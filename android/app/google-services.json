@@ -1,0 +1,127 @@
+{
+  "project_info": {
+    "project_number": "423147747880",
+    "firebase_url": "https://moonjoin-870e5-default-rtdb.firebaseio.com",
+    "project_id": "moonjoin-870e5",
+    "storage_bucket": "moonjoin-870e5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423147747880:android:943a09632bad4f9ddf931d",
+        "android_client_info": {
+          "package_name": "com.moonjoin.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "423147747880-dtqaiidmi9g8tfnbr9k04g0fg9if4tl0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.moonjoin.com",
+            "certificate_hash": "977f4caaf56bcab636afee63b3ab8c37b960b70a"
+          }
+        },
+        {
+          "client_id": "423147747880-m617rgkgj5md3v30ite2uu3g5rur6fof.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhtx-Oz6_7UEedH3Yg-wlGlaJpapN91x0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "423147747880-m617rgkgj5md3v30ite2uu3g5rur6fof.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "423147747880-42m2b6kc7phfudsokkug58pf0ct3cskq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.moonjoin.com"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423147747880:android:c745e16a42b7c331df931d",
+        "android_client_info": {
+          "package_name": "com.moonjoin.del"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "423147747880-m617rgkgj5md3v30ite2uu3g5rur6fof.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhtx-Oz6_7UEedH3Yg-wlGlaJpapN91x0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "423147747880-m617rgkgj5md3v30ite2uu3g5rur6fof.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "423147747880-42m2b6kc7phfudsokkug58pf0ct3cskq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.moonjoin.com"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423147747880:android:703ee71af9c06a92df931d",
+        "android_client_info": {
+          "package_name": "com.moonjoin.ven"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "423147747880-m617rgkgj5md3v30ite2uu3g5rur6fof.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhtx-Oz6_7UEedH3Yg-wlGlaJpapN91x0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "423147747880-m617rgkgj5md3v30ite2uu3g5rur6fof.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "423147747880-42m2b6kc7phfudsokkug58pf0ct3cskq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.moonjoin.com"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

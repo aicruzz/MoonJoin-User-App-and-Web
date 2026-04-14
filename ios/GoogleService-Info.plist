@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>423147747880-42m2b6kc7phfudsokkug58pf0ct3cskq.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.423147747880-42m2b6kc7phfudsokkug58pf0ct3cskq</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>423147747880-1dtj9ceu1beuq7fsh8sdj1o11djbt4s9.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDx8YJXzYnMuApcCAVseM7coPm_jnpjKhI</string>
+	<key>GCM_SENDER_ID</key>
+	<string>423147747880</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.moonjoin.com</string>
+	<key>PROJECT_ID</key>
+	<string>moonjoin-870e5</string>
+	<key>STORAGE_BUCKET</key>
+	<string>moonjoin-870e5.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:423147747880:ios:bfd65051b9b0215ddf931d</string>
+	<key>DATABASE_URL</key>
+	<string>https://moonjoin-870e5-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
