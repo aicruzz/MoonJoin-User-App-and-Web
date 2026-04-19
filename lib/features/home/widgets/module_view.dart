@@ -1,6 +1,5 @@
 import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:sixam_mart/common/widgets/address_widget.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/features/banner/controllers/banner_controller.dart';
 import 'package:sixam_mart/features/location/controllers/location_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
@@ -136,15 +135,12 @@ class ModuleView extends StatelessWidget {
         children: [
           const SizedBox(height: Dimensions.paddingSizeSmall),
 
-          // ─── 1. Featured (First 2 modules) ───
           if (featured.isNotEmpty) _buildFeaturedRow(context, featured),
           if (featured.isNotEmpty) const SizedBox(height: Dimensions.paddingSizeDefault),
 
-          // ─── 2. Primary (Next 3 modules) ───
           if (primary.isNotEmpty) _buildPrimaryRow(context, primary),
           if (primary.isNotEmpty) const SizedBox(height: Dimensions.paddingSizeDefault),
 
-          // ─── 3. Quick Services (All remaining modules) ───
           if (quick.isNotEmpty) _buildQuickServices(context, quick),
 
           const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -170,8 +166,7 @@ class ModuleView extends StatelessWidget {
     final String type = (module.moduleType ?? '').toLowerCase();
     final bool isFoodOrGreen = type == AppConstants.food || type.contains('food');
     final Color waveColor = isFoodOrGreen ? const Color(0xFFA8D5A2) : const Color(0xFFB8D8B0);
-    
-    // Provide a nice subtitle based on the type, fallback to description
+
     String subtitle = module.description ?? 'Quality services';
     if (type == AppConstants.food || type.contains('food')) {
       subtitle = 'Fresh meals\ndelivered';
@@ -179,9 +174,8 @@ class ModuleView extends StatelessWidget {
       subtitle = 'Daily essentials\n& more';
     }
 
-    return CustomInkWell(
+    return _ScaleTap(
       onTap: () => splashController.switchModule(originalIndex, true),
-      radius: Dimensions.radiusLarge,
       child: Container(
         height: 170,
         clipBehavior: Clip.antiAlias,
@@ -198,14 +192,11 @@ class ModuleView extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Wavy green bottom
             Positioned.fill(
               child: CustomPaint(
                 painter: _WavyBottomPainter(color: waveColor.withValues(alpha: 0.45)),
               ),
             ),
-
-            // Text top-left
             Positioned(
               left: 14,
               top: 16,
@@ -232,8 +223,6 @@ class ModuleView extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Large thumbnail image bottom-right
             Positioned(
               right: 4,
               bottom: 4,
@@ -254,7 +243,6 @@ class ModuleView extends StatelessWidget {
   }
 
   Widget _buildPrimaryRow(BuildContext context, List<MapEntry<int, ModuleModel>> items) {
-    // 3 items spaced evenly in a row
     return Row(
       children: List.generate(items.length, (i) {
         return Expanded(
@@ -268,9 +256,8 @@ class ModuleView extends StatelessWidget {
   }
 
   Widget _buildPrimaryCard(BuildContext context, int originalIndex, ModuleModel module) {
-    return CustomInkWell(
+    return _ScaleTap(
       onTap: () => splashController.switchModule(originalIndex, true),
-      radius: Dimensions.radiusDefault,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
@@ -314,7 +301,6 @@ class ModuleView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Pill header
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
@@ -341,7 +327,6 @@ class ModuleView extends StatelessWidget {
 
         const SizedBox(height: Dimensions.paddingSizeSmall),
 
-        // Horizontally scrolling cards row
         SizedBox(
           height: 110,
           child: ListView.separated(
@@ -362,9 +347,8 @@ class ModuleView extends StatelessWidget {
   }
 
   Widget _buildQuickServiceCard(BuildContext context, int originalIndex, ModuleModel module) {
-    return CustomInkWell(
+    return _ScaleTap(
       onTap: () => splashController.switchModule(originalIndex, true),
-      radius: Dimensions.radiusDefault,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         decoration: BoxDecoration(
@@ -448,7 +432,6 @@ class ModuleShimmer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Featured shimmer (2 large cards)
           Row(
             children: List.generate(2, (index) => Expanded(
               child: Container(
@@ -469,7 +452,6 @@ class ModuleShimmer extends StatelessWidget {
           ),
           const SizedBox(height: Dimensions.paddingSizeDefault),
 
-          // Primary shimmer (3 squares)
           Row(
             children: List.generate(3, (index) => Expanded(
               child: Container(
@@ -500,7 +482,6 @@ class ModuleShimmer extends StatelessWidget {
           ),
           const SizedBox(height: Dimensions.paddingSizeDefault),
 
-          // Quick services shimmer
           Container(
             height: 32,
             width: 150,
@@ -600,6 +581,42 @@ class AddressShimmer extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ScaleTap extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  const _ScaleTap({required this.child, required this.onTap});
+
+  @override
+  State<_ScaleTap> createState() => _ScaleTapState();
+}
+
+class _ScaleTapState extends State<_ScaleTap> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 100),
+    reverseDuration: const Duration(milliseconds: 200),
+  );
+  late final Animation<double> _scale = Tween(begin: 1.0, end: 0.93)
+      .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _ctrl.forward(),
+      onTapUp: (_) { _ctrl.reverse(); widget.onTap(); },
+      onTapCancel: () => _ctrl.reverse(),
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
+        child: widget.child,
+      ),
     );
   }
 }
