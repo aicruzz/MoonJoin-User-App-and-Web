@@ -11,11 +11,13 @@ import 'package:sixam_mart/common/widgets/custom_image.dart';
 class OrderEditScreen extends StatefulWidget {
   final OrderModel orderModel;
   final List<OrderDetailsModel> orderDetails;
+  final int? storeId;
 
   const OrderEditScreen({
     super.key,
     required this.orderModel,
     required this.orderDetails,
+    this.storeId,
   });
 
   @override
@@ -32,7 +34,7 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
         TextEditingController(text: widget.orderModel.orderNote ?? '');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.find<OrderEditController>()
-          .loadOrder(widget.orderModel, widget.orderDetails);
+          .loadOrder(widget.orderModel, widget.orderDetails, storeId: widget.storeId);
     });
   }
 
@@ -138,6 +140,13 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
 
   void _showAddItemsSheet(
       BuildContext context, OrderEditController controller) {
+    // Trigger a load if items haven't been fetched yet
+    if (!controller.isStoreItemsLoading && controller.storeItems.isEmpty) {
+      final storeId = widget.storeId ?? widget.orderModel.store?.id;
+      if (storeId != null) {
+        controller.loadStoreItems(storeId);
+      }
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

@@ -34,7 +34,7 @@ class OrderEditController extends GetxController implements GetxService {
   }
 
   // ── Load order into controller ────────────────────────────────────────────
-  void loadOrder(OrderModel order, List<OrderDetailsModel> details) {
+  void loadOrder(OrderModel order, List<OrderDetailsModel> details, {int? storeId}) {
     _orderModel = order;
     _orderNote = order.orderNote;
     _editableItems = details
@@ -42,9 +42,10 @@ class OrderEditController extends GetxController implements GetxService {
         .toList();
     update();
 
-    // Auto-load store items
-    if (order.store?.id != null) {
-      loadStoreItems(order.store!.id!);
+    // Auto-load store items — prefer explicit storeId, fall back to order.store?.id
+    final resolvedStoreId = storeId ?? order.store?.id;
+    if (resolvedStoreId != null) {
+      loadStoreItems(resolvedStoreId);
     }
   }
 

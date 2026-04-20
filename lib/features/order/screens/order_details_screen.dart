@@ -331,6 +331,7 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
               final updated = await Get.to(() => OrderEditScreen(
                 orderModel: order,
                 orderDetails: orderController.orderDetails ?? [],
+                storeId: order.store?.id,
               ));
               if (updated == true) {
                 _loadData(context, true);
