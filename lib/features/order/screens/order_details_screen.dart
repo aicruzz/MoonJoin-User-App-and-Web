@@ -10,6 +10,8 @@ import 'package:sixam_mart/features/order/controllers/order_controller.dart';
 import 'package:sixam_mart/features/order/domain/models/order_details_model.dart';
 import 'package:sixam_mart/features/order/domain/models/order_model.dart';
 import 'package:sixam_mart/features/location/domain/models/zone_response_model.dart';
+import 'package:sixam_mart/features/order/controllers/order_edit_controller.dart';
+import 'package:sixam_mart/features/order/screens/order_edit_screen.dart';
 import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
@@ -300,8 +302,8 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final showSwitchToCodButton = _ButtonVisibilityHelper.shouldShowSwitchToCodButton(order, _isCashOnDeliveryActive!);
     // final showFailedCodButton = _ButtonVisibilityHelper.shouldShowFailedOrderCodButton(order);
 
-    final showDecoration = showCancelButton || showTrackDeliveryButton || showReviewButton || showSwitchToCodButton;
-
+  final showEditButton = OrderEditController.canEdit(order);
+  final showDecoration = showCancelButton || showTrackDeliveryButton || showReviewButton || showSwitchToCodButton || showEditButton;
     return Container(
       padding: EdgeInsets.all(!isDesktop && showDecoration ? Dimensions.paddingSizeDefault : 0),
       decoration: !isDesktop && showDecoration ? BoxDecoration(
@@ -309,21 +311,34 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
         boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
       ) : null,
       child: Column(children: [
-        if (!orderController.showCancelled) ...[
-          _buildActionButtonsRow(
-            showCancelButton: showCancelButton,
-            showTrackDeliveryButton: false,
-            isDesktop: isDesktop,
-            order: order,
-            parcel: parcel,
-            onCancelPressed: () => _handleCancelOrder(orderController, order),
-            onTrackPressed: () => _handleTrackOrder(order),
-          ),
+      if (!orderController.showCancelled) ...[
+        _buildActionButtonsRow(
+          showCancelButton: showCancelButton,
+          showTrackDeliveryButton: false,
+          isDesktop: isDesktop,
+          order: order,
+          parcel: parcel,
+          onCancelPressed: () => _handleCancelOrder(orderController, order),
+          onTrackPressed: () => _handleTrackOrder(order),
+        ),
 
-          // if (showSwitchToCodButton)
-          //   _buildSwitchToCodButton(orderController, order, parcel, totalPrice),
-        ] else
-          _buildCancelledOrderWidget(isDesktop),
+        if (OrderEditController.canEdit(order)) ...[
+          const SizedBox(height: Dimensions.paddingSizeSmall),
+          CustomButton(
+            buttonText: 'Edit Order',
+            onPressed: () async {
+              final updated = await Get.to(() => OrderEditScreen(
+                orderModel: order,
+                orderDetails: orderController.orderDetails ?? [],
+              ));
+              if (updated == true) {
+                _loadData(context, true);
+              }
+            },
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+            textColor: Theme.of(context).primaryColor,
+          ),
+        ]],
 
         if (showReviewButton)
           _buildReviewButton(orderController, order),

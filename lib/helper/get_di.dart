@@ -206,6 +206,7 @@ import 'package:sixam_mart/features/language/domain/models/language_model.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
+import 'package:sixam_mart/features/order/controllers/order_edit_controller.dart';
 
 Future<Map<String, Map<String, String>>> init() async {
   /// Core
@@ -476,6 +477,7 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => SearchController(searchServiceInterface: Get.find()));
   Get.lazyPut(() => CouponController(couponServiceInterface: Get.find()));
   Get.lazyPut(() => OrderController(orderServiceInterface: Get.find()));
+  Get.lazyPut(() => OrderEditController(orderServiceInterface: Get.find()));
   Get.lazyPut(() => NotificationController(notificationServiceInterface: Get.find()));
   Get.lazyPut(() => CampaignController(campaignServiceInterface: Get.find()));
   Get.lazyPut(() => ParcelController(parcelServiceInterface: Get.find()));
