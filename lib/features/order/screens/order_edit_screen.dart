@@ -7,6 +7,9 @@ import 'package:sixam_mart/features/order/domain/models/order_model.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
+import 'package:sixam_mart/common/widgets/item_bottom_sheet.dart';
+import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
+import 'package:sixam_mart/helper/price_converter.dart';
 
 class OrderEditScreen extends StatefulWidget {
   final OrderModel orderModel;
@@ -260,29 +263,29 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
                   .copyWith(fontSize: Dimensions.fontSizeDefault)),
           const SizedBox(height: Dimensions.paddingSizeSmall),
           _summaryRow(context, 'Items Subtotal',
-              '\₦${controller.itemsSubtotal.toStringAsFixed(2)}'),
+              PriceConverter.convertPrice(controller.itemsSubtotal)),
           if ((controller.orderModel?.totalTaxAmount ?? 0) > 0)
             _summaryRow(
                 context,
                 'Tax',
-                '\₦${controller.orderModel!.totalTaxAmount!.toStringAsFixed(2)}'),
+                PriceConverter.convertPrice(controller.orderModel!.totalTaxAmount)),
           if ((controller.orderModel?.deliveryCharge ?? 0) > 0)
             _summaryRow(
                 context,
                 'Delivery Fee',
-                '\₦${controller.orderModel!.deliveryCharge!.toStringAsFixed(2)}'),
+                PriceConverter.convertPrice(controller.orderModel!.deliveryCharge)),
           if ((controller.orderModel?.couponDiscountAmount ?? 0) > 0)
             _summaryRow(
                 context,
                 'Coupon Discount',
-                '-\₦${controller.orderModel!.couponDiscountAmount!.toStringAsFixed(2)}',
+                '-${PriceConverter.convertPrice(controller.orderModel!.couponDiscountAmount)}',
                 isDiscount: true),
           Divider(
               color: Theme.of(context)
                   .disabledColor
                   .withValues(alpha: 0.2)),
           _summaryRow(context, 'Total',
-              '\$${controller.orderTotal.toStringAsFixed(2)}',
+              PriceConverter.convertPrice(controller.orderTotal),
               isBold: true),
         ],
       ),
@@ -468,15 +471,13 @@ class _OrderItemCard extends StatelessWidget {
                               fontSize: Dimensions.fontSizeDefault),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
-                      if (item.variant != null &&
-                          item.variant!.isNotEmpty)
+                      if (item.variant != null && item.variant!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 3),
                           child: Text(item.variant!,
                               style: robotoRegular.copyWith(
                                   fontSize: Dimensions.fontSizeExtraSmall,
-                                  color:
-                                      Theme.of(context).disabledColor)),
+                                  color: Theme.of(context).disabledColor)),
                         ),
                       if (item.addOns != null && item.addOns!.isNotEmpty)
                         Padding(
@@ -486,11 +487,11 @@ class _OrderItemCard extends StatelessWidget {
                               style: robotoRegular.copyWith(
                                   fontSize: Dimensions.fontSizeExtraSmall,
                                   color: Theme.of(context).disabledColor),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis),
                         ),
                       const SizedBox(height: 6),
-                      Text('\$${itemTotal.toStringAsFixed(2)}',
+                      Text(PriceConverter.convertPrice(itemTotal),
                           style: robotoBold.copyWith(
                               fontSize: Dimensions.fontSizeSmall,
                               color: Theme.of(context).primaryColor)),
@@ -536,7 +537,7 @@ class _OrderItemCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () => controller.decreaseQuantity(item.id!),
+            onTap: () => controller.decreaseQuantity(item.itemId!),
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Icon(
@@ -557,7 +558,7 @@ class _OrderItemCard extends StatelessWidget {
                     fontSize: Dimensions.fontSizeDefault)),
           ),
           GestureDetector(
-            onTap: () => controller.increaseQuantity(item.id!),
+            onTap: () => controller.increaseQuantity(item.itemId!),
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Icon(Icons.add_rounded,
@@ -590,7 +591,7 @@ class _OrderItemCard extends StatelessWidget {
         TextButton(
           onPressed: () {
             Get.back();
-            controller.removeItem(item.id!);
+            controller.removeItem(item.itemId!);
           },
           child: Text('Remove',
               style: robotoMedium.copyWith(color: Colors.redAccent)),
@@ -782,7 +783,18 @@ class _StoreItemTile extends StatelessWidget {
           // Add button
           GestureDetector(
             onTap: () {
-              controller.addItemToOrder(item);
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => ItemBottomSheet(
+                  itemId: item.id!,
+                  item: item,
+                  onCartItemAdd: (CartModel cartModel) {
+                    controller.addCartItem(cartModel);
+                  },
+                ),
+              );
             },
             child: Container(
               padding: const EdgeInsets.symmetric(

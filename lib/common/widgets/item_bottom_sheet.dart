@@ -35,7 +35,8 @@ class ItemBottomSheet extends StatefulWidget {
   final int? cartIndex;
   final bool inStorePage;
   final Item? item;
-  const ItemBottomSheet({super.key, required this.itemId, this.isCampaign = false, this.cart, this.cartIndex, this.inStorePage = false, this.item});
+  final Function(CartModel)? onCartItemAdd;
+  const ItemBottomSheet({super.key, required this.itemId, this.isCampaign = false, this.cart, this.cartIndex, this.inStorePage = false, this.item, this.onCartItemAdd});
 
   @override
   State<ItemBottomSheet> createState() => _ItemBottomSheetState();
@@ -508,6 +509,12 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                                     (price! - PriceConverter.convertWithDiscount(price, discount, discountType)!),
                                     itemController.quantity, addOnIdList, addOnsList, widget.isCampaign, stock, item,  item.quantityLimit
                                 );
+
+                                if (widget.onCartItemAdd != null) {
+                                  widget.onCartItemAdd!(cartModel);
+                                  Get.back();
+                                  return;
+                                }
 
                                 List<OrderVariation> variations = _getSelectedVariations(
                                   isFoodVariation: Get.find<SplashController>().getModuleConfig(item.moduleType).newVariation!,

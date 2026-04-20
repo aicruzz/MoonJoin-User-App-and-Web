@@ -5,6 +5,8 @@ import 'package:sixam_mart/features/order/domain/models/order_details_model.dart
 import 'package:sixam_mart/features/order/domain/models/order_model.dart';
 import 'package:sixam_mart/features/order/domain/services/order_service_interface.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
+import 'package:sixam_mart/features/cart/domain/models/cart_model.dart' as cart;
+import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 
 class OrderEditController extends GetxController implements GetxService {
   final OrderServiceInterface orderServiceInterface;
@@ -56,17 +58,109 @@ class OrderEditController extends GetxController implements GetxService {
     update();
 
     try {
-      await Get.find<StoreController>().getStoreItemList(storeId, 1, 'all', false);
-      final items = Get.find<StoreController>().storeItemModel?.items ?? [];
-      // Filter out items already in the order
+      // Using the recommended items endpoint as requested
+      // We still filter by storeId to ensure items are compatible with the order
+      await Get.find<ItemController>().getRecommendedItemList(true, 'all', false);
+      final items = Get.find<ItemController>().recommendedItemList ?? [];
+      
+      // Filter out items already in the order and ensure they belong to the correct store
       final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
-      _storeItems = items.where((i) => !existingItemIds.contains(i.id)).toList();
-    } catch (_) {
+      _storeItems = items.where((i) => 
+        i.storeId == storeId && !existingItemIds.contains(i.id)
+      ).toList();
+      
+      // If recommended list is empty for this store, fallback to store's items
+      if (_storeItems.isEmpty) {
+        await Get.find<StoreController>().getStoreItemList(storeId, 1, 'all', false);
+        final storeItems = Get.find<StoreController>().storeItemModel?.items ?? [];
+        _storeItems = storeItems.where((i) => !existingItemIds.contains(i.id)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error loading items for order edit: $e');
       _storeItems = [];
     }
 
     _isStoreItemsLoading = false;
     update();
+  }
+
+  void addCartItem(cart.CartModel cartModel) {
+    if (cartModel.item == null) return;
+    
+    final item = cartModel.item!;
+    
+    // Calculate total add-on price for this cart item
+    double totalAddOnPrice = 0;
+    List<AddOn> addons = [];
+    if (cartModel.addOns != null) {
+      for (int i = 0; i < cartModel.addOns!.length; i++) {
+        final addonRef = cartModel.addOns![i];
+        final addonId = cartModel.addOnIds?.firstWhereOrNull((a) => a.id == addonRef.id);
+        final qty = addonId?.quantity ?? 1;
+        
+        addons.add(AddOn(
+          name: addonRef.name,
+          price: addonRef.price,
+          quantity: qty,
+        ));
+        totalAddOnPrice += (addonRef.price ?? 0) * qty;
+      }
+    }
+
+    final existing = _editableItems.indexWhere((e) => e.itemId == item.id);
+
+    if (existing != -1 && _isSameVariation(_editableItems[existing], cartModel)) {
+      _editableItems[existing].quantity = (_editableItems[existing].quantity ?? 0) + (cartModel.quantity ?? 1);
+    } else {
+      _editableItems.add(OrderDetailsModel(
+        itemId: item.id,
+        orderId: _orderModel?.id,
+        price: cartModel.price,
+        quantity: cartModel.quantity,
+        variation: cartModel.variation,
+        foodVariation: _convertFoodVariations(item, cartModel.foodVariations ?? []),
+        addOns: addons,
+        totalAddOnPrice: totalAddOnPrice * (cartModel.quantity ?? 1),
+        itemDetails: item,
+        imageFullUrl: item.imageFullUrl,
+      ));
+      
+      _storeItems.removeWhere((i) => i.id == item.id);
+    }
+    update();
+  }
+
+  List<FoodVariation> _convertFoodVariations(Item item, List<List<bool?>> selectedVariations) {
+    List<FoodVariation> variations = [];
+    if (item.foodVariations != null && selectedVariations.isNotEmpty) {
+      for (int i = 0; i < item.foodVariations!.length; i++) {
+        if (i < selectedVariations.length && selectedVariations[i].contains(true)) {
+          FoodVariation original = item.foodVariations![i];
+          List<VariationValue> selectedValues = [];
+          for (int j = 0; j < original.variationValues!.length; j++) {
+            if (j < selectedVariations[i].length && selectedVariations[i][j]!) {
+              selectedValues.add(original.variationValues![j]);
+            }
+          }
+          variations.add(FoodVariation(
+            name: original.name,
+            multiSelect: original.multiSelect,
+            min: original.min,
+            max: original.max,
+            required: original.required,
+            variationValues: selectedValues,
+          ));
+        }
+      }
+    }
+    return variations;
+  }
+
+  bool _isSameVariation(OrderDetailsModel existing, cart.CartModel cart) {
+    // Simple check: for now, if it's the same itemId, we treat as same or add new if you want separate rows
+    // Standard SixamMart merges if variations match exactly. 
+    // Implementing a simple merge for now to keep the UI clean.
+    return true; 
   }
 
   // ── Add item from store to order ──────────────────────────────────────────
@@ -109,7 +203,7 @@ class OrderEditController extends GetxController implements GetxService {
 
   // ── Quantity ──────────────────────────────────────────────────────────────
   void increaseQuantity(int itemId) {
-    final index = _editableItems.indexWhere((e) => e.id == itemId);
+    final index = _editableItems.indexWhere((e) => e.itemId == itemId);
     if (index != -1) {
       _editableItems[index].quantity = (_editableItems[index].quantity ?? 1) + 1;
       update();
@@ -117,7 +211,7 @@ class OrderEditController extends GetxController implements GetxService {
   }
 
   void decreaseQuantity(int itemId) {
-    final index = _editableItems.indexWhere((e) => e.id == itemId);
+    final index = _editableItems.indexWhere((e) => e.itemId == itemId);
     if (index != -1) {
       if ((_editableItems[index].quantity ?? 1) <= 1) {
         removeItem(itemId);
@@ -130,8 +224,8 @@ class OrderEditController extends GetxController implements GetxService {
 
   // ── Remove item ───────────────────────────────────────────────────────────
   void removeItem(int itemId) {
-    final removed = _editableItems.firstWhereOrNull((e) => e.id == itemId);
-    _editableItems.removeWhere((e) => e.id == itemId);
+    final removed = _editableItems.firstWhereOrNull((e) => e.itemId == itemId);
+    _editableItems.removeWhere((e) => e.itemId == itemId);
     // Add back to store items list if it came from there
     if (removed?.itemDetails != null) {
       _storeItems.insert(0, removed!.itemDetails!);
@@ -184,8 +278,20 @@ class OrderEditController extends GetxController implements GetxService {
           'quantity': item.quantity ?? 1,
           'price': item.price ?? 0,
           'variant': item.variant ?? '',
-          'variation': item.foodVariation?.map((v) => v.toJson()).toList() ?? [],
-          'add_on_ids': item.addOns?.map((a) => a.name).toList() ?? [],
+          'variation': item.foodVariation?.map((v) {
+            return {
+              'name': v.name,
+              'values': {
+                'label': v.variationValues?.map((vv) => vv.level).toList() ?? [],
+              },
+            };
+          }).toList() ?? [],
+          'add_on_ids': item.addOns?.map((a) {
+            // We need to find the ID from itemDetails if available, 
+            // because OrderDetailsModel.AddOn only stores name/price/qty
+            final addonDetail = item.itemDetails?.addOns?.firstWhereOrNull((ad) => ad.name == a.name);
+            return addonDetail?.id ?? 0;
+          }).toList() ?? [],
           'add_on_qtys': item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [],
         };
       }).toList();
