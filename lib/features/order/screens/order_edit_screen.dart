@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/features/order/controllers/order_edit_controller.dart';
 import 'package:sixam_mart/features/order/domain/models/order_details_model.dart';
 import 'package:sixam_mart/features/order/domain/models/order_model.dart';
@@ -76,9 +77,24 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
                 ),
               ],
             ),
+            actions: [
+              // Add Items button in app bar
+              TextButton.icon(
+                onPressed: () => _showAddItemsSheet(context, controller),
+                icon: Icon(Icons.add_circle_outline,
+                    color: Theme.of(context).primaryColor, size: 18),
+                label: Text(
+                  'Add Items',
+                  style: robotoMedium.copyWith(
+                    color: Theme.of(context).primaryColor,
+                    fontSize: Dimensions.fontSizeSmall,
+                  ),
+                ),
+              ),
+            ],
           ),
           body: controller.editableItems.isEmpty && !controller.isLoading
-              ? _buildEmptyState(context)
+              ? _buildEmptyState(context, controller)
               : Column(
                   children: [
                     Expanded(
@@ -107,6 +123,7 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
 
                           // Summary
                           _buildOrderSummary(context, controller),
+                          const SizedBox(height: Dimensions.paddingSizeDefault),
                         ],
                       ),
                     ),
@@ -115,6 +132,17 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
                 ),
         );
       },
+    );
+  }
+
+
+  void _showAddItemsSheet(
+      BuildContext context, OrderEditController controller) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AddItemsBottomSheet(controller: controller),
     );
   }
 
@@ -128,11 +156,12 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),
+          const Icon(Icons.info_outline_rounded,
+              color: Colors.orange, size: 20),
           const SizedBox(width: Dimensions.paddingSizeSmall),
           Expanded(
             child: Text(
-              'Remove unavailable items or adjust quantities before resubmitting.',
+              'Remove unavailable items, adjust quantities, or add new items before resubmitting.',
               style: robotoRegular.copyWith(
                 fontSize: Dimensions.fontSizeExtraSmall,
                 color: Colors.orange.shade800,
@@ -151,13 +180,15 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Order Note',
-            style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+            style:
+                robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
         const SizedBox(height: Dimensions.paddingSizeExtraSmall),
         TextField(
           controller: _noteController,
           onChanged: controller.updateOrderNote,
           maxLines: 2,
-          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall),
+          style:
+              robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall),
           decoration: InputDecoration(
             hintText: 'Add a note for the restaurant...',
             hintStyle: robotoRegular.copyWith(
@@ -171,20 +202,26 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
               vertical: Dimensions.paddingSizeSmall,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              borderRadius:
+                  BorderRadius.circular(Dimensions.radiusDefault),
               borderSide: BorderSide(
-                  color:
-                      Theme.of(context).disabledColor.withValues(alpha: 0.3)),
+                  color: Theme.of(context)
+                      .disabledColor
+                      .withValues(alpha: 0.3)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              borderRadius:
+                  BorderRadius.circular(Dimensions.radiusDefault),
               borderSide: BorderSide(
-                  color:
-                      Theme.of(context).disabledColor.withValues(alpha: 0.3)),
+                  color: Theme.of(context)
+                      .disabledColor
+                      .withValues(alpha: 0.3)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+              borderRadius:
+                  BorderRadius.circular(Dimensions.radiusDefault),
+              borderSide:
+                  BorderSide(color: Theme.of(context).primaryColor),
             ),
           ),
         ),
@@ -210,25 +247,31 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Order Summary',
-              style:
-                  robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+              style: robotoBold
+                  .copyWith(fontSize: Dimensions.fontSizeDefault)),
           const SizedBox(height: Dimensions.paddingSizeSmall),
           _summaryRow(context, 'Items Subtotal',
-              '\$${controller.itemsSubtotal.toStringAsFixed(2)}'),
+              '\₦${controller.itemsSubtotal.toStringAsFixed(2)}'),
           if ((controller.orderModel?.totalTaxAmount ?? 0) > 0)
-            _summaryRow(context, 'Tax',
-                '\$${controller.orderModel!.totalTaxAmount!.toStringAsFixed(2)}'),
+            _summaryRow(
+                context,
+                'Tax',
+                '\₦${controller.orderModel!.totalTaxAmount!.toStringAsFixed(2)}'),
           if ((controller.orderModel?.deliveryCharge ?? 0) > 0)
-            _summaryRow(context, 'Delivery Fee',
-                '\$${controller.orderModel!.deliveryCharge!.toStringAsFixed(2)}'),
+            _summaryRow(
+                context,
+                'Delivery Fee',
+                '\₦${controller.orderModel!.deliveryCharge!.toStringAsFixed(2)}'),
           if ((controller.orderModel?.couponDiscountAmount ?? 0) > 0)
             _summaryRow(
                 context,
                 'Coupon Discount',
-                '-\$${controller.orderModel!.couponDiscountAmount!.toStringAsFixed(2)}',
+                '-\₦${controller.orderModel!.couponDiscountAmount!.toStringAsFixed(2)}',
                 isDiscount: true),
           Divider(
-              color: Theme.of(context).disabledColor.withValues(alpha: 0.2)),
+              color: Theme.of(context)
+                  .disabledColor
+                  .withValues(alpha: 0.2)),
           _summaryRow(context, 'Total',
               '\$${controller.orderTotal.toStringAsFixed(2)}',
               isBold: true),
@@ -287,8 +330,9 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed:
-                controller.isLoading ? null : controller.submitEditedOrder,
+            onPressed: controller.isLoading
+                ? null
+                : controller.submitEditedOrder,
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
               shape: RoundedRectangleBorder(
@@ -321,7 +365,8 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(
+      BuildContext context, OrderEditController controller) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -330,19 +375,32 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
               size: 80, color: Theme.of(context).disabledColor),
           const SizedBox(height: Dimensions.paddingSizeDefault),
           Text('No items left',
-              style:
-                  robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+              style: robotoBold
+                  .copyWith(fontSize: Dimensions.fontSizeLarge)),
           const SizedBox(height: Dimensions.paddingSizeSmall),
-          Text('All items have been removed.',
+          Text('Add items from the store or go back.',
               style: robotoRegular.copyWith(
                   fontSize: Dimensions.fontSizeSmall,
                   color: Theme.of(context).disabledColor)),
           const SizedBox(height: Dimensions.paddingSizeLarge),
+          ElevatedButton.icon(
+            onPressed: () => _showAddItemsSheet(context, controller),
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: Text('Add Items',
+                style: robotoMedium.copyWith(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(Dimensions.radiusDefault)),
+            ),
+          ),
+          const SizedBox(height: Dimensions.paddingSizeSmall),
           TextButton(
             onPressed: () => Get.back(),
             child: Text('Go Back',
                 style: robotoMedium.copyWith(
-                    color: Theme.of(context).primaryColor)),
+                    color: Theme.of(context).disabledColor)),
           ),
         ],
       ),
@@ -350,9 +408,6 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Order Item Card
-// ─────────────────────────────────────────────────────────────────────────────
 class _OrderItemCard extends StatelessWidget {
   final OrderDetailsModel item;
   final OrderEditController controller;
@@ -404,13 +459,15 @@ class _OrderItemCard extends StatelessWidget {
                               fontSize: Dimensions.fontSizeDefault),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
-                      if (item.variant != null && item.variant!.isNotEmpty)
+                      if (item.variant != null &&
+                          item.variant!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 3),
                           child: Text(item.variant!,
                               style: robotoRegular.copyWith(
                                   fontSize: Dimensions.fontSizeExtraSmall,
-                                  color: Theme.of(context).disabledColor)),
+                                  color:
+                                      Theme.of(context).disabledColor)),
                         ),
                       if (item.addOns != null && item.addOns!.isNotEmpty)
                         Padding(
@@ -463,7 +520,8 @@ class _OrderItemCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
         border: Border.all(
-            color: Theme.of(context).disabledColor.withValues(alpha: 0.2)),
+            color:
+                Theme.of(context).disabledColor.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -507,7 +565,8 @@ class _OrderItemCard extends StatelessWidget {
         item.itemDetails?.name ?? 'Item #${item.itemId}';
     Get.dialog(AlertDialog(
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Dimensions.radiusLarge)),
+          borderRadius:
+              BorderRadius.circular(Dimensions.radiusLarge)),
       title: Text('Remove Item?', style: robotoBold),
       content: Text('Remove "$itemName" from your order?',
           style: robotoRegular.copyWith(
@@ -529,5 +588,219 @@ class _OrderItemCard extends StatelessWidget {
         ),
       ],
     ));
+  }
+}
+
+class _AddItemsBottomSheet extends StatelessWidget {
+  final OrderEditController controller;
+
+  const _AddItemsBottomSheet({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return GetBuilder<OrderEditController>(
+      builder: (ctrl) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(Dimensions.radiusLarge)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .disabledColor
+                      .withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: Dimensions.paddingSizeSmall),
+
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: Dimensions.paddingSizeDefault),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Add from Store',
+                      style: robotoBold.copyWith(
+                          fontSize: Dimensions.fontSizeLarge),
+                    ),
+                    IconButton(
+                      onPressed: () => Get.back(),
+                      icon: Icon(Icons.close,
+                          color: Theme.of(context).disabledColor),
+                    ),
+                  ],
+                ),
+              ),
+
+              Divider(
+                  color: Theme.of(context)
+                      .disabledColor
+                      .withValues(alpha: 0.2)),
+
+              // Content
+              Expanded(
+                child: ctrl.isStoreItemsLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ctrl.storeItems.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.storefront_outlined,
+                                    size: 60,
+                                    color: Theme.of(context).disabledColor),
+                                const SizedBox(
+                                    height: Dimensions.paddingSizeSmall),
+                                Text(
+                                  'No more items available\nfrom this store.',
+                                  textAlign: TextAlign.center,
+                                  style: robotoRegular.copyWith(
+                                      color: Theme.of(context).disabledColor),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Dimensions.paddingSizeDefault,
+                              vertical: Dimensions.paddingSizeSmall,
+                            ),
+                            itemCount: ctrl.storeItems.length,
+                            separatorBuilder: (_, __) => Divider(
+                                color: Theme.of(context)
+                                    .disabledColor
+                                    .withValues(alpha: 0.15)),
+                            itemBuilder: (context, index) {
+                              return _StoreItemTile(
+                                item: ctrl.storeItems[index],
+                                controller: ctrl,
+                              );
+                            },
+                          ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StoreItemTile extends StatelessWidget {
+  final Item item;
+  final OrderEditController controller;
+
+  const _StoreItemTile({required this.item, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final double price = item.price ?? 0;
+    final double discount = item.discount ?? 0;
+    final bool hasDiscount = discount > 0;
+    final double discountedPrice = hasDiscount
+        ? (item.discountType == 'percent'
+            ? price - (price * discount / 100)
+            : price - discount)
+        : price;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          // Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+            child: CustomImage(
+              image: item.imageFullUrl ?? '',
+              height: 65,
+              width: 65,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+
+          // Name + price
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name ?? '',
+                  style: robotoBold.copyWith(
+                      fontSize: Dimensions.fontSizeSmall),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      '\₦${discountedPrice.toStringAsFixed(2)}',
+                      style: robotoMedium.copyWith(
+                        fontSize: Dimensions.fontSizeSmall,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    if (hasDiscount) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '\₦${price.toStringAsFixed(2)}',
+                        style: robotoRegular.copyWith(
+                          fontSize: Dimensions.fontSizeExtraSmall,
+                          color: Theme.of(context).disabledColor,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Add button
+          GestureDetector(
+            onTap: () {
+              controller.addItemToOrder(item);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: Dimensions.paddingSizeSmall,
+                  vertical: Dimensions.paddingSizeExtraSmall),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+                borderRadius:
+                    BorderRadius.circular(Dimensions.radiusSmall),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.add, color: Colors.white, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Add',
+                    style: robotoMedium.copyWith(
+                        color: Colors.white,
+                        fontSize: Dimensions.fontSizeSmall),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
