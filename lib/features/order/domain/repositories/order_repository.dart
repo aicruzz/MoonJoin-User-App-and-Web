@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:get/get_connect/connect.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sixam_mart/api/api_client.dart';
@@ -180,7 +181,7 @@ class OrderRepository implements OrderRepositoryInterface {
     final Map<String, dynamic> data = {
       '_method': 'put',
       'order_id': orderId,
-      'cart': cart,
+      'cart': jsonEncode(cart),
       if (orderNote != null && orderNote.isNotEmpty) 'order_note': orderNote,
     };
     final Response response = await apiClient.postData(AppConstants.updateOrderUri, data);

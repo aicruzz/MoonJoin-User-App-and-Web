@@ -10,6 +10,7 @@ import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/item_bottom_sheet.dart';
 import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
+import 'package:sixam_mart/common/widgets/custom_text_field.dart';
 
 class OrderEditScreen extends StatefulWidget {
   final OrderModel orderModel;
@@ -601,17 +602,36 @@ class _OrderItemCard extends StatelessWidget {
   }
 }
 
-class _AddItemsBottomSheet extends StatelessWidget {
+class _AddItemsBottomSheet extends StatefulWidget {
   final OrderEditController controller;
 
   const _AddItemsBottomSheet({required this.controller});
 
   @override
+  State<_AddItemsBottomSheet> createState() => _AddItemsBottomSheetState();
+}
+
+class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GetBuilder<OrderEditController>(
       builder: (ctrl) {
+        bool isSearching = ctrl.searchQuery.isNotEmpty;
+        List<Item> displayItems = isSearching ? ctrl.storeSearchItems : ctrl.storeItems;
+        bool isLoading = isSearching ? ctrl.isStoreSearchLoading : ctrl.isStoreItemsLoading;
+
         return Container(
-          height: MediaQuery.of(context).size.height * 0.75,
+          height: MediaQuery.of(context).size.height * 0.85,
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: const BorderRadius.vertical(
@@ -641,12 +661,15 @@ class _AddItemsBottomSheet extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Add from Store',
+                      'Add Items',
                       style: robotoBold.copyWith(
                           fontSize: Dimensions.fontSizeLarge),
                     ),
                     IconButton(
-                      onPressed: () => Get.back(),
+                      onPressed: () {
+                        ctrl.clearSearch();
+                        Get.back();
+                      },
                       icon: Icon(Icons.close,
                           color: Theme.of(context).disabledColor),
                     ),
@@ -654,27 +677,52 @@ class _AddItemsBottomSheet extends StatelessWidget {
                 ),
               ),
 
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                child: CustomTextField(
+                  titleText: 'Search items...',
+                  controller: _searchController,
+                  focusNode: _searchFocus,
+                  inputType: TextInputType.text,
+                  inputAction: TextInputAction.search,
+                  prefixIcon: Icons.search,
+                  onChanged: (text) {
+                    ctrl.searchStoreItems(text, widget.controller.orderModel?.store?.id);
+                  },
+                  onSubmit: (text) {
+                    ctrl.searchStoreItems(text, widget.controller.orderModel?.store?.id);
+                  },
+                ),
+              ),
+
               Divider(
                   color: Theme.of(context)
                       .disabledColor
-                      .withValues(alpha: 0.2)),
+                      .withValues(alpha: 0.2),
+                  height: 1),
 
               // Content
               Expanded(
-                child: ctrl.isStoreItemsLoading
+                child: isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : ctrl.storeItems.isEmpty
+                    : displayItems.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.storefront_outlined,
+                                Icon(
+                                    isSearching
+                                        ? Icons.search_off
+                                        : Icons.storefront_outlined,
                                     size: 60,
                                     color: Theme.of(context).disabledColor),
                                 const SizedBox(
                                     height: Dimensions.paddingSizeSmall),
                                 Text(
-                                  'No more items available\nfrom this store.',
+                                  isSearching
+                                      ? 'No items found for "${ctrl.searchQuery}"'
+                                      : 'No more items available\nfrom this store.',
                                   textAlign: TextAlign.center,
                                   style: robotoRegular.copyWith(
                                       color: Theme.of(context).disabledColor),
@@ -687,14 +735,14 @@ class _AddItemsBottomSheet extends StatelessWidget {
                               horizontal: Dimensions.paddingSizeDefault,
                               vertical: Dimensions.paddingSizeSmall,
                             ),
-                            itemCount: ctrl.storeItems.length,
+                            itemCount: displayItems.length,
                             separatorBuilder: (_, __) => Divider(
                                 color: Theme.of(context)
                                     .disabledColor
                                     .withValues(alpha: 0.15)),
                             itemBuilder: (context, index) {
                               return _StoreItemTile(
-                                item: ctrl.storeItems[index],
+                                item: displayItems[index],
                                 controller: ctrl,
                               );
                             },

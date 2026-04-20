@@ -7,6 +7,7 @@ import 'package:sixam_mart/features/order/domain/services/order_service_interfac
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/cart/domain/models/cart_model.dart' as cart;
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
+import 'package:sixam_mart/features/store/domain/services/store_service_interface.dart';
 
 class OrderEditController extends GetxController implements GetxService {
   final OrderServiceInterface orderServiceInterface;
@@ -26,6 +27,15 @@ class OrderEditController extends GetxController implements GetxService {
 
   List<Item> _storeItems = [];
   List<Item> get storeItems => _storeItems;
+
+  List<Item> _storeSearchItems = [];
+  List<Item> get storeSearchItems => _storeSearchItems;
+
+  bool _isStoreSearchLoading = false;
+  bool get isStoreSearchLoading => _isStoreSearchLoading;
+
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
 
   String? _orderNote;
   String? get orderNote => _orderNote;
@@ -58,29 +68,80 @@ class OrderEditController extends GetxController implements GetxService {
     update();
 
     try {
-      // Using the recommended items endpoint as requested
-      // We still filter by storeId to ensure items are compatible with the order
-      await Get.find<ItemController>().getRecommendedItemList(true, 'all', false);
-      final items = Get.find<ItemController>().recommendedItemList ?? [];
+      final storeController = Get.find<StoreController>();
+      final itemController = Get.find<ItemController>();
+
+      // 1. Fetch recommended items
+      await itemController.getRecommendedItemList(true, 'all', false);
+      final recommendedItems = itemController.recommendedItemList ?? [];
       
-      // Filter out items already in the order and ensure they belong to the correct store
-      final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
-      _storeItems = items.where((i) => 
-        i.storeId == storeId && !existingItemIds.contains(i.id)
-      ).toList();
+      // 2. Fetch store's general items - BYPASS StoreController filters
+      ItemModel? storeItemModel = await storeController.storeServiceInterface.getStoreItemList(
+        storeID: storeId, offset: 1, type: 'all', categoryID: 0, 
+        filter: [], rating: null, lowerValue: null, upperValue: null,
+      );
+      final storeItems = storeItemModel?.items ?? [];
       
-      // If recommended list is empty for this store, fallback to store's items
-      if (_storeItems.isEmpty) {
-        await Get.find<StoreController>().getStoreItemList(storeId, 1, 'all', false);
-        final storeItems = Get.find<StoreController>().storeItemModel?.items ?? [];
-        _storeItems = storeItems.where((i) => !existingItemIds.contains(i.id)).toList();
+      // Merge items and remove duplicates
+      final Map<int, Item> allItemsMap = {};
+      for (var item in storeItems) {
+        allItemsMap[item.id!] = item;
       }
+      for (var item in recommendedItems) {
+        if (item.storeId == storeId) {
+          allItemsMap[item.id!] = item;
+        }
+      }
+
+      final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
+      _storeItems = allItemsMap.values.where((i) => !existingItemIds.contains(i.id)).toList();
+      
+      debugPrint('OrderEdit: Loaded ${_storeItems.length} available items for store $storeId');
+
     } catch (e) {
       debugPrint('Error loading items for order edit: $e');
       _storeItems = [];
     }
 
     _isStoreItemsLoading = false;
+    update();
+  }
+
+  // ── Search Store Items ──────────────────────────────────────────────────
+  Future<void> searchStoreItems(String query, int? storeId) async {
+    _searchQuery = query;
+    if (query.isEmpty) {
+      _storeSearchItems = [];
+      update();
+      return;
+    }
+    if (storeId == null) return;
+
+    _isStoreSearchLoading = true;
+    update();
+
+    try {
+      final storeController = Get.find<StoreController>();
+      ItemModel? searchResult = await storeController.storeServiceInterface.getStoreSearchItemList(
+        query, storeId.toString(), 1, 'all', 0,
+      );
+      
+      if (searchResult != null) {
+        final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
+        _storeSearchItems = searchResult.items?.where((i) => !existingItemIds.contains(i.id)).toList() ?? [];
+      }
+    } catch (e) {
+      debugPrint('Error searching store items: $e');
+      _storeSearchItems = [];
+    }
+
+    _isStoreSearchLoading = false;
+    update();
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+    _storeSearchItems = [];
     update();
   }
 
@@ -110,7 +171,11 @@ class OrderEditController extends GetxController implements GetxService {
     final existing = _editableItems.indexWhere((e) => e.itemId == item.id);
 
     if (existing != -1 && _isSameVariation(_editableItems[existing], cartModel)) {
-      _editableItems[existing].quantity = (_editableItems[existing].quantity ?? 0) + (cartModel.quantity ?? 1);
+      int newQty = (_editableItems[existing].quantity ?? 0) + (cartModel.quantity ?? 1);
+      _editableItems[existing].quantity = newQty;
+      // Recalculate totalAddOnPrice based on the new total quantity
+      double singleItemAddOnPrice = totalAddOnPrice; 
+      _editableItems[existing].totalAddOnPrice = singleItemAddOnPrice * newQty;
     } else {
       _editableItems.add(OrderDetailsModel(
         itemId: item.id,
@@ -205,7 +270,13 @@ class OrderEditController extends GetxController implements GetxService {
   void increaseQuantity(int itemId) {
     final index = _editableItems.indexWhere((e) => e.itemId == itemId);
     if (index != -1) {
-      _editableItems[index].quantity = (_editableItems[index].quantity ?? 1) + 1;
+      int oldQty = _editableItems[index].quantity ?? 1;
+      double currentAddOnTotal = _editableItems[index].totalAddOnPrice ?? 0;
+      double unitAddOnPrice = oldQty > 0 ? currentAddOnTotal / oldQty : 0;
+      
+      int newQty = oldQty + 1;
+      _editableItems[index].quantity = newQty;
+      _editableItems[index].totalAddOnPrice = unitAddOnPrice * newQty;
       update();
     }
   }
@@ -213,10 +284,16 @@ class OrderEditController extends GetxController implements GetxService {
   void decreaseQuantity(int itemId) {
     final index = _editableItems.indexWhere((e) => e.itemId == itemId);
     if (index != -1) {
-      if ((_editableItems[index].quantity ?? 1) <= 1) {
+      int oldQty = _editableItems[index].quantity ?? 1;
+      if (oldQty <= 1) {
         removeItem(itemId);
       } else {
-        _editableItems[index].quantity = _editableItems[index].quantity! - 1;
+        double currentAddOnTotal = _editableItems[index].totalAddOnPrice ?? 0;
+        double unitAddOnPrice = oldQty > 0 ? currentAddOnTotal / oldQty : 0;
+
+        int newQty = oldQty - 1;
+        _editableItems[index].quantity = newQty;
+        _editableItems[index].totalAddOnPrice = unitAddOnPrice * newQty;
         update();
       }
     }
