@@ -177,31 +177,47 @@ class OrderEditController extends GetxController implements GetxService {
     update();
 
     try {
-      // TODO: Replace with your actual API call e.g:
-      // await orderServiceInterface.updateOrder(
-      //   orderId: _orderModel!.id.toString(),
-      //   cart: _editableItems.map((item) => {
-      //     'item_id': item.itemId,
-      //     'quantity': item.quantity,
-      //     'price': item.price,
-      //     'variant': item.variant,
-      //     'variation': item.foodVariation?.map((v) => v.toJson()).toList() ?? [],
-      //     'add_ons': item.addOns?.map((a) => a.toJson()).toList() ?? [],
-      //   }).toList(),
-      //   orderNote: _orderNote,
-      // );
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Build cart payload from editable items
+      final List<Map<String, dynamic>> cart = _editableItems.map((item) {
+        return {
+          'item_id': item.itemId,
+          'quantity': item.quantity ?? 1,
+          'price': item.price ?? 0,
+          'variant': item.variant ?? '',
+          'variation': item.foodVariation?.map((v) => v.toJson()).toList() ?? [],
+          'add_on_ids': item.addOns?.map((a) => a.name).toList() ?? [],
+          'add_on_qtys': item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [],
+        };
+      }).toList();
+
+      final bool success = await orderServiceInterface.updateOrder(
+        orderId: _orderModel!.id!,
+        cart: cart,
+        orderNote: _orderNote,
+      );
 
       _isLoading = false;
       update();
-      Get.back(result: true);
-      Get.snackbar(
-        'Order Updated',
-        'Your order has been updated successfully.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+
+      if (success) {
+        Get.back(result: true);
+        Get.snackbar(
+          'Order Updated',
+          'Your order has been updated successfully.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        Get.snackbar(
+          'Update Failed',
+          'Could not update your order. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
       _isLoading = false;
       update();

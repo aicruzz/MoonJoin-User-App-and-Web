@@ -176,6 +176,18 @@ class OrderRepository implements OrderRepositoryInterface {
   }
 
   @override
+  Future<bool> updateOrder({required int orderId, required List<Map<String, dynamic>> cart, String? orderNote}) async {
+    final Map<String, dynamic> data = {
+      '_method': 'put',
+      'order_id': orderId,
+      'cart': cart,
+      if (orderNote != null && orderNote.isNotEmpty) 'order_note': orderNote,
+    };
+    final Response response = await apiClient.postData(AppConstants.updateOrderUri, data);
+    return response.statusCode == 200;
+  }
+
+  @override
   Future add(value) {
     throw UnimplementedError();
   }

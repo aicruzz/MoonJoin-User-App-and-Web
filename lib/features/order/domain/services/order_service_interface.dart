@@ -23,4 +23,5 @@ abstract class OrderServiceInterface {
     required final String orderID, int? storeId, required bool createAccount, required String guestId});
   Future<bool> submitParcelReturn({required int orderId, required String orderStatus, required int returnOtp});
   Future<PaymentModel?> getPaymentFailedDetails(String? orderID);
+  Future<bool> updateOrder({required int orderId, required List<Map<String, dynamic>> cart, String? orderNote});
 }
