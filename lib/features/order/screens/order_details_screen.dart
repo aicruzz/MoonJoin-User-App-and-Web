@@ -17,6 +17,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/features/order/screens/order_edit_screen.dart';
+import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
@@ -332,6 +333,7 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 orderModel: order,
                 orderDetails: orderController.orderDetails ?? [],
                 storeId: order.store?.id,
+                moduleId: Get.find<SplashController>().module?.id,
               ));
               if (updated == true) {
                 _loadData(context, true);

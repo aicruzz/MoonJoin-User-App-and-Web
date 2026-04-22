@@ -36,32 +36,35 @@ class OrderEditScreen extends StatefulWidget {
 class _OrderEditScreenState extends State<OrderEditScreen> {
   late final TextEditingController _noteController;
 
-      @override
+    @override
     void initState() {
       super.initState();
       _noteController = TextEditingController(text: widget.orderModel.orderNote ?? '');
       WidgetsBinding.instance.addPostFrameCallback((_) {
 
-        // Use SplashController — confirmed to exist in your project
-        final moduleId = Get.find<SplashController>().module?.id
-            ?? ModuleHelper.getModule()?.id;
+        final splash = Get.find<SplashController>();
+        final apiClient = Get.find<ApiClient>();
+        
+        final moduleId = splash.module?.id ?? ModuleHelper.getModule()?.id;
 
         debugPrint('=== ORDER EDIT DEBUG ===');
         debugPrint('Store id: ${widget.orderModel.store?.id}');
         debugPrint('Resolved moduleId: $moduleId');
-        debugPrint('moduleType: ${widget.orderModel.moduleType}');
         debugPrint('========================');
+
+        // Set the module header exactly like auth_repository does
+        apiClient.updateHeader(
+          null, null, null, null, moduleId, null, null,
+        );
 
         Get.find<OrderEditController>().loadOrder(
           widget.orderModel,
           widget.orderDetails,
           storeId: widget.storeId,
-          moduleId: moduleId, // pass it into the controller
+           moduleId: widget.moduleId,
         );
       });
     }
-
-
 
   @override
   void dispose() {

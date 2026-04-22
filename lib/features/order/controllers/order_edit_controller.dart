@@ -49,10 +49,10 @@ class OrderEditController extends GetxController implements GetxService {
 
   int? _moduleId;
 
-    void loadOrder(OrderModel order, List<OrderDetailsModel> details, 
+    void loadOrder(OrderModel order, List<OrderDetailsModel> details,
         {int? storeId, int? moduleId}) {
       _orderModel = order;
-      _moduleId = moduleId; // just store what's passed in — no order.moduleId
+      _moduleId = moduleId;
       _orderNote = order.orderNote;
       _editableItems = details
           .map((d) => OrderDetailsModel.fromJson(d.toJson()))
@@ -66,69 +66,66 @@ class OrderEditController extends GetxController implements GetxService {
     }
 
   // ── Load available items from the same store ──────────────────────────────
-  Future<void> loadStoreItems(int storeId) async {
-    _isStoreItemsLoading = true;
-    _storeItems = [];
-    update();
-
-    try {
-      // Set the module header BEFORE any API call
-      if (_moduleId != null) {
-        final splash = Get.find<SplashController>();
-        final module = splash.moduleList?.firstWhereOrNull((m) => m.id == _moduleId);
-        if (module != null) {
-          splash.setModule(module);
-          debugPrint('OrderEdit: Module set to ${module.id} (${module.moduleType})');
-        } else {
-          debugPrint('OrderEdit: WARNING - module $_moduleId not found in moduleList');
-        }
-      } else {
-        debugPrint('OrderEdit: WARNING - _moduleId is null, header may be wrong');
-      }
-
-      final storeController = Get.find<StoreController>();
-      final Map<int, Item> allItemsMap = {};
-
-      int offset = 1;
-      const int limit = 20;
-      bool hasMore = true;
-
-      while (hasMore) {
-        ItemModel? storeItemModel = await storeController.storeServiceInterface
-            .getStoreItemList(
-              storeID: storeId,
-              offset: offset,
-              type: 'all',
-              categoryID: 0,
-              filter: [],
-              rating: null,
-              lowerValue: null,
-              upperValue: null,
-            );
-
-        final items = storeItemModel?.items ?? [];
-        for (var item in items) {
-          if (item.id != null) allItemsMap[item.id!] = item;
-        }
-
-        hasMore = items.length >= limit;
-        offset++;
-      }
-
-      final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
-      _storeItems = allItemsMap.values
-          .where((i) => !existingItemIds.contains(i.id))
-          .toList();
-
-      debugPrint('OrderEdit: Loaded ${_storeItems.length} items for store $storeId');
-    } catch (e) {
-      debugPrint('Error loading items for order edit: $e');
+    Future<void> loadStoreItems(int storeId) async {
+      _isStoreItemsLoading = true;
       _storeItems = [];
-    }
+      update();
 
-    _isStoreItemsLoading = false;
-    update();
-  }
+      try {
+        if (_moduleId != null) {
+          final splash = Get.find<SplashController>();
+          final module = splash.moduleList
+              ?.firstWhereOrNull((m) => m.id == _moduleId);
+          if (module != null) {
+            splash.setModule(module);
+            debugPrint('OrderEdit: module set to $_moduleId');
+          } else {
+            debugPrint('OrderEdit: WARNING module $_moduleId not found in list');
+          }
+        }
+
+        final storeController = Get.find<StoreController>();
+        final Map<int, Item> allItemsMap = {};
+        int offset = 1;
+        const int limit = 20;
+        bool hasMore = true;
+
+        while (hasMore) {
+          ItemModel? storeItemModel = await storeController.storeServiceInterface
+              .getStoreItemList(
+                storeID: storeId,
+                offset: offset,
+                type: 'all',
+                categoryID: 0,
+                filter: [],
+                rating: null,
+                lowerValue: null,
+                upperValue: null,
+              );
+
+          final items = storeItemModel?.items ?? [];
+          for (var item in items) {
+            if (item.id != null) allItemsMap[item.id!] = item;
+          }
+
+          hasMore = items.length >= limit;
+          offset++;
+        }
+
+        final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
+        _storeItems = allItemsMap.values
+            .where((i) => !existingItemIds.contains(i.id))
+            .toList();
+
+        debugPrint('OrderEdit: Loaded ${_storeItems.length} items for store $storeId');
+      } catch (e) {
+        debugPrint('Error loading items for order edit: $e');
+        _storeItems = [];
+      }
+
+      _isStoreItemsLoading = false;
+      update();
+    }
 
   // ── Search Store Items ──────────────────────────────────────────────────
   Future<void> searchStoreItems(String query, int? storeId) async {
