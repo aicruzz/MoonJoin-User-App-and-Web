@@ -12,7 +12,7 @@ import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/lib/api/api_client.dart';
+import 'package:sixam_mart/api/api_client.dart';
 import 'package:sixam_mart/helper/module_helper.dart';
 
 
