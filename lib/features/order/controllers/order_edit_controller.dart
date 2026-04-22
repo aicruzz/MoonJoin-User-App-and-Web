@@ -45,16 +45,15 @@ class OrderEditController extends GetxController implements GetxService {
     return order.paymentStatus == 'unpaid' && order.orderStatus == 'pending';
   }
 
-  // ── Load order into controller ────────────────────────────────────────────
-  void loadOrder(OrderModel order, List<OrderDetailsModel> details, {int? storeId}) {
+  int? _moduleId;
+
+  void loadOrder(OrderModel order, List<OrderDetailsModel> details, {int? storeId, int? moduleId}) {
     _orderModel = order;
+    _moduleId = moduleId ?? order.moduleId;
     _orderNote = order.orderNote;
-    _editableItems = details
-        .map((d) => OrderDetailsModel.fromJson(d.toJson()))
-        .toList();
+    _editableItems = details.map((d) => OrderDetailsModel.fromJson(d.toJson())).toList();
     update();
 
-    // Auto-load store items — prefer explicit storeId, fall back to order.store?.id
     final resolvedStoreId = storeId ?? order.store?.id;
     if (resolvedStoreId != null) {
       loadStoreItems(resolvedStoreId);
@@ -77,8 +76,8 @@ Future<void> loadStoreItems(int storeId) async {
     bool hasMore = true;
 
     while (hasMore) {
-      ItemModel? storeItemModel = await storeController.storeServiceInterface
-          .getStoreItemList(
+    ItemModel? storeItemModel = await storeController.storeServiceInterface
+        .getStoreItemList(
         storeID: storeId,
         offset: offset,
         type: 'all',
@@ -87,6 +86,7 @@ Future<void> loadStoreItems(int storeId) async {
         rating: null,
         lowerValue: null,
         upperValue: null,
+        moduleId: _moduleId,
       );
 
       final items = storeItemModel?.items ?? [];

@@ -16,12 +16,14 @@ class OrderEditScreen extends StatefulWidget {
   final OrderModel orderModel;
   final List<OrderDetailsModel> orderDetails;
   final int? storeId;
+  final int? moduleId; 
 
   const OrderEditScreen({
     super.key,
     required this.orderModel,
     required this.orderDetails,
     this.storeId,
+    this.moduleId,
   });
 
   @override
@@ -31,16 +33,26 @@ class OrderEditScreen extends StatefulWidget {
 class _OrderEditScreenState extends State<OrderEditScreen> {
   late final TextEditingController _noteController;
 
-  @override
-  void initState() {
-    super.initState();
-    _noteController =
-        TextEditingController(text: widget.orderModel.orderNote ?? '');
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.find<OrderEditController>()
-          .loadOrder(widget.orderModel, widget.orderDetails, storeId: widget.storeId);
-    });
-  }
+    @override
+    void initState() {
+      super.initState();
+      _noteController = TextEditingController(text: widget.orderModel.orderNote ?? '');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        
+        final moduleId = widget.orderModel.store?.moduleId
+            ?? Get.find<ModuleController>().module?.id;
+
+        if (moduleId != null) {
+          Get.find<ApiClient>().updateHeader(moduleId: moduleId);
+        }
+
+        Get.find<OrderEditController>().loadOrder(
+          widget.orderModel,
+          widget.orderDetails,
+          storeId: widget.storeId,
+        );
+      });
+    }
 
   @override
   void dispose() {
