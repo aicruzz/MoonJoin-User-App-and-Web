@@ -12,8 +12,7 @@ import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/helper/module_helper.dart';
+
 
 
 class OrderEditScreen extends StatefulWidget {
@@ -43,13 +42,13 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
       _noteController = TextEditingController(text: widget.orderModel.orderNote ?? '');
       WidgetsBinding.instance.addPostFrameCallback((_) {
 
-        final splash = Get.find<SplashController>();
-        final apiClient = Get.find<ApiClient>();
-        
-        final moduleId = splash.module?.id ?? ModuleHelper.getModule()?.id;
+        final moduleId = widget.orderModel.store?.moduleId
+            ?? widget.moduleId
+            ?? Get.find<SplashController>().module?.id;
 
         debugPrint('=== ORDER EDIT DEBUG ===');
         debugPrint('Store id: ${widget.orderModel.store?.id}');
+        debugPrint('Store moduleId: ${widget.orderModel.store?.moduleId}');
         debugPrint('Resolved moduleId: $moduleId');
         debugPrint('========================');
 
@@ -57,7 +56,7 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
           widget.orderModel,
           widget.orderDetails,
           storeId: widget.storeId,
-           moduleId: widget.moduleId,
+          moduleId: moduleId, 
         );
       });
     }
