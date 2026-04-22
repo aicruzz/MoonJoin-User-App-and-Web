@@ -197,8 +197,9 @@ Future<void> loadStoreItems(int storeId) async {
         imageFullUrl: item.imageFullUrl,
       ));
       
-      _storeItems.removeWhere((i) => i.id == item.id);
-
+      // _storeItems.removeWhere((i) => i.id == item.id);
+          // After successfully adding, also remove from search results
+    _storeSearchItems.removeWhere((i) => i.id == item.id);
     }
     update();
   }
