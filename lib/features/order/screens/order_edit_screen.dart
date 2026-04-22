@@ -11,9 +11,7 @@ import 'package:sixam_mart/common/widgets/item_bottom_sheet.dart';
 import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/helper/module_helper.dart';
-import 'package:sixam_mart/api/api_client.dart';
+
 
 class OrderEditScreen extends StatefulWidget {
   final OrderModel orderModel;
@@ -51,11 +49,6 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
         debugPrint('Store id: ${widget.orderModel.store?.id}');
         debugPrint('Resolved moduleId: $moduleId');
         debugPrint('========================');
-
-        // Set the module header exactly like auth_repository does
-        apiClient.updateHeader(
-          null, null, null, null, moduleId, null, null,
-        );
 
         Get.find<OrderEditController>().loadOrder(
           widget.orderModel,

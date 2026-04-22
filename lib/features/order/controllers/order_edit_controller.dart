@@ -9,7 +9,9 @@ import 'package:sixam_mart/features/cart/domain/models/cart_model.dart' as cart;
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/store/domain/services/store_service_interface.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-
+import 'package:sixam_mart/api/api_client.dart';
+import 'package:sixam_mart/util/app_constants.dart';
+import 'dart:convert';
 
 class OrderEditController extends GetxController implements GetxService {
   final OrderServiceInterface orderServiceInterface;
@@ -65,67 +67,86 @@ class OrderEditController extends GetxController implements GetxService {
       }
     }
 
-  // ── Load available items from the same store ──────────────────────────────
-    Future<void> loadStoreItems(int storeId) async {
-      _isStoreItemsLoading = true;
-      _storeItems = [];
-      update();
-
-      try {
-        if (_moduleId != null) {
-          final splash = Get.find<SplashController>();
-          final module = splash.moduleList
-              ?.firstWhereOrNull((m) => m.id == _moduleId);
-          if (module != null) {
-            splash.setModule(module);
-            debugPrint('OrderEdit: module set to $_moduleId');
-          } else {
-            debugPrint('OrderEdit: WARNING module $_moduleId not found in list');
-          }
-        }
-
-        final storeController = Get.find<StoreController>();
-        final Map<int, Item> allItemsMap = {};
-        int offset = 1;
-        const int limit = 20;
-        bool hasMore = true;
-
-        while (hasMore) {
-          ItemModel? storeItemModel = await storeController.storeServiceInterface
-              .getStoreItemList(
-                storeID: storeId,
-                offset: offset,
-                type: 'all',
-                categoryID: 0,
-                filter: [],
-                rating: null,
-                lowerValue: null,
-                upperValue: null,
-              );
-
-          final items = storeItemModel?.items ?? [];
-          for (var item in items) {
-            if (item.id != null) allItemsMap[item.id!] = item;
-          }
-
-          hasMore = items.length >= limit;
-          offset++;
-        }
-
-        final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
-        _storeItems = allItemsMap.values
-            .where((i) => !existingItemIds.contains(i.id))
-            .toList();
-
-        debugPrint('OrderEdit: Loaded ${_storeItems.length} items for store $storeId');
-      } catch (e) {
-        debugPrint('Error loading items for order edit: $e');
+       // ── Load available items from the same store ──────────────────────────────
+      Future<void> loadStoreItems(int storeId) async {
+        _isStoreItemsLoading = true;
         _storeItems = [];
-      }
+        update();
 
-      _isStoreItemsLoading = false;
-      update();
-    }
+        try {
+          // Safely update ONLY the moduleId in existing headers
+          if (_moduleId != null) {
+            final apiClient = Get.find<ApiClient>();
+            // Read existing token — never pass null
+            final existingToken = apiClient.token;
+            final existingHeaders = apiClient.getHeader();
+            final zoneId = existingHeaders[AppConstants.zoneId];
+            final langCode = existingHeaders[AppConstants.localizationKey];
+            final lat = existingHeaders[AppConstants.latitude];
+            final lng = existingHeaders[AppConstants.longitude];
+
+            // Parse zone IDs back from header string
+            List<int>? zoneIDs;
+            try {
+              if (zoneId != null && zoneId.isNotEmpty) {
+                zoneIDs = (jsonDecode(zoneId) as List).cast<int>();
+              }
+            } catch (_) {}
+
+            apiClient.updateHeader(
+              existingToken,  // preserve token — never null
+              zoneIDs,
+              null,
+              langCode,
+              _moduleId,      // only this changes
+              lat,
+              lng,
+            );
+            debugPrint('OrderEdit: header updated with moduleId=$_moduleId, token preserved');
+          }
+
+          final storeController = Get.find<StoreController>();
+          final Map<int, Item> allItemsMap = {};
+          int offset = 1;
+          const int limit = 20;
+          bool hasMore = true;
+
+          while (hasMore) {
+            ItemModel? storeItemModel = await storeController.storeServiceInterface
+                .getStoreItemList(
+                  storeID: storeId,
+                  offset: offset,
+                  type: 'all',
+                  categoryID: 0,
+                  filter: [],
+                  rating: null,
+                  lowerValue: null,
+                  upperValue: null,
+                );
+
+            final items = storeItemModel?.items ?? [];
+            for (var item in items) {
+              if (item.id != null) allItemsMap[item.id!] = item;
+            }
+
+            hasMore = items.length >= limit;
+            offset++;
+          }
+
+          final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
+          _storeItems = allItemsMap.values
+              .where((i) => !existingItemIds.contains(i.id))
+              .toList();
+
+          debugPrint('OrderEdit: Loaded ${_storeItems.length} items for store $storeId');
+        } catch (e) {
+          debugPrint('Error loading items for order edit: $e');
+          _storeItems = [];
+        }
+
+        _isStoreItemsLoading = false;
+        update();
+      }
 
   // ── Search Store Items ──────────────────────────────────────────────────
   Future<void> searchStoreItems(String query, int? storeId) async {
