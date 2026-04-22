@@ -8,6 +8,8 @@ import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/cart/domain/models/cart_model.dart' as cart;
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/store/domain/services/store_service_interface.dart';
+import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
+
 
 class OrderEditController extends GetxController implements GetxService {
   final OrderServiceInterface orderServiceInterface;
@@ -47,72 +49,86 @@ class OrderEditController extends GetxController implements GetxService {
 
   int? _moduleId;
 
-  void loadOrder(OrderModel order, List<OrderDetailsModel> details, {int? storeId, int? moduleId}) {
-    _orderModel = order;
-    _moduleId = moduleId ?? order.moduleId;
-    _orderNote = order.orderNote;
-    _editableItems = details.map((d) => OrderDetailsModel.fromJson(d.toJson())).toList();
-    update();
+    void loadOrder(OrderModel order, List<OrderDetailsModel> details, 
+        {int? storeId, int? moduleId}) {
+      _orderModel = order;
+      _moduleId = moduleId; // just store what's passed in — no order.moduleId
+      _orderNote = order.orderNote;
+      _editableItems = details
+          .map((d) => OrderDetailsModel.fromJson(d.toJson()))
+          .toList();
+      update();
 
-    final resolvedStoreId = storeId ?? order.store?.id;
-    if (resolvedStoreId != null) {
-      loadStoreItems(resolvedStoreId);
+      final resolvedStoreId = storeId ?? order.store?.id;
+      if (resolvedStoreId != null) {
+        loadStoreItems(resolvedStoreId);
+      }
     }
-  }
 
   // ── Load available items from the same store ──────────────────────────────
-Future<void> loadStoreItems(int storeId) async {
-  _isStoreItemsLoading = true;
-  _storeItems = [];
-  update();
+  Future<void> loadStoreItems(int storeId) async {
+    _isStoreItemsLoading = true;
+    _storeItems = [];
+    update();
 
-  try {
-    final storeController = Get.find<StoreController>();
-    final Map<int, Item> allItemsMap = {};
-
-    // Paginate through ALL pages of store items
-    int offset = 1;
-    const int limit = 20; // match your API's page size
-    bool hasMore = true;
-
-    while (hasMore) {
-    ItemModel? storeItemModel = await storeController.storeServiceInterface
-        .getStoreItemList(
-        storeID: storeId,
-        offset: offset,
-        type: 'all',
-        categoryID: 0,
-        filter: [],
-        rating: null,
-        lowerValue: null,
-        upperValue: null,
-        moduleId: _moduleId,
-      );
-
-      final items = storeItemModel?.items ?? [];
-      for (var item in items) {
-        if (item.id != null) allItemsMap[item.id!] = item;
+    try {
+      // Set the module header BEFORE any API call
+      if (_moduleId != null) {
+        final splash = Get.find<SplashController>();
+        final module = splash.moduleList?.firstWhereOrNull((m) => m.id == _moduleId);
+        if (module != null) {
+          splash.setModule(module);
+          debugPrint('OrderEdit: Module set to ${module.id} (${module.moduleType})');
+        } else {
+          debugPrint('OrderEdit: WARNING - module $_moduleId not found in moduleList');
+        }
+      } else {
+        debugPrint('OrderEdit: WARNING - _moduleId is null, header may be wrong');
       }
 
-      // Stop if we got fewer results than the page size (last page)
-      hasMore = items.length >= limit;
-      offset++;
+      final storeController = Get.find<StoreController>();
+      final Map<int, Item> allItemsMap = {};
+
+      int offset = 1;
+      const int limit = 20;
+      bool hasMore = true;
+
+      while (hasMore) {
+        ItemModel? storeItemModel = await storeController.storeServiceInterface
+            .getStoreItemList(
+              storeID: storeId,
+              offset: offset,
+              type: 'all',
+              categoryID: 0,
+              filter: [],
+              rating: null,
+              lowerValue: null,
+              upperValue: null,
+            );
+
+        final items = storeItemModel?.items ?? [];
+        for (var item in items) {
+          if (item.id != null) allItemsMap[item.id!] = item;
+        }
+
+        hasMore = items.length >= limit;
+        offset++;
+      }
+
+      final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
+      _storeItems = allItemsMap.values
+          .where((i) => !existingItemIds.contains(i.id))
+          .toList();
+
+      debugPrint('OrderEdit: Loaded ${_storeItems.length} items for store $storeId');
+    } catch (e) {
+      debugPrint('Error loading items for order edit: $e');
+      _storeItems = [];
     }
 
-    final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
-    _storeItems = allItemsMap.values
-        .where((i) => !existingItemIds.contains(i.id))
-        .toList();
-
-    debugPrint('OrderEdit: Loaded ${_storeItems.length} items for store $storeId');
-  } catch (e) {
-    debugPrint('Error loading items for order edit: $e');
-    _storeItems = [];
+    _isStoreItemsLoading = false;
+    update();
   }
-
-  _isStoreItemsLoading = false;
-  update();
-}
 
   // ── Search Store Items ──────────────────────────────────────────────────
   Future<void> searchStoreItems(String query, int? storeId) async {
