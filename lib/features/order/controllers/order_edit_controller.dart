@@ -62,50 +62,57 @@ class OrderEditController extends GetxController implements GetxService {
   }
 
   // ── Load available items from the same store ──────────────────────────────
-  Future<void> loadStoreItems(int storeId) async {
-    _isStoreItemsLoading = true;
-    _storeItems = [];
-    update();
+Future<void> loadStoreItems(int storeId) async {
+  _isStoreItemsLoading = true;
+  _storeItems = [];
+  update();
 
-    try {
-      final storeController = Get.find<StoreController>();
-      final itemController = Get.find<ItemController>();
+  try {
+    final storeController = Get.find<StoreController>();
+    final Map<int, Item> allItemsMap = {};
 
-      // 1. Fetch recommended items
-      await itemController.getRecommendedItemList(true, 'all', false);
-      final recommendedItems = itemController.recommendedItemList ?? [];
-      
-      // 2. Fetch store's general items - BYPASS StoreController filters
-      ItemModel? storeItemModel = await storeController.storeServiceInterface.getStoreItemList(
-        storeID: storeId, offset: 1, type: 'all', categoryID: 0, 
-        filter: [], rating: null, lowerValue: null, upperValue: null,
+    // Paginate through ALL pages of store items
+    int offset = 1;
+    const int limit = 20; // match your API's page size
+    bool hasMore = true;
+
+    while (hasMore) {
+      ItemModel? storeItemModel = await storeController.storeServiceInterface
+          .getStoreItemList(
+        storeID: storeId,
+        offset: offset,
+        type: 'all',
+        categoryID: 0,
+        filter: [],
+        rating: null,
+        lowerValue: null,
+        upperValue: null,
       );
-      final storeItems = storeItemModel?.items ?? [];
-      
-      // Merge items and remove duplicates
-      final Map<int, Item> allItemsMap = {};
-      for (var item in storeItems) {
-        allItemsMap[item.id!] = item;
-      }
-      for (var item in recommendedItems) {
-        if (item.storeId == storeId) {
-          allItemsMap[item.id!] = item;
-        }
+
+      final items = storeItemModel?.items ?? [];
+      for (var item in items) {
+        if (item.id != null) allItemsMap[item.id!] = item;
       }
 
-      final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
-      _storeItems = allItemsMap.values.where((i) => !existingItemIds.contains(i.id)).toList();
-      
-      debugPrint('OrderEdit: Loaded ${_storeItems.length} available items for store $storeId');
-
-    } catch (e) {
-      debugPrint('Error loading items for order edit: $e');
-      _storeItems = [];
+      // Stop if we got fewer results than the page size (last page)
+      hasMore = items.length >= limit;
+      offset++;
     }
 
-    _isStoreItemsLoading = false;
-    update();
+    final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
+    _storeItems = allItemsMap.values
+        .where((i) => !existingItemIds.contains(i.id))
+        .toList();
+
+    debugPrint('OrderEdit: Loaded ${_storeItems.length} items for store $storeId');
+  } catch (e) {
+    debugPrint('Error loading items for order edit: $e');
+    _storeItems = [];
   }
+
+  _isStoreItemsLoading = false;
+  update();
+}
 
   // ── Search Store Items ──────────────────────────────────────────────────
   Future<void> searchStoreItems(String query, int? storeId) async {
@@ -191,6 +198,7 @@ class OrderEditController extends GetxController implements GetxService {
       ));
       
       _storeItems.removeWhere((i) => i.id == item.id);
+
     }
     update();
   }
@@ -300,15 +308,17 @@ class OrderEditController extends GetxController implements GetxService {
   }
 
   // ── Remove item ───────────────────────────────────────────────────────────
-  void removeItem(int itemId) {
-    final removed = _editableItems.firstWhereOrNull((e) => e.itemId == itemId);
-    _editableItems.removeWhere((e) => e.itemId == itemId);
-    // Add back to store items list if it came from there
-    if (removed?.itemDetails != null) {
-      _storeItems.insert(0, removed!.itemDetails!);
-    }
-    update();
+void removeItem(int itemId) {
+  final removed = _editableItems.firstWhereOrNull((e) => e.itemId == itemId);
+  _editableItems.removeWhere((e) => e.itemId == itemId);
+
+  if (removed?.itemDetails != null) {
+    _storeItems.insert(0, removed!.itemDetails!);
+    // Also remove from search results so it doesn't show as "already added"
+    _storeSearchItems.removeWhere((i) => i.id == itemId);
   }
+  update();
+}
 
   // ── Order note ────────────────────────────────────────────────────────────
   void updateOrderNote(String note) {
