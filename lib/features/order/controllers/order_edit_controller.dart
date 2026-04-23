@@ -377,85 +377,119 @@ void removeItem(int itemId) {
   }
 
   // ── Submit ────────────────────────────────────────────────────────────────
-  Future<void> submitEditedOrder() async {
-    if (_editableItems.isEmpty) {
-      Get.snackbar(
-        'Empty Order',
-        'You cannot submit an empty order.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      return;
-    }
+Future<void> submitEditedOrder() async {
+  if (_editableItems.isEmpty) {
+    Get.snackbar(
+      'Empty Order',
+      'You cannot submit an empty order.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+    );
+    return;
+  }
 
-    _isLoading = true;
+  _isLoading = true;
+  update();
+
+  try {
+    // Build cart payload from editable items
+    final List<Map<String, dynamic>> cart = _editableItems.map((item) {
+      // ── Add-on IDs ──────────────────────────────────────────────────────
+      // Priority 1: use the id stored directly on the AddOn object (newly added items)
+      // Priority 2: look up by name in itemDetails.addOns (original order items)
+      // Priority 3: fall back to 0 (will be flagged in logs)
+      final addOnIds = item.addOns?.map((a) {
+        if (a.id != null && a.id != 0) return a.id!;                          // ← direct ID (new items)
+        final matched = item.itemDetails?.addOns
+            ?.firstWhereOrNull((ad) => ad.name == a.name);
+        return matched?.id ?? 0;                                               // ← name lookup (old items)
+      }).toList() ?? [];
+
+      final addOnQtys = item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [];
+
+      final payload = {
+        'item_id'     : item.itemId,
+        'quantity'    : item.quantity ?? 1,
+        'price'       : item.price ?? 0,
+        'variant'     : item.variant == 'null' ? '' : (item.variant ?? ''),   // ← fixes "null" string bug too
+        'variation'   : item.foodVariation?.map((v) => {
+                          'name'  : v.name,
+                          'values': {
+                            'label': v.variationValues?.map((vv) => vv.level).toList() ?? [],
+                          },
+                        }).toList() ?? [],
+        'add_on_ids'  : addOnIds,
+        'add_on_qtys' : addOnQtys,
+      };
+
+      // ── Per-item log ─────────────────────────────────────────────────────
+      debugPrint('  📦 [${item.itemId}] ${item.itemDetails?.name}'
+          ' | qty=${payload['quantity']}'
+          ' | price=${payload['price']}'
+          ' | variant=${payload['variant']}'
+          ' | addOnIds=$addOnIds'
+          ' | addOnQtys=$addOnQtys');
+
+      // Warn if any add-on resolved to 0 (means lookup failed)
+      if (addOnIds.any((id) => id == 0)) {
+        debugPrint('  ⚠️  WARNING: item ${item.itemId} has unresolved add-on ID (0). '
+            'Add-on names: ${item.addOns?.map((a) => a.name).toList()}');
+      }
+
+      return payload;
+    }).toList();
+
+    // ── Full payload log ──────────────────────────────────────────────────
+    debugPrint('=== SUBMITTING EDITED ORDER #${_orderModel!.id} ===');
+    debugPrint('  Total items : ${cart.length}');
+    debugPrint('  Order note  : $_orderNote');
+    for (final c in cart) {
+      debugPrint('  → $c');
+    }
+    debugPrint('================================================');
+
+    final bool success = await orderServiceInterface.updateOrder(
+      orderId: _orderModel!.id!,
+      cart: cart,
+      orderNote: _orderNote,
+    );
+
+    _isLoading = false;
     update();
 
-    try {
-      // Build cart payload from editable items
-      final List<Map<String, dynamic>> cart = _editableItems.map((item) {
-        return {
-          'item_id': item.itemId,
-          'quantity': item.quantity ?? 1,
-          'price': item.price ?? 0,
-          'variant': item.variant ?? '',
-          'variation': item.foodVariation?.map((v) {
-            return {
-              'name': v.name,
-              'values': {
-                'label': v.variationValues?.map((vv) => vv.level).toList() ?? [],
-              },
-            };
-          }).toList() ?? [],
-          'add_on_ids': item.addOns?.map((a) {
-            // We need to find the ID from itemDetails if available, 
-            // because OrderDetailsModel.AddOn only stores name/price/qty
-            final addonDetail = item.itemDetails?.addOns?.firstWhereOrNull((ad) => ad.name == a.name);
-            return addonDetail?.id ?? 0;
-          }).toList() ?? [],
-          'add_on_qtys': item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [],
-        };
-      }).toList();
-
-      final bool success = await orderServiceInterface.updateOrder(
-        orderId: _orderModel!.id!,
-        cart: cart,
-        orderNote: _orderNote,
-      );
-
-      _isLoading = false;
-      update();
-
-      if (success) {
-        Get.back(result: true);
-        Get.snackbar(
-          'Order Updated',
-          'Your order has been updated successfully.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
-      } else {
-        Get.snackbar(
-          'Update Failed',
-          'Could not update your order. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      _isLoading = false;
-      update();
+    if (success) {
+      debugPrint('✅ Order #${_orderModel!.id} updated successfully.');
+      Get.back(result: true);
       Get.snackbar(
-        'Error',
-        'Failed to update order. Please try again.',
+        'Order Updated',
+        'Your order has been updated successfully.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } else {
+      debugPrint('❌ Order update failed for #${_orderModel!.id}.');
+      Get.snackbar(
+        'Update Failed',
+        'Could not update your order. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
     }
+  } catch (e, st) {
+    _isLoading = false;
+    update();
+    debugPrint('💥 submitEditedOrder exception: $e\n$st');
+    Get.snackbar(
+      'Error',
+      'Failed to update order. Please try again.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+    );
   }
+}
 }

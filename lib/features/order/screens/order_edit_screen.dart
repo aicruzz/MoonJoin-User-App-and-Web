@@ -491,7 +491,7 @@ class _OrderItemCard extends StatelessWidget {
                               fontSize: Dimensions.fontSizeDefault),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
-                      if (item.variant != null && item.variant!.isNotEmpty)
+                  if (item.variant != null && item.variant!.isNotEmpty && item.variant != 'null')
                         Padding(
                           padding: const EdgeInsets.only(top: 3),
                           child: Text(item.variant!,
@@ -499,7 +499,7 @@ class _OrderItemCard extends StatelessWidget {
                                   fontSize: Dimensions.fontSizeExtraSmall,
                                   color: Theme.of(context).disabledColor)),
                         ),
-                      if (item.addOns != null && item.addOns!.isNotEmpty)
+               if (item.addOns != null && item.addOns!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 3),
                           child: Text(

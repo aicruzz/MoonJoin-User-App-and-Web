@@ -10,6 +10,7 @@ import 'package:sixam_mart/features/order/domain/models/refund_model.dart';
 import 'package:sixam_mart/features/order/domain/models/support_model.dart';
 import 'package:sixam_mart/features/order/domain/repositories/order_repository_interface.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 
 class OrderRepository implements OrderRepositoryInterface {
@@ -181,10 +182,22 @@ class OrderRepository implements OrderRepositoryInterface {
     final Map<String, dynamic> data = {
       '_method': 'put',
       'order_id': orderId,
-      'cart': jsonEncode(cart),
+      'cart': cart,
       if (orderNote != null && orderNote.isNotEmpty) 'order_note': orderNote,
     };
+
+    debugPrint('=== UPDATE ORDER REQUEST ===');
+    debugPrint('URL: ${AppConstants.updateOrderUri}');
+    debugPrint('order_id: $orderId');
+    debugPrint('cart: ${jsonEncode(cart)}');
+    debugPrint('order_note: $orderNote');
+
     final Response response = await apiClient.postData(AppConstants.updateOrderUri, data);
+
+    debugPrint('=== UPDATE ORDER RESPONSE ===');
+    debugPrint('Status: ${response.statusCode}');
+    debugPrint('Body: ${response.body}');
+
     return response.statusCode == 200;
   }
 
