@@ -46,11 +46,11 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
             ?? widget.moduleId
             ?? Get.find<SplashController>().module?.id;
 
-        debugPrint('=== ORDER EDIT DEBUG ===');
-        debugPrint('Store id: ${widget.orderModel.store?.id}');
-        debugPrint('Store moduleId: ${widget.orderModel.store?.moduleId}');
-        debugPrint('Resolved moduleId: $moduleId');
-        debugPrint('========================');
+        // debugPrint('=== ORDER EDIT DEBUG ===');
+        // debugPrint('Store id: ${widget.orderModel.store?.id}');
+        // debugPrint('Store moduleId: ${widget.orderModel.store?.moduleId}');
+        // debugPrint('Resolved moduleId: $moduleId');
+        // debugPrint('========================');
 
         Get.find<OrderEditController>().loadOrder(
           widget.orderModel,

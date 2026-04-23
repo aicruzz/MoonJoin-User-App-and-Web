@@ -102,7 +102,7 @@ class OrderEditController extends GetxController implements GetxService {
               lat,
               lng,
             );
-            debugPrint('OrderEdit: header updated with moduleId=$_moduleId, token preserved');
+            // debugPrint('OrderEdit: header updated with moduleId=$_moduleId, token preserved');
           }
 
           final storeController = Get.find<StoreController>();
@@ -172,7 +172,7 @@ class OrderEditController extends GetxController implements GetxService {
         _storeSearchItems = searchResult.items?.where((i) => !existingItemIds.contains(i.id)).toList() ?? [];
       }
     } catch (e) {
-      debugPrint('Error searching store items: $e');
+      // debugPrint('Error searching store items: $e');
       _storeSearchItems = [];
     }
 
