@@ -50,7 +50,7 @@ class OrderDetailsModel {
     id = json['id'];
     itemId = json['item_id'];
     orderId = json['order_id'];
-    price = json['price'].toDouble();
+    price = (json['price'] ?? 0).toDouble();
     itemDetails = json['item_details'] != null ? Item.fromJson(json['item_details']) : null;
     variation = [];
     foodVariation = [];
@@ -136,7 +136,7 @@ class AddOn {
   AddOn.fromJson(Map<String, dynamic> json) {
         id = json['id']; 
     name = json['name'];
-    price = json['price'].toDouble();
+    price = (json['price'] ?? 0).toDouble();
     quantity = int.parse(json['quantity'].toString());
   }
 

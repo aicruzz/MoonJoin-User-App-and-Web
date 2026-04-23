@@ -26,6 +26,9 @@ class OrderEditController extends GetxController implements GetxService {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  bool _isInitializing = true;
+  bool get isInitializing => _isInitializing;
+
   bool _isStoreItemsLoading = false;
   bool get isStoreItemsLoading => _isStoreItemsLoading;
 
@@ -59,6 +62,7 @@ class OrderEditController extends GetxController implements GetxService {
     _editableItems = details
         .map((d) => OrderDetailsModel.fromJson(d.toJson()))
         .toList();
+    _isInitializing = false;
     update();
     final resolvedStoreId = storeId ?? order.store?.id;
     if (resolvedStoreId != null) {
@@ -110,7 +114,7 @@ class OrderEditController extends GetxController implements GetxService {
       final storeController = Get.find<StoreController>();
       ItemModel? searchResult =
           await storeController.storeServiceInterface.getStoreSearchItemList(
-        query, storeId.toString(), 1, 'all', 0,
+        query, storeId.toString(), 1, 'all', _moduleId ?? 0,
       );
 
       if (searchResult != null) {
@@ -358,8 +362,9 @@ class OrderEditController extends GetxController implements GetxService {
           'tax_amount': item.taxAmount ?? 0,
           'discount_on_item': item.discountOnItem ?? 0,
           'variant': item.variant == 'null' ? '' : (item.variant ?? ''),
-          'variation': item.foodVariation
-                  ?.map((v) => {
+          'variation': (item.foodVariation != null && item.foodVariation!.isNotEmpty)
+              ? item.foodVariation!
+                  .map((v) => {
                         'name': v.name,
                         'values': {
                           'label': v.variationValues
@@ -368,8 +373,8 @@ class OrderEditController extends GetxController implements GetxService {
                               [],
                         },
                       })
-                  .toList() ??
-              [],
+                  .toList()
+              : item.variation?.map((v) => v.toJson()).toList() ?? [],
           'add_on_ids': addOnIds,
           'add_on_qtys': addOnQtys,
         };

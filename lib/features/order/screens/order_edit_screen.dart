@@ -118,9 +118,11 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
               ),
             ],
           ),
-          body: controller.editableItems.isEmpty && !controller.isLoading
-              ? _buildEmptyState(context, controller)
-              : Column(
+          body: controller.isInitializing
+              ? const Center(child: CircularProgressIndicator())
+              : controller.editableItems.isEmpty && !controller.isLoading
+                  ? _buildEmptyState(context, controller)
+                  : Column(
                   children: [
                     Expanded(
                       child: ListView(
