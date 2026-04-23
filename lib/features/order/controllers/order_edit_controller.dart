@@ -201,6 +201,7 @@ class OrderEditController extends GetxController implements GetxService {
         final qty = addonId?.quantity ?? 1;
         
         addons.add(AddOn(
+           id: addonRef.id,
           name: addonRef.name,
           price: addonRef.price,
           quantity: qty,
@@ -393,17 +394,12 @@ Future<void> submitEditedOrder() async {
   update();
 
   try {
-    // Build cart payload from editable items
     final List<Map<String, dynamic>> cart = _editableItems.map((item) {
-      // ── Add-on IDs ──────────────────────────────────────────────────────
-      // Priority 1: use the id stored directly on the AddOn object (newly added items)
-      // Priority 2: look up by name in itemDetails.addOns (original order items)
-      // Priority 3: fall back to 0 (will be flagged in logs)
       final addOnIds = item.addOns?.map((a) {
-        if (a.id != null && a.id != 0) return a.id!;                          // ← direct ID (new items)
+        if (a.id != null && a.id != 0) return a.id!;
         final matched = item.itemDetails?.addOns
             ?.firstWhereOrNull((ad) => ad.name == a.name);
-        return matched?.id ?? 0;                                               // ← name lookup (old items)
+        return matched?.id ?? 0;
       }).toList() ?? [];
 
       final addOnQtys = item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [];
