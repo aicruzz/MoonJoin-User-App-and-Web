@@ -421,15 +421,21 @@ Future<void> submitEditedOrder() async {
         return payload;
       }).toList();
 
-    // ── Full payload log ──────────────────────────────────────────────────
-    debugPrint('=== SUBMITTING EDITED ORDER #${_orderModel!.id} ===');
-    debugPrint('  Total items: ${cart.length}');
-    debugPrint('  Order note: $_orderNote');
-    for (final c in cart) {
-      debugPrint('  → $c');
-    }
-    debugPrint('================================================');
-
+        // ── FULL PAYLOAD INSPECTOR ────────────────────────────────────────────────
+      debugPrint('=== CART PAYLOAD BEING SENT TO SERVER ===');
+      for (int i = 0; i < cart.length; i++) {
+        final c = cart[i];
+        debugPrint('--- Item $i ---');
+        debugPrint('  id          : ${c['id']}');        // ← null = INSERT, int = UPDATE
+        debugPrint('  item_id     : ${c['item_id']}');
+        debugPrint('  quantity    : ${c['quantity']}');
+        debugPrint('  price       : ${c['price']}');
+        debugPrint('  variant     : ${c['variant']}');
+        debugPrint('  variation   : ${c['variation']}');
+        debugPrint('  add_on_ids  : ${c['add_on_ids']}');
+        debugPrint('  add_on_qtys : ${c['add_on_qtys']}');
+      }
+      debugPrint('==========================================');
     final bool success = await orderServiceInterface.updateOrder(
       orderId: _orderModel!.id!,
       cart: cart,
