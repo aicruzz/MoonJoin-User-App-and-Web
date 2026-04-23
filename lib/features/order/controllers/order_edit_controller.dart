@@ -412,7 +412,7 @@ class OrderEditController extends GetxController implements GetxService {
         Get.snackbar(
           'Order Updated',
           'Your order has been updated successfully.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green,
           colorText: Colors.white,
           duration: const Duration(seconds: 3),
