@@ -52,99 +52,46 @@ class OrderEditController extends GetxController implements GetxService {
   int? _moduleId;
 
   void loadOrder(OrderModel order, List<OrderDetailsModel> details,
-    {int? storeId, int? moduleId}) {
-      _orderModel = order;
-      _moduleId = moduleId;
-      _orderNote = order.orderNote;
-      _editableItems = details
-          .map((d) => OrderDetailsModel.fromJson(d.toJson()))  
-          .toList();
-      update();
+      {int? storeId, int? moduleId}) {
+    _orderModel = order;
+    _moduleId = moduleId;
+    _orderNote = order.orderNote;
+    _editableItems = details
+        .map((d) => OrderDetailsModel.fromJson(d.toJson()))
+        .toList();
+    update();
     final resolvedStoreId = storeId ?? order.store?.id;
-          if (resolvedStoreId != null) {
-            loadStoreItems(resolvedStoreId);
-          }
+    if (resolvedStoreId != null) {
+      loadStoreItems(resolvedStoreId);
     }
-       // ── Load available items from the same store ──────────────────────────────
-      Future<void> loadStoreItems(int storeId) async {
-        _isStoreItemsLoading = true;
-        _storeItems = [];
-        update();
+  }
 
-        try {
-          // Safely update ONLY the moduleId in existing headers
-          if (_moduleId != null) {
-            final apiClient = Get.find<ApiClient>();
-            // Read existing token — never pass null
-            final existingToken = apiClient.token;
-            final existingHeaders = apiClient.getHeader();
-            final zoneId = existingHeaders[AppConstants.zoneId];
-            final langCode = existingHeaders[AppConstants.localizationKey];
-            final lat = existingHeaders[AppConstants.latitude];
-            final lng = existingHeaders[AppConstants.longitude];
+  // ── Load available items from the same store ──────────────────────────────
+  Future<void> loadStoreItems(int storeId) async {
+    _isStoreItemsLoading = true;
+    _storeItems = [];
+    update();
 
-            // Parse zone IDs back from header string
-            List<int>? zoneIDs;
-            try {
-              if (zoneId != null && zoneId.isNotEmpty) {
-                zoneIDs = (jsonDecode(zoneId) as List).cast<int>();
-              }
-            } catch (_) {}
+    try {
+      final storeController = Get.find<StoreController>();
+      ItemModel? result = await storeController.storeServiceInterface
+          .getStoreItemList(storeId.toString(), 1, 'all', _moduleId ?? 0);
 
-            apiClient.updateHeader(
-              existingToken,  // preserve token — never null
-              zoneIDs,
-              null,
-              langCode,
-              _moduleId,      // only this changes
-              lat,
-              lng,
-            );
-            // debugPrint('OrderEdit: header updated with moduleId=$_moduleId, token preserved');
-          }
-
-          final storeController = Get.find<StoreController>();
-          final Map<int, Item> allItemsMap = {};
-          int offset = 1;
-          const int limit = 20;
-          bool hasMore = true;
-
-          while (hasMore) {
-            ItemModel? storeItemModel = await storeController.storeServiceInterface
-                .getStoreItemList(
-                  storeID: storeId,
-                  offset: offset,
-                  type: 'all',
-                  categoryID: 0,
-                  filter: [],
-                  rating: null,
-                  lowerValue: null,
-                  upperValue: null,
-                );
-
-            final items = storeItemModel?.items ?? [];
-            for (var item in items) {
-              if (item.id != null) allItemsMap[item.id!] = item;
-            }
-
-            hasMore = items.length >= limit;
-            offset++;
-          }
-
-          final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
-          _storeItems = allItemsMap.values
-              .where((i) => !existingItemIds.contains(i.id))
-              .toList();
-
-          debugPrint('OrderEdit: Loaded ${_storeItems.length} items for store $storeId');
-        } catch (e) {
-          debugPrint('Error loading items for order edit: $e');
-          _storeItems = [];
-        }
-
-        _isStoreItemsLoading = false;
-        update();
+      if (result != null) {
+        final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
+        _storeItems = result.items
+                ?.where((i) => !existingItemIds.contains(i.id))
+                .toList() ??
+            [];
       }
+    } catch (e) {
+      debugPrint('Error loading store items: $e');
+      _storeItems = [];
+    }
+
+    _isStoreItemsLoading = false;
+    update();
+  }
 
   // ── Search Store Items ──────────────────────────────────────────────────
   Future<void> searchStoreItems(String query, int? storeId) async {
@@ -161,16 +108,19 @@ class OrderEditController extends GetxController implements GetxService {
 
     try {
       final storeController = Get.find<StoreController>();
-      ItemModel? searchResult = await storeController.storeServiceInterface.getStoreSearchItemList(
+      ItemModel? searchResult =
+          await storeController.storeServiceInterface.getStoreSearchItemList(
         query, storeId.toString(), 1, 'all', 0,
       );
-      
+
       if (searchResult != null) {
         final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
-        _storeSearchItems = searchResult.items?.where((i) => !existingItemIds.contains(i.id)).toList() ?? [];
+        _storeSearchItems = searchResult.items
+                ?.where((i) => !existingItemIds.contains(i.id))
+                .toList() ??
+            [];
       }
     } catch (e) {
-      // debugPrint('Error searching store items: $e');
       _storeSearchItems = [];
     }
 
@@ -186,20 +136,20 @@ class OrderEditController extends GetxController implements GetxService {
 
   void addCartItem(cart.CartModel cartModel) {
     if (cartModel.item == null) return;
-    
+
     final item = cartModel.item!;
-    
-    // Calculate total add-on price for this cart item
+
     double totalAddOnPrice = 0;
     List<AddOn> addons = [];
     if (cartModel.addOns != null) {
       for (int i = 0; i < cartModel.addOns!.length; i++) {
         final addonRef = cartModel.addOns![i];
-        final addonId = cartModel.addOnIds?.firstWhereOrNull((a) => a.id == addonRef.id);
+        final addonId =
+            cartModel.addOnIds?.firstWhereOrNull((a) => a.id == addonRef.id);
         final qty = addonId?.quantity ?? 1;
-        
+
         addons.add(AddOn(
-           id: addonRef.id,
+          id: addonRef.id,
           name: addonRef.name,
           price: addonRef.price,
           quantity: qty,
@@ -208,14 +158,17 @@ class OrderEditController extends GetxController implements GetxService {
       }
     }
 
-    final existing = _editableItems.indexWhere((e) => e.itemId == item.id);
+    final existing =
+        _editableItems.indexWhere((e) => e.itemId == item.id);
 
-    if (existing != -1 && _isSameVariation(_editableItems[existing], cartModel)) {
-      int newQty = (_editableItems[existing].quantity ?? 0) + (cartModel.quantity ?? 1);
+    if (existing != -1 &&
+        _isSameVariation(_editableItems[existing], cartModel)) {
+      int newQty =
+          (_editableItems[existing].quantity ?? 0) + (cartModel.quantity ?? 1);
       _editableItems[existing].quantity = newQty;
-      // Recalculate totalAddOnPrice based on the new total quantity
-      double singleItemAddOnPrice = totalAddOnPrice; 
-      _editableItems[existing].totalAddOnPrice = singleItemAddOnPrice * newQty;
+      double singleItemAddOnPrice = totalAddOnPrice;
+      _editableItems[existing].totalAddOnPrice =
+          singleItemAddOnPrice * newQty;
     } else {
       _editableItems.add(OrderDetailsModel(
         itemId: item.id,
@@ -223,29 +176,30 @@ class OrderEditController extends GetxController implements GetxService {
         price: cartModel.price,
         quantity: cartModel.quantity,
         variation: cartModel.variation,
-        foodVariation: _convertFoodVariations(item, cartModel.foodVariations ?? []),
+        foodVariation:
+            _convertFoodVariations(item, cartModel.foodVariations ?? []),
         addOns: addons,
         totalAddOnPrice: totalAddOnPrice * (cartModel.quantity ?? 1),
         itemDetails: item,
         imageFullUrl: item.imageFullUrl,
       ));
-      
-      // _storeItems.removeWhere((i) => i.id == item.id);
-          // After successfully adding, also remove from search results
-    _storeSearchItems.removeWhere((i) => i.id == item.id);
+      _storeSearchItems.removeWhere((i) => i.id == item.id);
     }
     update();
   }
 
-  List<FoodVariation> _convertFoodVariations(Item item, List<List<bool?>> selectedVariations) {
+  List<FoodVariation> _convertFoodVariations(
+      Item item, List<List<bool?>> selectedVariations) {
     List<FoodVariation> variations = [];
     if (item.foodVariations != null && selectedVariations.isNotEmpty) {
       for (int i = 0; i < item.foodVariations!.length; i++) {
-        if (i < selectedVariations.length && selectedVariations[i].contains(true)) {
+        if (i < selectedVariations.length &&
+            selectedVariations[i].contains(true)) {
           FoodVariation original = item.foodVariations![i];
           List<VariationValue> selectedValues = [];
           for (int j = 0; j < original.variationValues!.length; j++) {
-            if (j < selectedVariations[i].length && selectedVariations[i][j]!) {
+            if (j < selectedVariations[i].length &&
+                selectedVariations[i][j]!) {
               selectedValues.add(original.variationValues![j]);
             }
           }
@@ -264,21 +218,15 @@ class OrderEditController extends GetxController implements GetxService {
   }
 
   bool _isSameVariation(OrderDetailsModel existing, cart.CartModel cart) {
-    // Simple check: for now, if it's the same itemId, we treat as same or add new if you want separate rows
-    // Standard SixamMart merges if variations match exactly. 
-    // Implementing a simple merge for now to keep the UI clean.
-    return true; 
+    return true;
   }
 
-  // ── Add item from store to order ──────────────────────────────────────────
   void addItemToOrder(Item item) {
-    // Check if already in editable items
     final existing = _editableItems.indexWhere((e) => e.itemId == item.id);
     if (existing != -1) {
-      // Just increase quantity
-      _editableItems[existing].quantity = (_editableItems[existing].quantity ?? 1) + 1;
+      _editableItems[existing].quantity =
+          (_editableItems[existing].quantity ?? 1) + 1;
     } else {
-      // Add as new OrderDetailsModel
       _editableItems.add(OrderDetailsModel(
         itemId: item.id,
         orderId: _orderModel?.id,
@@ -293,7 +241,6 @@ class OrderEditController extends GetxController implements GetxService {
         imageFullUrl: item.imageFullUrl,
         itemDetails: item,
       ));
-      // Remove from available store items
       _storeItems.removeWhere((i) => i.id == item.id);
     }
     update();
@@ -308,14 +255,13 @@ class OrderEditController extends GetxController implements GetxService {
     );
   }
 
-  // ── Quantity ──────────────────────────────────────────────────────────────
   void increaseQuantity(int itemId) {
     final index = _editableItems.indexWhere((e) => e.itemId == itemId);
     if (index != -1) {
       int oldQty = _editableItems[index].quantity ?? 1;
       double currentAddOnTotal = _editableItems[index].totalAddOnPrice ?? 0;
       double unitAddOnPrice = oldQty > 0 ? currentAddOnTotal / oldQty : 0;
-      
+
       int newQty = oldQty + 1;
       _editableItems[index].quantity = newQty;
       _editableItems[index].totalAddOnPrice = unitAddOnPrice * newQty;
@@ -341,25 +287,22 @@ class OrderEditController extends GetxController implements GetxService {
     }
   }
 
-  // ── Remove item ───────────────────────────────────────────────────────────
-void removeItem(int itemId) {
-  final removed = _editableItems.firstWhereOrNull((e) => e.itemId == itemId);
-  _editableItems.removeWhere((e) => e.itemId == itemId);
+  void removeItem(int itemId) {
+    final removed =
+        _editableItems.firstWhereOrNull((e) => e.itemId == itemId);
+    _editableItems.removeWhere((e) => e.itemId == itemId);
 
-  if (removed?.itemDetails != null) {
-    _storeItems.insert(0, removed!.itemDetails!);
-    // Also remove from search results so it doesn't show as "already added"
-    _storeSearchItems.removeWhere((i) => i.id == itemId);
+    if (removed?.itemDetails != null) {
+      _storeItems.insert(0, removed!.itemDetails!);
+      _storeSearchItems.removeWhere((i) => i.id == itemId);
+    }
+    update();
   }
-  update();
-}
 
-  // ── Order note ────────────────────────────────────────────────────────────
   void updateOrderNote(String note) {
     _orderNote = note;
   }
 
-  // ── Totals ────────────────────────────────────────────────────────────────
   double get itemsSubtotal {
     return _editableItems.fold(
         0.0, (sum, item) => sum + ((item.price ?? 0) * (item.quantity ?? 1)));
@@ -375,108 +318,126 @@ void removeItem(int itemId) {
     return itemsSubtotal + addons + tax + delivery - coupon - store;
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-Future<void> submitEditedOrder() async {
-  if (_editableItems.isEmpty) {
-    Get.snackbar(
-      'Empty Order',
-      'You cannot submit an empty order.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.redAccent,
-      colorText: Colors.white,
-    );
-    return;
-  }
+  // ── Submit edited order ───────────────────────────────────────────────────
+  Future<void> submitEditedOrder() async {
+    if (_editableItems.isEmpty) {
+      Get.snackbar(
+        'Empty Order',
+        'You cannot submit an empty order.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
 
-  _isLoading = true;
-  update();
+    _isLoading = true;
+    update();
 
-  try {
-      final List<Map<String, dynamic>> cart = _editableItems.map((item) {
+    try {
+      final List<Map<String, dynamic>> cartPayload =
+          _editableItems.map((item) {
         final addOnIds = item.addOns?.map((a) {
-          if (a.id != null && a.id != 0) return a.id!;
-          final matched = item.itemDetails?.addOns
-              ?.firstWhereOrNull((ad) => ad.name == a.name);
-          return matched?.id ?? 0;
-        }).toList() ?? [];
+              if (a.id != null && a.id != 0) return a.id!;
+              final matched = item.itemDetails?.addOns
+                  ?.firstWhereOrNull((ad) => ad.name == a.name);
+              return matched?.id ?? 0;
+            }).toList() ??
+            [];
 
-        final addOnQtys = item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [];
+        final addOnQtys =
+            item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [];
 
-        final payload = {
+        final payload = <String, dynamic>{
           if (item.id != null) 'id': item.id,
-          'item_id'     : item.itemId,  
-          'quantity'    : item.quantity ?? 1,
-          'price'       : item.price ?? 0,
-          'variant'     : item.variant == 'null' ? '' : (item.variant ?? ''),
-          'variation'   : item.foodVariation?.map((v) => {
-                            'name'  : v.name,
-                            'values': {
-                              'label': v.variationValues?.map((vv) => vv.level).toList() ?? [],
-                            },
-                          }).toList() ?? [],
-          'add_on_ids'  : addOnIds,
-          'add_on_qtys' : addOnQtys,
+          'item_id': item.itemId,
+          'item_campaign_id': item.itemCampaignId,
+          'quantity': item.quantity ?? 1,
+          'price': item.price ?? 0,
+          'total_add_on_price': item.totalAddOnPrice ?? 0,
+          'tax_amount': item.taxAmount ?? 0,
+          'discount_on_item': item.discountOnItem ?? 0,
+          'variant': item.variant == 'null' ? '' : (item.variant ?? ''),
+          'variation': item.foodVariation
+                  ?.map((v) => {
+                        'name': v.name,
+                        'values': {
+                          'label': v.variationValues
+                                  ?.map((vv) => vv.level)
+                                  .toList() ??
+                              [],
+                        },
+                      })
+                  .toList() ??
+              [],
+          'add_on_ids': addOnIds,
+          'add_on_qtys': addOnQtys,
         };
+
+        debugPrint(
+            '  📦 [${item.id}|${item.itemId}] ${item.itemDetails?.name}'
+            ' | qty=${payload['quantity']}'
+            ' | price=${payload['price']}'
+            ' | addOnIds=$addOnIds'
+            ' | addOnQtys=$addOnQtys'
+            ' | totalAddOn=${payload['total_add_on_price']}');
+
+        if (addOnIds.any((id) => id == 0)) {
+          debugPrint('  ⚠️  Unresolved add-on ID for item ${item.itemId}');
+        }
 
         return payload;
       }).toList();
 
-        // ── FULL PAYLOAD INSPECTOR ────────────────────────────────────────────────
-      debugPrint('=== CART PAYLOAD BEING SENT TO SERVER ===');
-      for (int i = 0; i < cart.length; i++) {
-        final c = cart[i];
-        debugPrint('--- Item $i ---');
-        debugPrint('  id          : ${c['id']}');        // ← null = INSERT, int = UPDATE
-        debugPrint('  item_id     : ${c['item_id']}');
-        debugPrint('  quantity    : ${c['quantity']}');
-        debugPrint('  price       : ${c['price']}');
-        debugPrint('  variant     : ${c['variant']}');
-        debugPrint('  variation   : ${c['variation']}');
-        debugPrint('  add_on_ids  : ${c['add_on_ids']}');
-        debugPrint('  add_on_qtys : ${c['add_on_qtys']}');
+      debugPrint('=== SUBMITTING EDITED ORDER #${_orderModel!.id} ===');
+      debugPrint('  Total items : ${cartPayload.length}');
+      debugPrint('  Order note  : $_orderNote');
+      for (final c in cartPayload) {
+        debugPrint('  → $c');
       }
-      debugPrint('==========================================');
-    final bool success = await orderServiceInterface.updateOrder(
-      orderId: _orderModel!.id!,
-      cart: cart,
-      orderNote: _orderNote,
-    );
+      debugPrint('================================================');
 
-    _isLoading = false;
-    update();
-
-    if (success) {
-      debugPrint('✅ Order #${_orderModel!.id} updated successfully.');
-      Get.back(result: true);
-      Get.snackbar(
-        'Order Updated',
-        'Your order has been updated successfully.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
+      final bool success = await orderServiceInterface.updateOrder(
+        orderId: _orderModel!.id!,
+        cart: cartPayload,
+        orderNote: _orderNote,
       );
-    } else {
-      debugPrint('❌ Order update failed for #${_orderModel!.id}.');
+
+      _isLoading = false;
+      update();
+
+      if (success) {
+        debugPrint('✅ Order #${_orderModel!.id} updated successfully.');
+        Get.back(result: true);
+        Get.snackbar(
+          'Order Updated',
+          'Your order has been updated successfully.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        debugPrint('❌ Order update failed for #${_orderModel!.id}.');
+        Get.snackbar(
+          'Update Failed',
+          'Could not update your order. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e, st) {
+      _isLoading = false;
+      update();
+      debugPrint('💥 submitEditedOrder exception: $e\n$st');
       Get.snackbar(
-        'Update Failed',
-        'Could not update your order. Please try again.',
+        'Error',
+        'Failed to update order. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
     }
-  } catch (e, st) {
-    _isLoading = false;
-    update();
-    debugPrint('💥 submitEditedOrder exception: $e\n$st');
-    Get.snackbar(
-      'Error',
-      'Failed to update order. Please try again.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.redAccent,
-      colorText: Colors.white,
-    );
   }
-}
 }
