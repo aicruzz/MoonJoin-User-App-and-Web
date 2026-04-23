@@ -51,22 +51,20 @@ class OrderEditController extends GetxController implements GetxService {
 
   int? _moduleId;
 
-    void loadOrder(OrderModel order, List<OrderDetailsModel> details,
-        {int? storeId, int? moduleId}) {
+  void loadOrder(OrderModel order, List<OrderDetailsModel> details,
+    {int? storeId, int? moduleId}) {
       _orderModel = order;
       _moduleId = moduleId;
       _orderNote = order.orderNote;
       _editableItems = details
-          .map((d) => OrderDetailsModel.fromJson(d.toJson()))
+          .map((d) => OrderDetailsModel.fromJson(d.toJson()))  
           .toList();
       update();
-
-      final resolvedStoreId = storeId ?? order.store?.id;
-      if (resolvedStoreId != null) {
-        loadStoreItems(resolvedStoreId);
-      }
+    final resolvedStoreId = storeId ?? order.store?.id;
+          if (resolvedStoreId != null) {
+            loadStoreItems(resolvedStoreId);
+          }
     }
-
        // ── Load available items from the same store ──────────────────────────────
       Future<void> loadStoreItems(int storeId) async {
         _isStoreItemsLoading = true;
@@ -394,52 +392,39 @@ Future<void> submitEditedOrder() async {
   update();
 
   try {
-    final List<Map<String, dynamic>> cart = _editableItems.map((item) {
-      final addOnIds = item.addOns?.map((a) {
-        if (a.id != null && a.id != 0) return a.id!;
-        final matched = item.itemDetails?.addOns
-            ?.firstWhereOrNull((ad) => ad.name == a.name);
-        return matched?.id ?? 0;
-      }).toList() ?? [];
+      final List<Map<String, dynamic>> cart = _editableItems.map((item) {
+        final addOnIds = item.addOns?.map((a) {
+          if (a.id != null && a.id != 0) return a.id!;
+          final matched = item.itemDetails?.addOns
+              ?.firstWhereOrNull((ad) => ad.name == a.name);
+          return matched?.id ?? 0;
+        }).toList() ?? [];
 
-      final addOnQtys = item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [];
+        final addOnQtys = item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [];
 
-      final payload = {
-        'item_id'     : item.itemId,
-        'quantity'    : item.quantity ?? 1,
-        'price'       : item.price ?? 0,
-        'variant'     : item.variant == 'null' ? '' : (item.variant ?? ''),   // ← fixes "null" string bug too
-        'variation'   : item.foodVariation?.map((v) => {
-                          'name'  : v.name,
-                          'values': {
-                            'label': v.variationValues?.map((vv) => vv.level).toList() ?? [],
-                          },
-                        }).toList() ?? [],
-        'add_on_ids'  : addOnIds,
-        'add_on_qtys' : addOnQtys,
-      };
+        final payload = {
+          if (item.id != null) 'id': item.id,
+          'item_id'     : item.itemId,  
+          'quantity'    : item.quantity ?? 1,
+          'price'       : item.price ?? 0,
+          'variant'     : item.variant == 'null' ? '' : (item.variant ?? ''),
+          'variation'   : item.foodVariation?.map((v) => {
+                            'name'  : v.name,
+                            'values': {
+                              'label': v.variationValues?.map((vv) => vv.level).toList() ?? [],
+                            },
+                          }).toList() ?? [],
+          'add_on_ids'  : addOnIds,
+          'add_on_qtys' : addOnQtys,
+        };
 
-      // ── Per-item log ─────────────────────────────────────────────────────
-      debugPrint('  📦 [${item.itemId}] ${item.itemDetails?.name}'
-          ' | qty=${payload['quantity']}'
-          ' | price=${payload['price']}'
-          ' | variant=${payload['variant']}'
-          ' | addOnIds=$addOnIds'
-          ' | addOnQtys=$addOnQtys');
-
-      // Warn if any add-on resolved to 0 (means lookup failed)
-      if (addOnIds.any((id) => id == 0)) {
-        debugPrint('  ⚠️  WARNING: item ${item.itemId} has unresolved add-on ID (0). '
-            'Add-on names: ${item.addOns?.map((a) => a.name).toList()}');
-      }
-
-      return payload;
-    }).toList();
+        return payload;
+      }).toList();
 
     // ── Full payload log ──────────────────────────────────────────────────
     debugPrint('=== SUBMITTING EDITED ORDER #${_orderModel!.id} ===');
-    debugPrint('  Total items : ${cart.length}');
-    debugPrint('  Order note  : $_orderNote');
+    debugPrint('  Total items: ${cart.length}');
+    debugPrint('  Order note: $_orderNote');
     for (final c in cart) {
       debugPrint('  → $c');
     }

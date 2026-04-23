@@ -21,7 +21,7 @@ class OrderDetailsModel {
   double? totalAddOnPrice;
   String? imageFullUrl;
   int? isGuest;
-  ParcelCancellation? parcelCancellation;
+  ParcelCancellation? parcelCancellation; 
 
   OrderDetailsModel({
     this.id,
