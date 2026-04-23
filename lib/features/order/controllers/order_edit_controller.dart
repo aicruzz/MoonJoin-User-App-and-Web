@@ -248,7 +248,7 @@ class OrderEditController extends GetxController implements GetxService {
     Get.snackbar(
       'Item Added',
       '${item.name} added to your order.',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.green,
       colorText: Colors.white,
       duration: const Duration(seconds: 2),
@@ -422,7 +422,7 @@ class OrderEditController extends GetxController implements GetxService {
         Get.snackbar(
           'Update Failed',
           'Could not update your order. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.redAccent,
           colorText: Colors.white,
         );
@@ -434,7 +434,7 @@ class OrderEditController extends GetxController implements GetxService {
       Get.snackbar(
         'Error',
         'Failed to update order. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
