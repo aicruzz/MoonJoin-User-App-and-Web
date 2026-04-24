@@ -190,7 +190,7 @@ class OrderRepository implements OrderRepositoryInterface {
     debugPrint('cart: ${jsonEncode(cart)}');
     debugPrint('order_note: $orderNote');
 
-    final Response response = await apiClient.putData('${AppConstants.updateOrderUri}/$orderId', data);
+    final Response response = await apiClient.putData('${AppConstants.updateOrderUri}/$orderId', data, handleError: false);
 
     debugPrint('=== UPDATE ORDER RESPONSE ===');
     debugPrint('Status: ${response.statusCode}');
