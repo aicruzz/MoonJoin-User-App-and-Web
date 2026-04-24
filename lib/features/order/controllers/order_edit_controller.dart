@@ -341,16 +341,16 @@ class OrderEditController extends GetxController implements GetxService {
     try {
       final List<Map<String, dynamic>> cartPayload =
           _editableItems.map((item) {
-        final addOnIds = item.addOns?.map((a) {
-              if (a.id != null && a.id != 0) return a.id!;
-              final matched = item.itemDetails?.addOns
-                  ?.firstWhereOrNull((ad) => ad.name == a.name);
-              return matched?.id ?? 0;
-            }).toList() ??
-            [];
-
-        final addOnQtys =
-            item.addOns?.map((a) => a.quantity ?? 1).toList() ?? [];
+        final resolvedAddOns = (item.addOns ?? []).map((a) {
+          final id = (a.id != null && a.id != 0)
+              ? a.id!
+              : item.itemDetails?.addOns
+                  ?.firstWhereOrNull((ad) => ad.name == a.name)
+                  ?.id;
+          return id != null ? (id: id, qty: a.quantity ?? 1) : null;
+        }).whereType<({int id, int qty})>().toList();
+        final addOnIds = resolvedAddOns.map((e) => e.id).toList();
+        final addOnQtys = resolvedAddOns.map((e) => e.qty).toList();
 
         final payload = <String, dynamic>{
           if (item.id != null) 'id': item.id,
@@ -360,7 +360,7 @@ class OrderEditController extends GetxController implements GetxService {
           'price': item.price ?? 0,
           'total_add_on_price': item.totalAddOnPrice ?? 0,
           'tax_amount': item.taxAmount ?? 0,
-          'discount_on_item': item.discountOnItem ?? 0,
+          'discount_on_item': ((item.discountOnItem ?? 0) / (item.quantity ?? 1)),
           'variant': item.variant == 'null' ? '' : (item.variant ?? ''),
           'variation': (item.foodVariation != null && item.foodVariation!.isNotEmpty)
               ? item.foodVariation!
