@@ -79,7 +79,7 @@ class OrderEditController extends GetxController implements GetxService {
     try {
       final storeController = Get.find<StoreController>();
       ItemModel? result = await storeController.storeServiceInterface
-          .getStoreItemList(storeId.toString(), 1, 'all', _moduleId ?? 0);
+          .getStoreItemList(storeID: storeId, offset: 1, type: 'all');
 
       if (result != null) {
         final existingItemIds = _editableItems.map((e) => e.itemId).toSet();
