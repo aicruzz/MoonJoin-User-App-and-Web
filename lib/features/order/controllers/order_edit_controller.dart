@@ -70,6 +70,12 @@ class OrderEditController extends GetxController implements GetxService {
     }
   }
 
+  void _applyModuleHeader() {
+    if (_moduleId != null) {
+      Get.find<ApiClient>().getHeader()[AppConstants.moduleId] = '$_moduleId';
+    }
+  }
+
   // ── Load available items from the same store ──────────────────────────────
   Future<void> loadStoreItems(int storeId) async {
     _isStoreItemsLoading = true;
@@ -77,6 +83,7 @@ class OrderEditController extends GetxController implements GetxService {
     update();
 
     try {
+      _applyModuleHeader();
       final storeController = Get.find<StoreController>();
       ItemModel? result = await storeController.storeServiceInterface
           .getStoreItemList(storeID: storeId, offset: 1, type: 'all');
@@ -111,10 +118,11 @@ class OrderEditController extends GetxController implements GetxService {
     update();
 
     try {
+      _applyModuleHeader();
       final storeController = Get.find<StoreController>();
       ItemModel? searchResult =
           await storeController.storeServiceInterface.getStoreSearchItemList(
-        query, storeId.toString(), 1, 'all', _moduleId ?? 0,
+        query, storeId.toString(), 1, 'all', null,
       );
 
       if (searchResult != null) {
