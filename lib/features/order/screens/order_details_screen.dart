@@ -222,7 +222,6 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   }
                 }
               }
-            }
 
               if (order.store != null) {
                 if (order.store!.storeBusinessModel == 'commission') {
