@@ -86,9 +86,9 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
+
     bool isDesktop = ResponsiveHelper.isDesktop(context);
-    
+
     return PopScope(
       canPop: Navigator.canPop(context),
       onPopInvokedWithResult: (didPop, result) async {
@@ -168,43 +168,61 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
             bool taxIncluded = false;
             bool ongoing = false;
             bool showChatPermission = true;
-            if(orderController.orderDetails != null  && order != null) {
+
+            if(orderController.orderDetails != null && order != null) {
               parcel = order.orderType == 'parcel';
-              prescriptionOrder = order.prescriptionOrder!;
-              deliveryCharge = order.deliveryCharge!;
-              couponDiscount = order.couponDiscountAmount!;
-              discount = order.storeDiscountAmount! + order.flashAdminDiscountAmount! + order.flashStoreDiscountAmount!;
-              tax = order.totalTaxAmount!;
-              dmTips = order.dmTips!;
-              taxIncluded = order.taxStatus!;
-              additionalCharge = order.additionalCharge!;
-              extraPackagingCharge = order.extraPackagingAmount!;
-              referrerBonusAmount = order.referrerBonusAmount!;
+              prescriptionOrder = order.prescriptionOrder ?? false;
+              deliveryCharge = order.deliveryCharge ?? 0;
+              couponDiscount = order.couponDiscountAmount ?? 0;
+
+              // Safely sum up discounts without crashing if one is null
+              discount = (order.storeDiscountAmount ?? 0)
+                  + (order.flashAdminDiscountAmount ?? 0)
+                  + (order.flashStoreDiscountAmount ?? 0);
+
+              tax = order.totalTaxAmount ?? 0;
+              dmTips = order.dmTips ?? 0;
+              taxIncluded = order.taxStatus ?? false;
+              additionalCharge = order.additionalCharge ?? 0;
+              extraPackagingCharge = order.extraPackagingAmount ?? 0;
+              referrerBonusAmount = order.referrerBonusAmount ?? 0;
+
               if(prescriptionOrder) {
                 double orderAmount = order.orderAmount ?? 0;
                 itemsPrice = (orderAmount + discount) - ((taxIncluded ? 0 : tax) + deliveryCharge) - dmTips - additionalCharge;
-              } else{
+              } else {
                 for(OrderDetailsModel orderDetails in orderController.orderDetails!) {
-                  for(AddOn addOn in orderDetails.addOns!) {
-                    addOns = addOns + (addOn.price! * addOn.quantity!);
+                  // Guard against null addOns list
+                  if(orderDetails.addOns != null) {
+                    for(AddOn addOn in orderDetails.addOns!) {
+                      addOns = addOns + ((addOn.price ?? 0) * (addOn.quantity ?? 0));
+                    }
                   }
-                  itemsPrice = itemsPrice + (orderDetails.price! * orderDetails.quantity!);
+                  itemsPrice = itemsPrice + ((orderDetails.price ?? 0) * (orderDetails.quantity ?? 0));
                 }
               }
 
               if(!parcel && order.store != null) {
-                for(ZoneData zData in AddressHelper.getUserAddressFromSharedPref()!.zoneData!) {
-                  if(zData.id == order.store!.zoneId){
-                    _isCashOnDeliveryActive = zData.cashOnDelivery;
-                  }
-                  for(Modules m in zData.modules!) {
-                    if(m.id == order.store!.moduleId) {
-                      _maxCodOrderAmount = m.pivot!.maximumCodOrderAmount;
-                      break;
+                var userAddress = AddressHelper.getUserAddressFromSharedPref();
+                // Guard against null local address or zone data
+                if(userAddress != null && userAddress.zoneData != null) {
+                  for(ZoneData zData in userAddress.zoneData!) {
+                    if(zData.id == order.store!.zoneId){
+                      _isCashOnDeliveryActive = zData.cashOnDelivery;
+                    }
+                    if(zData.modules != null) {
+                      for(Modules m in zData.modules!) {
+                        if(m.id == order.store!.moduleId) {
+                          // Safely access the pivot configuration
+                          _maxCodOrderAmount = m.pivot?.maximumCodOrderAmount ?? 0;
+                          break;
+                        }
+                      }
                     }
                   }
                 }
               }
+            }
 
               if (order.store != null) {
                 if (order.store!.storeBusinessModel == 'commission') {
@@ -334,7 +352,7 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 orderModel: order,
                 orderDetails: orderController.orderDetails ?? [],
                 storeId: order.store?.id,
-                moduleId: order.store?.moduleId 
+                moduleId: order.store?.moduleId
     ?? Get.find<SplashController>().module?.id,
               ));
               if (updated == true) {
@@ -604,7 +622,7 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final orderDetailsIdList = <int?>[];
 
     for (var orderDetail in orderController.orderDetails!) {
-      if (!orderDetailsIdList.contains(orderDetail.itemDetails!.id)) {
+      if (orderDetail.itemDetails != null && !orderDetailsIdList.contains(orderDetail.itemDetails!.id)) {
         orderDetailsList.add(orderDetail);
         orderDetailsIdList.add(orderDetail.itemDetails!.id);
       }

@@ -20,26 +20,29 @@ class OrderItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String addOnText = '';
-    for (var addOn in orderDetails.addOns!) {
+    for (var addOn in (orderDetails.addOns ?? [])) {
       addOnText = '$addOnText${(addOnText.isEmpty) ? '' : ',  '}${addOn.name} (${addOn.quantity})';
     }
 
+    final List<Variation> variations = orderDetails.variation ?? [];
+    final List<FoodVariation> foodVariations = orderDetails.foodVariation ?? [];
+    final List<ChoiceOptions> choiceOptions = orderDetails.itemDetails?.choiceOptions ?? [];
+
     String? variationText = '';
-    if(orderDetails.variation!.isNotEmpty) {
-      if(orderDetails.variation!.isNotEmpty) {
-        List<String> variationTypes = orderDetails.variation![0].type!.split('-');
-        if(variationTypes.length == orderDetails.itemDetails!.choiceOptions!.length) {
-          int index = 0;
-          for (var choice in orderDetails.itemDetails!.choiceOptions!) {
-            variationText = '${variationText!}${(index == 0) ? '' : ',  '}${choice.title} - ${variationTypes[index]}';
-            index = index + 1;
-          }
-        }else {
-          variationText = orderDetails.itemDetails!.variations![0].type;
+    if(variations.isNotEmpty) {
+      List<String> variationTypes = (variations[0].type ?? '').split('-');
+      if(variationTypes.length == choiceOptions.length) {
+        int index = 0;
+        for (var choice in choiceOptions) {
+          variationText = '${variationText!}${(index == 0) ? '' : ',  '}${choice.title} - ${variationTypes[index]}';
+          index = index + 1;
         }
+      }else {
+        final itemVariations = orderDetails.itemDetails?.variations;
+        variationText = (itemVariations != null && itemVariations.isNotEmpty) ? itemVariations[0].type : '';
       }
-    }else if(orderDetails.foodVariation!.isNotEmpty) {
-      for(FoodVariation variation in orderDetails.foodVariation!) {
+    }else if(foodVariations.isNotEmpty) {
+      for(FoodVariation variation in foodVariations) {
         variationText = '${variationText!}${variationText.isNotEmpty ? ', ' : ''}${variation.name} (';
         if(variation.variationValues != null){
           for(VariationValue value in variation.variationValues!) {
@@ -66,7 +69,7 @@ class OrderItemWidget extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Expanded(child: Text(
-                  orderDetails.itemDetails!.name!,
+                  orderDetails.itemDetails?.name ?? '',
                   style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
                   maxLines: 2, overflow: TextOverflow.ellipsis,
                 )),
@@ -83,10 +86,10 @@ class OrderItemWidget extends StatelessWidget {
                   style: robotoMedium, textDirection: TextDirection.ltr,
                 )),
 
-                ((Get.find<SplashController>().configModel!.moduleConfig!.module!.unit! && orderDetails.itemDetails!.unitType != null)
+                ((Get.find<SplashController>().configModel!.moduleConfig!.module!.unit! && orderDetails.itemDetails?.unitType != null)
                     || (Get.find<SplashController>().configModel!.moduleConfig!.module!.vegNonVeg! && Get.find<SplashController>().configModel!.toggleVegNonVeg!))
                     ? Get.find<SplashController>().getModuleConfig(order.moduleType).newVariation! ? CustomAssetImageWidget(
-                  orderDetails.itemDetails!.veg == 0 ? Images.nonVegImage : Images.vegImage,
+                  orderDetails.itemDetails?.veg == 0 ? Images.nonVegImage : Images.vegImage,
                   height: 11, width: 11,
                 ) : Container(
                   padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall, horizontal: Dimensions.paddingSizeSmall),
@@ -95,14 +98,14 @@ class OrderItemWidget extends StatelessWidget {
                     color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   ),
                   child: Text(
-                    orderDetails.itemDetails!.unitType ?? '',
+                    orderDetails.itemDetails?.unitType ?? '',
                     style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor),
                   ),
                 ) : const SizedBox(),
 
-                SizedBox(width: orderDetails.itemDetails!.isStoreHalalActive! && orderDetails.itemDetails!.isHalalItem! ? Dimensions.paddingSizeExtraSmall : 0),
+                SizedBox(width: (orderDetails.itemDetails?.isStoreHalalActive ?? false) && (orderDetails.itemDetails?.isHalalItem ?? false) ? Dimensions.paddingSizeExtraSmall : 0),
 
-                orderDetails.itemDetails!.isStoreHalalActive! && orderDetails.itemDetails!.isHalalItem! ? const CustomAssetImageWidget(
+                (orderDetails.itemDetails?.isStoreHalalActive ?? false) && (orderDetails.itemDetails?.isHalalItem ?? false) ? const CustomAssetImageWidget(
                  Images.halalTag, height: 13, width: 13) : const SizedBox(),
 
               ]),

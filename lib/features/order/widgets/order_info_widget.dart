@@ -66,9 +66,9 @@ class OrderInfoWidget extends StatelessWidget {
           ? (order.orderStatus != 'delivered' && order.orderStatus != 'failed'
           && order.orderStatus != 'canceled' && order.orderStatus != 'refund_requested' && order.orderStatus != 'refunded'
           && order.orderStatus != 'refund_request_canceled' ) ? 280 : 140 :
-          parcel || prescriptionOrder || (orderController.orderDetails!.isNotEmpty && orderController.orderDetails![0].itemDetails!.moduleType == 'grocery')
-          || (orderController.orderDetails!.isNotEmpty && orderController.orderDetails![0].itemDetails!.moduleType == 'ecommerce')
-          || (orderController.orderDetails!.isNotEmpty && orderController.orderDetails![0].itemDetails!.moduleType == 'pharmacy')
+          parcel || prescriptionOrder || (orderController.orderDetails!.isNotEmpty && orderController.orderDetails![0].itemDetails?.moduleType == 'grocery')
+          || (orderController.orderDetails!.isNotEmpty && orderController.orderDetails![0].itemDetails?.moduleType == 'ecommerce')
+          || (orderController.orderDetails!.isNotEmpty && orderController.orderDetails![0].itemDetails?.moduleType == 'pharmacy')
           ? 140 : 0) : const SizedBox(),
 
         CustomCard(

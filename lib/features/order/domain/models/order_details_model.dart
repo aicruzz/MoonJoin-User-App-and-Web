@@ -65,8 +65,8 @@ class OrderDetailsModel {
         });
       }
     }
+    addOns = [];
     if (json['add_ons'] != null) {
-      addOns = [];
       json['add_ons'].forEach((v) {
         addOns!.add(AddOn.fromJson(v));
       });
