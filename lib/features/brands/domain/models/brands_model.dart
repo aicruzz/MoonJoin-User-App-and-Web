@@ -30,7 +30,9 @@ class BrandModel {
     status = json['status'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
-    itemsCount = json['items_count'];
+    // Backend may send items_count as an int or a numeric String — parse defensively
+    // so a stray String value doesn't crash brand parsing (pre-existing robustness fix).
+    itemsCount = json['items_count'] is int ? json['items_count'] : int.tryParse('${json['items_count']}');
     if (json['translations'] != null) {
       translations = <Translations>[];
       json['translations'].forEach((v) {

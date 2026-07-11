@@ -21,6 +21,7 @@ import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
+import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
@@ -128,6 +129,11 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
 
     bool isDesktop = ResponsiveHelper.isDesktop(context);
+
+    // MoonJoin YOUR CART (mobile) — Figma redesign; desktop keeps the existing layout.
+    if (!isDesktop) {
+      return _mobileScaffold(context);
+    }
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -330,6 +336,424 @@ class _CartScreenState extends State<CartScreen> {
       }),
     );
   }
+
+  // ============================ MoonJoin mobile cart ============================
+
+  static const Color _bodyBg = Color(0xFFF6F8F0);
+
+  Widget _mobileScaffold(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.light ? _bodyBg : Theme.of(context).scaffoldBackgroundColor,
+      endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
+      body: GetBuilder<StoreController>(builder: (storeController) {
+        return GetBuilder<CartController>(builder: (cartController) {
+          if (cartController.cartList.isEmpty) {
+            return Column(children: [
+              _mobileHeader(context, cartController, 0),
+              const Expanded(child: NoDataScreen(isCart: true, text: '', showFooter: true)),
+            ]);
+          }
+          final Item firstItem = cartController.cartList[0].item!;
+          return Column(children: [
+            _mobileHeader(context, cartController, cartController.cartList.length),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+                child: Column(children: [
+
+                  _savingsBanner(context, cartController),
+
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+                    itemCount: cartController.cartList.length,
+                    itemBuilder: (context, index) => CartItemWidget(
+                      cart: cartController.cartList[index], cartIndex: index,
+                      addOns: cartController.addOnsList[index], isAvailable: cartController.availableList[index], showDivider: false,
+                    ),
+                  ),
+
+                  _cutleryRow(context, cartController, storeController, firstItem),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+                    child: ExtraPackagingWidget(cartController: cartController),
+                  ),
+
+                  _addMoreCard(context, cartController),
+
+                  _notAvailableCard(context, cartController),
+
+                  _chatWithVendorCard(context, cartController),
+
+                  suggestedItemView(cartController.cartList),
+
+                  _priceSummaryCard(context, cartController, storeController),
+
+                  const SizedBox(height: Dimensions.paddingSizeLarge),
+                ]),
+              ),
+            ),
+
+            _mobileBottomBar(context, cartController, storeController),
+          ]);
+        });
+      }),
+    );
+  }
+
+  Widget _mobileHeader(BuildContext context, CartController cartController, int count) {
+    return Container(
+      color: Theme.of(context).primaryColor,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+          child: Row(children: [
+            InkWell(
+              onTap: () => Get.back(),
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                height: 40, width: 40,
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), shape: BoxShape.circle),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              ),
+            ),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('your_cart'.tr, style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeExtraLarge)),
+              Text('$count ${count == 1 ? 'item'.tr : 'items'.tr}', style: robotoRegular.copyWith(color: Colors.white.withValues(alpha: 0.9), fontSize: Dimensions.fontSizeSmall)),
+            ])),
+            if (count > 0) InkWell(
+              onTap: () => Get.dialog(ConfirmationDialog(
+                icon: Images.warning,
+                title: 'are_you_sure_to_delete'.tr,
+                description: 'you_want_to_delete_all_carts'.tr,
+                onYesPressed: () {
+                  Get.back();
+                  cartController.clearCartList();
+                  Get.find<CartController>().calculationCart();
+                },
+              ), barrierDismissible: false),
+              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              child: Container(
+                height: 40, width: 40,
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+                child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _savingsBanner(BuildContext context, CartController cartController) {
+    if (cartController.itemDiscountPrice <= 0) return const SizedBox();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall + 2),
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        ),
+        child: Row(children: [
+          Icon(Icons.verified_user, color: Theme.of(context).primaryColor, size: 18),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: Text(
+            "${'youre_saving'.tr} ${PriceConverter.convertPrice(cartController.itemDiscountPrice)} ${'on_this_order'.tr}",
+            style: robotoMedium.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall), textDirection: TextDirection.ltr,
+          )),
+          Icon(Icons.chevron_right, color: Theme.of(context).primaryColor, size: 20),
+        ]),
+      ),
+    );
+  }
+
+  Widget _cutleryRow(BuildContext context, CartController cartController, StoreController storeController, Item item) {
+    if (!(Get.find<SplashController>().getModuleConfig(item.moduleType).newVariation! && storeController.store != null && storeController.store!.cutlery!)) {
+      return const SizedBox();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+      child: Container(
+        decoration: _cardDeco(context),
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+        child: Row(children: [
+          Image.asset(Images.cutlery, height: 18, width: 18, color: Theme.of(context).textTheme.bodyLarge!.color),
+          const SizedBox(width: Dimensions.paddingSizeDefault),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('add_cutlery'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
+            const SizedBox(height: 2),
+            Text('do_not_have_cutlery'.tr, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall)),
+          ])),
+          Transform.scale(
+            scale: 0.7,
+            child: CupertinoSwitch(
+              value: cartController.addCutlery,
+              activeTrackColor: Theme.of(context).primaryColor,
+              inactiveTrackColor: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+              onChanged: (bool? value) => cartController.updateCutlery(),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _addMoreCard(BuildContext context, CartController cartController) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+      child: Container(
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        ),
+        child: Row(children: [
+          Container(
+            height: 46, width: 46, alignment: Alignment.center,
+            decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.15), shape: BoxShape.circle),
+            child: Icon(Icons.add_shopping_cart, color: Theme.of(context).primaryColor, size: 22),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('add_more_items'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+            const SizedBox(height: 2),
+            Text('add_items_from_your_favorite_store'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
+          ])),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          InkWell(
+            onTap: () => _openStore(cartController),
+            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeSmall),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                border: Border.all(color: Theme.of(context).primaryColor),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('browse_more'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall)),
+                const SizedBox(width: 4),
+                Icon(Icons.add_circle, color: Theme.of(context).primaryColor, size: 18),
+              ]),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _notAvailableCard(BuildContext context, CartController cartController) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+      child: Container(
+        decoration: _cardDeco(context),
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          InkWell(
+            onTap: () => showModalBottomSheet(
+              context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+              builder: (con) => const NotAvailableBottomSheetWidget(),
+            ),
+            child: Row(children: [
+              Expanded(child: Text('if_any_product_is_not_available'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall), maxLines: 2, overflow: TextOverflow.ellipsis)),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+            ]),
+          ),
+          cartController.notAvailableIndex != -1 ? Row(children: [
+            Expanded(child: Text(cartController.notAvailableList[cartController.notAvailableIndex].tr,
+                style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor))),
+            IconButton(onPressed: () => cartController.setAvailableIndex(-1), icon: const Icon(Icons.clear, size: 18)),
+          ]) : const SizedBox(),
+        ]),
+      ),
+    );
+  }
+
+  Widget _chatWithVendorCard(BuildContext context, CartController cartController) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+      child: InkWell(
+        onTap: () => _openStore(cartController),
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        child: Container(
+          decoration: _cardDeco(context),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+          child: Row(children: [
+            Container(
+              height: 42, width: 42, alignment: Alignment.center,
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.12), shape: BoxShape.circle),
+              child: Icon(Icons.chat_bubble_outline, color: Theme.of(context).primaryColor, size: 20),
+            ),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('chat_with_vendor'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+              const SizedBox(height: 2),
+              Text('have_a_question_or_need_help'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
+            ])),
+            Icon(Icons.chevron_right, color: Theme.of(context).disabledColor, size: 22),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _priceSummaryCard(BuildContext context, CartController cartController, StoreController storeController) {
+    final double discount = cartController.itemDiscountPrice;
+    final double total = cartController.subTotal;
+    final double subtotal = total + discount; // gross, so subtotal − discount == total
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+      child: Container(
+        decoration: _cardDeco(context),
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        child: Column(children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('${'subtotal'.tr} (${cartController.cartList.length} ${cartController.cartList.length == 1 ? 'item'.tr : 'items'.tr})',
+                style: robotoRegular.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color)),
+            PriceConverter.convertAnimationPrice(subtotal, textStyle: robotoMedium),
+          ]),
+          // Delivery fee is a checkout-stage (distance-based) value — kept as a
+          // truthful placeholder rather than a fabricated amount.
+          Padding(
+            padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text('delivery_fee'.tr, style: robotoRegular.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color)),
+              Text('calculated_at_checkout'.tr, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall)),
+            ]),
+          ),
+          discount > 0 ? Padding(
+            padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text('discount'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
+              Row(children: [
+                Text('- ', style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
+                PriceConverter.convertAnimationPrice(discount, textStyle: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
+              ]),
+            ]),
+          ) : const SizedBox(),
+          const Padding(padding: EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall), child: Divider(height: 1)),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('total_amount'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            storeController.store != null
+                ? PriceConverter.convertAnimationPrice(total, textStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor))
+                : Text('calculating'.tr, style: robotoRegular),
+          ]),
+          discount > 0 ? Padding(
+            padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+              child: Row(children: [
+                Icon(Icons.sell_outlined, size: 16, color: Theme.of(context).primaryColor),
+                const SizedBox(width: Dimensions.paddingSizeSmall),
+                Expanded(child: Text("${'you_saved'.tr} ${PriceConverter.convertPrice(discount)} ${'on_this_order'.tr}",
+                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor), textDirection: TextDirection.ltr)),
+                Icon(Icons.chevron_right, size: 18, color: Theme.of(context).primaryColor),
+              ]),
+            ),
+          ) : const SizedBox(),
+        ]),
+      ),
+    );
+  }
+
+  Widget _mobileBottomBar(BuildContext context, CartController cartController, StoreController storeController) {
+    double percentage = 0;
+    final splash = Get.find<SplashController>();
+    final bool showFreeDeliveryProgress = storeController.store != null && !storeController.store!.freeDelivery!
+        && (splash.configModel?.adminFreeDelivery?.status == true && splash.configModel?.adminFreeDelivery?.type == 'free_delivery_by_order_amount'
+            && splash.configModel!.adminFreeDelivery?.freeDeliveryOver != null);
+    if (showFreeDeliveryProgress) {
+      percentage = cartController.subTotal / splash.configModel!.adminFreeDelivery!.freeDeliveryOver!;
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, -2))],
+      ),
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
+      child: SafeArea(top: false, child: Column(mainAxisSize: MainAxisSize.min, children: [
+
+        if (showFreeDeliveryProgress && percentage < 1) Padding(
+          padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
+          child: Column(children: [
+            Row(children: [
+              Image.asset(Images.percentTag, height: 18, width: 18, color: Colors.orange),
+              const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+              Text(PriceConverter.convertPrice(splash.configModel!.adminFreeDelivery!.freeDeliveryOver! - cartController.subTotal),
+                  style: robotoMedium.copyWith(color: Colors.orange), textDirection: TextDirection.ltr),
+              const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+              Text('more_for_free_delivery'.tr, style: robotoMedium.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall)),
+            ]),
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                backgroundColor: Theme.of(context).disabledColor.withValues(alpha: 0.2),
+                value: percentage, minHeight: 5,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+              ),
+            ),
+          ]),
+        ),
+
+        Row(children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            PriceConverter.convertAnimationPrice(cartController.subTotal, textStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
+            Text('total_amount'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+          ]),
+          const SizedBox(width: Dimensions.paddingSizeDefault),
+          Expanded(child: CustomButton(
+            height: 52,
+            radius: Dimensions.radiusLarge,
+            isBold: true,
+            icon: Icons.arrow_forward,
+            buttonText: 'proceed_to_checkout'.tr,
+            onPressed: () => _proceedToCheckout(context, cartController),
+          )),
+        ]),
+      ])),
+    );
+  }
+
+  void _openStore(CartController cartController) {
+    cartController.forcefullySetModule(cartController.cartList[0].item!.moduleId!);
+    Get.toNamed(
+      RouteHelper.getStoreRoute(id: cartController.cartList[0].item!.storeId, page: 'item'),
+      arguments: StoreScreen(store: Store(id: cartController.cartList[0].item!.storeId), fromModule: false),
+    );
+  }
+
+  void _proceedToCheckout(BuildContext context, CartController cartController) {
+    Get.find<CheckoutController>().updateFirstTime();
+    Get.find<CheckoutController>().updateFirstTimeCodActive();
+    if (!cartController.cartList.first.item!.scheduleOrder! && cartController.availableList.contains(false)) {
+      showCustomSnackBar('one_or_more_product_unavailable'.tr);
+    } else {
+      if (Get.find<SplashController>().module == null) {
+        int i = 0;
+        for (i = 0; i < Get.find<SplashController>().moduleList!.length; i++) {
+          if (cartController.cartList[0].item!.moduleId == Get.find<SplashController>().moduleList![i].id) break;
+        }
+        Get.find<SplashController>().setModule(Get.find<SplashController>().moduleList![i]);
+        HomeScreen.loadData(true);
+      }
+      Get.find<CouponController>().removeCouponData(false);
+      Get.toNamed(RouteHelper.getCheckoutRoute('cart'));
+    }
+  }
+
+  BoxDecoration _cardDeco(BuildContext context) => BoxDecoration(
+    color: Theme.of(context).cardColor,
+    borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+  );
 
   Widget pricingView(CartController cartController, Item item){
     return Container(

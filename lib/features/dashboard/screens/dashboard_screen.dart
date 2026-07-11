@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:expandable_bottom_sheet/expandable_bottom_sheet.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:sixam_mart/common/widgets/login_suggestion_bottomsheet.dart';
 import 'package:sixam_mart/features/dashboard/widgets/payment_incomplete_bottomsheet.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/taxi_cart_widget.dart';
 import 'package:sixam_mart/features/dashboard/widgets/store_registration_success_bottom_sheet.dart';
 import 'package:sixam_mart/features/home/controllers/home_controller.dart';
 import 'package:sixam_mart/features/location/controllers/location_controller.dart';
@@ -15,22 +13,16 @@ import 'package:sixam_mart/features/order/domain/models/order_model.dart';
 import 'package:sixam_mart/features/address/screens/address_screen.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart/features/dashboard/widgets/bottom_nav_item_widget.dart';
-import 'package:sixam_mart/features/parcel/controllers/parcel_controller.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/taxi_cart_screen.dart';
 import 'package:sixam_mart/features/rental_module/rental_favourite/screens/vehicle_favourite_screen.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/helper/taxi_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/common/widgets/cart_widget.dart';
 import 'package:sixam_mart/common/widgets/custom_dialog.dart';
 import 'package:sixam_mart/features/checkout/widgets/congratulation_dialogue.dart';
 import 'package:sixam_mart/features/dashboard/widgets/address_bottom_sheet_widget.dart';
-import 'package:sixam_mart/features/dashboard/widgets/parcel_bottom_sheet_widget.dart';
 import 'package:sixam_mart/features/favourite/screens/favourite_screen.dart';
 import 'package:sixam_mart/features/home/screens/home_screen.dart';
 import 'package:sixam_mart/features/menu/screens/menu_screen.dart';
@@ -103,12 +95,13 @@ class DashboardScreenState extends State<DashboardScreen> {
 
     _pageController = PageController(initialPage: widget.pageIndex);
 
+    // MoonJoin 4-tab shell: Home · Orders · Favorites · Account.
+    // (Cart moved to the header; old Menu relocated into Account = MenuScreen.)
     _screens = [
       const HomeScreen(),
-      const FavouriteScreen(),
-      const SizedBox(),
       const OrderScreen(),
-      const MenuScreen()
+      const FavouriteScreen(),
+      const MenuScreen(),
     ];
   }
 
@@ -215,14 +208,16 @@ class DashboardScreenState extends State<DashboardScreen> {
                               bool isTaxi = (splashController.module != null && splashController.module!.moduleType.toString() == AppConstants.taxi);
                               isParcel = isParcel && !isTaxiWithCache;
 
+                              // MoonJoin 4-tab order: Home(0) · Orders(1) · Favorites(2) · Account(3).
+                              // Module-aware content is preserved: taxi shows Trips/Wishlist,
+                              // parcel keeps its Address manager under the Favorites slot.
                               _screens = [
                                 const HomeScreen(),
-                                isParcel ? const AddressScreen(fromDashboard: true)
-                                    : isTaxi ? const VehicleFavouriteScreen()
-                                    : const FavouriteScreen(),
-                                const SizedBox(),
                                 OrderScreen(index: isTaxi ? 1 : 0),
-                                const MenuScreen()
+                                isTaxi ? const VehicleFavouriteScreen()
+                                    : isParcel ? const AddressScreen(fromDashboard: true)
+                                    : const FavouriteScreen(),
+                                const MenuScreen(),
                               ];
                               return Container(
                                 width: size.width, height: GetPlatform.isIOS ? 80 : 65,
@@ -231,68 +226,33 @@ class DashboardScreenState extends State<DashboardScreen> {
                                   borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusLarge)),
                                     boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
                                 ),
-                                child: Stack(children: [
-
-                                  Center(
-                                    heightFactor: 0.6,
-                                    child: ResponsiveHelper.isDesktop(context) ? null : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? null
-                                      : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Container(
-                                        width: 60, height: 60,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: Theme.of(context).cardColor, width: 5),
-                                          borderRadius: BorderRadius.circular(30),
-                                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-                                        ),
-                                        child: FloatingActionButton(
-                                          backgroundColor: Theme.of(context).primaryColor,
-                                          onPressed: () {
-                                            if(isParcel) {
-                                              showModalBottomSheet(
-                                                context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-                                                builder: (con) => ParcelBottomSheetWidget(parcelCategoryList: Get.find<ParcelController>().parcelCategoryList),
-                                              );
-                                            } else if(isTaxiWithCache) {
-                                              Get.to(()=> const TaxiCartScreen());
-                                            } else {
-                                              Get.toNamed(RouteHelper.getCartRoute());
-                                            }
-                                          },
-                                          elevation: 0,
-                                          child: isTaxiWithCache ? TaxiCartWidget(color: Theme.of(context).cardColor, size: 22) : isParcel ? Icon(CupertinoIcons.add, size: 34, color: Theme.of(context).cardColor) : CartWidget(color: Theme.of(context).cardColor, size: 22),
-                                        ),
-                                    ),
-                                  ),
-
-                                  ResponsiveHelper.isDesktop(context) ? const SizedBox() : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? const SizedBox()
+                                child: ResponsiveHelper.isDesktop(context) ? const SizedBox() : (widget.fromSplash && Get.find<LocationController>().showLocationSuggestion && active) ? const SizedBox()
                                   : (orderController.showBottomSheet && orderController.runningOrderModel != null && orderController.runningOrderModel!.orders!.isNotEmpty && _isLogin) ? const SizedBox() : Center(
                                     child: SizedBox(
                                         width: size.width, height: 80,
                                         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                                           BottomNavItemWidget(
-                                            title: 'home'.tr, selectedIcon: Images.homeSelect,
-                                            unSelectedIcon: Images.homeUnselect, isSelected: _pageIndex == 0,
+                                            title: 'home'.tr, selectedIcon: Icons.home_rounded,
+                                            unselectedIcon: Icons.home_outlined, isSelected: _pageIndex == 0,
                                             onTap: () => _setPage(0),
                                           ),
                                           BottomNavItemWidget(
-                                            title: isParcel ? 'address'.tr : isTaxi ? 'wishlist'.tr : 'favourite'.tr,
-                                            selectedIcon: isParcel ? Images.addressSelect : Images.favouriteSelect,
-                                            unSelectedIcon: isParcel ? Images.addressUnselect : Images.favouriteUnselect,
+                                            title: isTaxi ? 'trips'.tr : 'orders'.tr, selectedIcon: Icons.shopping_bag, unselectedIcon: Icons.shopping_bag_outlined,
                                             isSelected: _pageIndex == 1, onTap: () => _setPage(1),
                                           ),
-                                          Container(width: size.width * 0.2),
                                           BottomNavItemWidget(
-                                            title: isTaxi ? 'trips'.tr : 'orders'.tr, selectedIcon: Images.orderSelect, unSelectedIcon: Images.orderUnselect,
-                                            isSelected: _pageIndex == 3, onTap: () => _setPage(3),
+                                            title: isTaxi ? 'wishlist'.tr : isParcel ? 'address'.tr : 'favorites'.tr,
+                                            selectedIcon: isParcel ? Icons.location_on : Icons.favorite,
+                                            unselectedIcon: isParcel ? Icons.location_on_outlined : Icons.favorite_border,
+                                            isSelected: _pageIndex == 2, onTap: () => _setPage(2),
                                           ),
                                           BottomNavItemWidget(
-                                            title: 'menu'.tr, selectedIcon: Images.menu, unSelectedIcon: Images.menu,
-                                            isSelected: _pageIndex == 4, onTap: () => _setPage(4),
+                                            title: 'account'.tr, selectedIcon: Icons.person, unselectedIcon: Icons.person_outline,
+                                            isSelected: _pageIndex == 3, onTap: () => _setPage(3),
                                           ),
                                         ]),
                                     ),
                                   ),
-                                ],
-                                ),
                               );
                             }
                           ),
@@ -325,7 +285,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                         }
                       },
                       child: RunningOrderViewWidget(reversOrder: reversOrder, onOrderTap: () {
-                        _setPage(3);
+                        _setPage(1);
                         if(orderController.showBottomSheet){
                           orderController.showRunningOrders();
                         }

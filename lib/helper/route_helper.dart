@@ -363,8 +363,10 @@ class RouteHelper {
     }),
     GetPage(name: interest, page: () => const InterestScreen()),
     GetPage(name: main, page: () => getRoute(DashboardScreen(
-      pageIndex: Get.parameters['page'] == 'home' ? 0 : Get.parameters['page'] == 'favourite' ? 1
-          : Get.parameters['page'] == 'cart' ? 2 : Get.parameters['page'] == 'order' ? 3 : Get.parameters['page'] == 'menu' ? 4 : 0,
+      // MoonJoin 4-tab shell order: Home(0) · Orders(1) · Favorites(2) · Account(3).
+      // 'cart' is no longer a tab (moved to the header) and falls back to Home.
+      pageIndex: Get.parameters['page'] == 'home' ? 0 : Get.parameters['page'] == 'order' ? 1
+          : Get.parameters['page'] == 'favourite' ? 2 : Get.parameters['page'] == 'menu' ? 3 : 0,
     ))),
 
     GetPage(name: forgotPassword, page: () => const ForgetPassScreen()),

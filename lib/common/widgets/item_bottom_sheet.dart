@@ -5,26 +5,23 @@ import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
-import 'package:sixam_mart/features/checkout/domain/models/place_order_body_model.dart';
 import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/common/models/module_model.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/date_converter.dart';
+import 'package:sixam_mart/helper/item_cart_helper.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/discount_tag.dart';
 import 'package:sixam_mart/common/widgets/quantity_button.dart';
 import 'package:sixam_mart/common/widgets/rating_bar.dart';
-import 'package:sixam_mart/features/checkout/screens/checkout_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -81,83 +78,19 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
           return const ItemBottomSheetShimmer();
         }
         
-        double? startingPrice;
-        double? endingPrice;
-        if (item!.choiceOptions!.isNotEmpty && item.foodVariations!.isEmpty && !_newVariation) {
-          List<double?> priceList = [];
-          for (var variation in item.variations!) {
-            priceList.add(variation.price);
-          }
-          priceList.sort((a, b) => a!.compareTo(b!));
-          startingPrice = priceList[0];
-          if (priceList[0]! < priceList[priceList.length - 1]!) {
-            endingPrice = priceList[priceList.length - 1];
-          }
-        } else {
-          startingPrice = item.price;
-        }
-
-        double? price = item.price;
-        double variationPrice = 0;
-        Variation? variation;
-        double? initialDiscount = item.discount;
-        double? discount = item.discount;
-        String? discountType = item.discountType;
-        int? stock = item.stock ?? 0;
-
-        if(discountType == 'amount'){
-          discount = discount! * itemController.quantity!;
-        }
-
-        if(_newVariation) {
-          for(int index = 0; index< item.foodVariations!.length; index++) {
-            for(int i=0; i<item.foodVariations![index].variationValues!.length; i++) {
-              if(itemController.selectedVariations[index][i]!) {
-                variationPrice += item.foodVariations![index].variationValues![i].optionPrice!;
-              }
-            }
-          }
-        }else {
-          List<String> variationList = [];
-          for (int index = 0; index < item.choiceOptions!.length; index++) {
-            variationList.add(item.choiceOptions![index].options![itemController.variationIndex![index]].replaceAll(' ', ''));
-          }
-          String variationType = '';
-          bool isFirst = true;
-          for (var variation in variationList) {
-            if (isFirst) {
-              variationType = '$variationType$variation';
-              isFirst = false;
-            } else {
-              variationType = '$variationType-$variation';
-            }
-          }
-
-          for (Variation variations in item.variations!) {
-            if (variations.type == variationType) {
-              price = variations.price;
-              variation = variations;
-              stock = variations.stock;
-              break;
-            }
-          }
-        }
-
-        price = price! + variationPrice;
-        double priceWithDiscount = PriceConverter.convertWithDiscount(price, discount, discountType)!;
-        double addonsCost = 0;
-        List<AddOn> addOnIdList = [];
-        List<AddOns> addOnsList = [];
-        for (int index = 0; index < item.addOns!.length; index++) {
-          if (itemController.addOnActiveList[index]) {
-            addonsCost = addonsCost + (item.addOns![index].price! * itemController.addOnQtyList[index]!);
-            addOnIdList.add(AddOn(id: item.addOns![index].id, quantity: itemController.addOnQtyList[index]));
-            addOnsList.add(item.addOns![index]);
-          }
-        }
-        priceWithDiscount = priceWithDiscount;
-        double? priceWithDiscountAndAddons = priceWithDiscount + addonsCost;
-        bool isAvailable = DateConverter.isAvailable(item.availableTimeStarts, item.availableTimeEnds);
+        // Shared pricing/selection math (see item_cart_helper.dart) — one source
+        // of truth for both the sheet and the full-page food details screen.
+        final ItemCartData data = ItemCartHelper.compute(item!, itemController, _newVariation);
+        final double? startingPrice = data.startingPrice;
+        final double? endingPrice = data.endingPrice;
+        final double price = data.price;
+        final double priceWithDiscount = data.priceWithDiscount;
+        final double addonsCost = data.addonsCost;
+        final double? initialDiscount = data.initialDiscount;
+        final double? discount = data.discount;
+        final String? discountType = data.discountType;
+        final int? stock = data.stock;
+        final bool isAvailable = data.isAvailable;
 
         return ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
@@ -421,7 +354,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
 
                     Builder(
                         builder: (context) {
-                          double? cost = PriceConverter.convertWithDiscount((price! * itemController.quantity!), discount, discountType);
+                          double? cost = PriceConverter.convertWithDiscount((price * itemController.quantity!), discount, discountType);
                           double withAddonCost = cost! + addonsCost;
                           return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                             Text('${'total_amount'.tr}:', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor)),
@@ -474,108 +407,13 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                                 ? 'out_of_stock'.tr : widget.isCampaign ? 'order_now'.tr
                                 : (widget.cart != null || itemController.cartIndex != -1) ? 'update_in_cart'.tr : 'add_to_cart'.tr,
                             onPressed: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0) ? null : () async {
-                              String? invalid;
-                              if(_newVariation) {
-                                for(int index=0; index<item.foodVariations!.length; index++) {
-                                  if(!item.foodVariations![index].multiSelect! && item.foodVariations![index].required!
-                                      && !itemController.selectedVariations[index].contains(true)) {
-                                    invalid = '${'choose_a_variation_from'.tr} ${item.foodVariations![index].name}';
-                                    break;
-                                  }else if(item.foodVariations![index].multiSelect! && (item.foodVariations![index].required!
-                                      || itemController.selectedVariations[index].contains(true)) && item.foodVariations![index].min!
-                                      > itemController.selectedVariationLength(itemController.selectedVariations, index)) {
-                                    invalid = '${'select_minimum'.tr} ${item.foodVariations![index].min} '
-                                        '${'and_up_to'.tr} ${item.foodVariations![index].max} ${'options_from'.tr}'
-                                        ' ${item.foodVariations![index].name} ${'variation'.tr}';
-                                    break;
-                                  }
-                                }
-                              }
-
-                              if(Get.find<SplashController>().moduleList != null) {
-                                for(ModuleModel module in Get.find<SplashController>().moduleList!) {
-                                  if(module.id == item.moduleId) {
-                                    Get.find<SplashController>().setModule(module);
-                                    break;
-                                  }
-                                }
-                              }
-
-                              if(invalid != null) {
-                                showCustomSnackBar(invalid, getXSnackBar: true);
-                              }else {
-                                CartModel cartModel = CartModel(
-                                    null, price, priceWithDiscountAndAddons, variation != null ? [variation] : [], itemController.selectedVariations,
-                                    (price! - PriceConverter.convertWithDiscount(price, discount, discountType)!),
-                                    itemController.quantity, addOnIdList, addOnsList, widget.isCampaign, stock, item,  item.quantityLimit
-                                );
-
-                                if (widget.onCartItemAdd != null) {
-                                  widget.onCartItemAdd!(cartModel);
-                                  Get.back();
-                                  return;
-                                }
-
-                                List<OrderVariation> variations = _getSelectedVariations(
-                                  isFoodVariation: Get.find<SplashController>().getModuleConfig(item.moduleType).newVariation!,
-                                  foodVariations: item.foodVariations!, selectedVariations: itemController.selectedVariations,
-                                );
-                                List<int?> listOfAddOnId = _getSelectedAddonIds(addOnIdList: addOnIdList);
-                                List<int?> listOfAddOnQty = _getSelectedAddonQtnList(addOnIdList: addOnIdList);
-
-                                OnlineCart onlineCart = OnlineCart(
-                                  (widget.cart != null || itemController.cartIndex != -1) ? widget.cart?.id ?? cartController.cartList[itemController.cartIndex].id : null,
-                                  widget.isCampaign ? null : item.id, widget.isCampaign ? item.id : null,
-                                  priceWithDiscountAndAddons.toString(), '', variation != null ? [variation] : null,
-                                  Get.find<SplashController>().getModuleConfig(item.moduleType).newVariation! ? variations : null,
-                                  itemController.quantity, listOfAddOnId, addOnsList, listOfAddOnQty, 'Item',
-                                );
-
-                                if(widget.isCampaign) {
-                                  Get.toNamed(RouteHelper.getCheckoutRoute('campaign'), arguments: CheckoutScreen(
-                                    storeId: null, fromCart: false, cartList: [cartModel],
-                                  ));
-                                }else {
-                                  if (Get.find<CartController>().existAnotherStoreItem(
-                                    cartModel.item!.storeId, Get.find<SplashController>().module != null
-                                      ? Get.find<SplashController>().module!.id : Get.find<SplashController>().cacheModule!.id,
-                                  )) {
-                                    Get.dialog(ConfirmationDialog(
-                                      icon: Images.warning,
-                                      title: 'are_you_sure_to_reset'.tr,
-                                      description: Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText!
-                                          ? 'if_you_continue'.tr : 'if_you_continue_without_another_store'.tr,
-                                      onYesPressed: () {
-                                        Get.back();
-                                        Get.find<CartController>().clearCartOnline().then((success) async {
-                                          if(success) {
-                                            await Get.find<CartController>().addToCartOnline(onlineCart);
-                                            Get.back();
-                                            //showCartSnackBar();
-                                          }
-                                        });
-
-                                      },
-                                    ), barrierDismissible: false);
-                                  } else {
-                                    if(widget.cart != null || itemController.cartIndex != -1){
-                                      await Get.find<CartController>().updateCartOnline(onlineCart).then((success) {
-                                        if(success) {
-                                          Get.back();
-                                        }
-                                      });
-                                    } else {
-                                      await Get.find<CartController>().addToCartOnline(onlineCart).then((success) {
-                                        if(success) {
-                                          Get.back();
-                                        }
-                                      });
-                                    }
-
-                                    //showCartSnackBar();
-                                  }
-                                }
-                              }
+                              // Shared cart logic (validation, campaign, reset flow, add/update).
+                              await ItemCartHelper.addOrUpdateCart(
+                                context: context, item: item, itemController: itemController, data: data,
+                                isCampaign: widget.isCampaign, newVariation: _newVariation,
+                                cart: widget.cart, onCartItemAdd: widget.onCartItemAdd,
+                                onSuccess: () => Get.back(),
+                              );
                             },
                           );
                         })),
@@ -605,39 +443,6 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
         );
       }),
     );
-  }
-
-  List<OrderVariation> _getSelectedVariations({required bool isFoodVariation, required List<FoodVariation>? foodVariations, required List<List<bool?>> selectedVariations}) {
-    List<OrderVariation> variations = [];
-    if(isFoodVariation) {
-      for(int i=0; i<foodVariations!.length; i++) {
-        if(selectedVariations[i].contains(true)) {
-          variations.add(OrderVariation(name: foodVariations[i].name, values: OrderVariationValue(label: [])));
-          for(int j=0; j<foodVariations[i].variationValues!.length; j++) {
-            if(selectedVariations[i][j]!) {
-              variations[variations.length-1].values!.label!.add(foodVariations[i].variationValues![j].level);
-            }
-          }
-        }
-      }
-    }
-    return variations;
-  }
-
-  List<int?> _getSelectedAddonIds({required List<AddOn> addOnIdList }) {
-    List<int?> listOfAddOnId = [];
-    for (var addOn in addOnIdList) {
-      listOfAddOnId.add(addOn.id);
-    }
-    return listOfAddOnId;
-  }
-
-  List<int?> _getSelectedAddonQtnList({required List<AddOn> addOnIdList }) {
-    List<int?> listOfAddOnQty = [];
-    for (var addOn in addOnIdList) {
-      listOfAddOnQty.add(addOn.quantity);
-    }
-    return listOfAddOnQty;
   }
 
 }

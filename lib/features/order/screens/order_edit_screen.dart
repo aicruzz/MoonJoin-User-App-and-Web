@@ -67,98 +67,178 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
     super.dispose();
   }
 
+  static const Color _bodyBg = Color(0xFFF6F8F0);
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<OrderEditController>(
       builder: (controller) {
+        final Color bodyColor = Theme.of(context).brightness == Brightness.light ? _bodyBg : Theme.of(context).scaffoldBackgroundColor;
         return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            surfaceTintColor: Colors.transparent,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios,
-                  color: Theme.of(context).textTheme.bodyLarge!.color,
-                  size: 20),
-              onPressed: () => Get.back(),
-            ),
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Edit Order #${widget.orderModel.id}',
-                  style: robotoBold.copyWith(
-                    fontSize: Dimensions.fontSizeLarge,
-                    color: Theme.of(context).textTheme.bodyLarge!.color,
-                  ),
-                ),
-                Text(
-                  'Unpaid • Pending',
-                  style: robotoRegular.copyWith(
-                    fontSize: Dimensions.fontSizeExtraSmall,
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              // Add Items button in app bar
-              TextButton.icon(
-                onPressed: () => _showAddItemsSheet(context, controller),
-                icon: Icon(Icons.add_circle_outline,
-                    color: Theme.of(context).primaryColor, size: 18),
-                label: Text(
-                  'Add Items',
-                  style: robotoMedium.copyWith(
-                    color: Theme.of(context).primaryColor,
-                    fontSize: Dimensions.fontSizeSmall,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          backgroundColor: bodyColor,
           body: controller.isInitializing
               ? const Center(child: CircularProgressIndicator())
-              : controller.editableItems.isEmpty && !controller.isLoading
-                  ? _buildEmptyState(context, controller)
-                  : Column(
-                  children: [
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Dimensions.paddingSizeSmall,
-                          vertical: Dimensions.paddingSizeDefault,
-                        ),
-                        children: [
-                          // Info banner
-                          _buildInfoBanner(context),
-                          const SizedBox(height: Dimensions.paddingSizeDefault),
+              : Column(children: [
+                  _buildHeader(context),
+                  Expanded(
+                    child: controller.editableItems.isEmpty && !controller.isLoading
+                        ? _buildEmptyState(context, controller)
+                        : ListView(
+                            padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+                            children: [
+                              _buildShortageBanner(context),
 
-                          // Items
-                          ...controller.editableItems.map((item) => Padding(
-                                padding: const EdgeInsets.only(
-                                    bottom: Dimensions.paddingSizeSmall),
-                                child: _OrderItemCard(
-                                    item: item, controller: controller),
-                              )),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
+                                child: Text('${'unavailable_items'.tr} (${controller.editableItems.length})',
+                                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).colorScheme.error)),
+                              ),
 
-                          // Order note
-                          const SizedBox(height: Dimensions.paddingSizeSmall),
-                          _buildOrderNoteField(context, controller),
-                          const SizedBox(height: Dimensions.paddingSizeDefault),
+                              ...controller.editableItems.map((item) => Padding(
+                                    padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+                                    child: _OrderItemCard(item: item, controller: controller, onReplace: () => _showAddItemsSheet(context, controller)),
+                                  )),
 
-                          // Summary
-                          _buildOrderSummary(context, controller),
-                          const SizedBox(height: Dimensions.paddingSizeDefault),
-                        ],
-                      ),
-                    ),
-                    _buildBottomBar(context, controller),
-                  ],
-                ),
+                              _buildAddMoreCard(context, controller),
+                              _buildChatCard(context, controller),
+
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+                                child: _buildOrderNoteField(context, controller),
+                              ),
+
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+                                child: _buildOrderSummary(context, controller),
+                              ),
+                              const SizedBox(height: Dimensions.paddingSizeDefault),
+                            ],
+                          ),
+                  ),
+                  if (controller.editableItems.isNotEmpty || controller.isLoading) _buildBottomBar(context, controller),
+                ]),
         );
       },
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      color: Theme.of(context).primaryColor,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeLarge),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: InkWell(
+                onTap: () => Get.back(),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              ),
+            ),
+            const SizedBox(width: Dimensions.paddingSizeDefault),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('edit_unavailable_items'.tr, style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeExtraLarge)),
+              const SizedBox(height: 4),
+              Text('review_items_below_choose'.tr, style: robotoRegular.copyWith(color: Colors.white.withValues(alpha: 0.9), fontSize: Dimensions.fontSizeSmall, height: 1.35)),
+            ])),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            Container(
+              height: 56, width: 56, alignment: Alignment.center,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), shape: BoxShape.circle),
+              child: const Icon(Icons.production_quantity_limits, color: Colors.white, size: 28),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShortageBanner(BuildContext context) {
+    final Color error = Theme.of(context).colorScheme.error;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+      child: Container(
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        decoration: BoxDecoration(color: error.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(Dimensions.radiusLarge)),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.warning_rounded, color: error, size: 28),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('vendor_shortage'.tr, style: robotoBold.copyWith(color: error, fontSize: Dimensions.fontSizeDefault)),
+            const SizedBox(height: 2),
+            Text('items_below_currently_unavailable'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, height: 1.35)),
+          ])),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildAddMoreCard(BuildContext context, OrderEditController controller) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+      child: Container(
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(Dimensions.radiusLarge)),
+        child: Row(children: [
+          Container(
+            height: 46, width: 46, alignment: Alignment.center,
+            decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.15), shape: BoxShape.circle),
+            child: Icon(Icons.add_shopping_cart, color: Theme.of(context).primaryColor, size: 22),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('add_more_items'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+            const SizedBox(height: 2),
+            Text('you_can_add_new_items_to_complete_your_order'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
+          ])),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          InkWell(
+            onTap: () => _showAddItemsSheet(context, controller),
+            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            child: Container(
+              padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                border: Border.all(color: Theme.of(context).primaryColor),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('add_items'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall)),
+                const SizedBox(width: 4),
+                Icon(Icons.add_circle, color: Theme.of(context).primaryColor, size: 18),
+              ]),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildChatCard(BuildContext context, OrderEditController controller) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        child: Row(children: [
+          Container(
+            height: 42, width: 42, alignment: Alignment.center,
+            decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.12), shape: BoxShape.circle),
+            child: Icon(Icons.chat_bubble_outline, color: Theme.of(context).primaryColor, size: 20),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('chat_with_vendor'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+            const SizedBox(height: 2),
+            Text('ask_anything_help_order'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
+          ])),
+          Icon(Icons.chevron_right, color: Theme.of(context).disabledColor, size: 22),
+        ]),
+      ),
     );
   }
 
@@ -177,34 +257,6 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _AddItemsBottomSheet(controller: controller),
-    );
-  }
-
-  Widget _buildInfoBanner(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded,
-              color: Colors.orange, size: 20),
-          const SizedBox(width: Dimensions.paddingSizeSmall),
-          Expanded(
-            child: Text(
-              'Remove unavailable items, adjust quantities, or add new items before resubmitting.',
-              style: robotoRegular.copyWith(
-                fontSize: Dimensions.fontSizeExtraSmall,
-                color: Colors.orange.shade800,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -347,54 +399,40 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
   Widget _buildBottomBar(
       BuildContext context, OrderEditController controller) {
     return Container(
-      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(Dimensions.radiusLarge)),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, -4))
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, -2))],
       ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: controller.isLoading
-                ? null
-                : controller.submitEditedOrder,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(Dimensions.radiusDefault)),
-              elevation: 0,
-            ),
-            child: controller.isLoading
-                ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2.5),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.check_circle_outline_rounded,
-                          color: Colors.white, size: 20),
-                      const SizedBox(width: 8),
-                      Text('Submit Updated Order',
-                          style: robotoBold.copyWith(
-                              color: Colors.white,
-                              fontSize: Dimensions.fontSizeDefault)),
-                    ],
-                  ),
+        top: false,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Row(children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text('order_total'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+              PriceConverter.convertAnimationPrice(controller.orderTotal, textStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
+            ]),
+            const SizedBox(width: Dimensions.paddingSizeDefault),
+            Expanded(child: SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                onPressed: controller.isLoading ? null : controller.submitEditedOrder,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusLarge)),
+                  elevation: 0,
+                ),
+                child: controller.isLoading
+                    ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                    : Text('update_cart'.tr, style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeDefault)),
+              ),
+            )),
+          ]),
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('back_to_cart'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeDefault)),
           ),
-        ),
+        ]),
       ),
     );
   }
@@ -445,150 +483,99 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
 class _OrderItemCard extends StatelessWidget {
   final OrderDetailsModel item;
   final OrderEditController controller;
+  final VoidCallback onReplace;
 
-  const _OrderItemCard({required this.item, required this.controller});
+  const _OrderItemCard({required this.item, required this.controller, required this.onReplace});
 
   @override
   Widget build(BuildContext context) {
-    final String itemName =
-        item.itemDetails?.name ?? 'Item #${item.itemId}';
-    final String image =
-        item.imageFullUrl ?? item.itemDetails?.imageFullUrl ?? '';
+    final String itemName = item.itemDetails?.name ?? 'Item #${item.itemId}';
+    final String image = item.imageFullUrl ?? item.itemDetails?.imageFullUrl ?? '';
     final double itemTotal = (item.price ?? 0) * (item.quantity ?? 1);
+    final bool hasVariant = item.variant != null && item.variant!.isNotEmpty && item.variant != 'null';
+    final bool hasAddons = item.addOns != null && item.addOns!.isNotEmpty;
+
+    final List<(String, String)> detailRows = [
+      if (hasVariant) ('variations'.tr, item.variant!),
+      if (hasAddons) ('extras'.tr, item.addOns!.map((a) => a.name).join(', ')),
+    ];
 
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2))
-        ],
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius:
-                      BorderRadius.circular(Dimensions.radiusSmall),
-                  child: CustomImage(
-                      image: image,
-                      height: 70,
-                      width: 70,
-                      fit: BoxFit.cover),
-                ),
-                const SizedBox(width: Dimensions.paddingSizeSmall),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(itemName,
-                          style: robotoBold.copyWith(
-                              fontSize: Dimensions.fontSizeDefault),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                  if (item.variant != null && item.variant!.isNotEmpty && item.variant != 'null')
-                        Padding(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Text(item.variant!,
-                              style: robotoRegular.copyWith(
-                                  fontSize: Dimensions.fontSizeExtraSmall,
-                                  color: Theme.of(context).disabledColor)),
-                        ),
-               if (item.addOns != null && item.addOns!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Text(
-                              'Add-ons: ${item.addOns!.map((a) => a.name).join(', ')}',
-                              style: robotoRegular.copyWith(
-                                  fontSize: Dimensions.fontSizeExtraSmall,
-                                  color: Theme.of(context).disabledColor),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                      const SizedBox(height: 6),
-                      Text(PriceConverter.convertPrice(itemTotal),
-                          style: robotoBold.copyWith(
-                              fontSize: Dimensions.fontSizeSmall,
-                              color: Theme.of(context).primaryColor)),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => _showRemoveDialog(context),
-                  icon: const Icon(Icons.delete_outline_rounded,
-                      color: Colors.redAccent, size: 22),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            child: CustomImage(image: image, height: 64, width: 64, fit: BoxFit.cover),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(itemName, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault), maxLines: 2, overflow: TextOverflow.ellipsis),
+            if (detailRows.isEmpty) ...[
+              const SizedBox(height: 4),
+              Text(PriceConverter.convertPrice(itemTotal),
+                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyLarge?.color)),
+            ],
+          ])),
+          InkWell(
+            onTap: () => _showRemoveDialog(context),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Theme.of(context).colorScheme.error)),
+              child: Icon(Icons.close, size: 16, color: Theme.of(context).colorScheme.error),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(
-              left: Dimensions.paddingSizeSmall,
-              right: Dimensions.paddingSizeSmall,
-              bottom: Dimensions.paddingSizeSmall,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [_buildQuantityStepper(context)],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ]),
 
-  Widget _buildQuantityStepper(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-        border: Border.all(
-            color:
-                Theme.of(context).disabledColor.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: () => controller.decreaseQuantity(item.itemId!),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Icon(
-                (item.quantity ?? 1) <= 1
-                    ? Icons.delete_outline_rounded
-                    : Icons.remove_rounded,
-                size: 18,
-                color: (item.quantity ?? 1) <= 1
-                    ? Colors.redAccent
-                    : Theme.of(context).textTheme.bodyLarge!.color,
+        if (detailRows.isNotEmpty) Padding(
+          padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+            decoration: BoxDecoration(color: Theme.of(context).disabledColor.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+            child: Column(children: List.generate(detailRows.length, (i) => Padding(
+              padding: EdgeInsets.only(top: i == 0 ? 0 : Dimensions.paddingSizeExtraSmall),
+              child: Row(children: [
+                Text(detailRows[i].$1, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+                Text('  ·  ', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+                Expanded(child: Text(detailRows[i].$2, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor))),
+                InkWell(onTap: onReplace, child: Text('change'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor))),
+              ]),
+            ))),
+          ),
+        ),
+
+        Padding(
+          padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+          child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+            OutlinedButton(
+              onPressed: () => _showRemoveDialog(context),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Theme.of(context).disabledColor.withValues(alpha: 0.4)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
               ),
+              child: Text('remove'.tr, style: robotoMedium.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: Dimensions.fontSizeSmall)),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Text('${item.quantity ?? 1}',
-                style: robotoBold.copyWith(
-                    fontSize: Dimensions.fontSizeDefault)),
-          ),
-          GestureDetector(
-            onTap: () => controller.increaseQuantity(item.itemId!),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Icon(Icons.add_rounded,
-                  size: 18, color: Theme.of(context).primaryColor),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            ElevatedButton(
+              onPressed: onReplace,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor, elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
+              ),
+              child: Text('replace'.tr, style: robotoMedium.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
             ),
-          ),
-        ],
-      ),
+          ]),
+        ),
+      ]),
     );
   }
 

@@ -20,6 +20,7 @@ import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/item_bottom_sheet.dart';
 import 'package:sixam_mart/features/item/screens/item_details_screen.dart';
+import 'package:sixam_mart/features/item/screens/food_details_screen.dart';
 import 'package:sixam_mart/features/item/domain/services/item_service_interface.dart';
 
 class ItemController extends GetxController implements GetxService {
@@ -809,12 +810,19 @@ class ItemController extends GetxController implements GetxService {
 
   void navigateToItemPage(Item? item, BuildContext context, {bool inStore = false, bool isCampaign = false}) {
     if(Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText! || item!.moduleType == 'food') {
-      ResponsiveHelper.isMobile(context) ? Get.bottomSheet(
-        ItemBottomSheet(itemId: item!.id!, inStorePage: inStore, isCampaign: isCampaign, item: item),
-        backgroundColor: Colors.transparent, isScrollControlled: true,
-      ) : Get.dialog(
-        Dialog(child: ItemBottomSheet(itemId: item!.id!, inStorePage: inStore, isCampaign: isCampaign, item: item)),
-      );
+      // MoonJoin: food product browsing now opens the full-page FoodDetailsScreen on
+      // mobile (see product_details_for_only_food). Desktop keeps the existing dialog,
+      // and cart editing continues to use ItemBottomSheet (unchanged).
+      if (ResponsiveHelper.isMobile(context)) {
+        Get.toNamed(
+          RouteHelper.getItemDetailsRoute(item!.id, inStore),
+          arguments: FoodDetailsScreen(itemId: item.id!, inStorePage: inStore, isCampaign: isCampaign, item: item),
+        );
+      } else {
+        Get.dialog(
+          Dialog(child: ItemBottomSheet(itemId: item!.id!, inStorePage: inStore, isCampaign: isCampaign, item: item)),
+        );
+      }
     }else {
       Get.toNamed(RouteHelper.getItemDetailsRoute(item.id, inStore), arguments: ItemDetailsScreen(itemId: item.id!, inStorePage: inStore, isCampaign: isCampaign, item: item));
     }

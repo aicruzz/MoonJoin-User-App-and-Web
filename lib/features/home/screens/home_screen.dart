@@ -33,6 +33,9 @@ import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
+import 'package:sixam_mart/common/widgets/cart_widget.dart';
+import 'package:sixam_mart/features/rental_module/common/widgets/taxi_cart_widget.dart';
+import 'package:sixam_mart/features/rental_module/rental_cart_screen/taxi_cart_screen.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
@@ -46,6 +49,7 @@ import 'package:sixam_mart/features/home/screens/web_new_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/home/widgets/module_view.dart';
+import 'package:sixam_mart/features/home/widgets/module_landing_view.dart';
 import 'package:sixam_mart/features/parcel/screens/parcel_category_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -217,6 +221,9 @@ class _HomeScreenState extends State<HomeScreen> {
           endDrawerEnableOpenDragGesture: false,
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: isParcel ? const ParcelCategoryScreen() : SafeArea(
+            // Module-landing header extends edge-to-edge behind the status bar
+            // (MoonJoin design); per-module homes keep the top inset.
+            top: !showMobileModule,
             child: RefreshIndicator(
               onRefresh: () async {
                 splashController.setRefreshing(true);
@@ -266,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: ResponsiveHelper.isDesktop(context) ? WebNewHomeScreen(
                 scrollController: _scrollController,
-              ) : CustomScrollView(
+              ) : showMobileModule ? ModuleLandingView(scrollController: _scrollController) : CustomScrollView(
                 controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
@@ -367,6 +374,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             ]);
                           }),
                           onTap: () => Get.toNamed(RouteHelper.getNotificationRoute()),
+                        ),
+
+                        const SizedBox(width: Dimensions.paddingSizeDefault),
+
+                        /// Cart (relocated from the bottom navigation into the header)
+                        isTaxi ? InkWell(
+                          onTap: () => Get.to(() => const TaxiCartScreen()),
+                          child: TaxiCartWidget(color: Theme.of(context).textTheme.bodyLarge!.color, size: 28),
+                        ) : InkWell(
+                          onTap: () => Get.toNamed(RouteHelper.getCartRoute()),
+                          child: CartWidget(color: Theme.of(context).textTheme.bodyLarge!.color, size: 28),
                         ),
                       ]),
                     )),
