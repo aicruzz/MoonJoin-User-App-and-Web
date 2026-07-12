@@ -27,14 +27,17 @@ class TimeSlotSection extends StatelessWidget {
     bool isGuestLoggedIn = AuthHelper.isGuestLoggedIn();
     return Column(children: [
       !isGuestLoggedIn && storeId == null && checkoutController.store!.scheduleOrder! && cartList!.isNotEmpty && cartList![0]!.item!.availableDateStarts == null ? Container(
+        // MoonJoin "Preference Time" card (Figma).
+        margin: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
           boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Text('preference_time'.tr, style: robotoMedium),
+            Text('preference_time'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
             const SizedBox(width: Dimensions.paddingSizeExtraSmall),
 
             JustTheTooltip(
@@ -76,26 +79,39 @@ class TimeSlotSection extends StatelessWidget {
             },
             child: Container(
               decoration: BoxDecoration(
-                  border: Border.all(color: Theme.of(context).primaryColor, width: 0.3),
+                  border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.3), width: 1),
                   borderRadius: BorderRadius.circular(Dimensions.radiusDefault)
               ),
-              height: 50,
-              child: Row(children: [
-                const SizedBox(width: Dimensions.paddingSizeLarge),
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+              child: Builder(builder: (context) {
+                bool closed = (checkoutController.selectedDateSlot == 0 && todayClosed) || (checkoutController.selectedDateSlot == 1 && tomorrowClosed);
+                bool instant = checkoutController.preferableTime.isEmpty;
+                return Row(children: [
+                  Icon(Icons.access_time, color: Theme.of(context).primaryColor, size: 24),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                Expanded(
-                  child: ((checkoutController.selectedDateSlot == 0 && todayClosed) || (checkoutController.selectedDateSlot == 1 && tomorrowClosed))
-                    ? Center(child: Text(module!.showRestaurantText! ? 'restaurant_is_closed'.tr : 'store_is_closed'.tr))
-                    : Text(checkoutController.preferableTime.isNotEmpty ? checkoutController.preferableTime : 'instant'.tr),
-                ),
+                  Expanded(
+                    child: closed
+                      ? Text(module!.showRestaurantText! ? 'restaurant_is_closed'.tr : 'store_is_closed'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))
+                      : Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                          Text(instant ? 'instant_delivery'.tr : checkoutController.preferableTime, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                          if(instant) Text('as_soon_as_possible'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+                        ]),
+                  ),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                const Icon(Icons.arrow_drop_down, size: 28),
-                Icon(Icons.access_time_filled_outlined, color: Theme.of(context).primaryColor),
-                const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-              ]),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                    ),
+                    padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                    child: Icon(Icons.keyboard_arrow_down, size: 22, color: Theme.of(context).textTheme.bodyLarge?.color),
+                  ),
+                ]);
+              }),
             ),
           ),
-          const SizedBox(height: Dimensions.paddingSizeLarge),
         ]),
       ) : const SizedBox(),
 

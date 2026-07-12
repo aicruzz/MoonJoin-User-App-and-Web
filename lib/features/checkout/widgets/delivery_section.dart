@@ -37,16 +37,19 @@ class DeliverySection extends StatelessWidget {
         guestNameTextEditingController: guestNameTextEditingController, guestNumberTextEditingController: guestNumberTextEditingController,
         guestEmailController: guestEmailController, guestEmailNode: guestEmailNode,
       ) : !takeAway ? Container(
+        // MoonJoin Checkout "Deliver To" card (Figma).
+        margin: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeDefault),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
           boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('deliver_to'.tr, style: robotoMedium),
-            TextButton.icon(
-              onPressed: () async {
+            Text('deliver_to'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            InkWell(
+              onTap: () async {
                 var address = await Get.toNamed(RouteHelper.getAddAddressRoute(true, false, checkoutController.store!.zoneId));
                 if(address != null) {
                   checkoutController.getDistanceInKM(
@@ -58,11 +61,18 @@ class DeliverySection extends StatelessWidget {
                   checkoutController.floorController.text = address.floor ?? '';
                 }
               },
-              icon: const Icon(Icons.add, size: 20),
-              label: Text('add_new'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+              child: Padding(
+                padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.add, size: 18, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 2),
+                  Text('add_new_address'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor)),
+                ]),
+              ),
             ),
           ]),
-
+          const SizedBox(height: Dimensions.paddingSizeDefault),
 
           isDesktop ?  Stack(children: [
             Container(
@@ -147,14 +157,8 @@ class DeliverySection extends StatelessWidget {
                 ),
               ),
             ),
-          ]) : Container(
-            constraints: BoxConstraints(minHeight: ResponsiveHelper.isDesktop(context) ? 90 : 75),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-            ),
-            child: CustomDropdown<int>(
-
+          ]) : CustomDropdown<int>(
+              icon: Icon(Icons.chevron_right, color: Theme.of(context).primaryColor),
               onChange: (int? value, int index) {
                 checkoutController.getDistanceInKM(
                   LatLng(
@@ -171,7 +175,6 @@ class DeliverySection extends StatelessWidget {
 
               },
               dropdownButtonStyle: DropdownButtonStyle(
-                height: 45,
                 padding: const EdgeInsets.symmetric(
                   vertical: Dimensions.paddingSizeExtraSmall,
                   horizontal: Dimensions.paddingSizeExtraSmall,
@@ -189,18 +192,18 @@ class DeliverySection extends StatelessWidget {
                 fromAddress: false, fromCheckout: true,
               ),
             ),
-          ),
-          const SizedBox(height: Dimensions.paddingSizeLarge),
+          const SizedBox(height: Dimensions.paddingSizeDefault),
 
           !isDesktop ? CustomTextField(
-            labelText: 'street_number'.tr,
-            titleText: 'write_street_number'.tr,
+            titleText: 'street_number'.tr,
+            showLabelText: false,
+            prefixIcon: Icons.location_on_outlined,
             inputType: TextInputType.streetAddress,
             focusNode: checkoutController.streetNode,
             nextFocus: checkoutController.houseNode,
             controller: checkoutController.streetNumberController,
           ) : const SizedBox(),
-          SizedBox(height: !isDesktop ? Dimensions.paddingSizeLarge : 0),
+          SizedBox(height: !isDesktop ? Dimensions.paddingSizeSmall : 0),
 
           Row(
               children: [
@@ -218,8 +221,9 @@ class DeliverySection extends StatelessWidget {
 
                 Expanded(
                   child: CustomTextField(
-                    titleText: 'write_house_number'.tr,
-                    labelText: 'house'.tr,
+                    titleText: 'house_apartment'.tr,
+                    showLabelText: false,
+                    prefixIcon: Icons.home_outlined,
                     inputType: TextInputType.text,
                     focusNode: checkoutController.houseNode,
                     nextFocus: checkoutController.floorNode,
@@ -230,18 +234,17 @@ class DeliverySection extends StatelessWidget {
 
                 Expanded(
                   child: CustomTextField(
-                    titleText: 'write_floor_number'.tr,
-                    labelText: 'floor'.tr,
+                    titleText: 'floor_optional'.tr,
+                    showLabelText: false,
+                    prefixIcon: Icons.apartment_outlined,
                     inputType: TextInputType.text,
                     focusNode: checkoutController.floorNode,
                     inputAction: TextInputAction.done,
                     controller: checkoutController.floorController,
                   ),
                 ),
-                //const SizedBox(height: Dimensions.paddingSizeLarge),
               ]
           ),
-          const SizedBox(height: Dimensions.paddingSizeLarge),
         ]),
       ) : const SizedBox(),
     ]);

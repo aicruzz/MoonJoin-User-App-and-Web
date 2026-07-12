@@ -14,6 +14,7 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
@@ -34,9 +35,7 @@ class PaymentMethodBottomSheet extends StatefulWidget {
 }
 
 class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
-  bool canSelectWallet = true;
   bool notHideCod = true;
-  bool notHideWallet = true;
   bool notHideDigital = true;
   final JustTheController tooltipController = JustTheController();
   final TextEditingController _amountController = TextEditingController();
@@ -63,12 +62,7 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
 
   void configurePartialPayment() {
     if(!AuthHelper.isGuestLoggedIn()) {
-      double walletBalance = Get.find<ProfileController>().userInfoModel?.walletBalance??0;
-      if(walletBalance < widget.totalPrice){
-        canSelectWallet = false;
-      }
       if(Get.find<CheckoutController>().isPartialPay){
-        notHideWallet = false;
         if(Get.find<SplashController>().configModel!.partialPaymentMethod! == 'cod'){
           notHideCod = true;
           notHideDigital = false;
@@ -80,7 +74,6 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
           notHideDigital = true;
         }
       } else {
-        notHideWallet = false;
         notHideCod = true;
         notHideDigital = true;
       }
@@ -135,7 +128,24 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
             ),
             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
-            Text('choose_payment_method'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            // MoonJoin premium hero: title + subtitle + total on the left, Figma bank illustration on the right.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text('choose_payment_method'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
+                  const SizedBox(height: 2),
+                  Text('choose_how_you_would_like_to_pay_securely'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+                  const SizedBox(height: Dimensions.paddingSizeDefault),
+                  Text('total_amount'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+                  const SizedBox(height: 2),
+                  Text(PriceConverter.convertPrice(widget.totalPrice), maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 6, color: Theme.of(context).primaryColor)),
+                ])),
+                const SizedBox(width: Dimensions.paddingSizeSmall),
+                Image.asset(Images.virtualAccountBank, width: 96, height: 96, fit: BoxFit.contain),
+              ]),
+            ),
             const SizedBox(height: Dimensions.paddingSizeSmall),
 
             Flexible(
@@ -144,18 +154,14 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
                 child: Column(
                   children: [
 
-                    Text('total_bill'.tr, style: robotoMedium.copyWith(fontSize: 14, color: Colors.grey.shade700)),
-                    const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-                    Text(PriceConverter.convertPrice(widget.totalPrice), style: robotoMedium.copyWith(fontSize: 20, color: Theme.of(context).primaryColor)),
-                    const SizedBox(height: Dimensions.paddingSizeLarge),
-
                     // Wallet section — virtual account details (9PSB) are embedded inside
                     walletView(checkoutController),
 
                     widget.isCashOnDeliveryActive && notHideCod ? paymentButtonView(
                       padding: EdgeInsets.only(bottom: Dimensions.paddingSizeDefault),
                       title: 'cash_on_delivery'.tr,
+                      subtitle: 'pay_when_your_order_arrives'.tr,
+                      iconData: Icons.payments_outlined,
                       isSelected: checkoutController.paymentMethodIndex == 0,
                       disablePayments: disablePayments,
                       onTap: disablePayments ? null : (){
@@ -171,50 +177,45 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
                     widget.isCashOnDeliveryActive && notHideCod && widget.paymentModel == null ? changeAmountView(checkoutController) : const SizedBox(),
 
                     // Digital payments — excludes 9PSB
-                    widget.isDigitalPaymentActive && notHideDigital && nonPSBMethods.isNotEmpty ? Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                        border: Border.all(color: Theme.of(context).disabledColor, width: 0.2),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                            child: Text('pay_via_online'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: disablePayments ? Theme.of(context).disabledColor : Theme.of(context).textTheme.bodyLarge!.color)),
-                          ),
+                    widget.isDigitalPaymentActive && notHideDigital && nonPSBMethods.isNotEmpty ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall, left: 2),
+                          child: Text('pay_via_online'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+                        ),
 
-                          ListView.builder(
-                            itemCount: nonPSBMethods.length,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            itemBuilder: (context, index) {
-                              final paymentMethod = nonPSBMethods[index];
-                              bool isSelected = checkoutController.paymentMethodIndex == 2 && paymentMethod.getWay! == checkoutController.digitalPaymentName;
+                        ListView.builder(
+                          itemCount: nonPSBMethods.length,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemBuilder: (context, index) {
+                            final paymentMethod = nonPSBMethods[index];
+                            bool isSelected = checkoutController.paymentMethodIndex == 2 && paymentMethod.getWay! == checkoutController.digitalPaymentName;
 
-                              return paymentButtonView(
-                                padding: EdgeInsets.only(
-                                  bottom: index == nonPSBMethods.length - 1 ? 0 : Dimensions.paddingSizeSmall,
-                                ),
-                                disablePayments: disablePayments,
-                                onTap: disablePayments ? null : () {
-                                  checkoutController.setPaymentMethod(2);
-                                  checkoutController.changeDigitalPaymentName(paymentMethod.getWay!);
-                                  if(showChangeAmount) {
-                                    setState(() {
-                                      showChangeAmount = false;
-                                    });
-                                  }
-                                },
-                                title: paymentMethod.getWayTitle!,
-                                isSelected: isSelected,
-                                image: paymentMethod.getWayImageFullUrl,
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                            return paymentButtonView(
+                              padding: EdgeInsets.only(
+                                bottom: index == nonPSBMethods.length - 1 ? 0 : Dimensions.paddingSizeSmall,
+                              ),
+                              disablePayments: disablePayments,
+                              onTap: disablePayments ? null : () {
+                                checkoutController.setPaymentMethod(2);
+                                checkoutController.changeDigitalPaymentName(paymentMethod.getWay!);
+                                if(showChangeAmount) {
+                                  setState(() {
+                                    showChangeAmount = false;
+                                  });
+                                }
+                              },
+                              title: paymentMethod.getWayTitle!,
+                              subtitle: 'pay_securely_using_supported_gateways'.tr,
+                              isSelected: isSelected,
+                              image: paymentMethod.getWayImageFullUrl,
+                            );
+                          },
+                        ),
+                      ],
                     ) : const SizedBox(),
                     const SizedBox(height: Dimensions.paddingSizeDefault),
 
@@ -327,43 +328,70 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
           },
           radius: Dimensions.radiusSmall,
           padding: EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-          child: Text(showChangeAmount ? 'see_less'.tr : 'see_more'.tr, style: robotoBold.copyWith(color: Colors.blue)),
+          child: Text(showChangeAmount ? 'see_less'.tr : 'see_more'.tr, style: robotoBold.copyWith(color: Theme.of(context).primaryColor)),
         ),
       const SizedBox(height: Dimensions.paddingSizeSmall),
     ]);
   }
 
-  Widget paymentButtonView({required String title, String? image, required bool isSelected, required Function? onTap, bool disablePayments = false, bool isDigitalPayment = false, required EdgeInsetsGeometry padding}) {
+  // MoonJoin premium payment card (Figma): icon chip + title + description + animated radio.
+  Widget paymentButtonView({required String title, String? subtitle, String? image, IconData? iconData, required bool isSelected,
+    required Function? onTap, bool disablePayments = false, required EdgeInsetsGeometry padding}) {
+    Color primary = Theme.of(context).primaryColor;
+    Color titleColor = disablePayments ? Theme.of(context).disabledColor : Theme.of(context).textTheme.bodyLarge!.color!;
     return Padding(
       padding: padding,
       child: InkWell(
         onTap: onTap as void Function()?,
-        child: Container(
-          decoration: image != null ? null : BoxDecoration(
-            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-            border: Border.all(color: isSelected && isDigitalPayment ? Theme.of(context).primaryColor.withValues(alpha: 0.2) : Theme.of(context).disabledColor.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: isSelected ? primary.withValues(alpha: 0.06) : Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+            border: Border.all(color: isSelected ? primary : Theme.of(context).disabledColor.withValues(alpha: 0.25), width: isSelected ? 1.2 : 1),
+            boxShadow: isSelected ? [] : [BoxShadow(color: primary.withValues(alpha: 0.05), blurRadius: 10)],
           ),
-          padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Row(children: [
 
-            image != null ? CustomImage(
-              height: 15, fit: BoxFit.contain,
-              image: image, color: disablePayments ? Theme.of(context).disabledColor : null,
-            ) : const SizedBox(),
-            const SizedBox(width: Dimensions.paddingSizeSmall),
+            Container(
+              height: 44, width: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isSelected ? primary.withValues(alpha: 0.12) : Theme.of(context).disabledColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+              ),
+              child: image != null ? Padding(
+                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                child: CustomImage(height: 24, width: 24, fit: BoxFit.contain, image: image, color: disablePayments ? Theme.of(context).disabledColor : null),
+              ) : Icon(iconData ?? Icons.payments_outlined, size: 22, color: disablePayments ? Theme.of(context).disabledColor : primary),
+            ),
+            const SizedBox(width: Dimensions.paddingSizeDefault),
 
             Expanded(
-              child: Text(
-                title,
-                style: isDigitalPayment ? robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: disablePayments ? Theme.of(context).disabledColor : Theme.of(context).textTheme.bodyLarge!.color) :
-                robotoSemiBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: disablePayments ? Theme.of(context).disabledColor : Theme.of(context).textTheme.bodyLarge!.color),
-              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: titleColor)),
+                if(subtitle != null && subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+                ],
+              ]),
             ),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
 
-            Icon(
-              isSelected ? Icons.check_circle : Icons.circle_outlined,
-              size: 24,
-              color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withValues(alpha: 0.5),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                key: ValueKey(isSelected),
+                size: 24,
+                color: isSelected ? primary : Theme.of(context).disabledColor.withValues(alpha: 0.5),
+              ),
             ),
 
           ]),
@@ -386,73 +414,74 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
     return Get.find<SplashController>().configModel!.customerWalletStatus == 1
         && Get.find<ProfileController>().userInfoModel != null && (checkoutController.distance != -1)
         && Get.find<ProfileController>().userInfoModel!.walletBalance! > 0 ? Column(children: [
+      // MoonJoin Wallet Balance card (Figma Virtual Account Payment): green card + white "Use Wallet" button.
       Container(
-        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
         margin: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeLarge),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-          border: Border.all(color: Theme.of(context).disabledColor, width: 0.3),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+            colors: [const Color(0xFF15702F), Theme.of(context).primaryColor],
+          ),
+          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.25), blurRadius: 14, offset: const Offset(0, 6))],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: Row(children: [
+          const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 30),
+          const SizedBox(width: Dimensions.paddingSizeDefault),
 
-                Text(isWalletSelected ? 'wallet_remaining_balance'.tr : 'wallet_balance'.tr, style: robotoMedium.copyWith(fontSize: 12, color: Colors.grey.shade700)),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text(isWalletSelected ? 'wallet_remaining_balance'.tr : 'wallet_balance'.tr, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: Colors.white.withValues(alpha: 0.92))),
+            const SizedBox(height: 4),
+            Text(PriceConverter.convertPrice(isWalletSelected ? balance : walletBalance), maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge + 3, color: Colors.white)),
+          ])),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                Row(children: [
-                  Text(
-                    PriceConverter.convertPrice(isWalletSelected ? balance : walletBalance),
-                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraLarge),
-                  ),
-
-                  Text(
-                    isWalletSelected ? ' (${'applied'.tr})' : '',
-                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor),
-                  ),
-                ])
-              ]),
-
-              CustomInkWell(
-                onTap: () {
-                  if(isWalletSelected) {
-                    checkoutController.setPaymentMethod(-1);
-                    if(checkoutController.isPartialPay) {
-                      checkoutController.changePartialPayment();
-                    }
-                  } else {
-                    if(checkoutController.isPartialPay) {
-                      checkoutController.changePartialPayment();
-                    }
-                    checkoutController.setPaymentMethod(1);
-                    if(walletBalance < widget.totalPrice) {
-                      checkoutController.changePartialPayment();
-                    }
-                    if(showChangeAmount) {
-                      setState(() {
-                        showChangeAmount = false;
-                      });
-                    }
-                  }
-                  configurePartialPayment();
-                },
-                radius: 5,
-                child: isWalletSelected ? const Icon(Icons.clear, color: Colors.red) : Container(
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), border: Border.all(color: Theme.of(context).primaryColor, width: 1)),
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 20),
-                  child: Text('apply'.tr, style: robotoMedium.copyWith(fontSize: 12, color: Theme.of(context).primaryColor)),
-                ),
+          // White "Use Wallet" button — existing apply/clear (select/deselect) logic preserved verbatim.
+          CustomInkWell(
+            onTap: () {
+              if(isWalletSelected) {
+                checkoutController.setPaymentMethod(-1);
+                if(checkoutController.isPartialPay) {
+                  checkoutController.changePartialPayment();
+                }
+              } else {
+                if(checkoutController.isPartialPay) {
+                  checkoutController.changePartialPayment();
+                }
+                checkoutController.setPaymentMethod(1);
+                if(walletBalance < widget.totalPrice) {
+                  checkoutController.changePartialPayment();
+                }
+                if(showChangeAmount) {
+                  setState(() {
+                    showChangeAmount = false;
+                  });
+                }
+              }
+              configurePartialPayment();
+            },
+            radius: Dimensions.radiusDefault,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall + 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFCFDFD),
+                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                border: Border.all(color: const Color(0xFFD9E5DE)),
               ),
-            ]),
-
-            // ── 9PSB virtual account section — shown only when 9PSB is active ──
-            if(_is9PSBActive) ...[
-              const SizedBox(height: Dimensions.paddingSizeDefault),
-              _virtualAccountFundSection(),
-            ],
-          ],
-        ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                if(isWalletSelected) ...[
+                  Icon(Icons.check_circle, size: 16, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 4),
+                ],
+                Text(isWalletSelected ? 'applied'.tr : 'use_wallet'.tr,
+                    style: robotoSemiBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor)),
+              ]),
+            ),
+          ),
+        ]),
       ),
 
       if(isWalletSelected && !checkoutController.isPartialPay)
@@ -480,8 +509,8 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             child: Column(children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('paid_by_wallet'.tr, style: robotoMedium.copyWith(fontSize: 14, color: Colors.grey.shade700)),
-                Text(PriceConverter.convertPrice(walletBalance), style: robotoMedium.copyWith(fontSize: 14, color: Colors.grey.shade700))
+                Text('paid_by_wallet'.tr, style: robotoMedium.copyWith(fontSize: 14, color: Theme.of(context).disabledColor)),
+                Text(PriceConverter.convertPrice(walletBalance), style: robotoMedium.copyWith(fontSize: 14, color: Theme.of(context).disabledColor))
               ]),
               const SizedBox(height: 5),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -496,118 +525,129 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
           const SizedBox(height: Dimensions.paddingSizeSmall),
         ]),
 
+      // ── Virtual Account details section (9PSB wallet funding) — separate premium card ──
+      if(_is9PSBActive) ...[
+        const SizedBox(height: Dimensions.paddingSizeDefault),
+        _virtualAccountFundSection(),
+      ],
+
       const SizedBox(height: Dimensions.paddingSizeDefault),
 
     ]) : const SizedBox();
   }
 
-  /// The "Add Fund to Wallet with Virtual Account" block shown inside the wallet card.
-  /// Visible whenever 9PSB is in the active payment methods list — no selection needed.
+  /// "Your Virtual Account Details" — reproduces the Figma Virtual Account Payment card
+  /// (permanent 9PSB wallet funding, so NO expiry/timer). Data/copy/logic unchanged.
   Widget _virtualAccountFundSection() {
     return GetBuilder<ProfileController>(builder: (profileController) {
       final data = profileController.virtualAccountData;
 
-      return Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.15)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('your_virtual_account_details'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+        const SizedBox(height: Dimensions.paddingSizeDefault),
 
-            // Header row
-            Padding(
-              padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-              child: Row(children: [
-                Icon(Icons.account_balance_wallet_outlined, size: 16, color: Theme.of(context).primaryColor),
-                const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-                Expanded(
-                  child: Text(
-                    'Add Fund to Wallet with Virtual Account'.tr,
-                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
-                  ),
-                ),
-              ]),
+        if(data != null) ...[
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+              border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
+              boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
             ),
+            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-            if(data != null) ...[
-              Divider(height: 1, color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
+              // Bank Name (with logo chip)  |  Account Number (with copy)
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                  Container(
+                    height: 46, width: 46, alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                    ),
+                    child: Icon(Icons.account_balance_rounded, size: 24, color: Theme.of(context).primaryColor),
+                  ),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
+                  Expanded(child: _virtualAccountInfoRow(label: 'bank_name'.tr, value: data['bank_name']?.toString() ?? 'N/A')),
+                ])),
+                const SizedBox(width: Dimensions.paddingSizeDefault),
 
-              Padding(
-                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    _virtualAccountInfoRow(label: 'bank_name'.tr, value: data['bank_name']?.toString() ?? 'N/A'),
-                    const Divider(height: 15),
-
-                    _virtualAccountInfoRow(label: 'account_name'.tr, value: data['account_name']?.toString() ?? 'N/A'),
-                    const Divider(height: 15),
-
-                    Row(children: [
-                      Expanded(child: _virtualAccountInfoRow(label: 'account_number'.tr, value: data['account_number']?.toString() ?? 'N/A')),
-                      if (data['account_number'] != null) InkWell(
-                        onTap: () async {
-                          await Clipboard.setData(ClipboardData(text: data['account_number'].toString()));
-                          if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
-                          Get.rawSnackbar(
-                            message: 'account_number_copied'.tr,
-                            duration: const Duration(seconds: 2),
-                            snackPosition: SnackPosition.TOP,
-                            backgroundColor: Colors.black87,
-                            messageText: Text(
-                              'account_number_copied'.tr,
-                              style: robotoMedium.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),
-                            ),
-                            borderRadius: Dimensions.radiusSmall.toDouble(),
-                            margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                            isDismissible: true,
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Icon(Icons.copy_rounded, size: 16, color: Theme.of(context).cardColor),
-                        ),
-                      ),
-                    ]),
-
-                    const SizedBox(height: Dimensions.paddingSizeDefault),
-                    _virtualAccountInstructions(),
+                Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(child: _virtualAccountInfoRow(
+                    label: 'account_number'.tr,
+                    value: data['account_number']?.toString() ?? 'N/A',
+                  )),
+                  if(data['account_number'] != null) ...[
+                    const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                    _copyAccountNumberButton(data['account_number'].toString()),
                   ],
-                ),
-              ),
-            ] else ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Dimensions.paddingSizeSmall, 0,
-                  Dimensions.paddingSizeSmall, Dimensions.paddingSizeSmall,
-                ),
-                child: Text(
-                  'transfer_to_virtual_account_to_top_up_wallet'.tr,
-                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor),
-                ),
-              ),
-            ],
+                ])),
+              ]),
 
-          ],
-        ),
-      );
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault),
+                child: Divider(height: 1, color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
+              ),
+
+              _virtualAccountInfoRow(label: 'account_name'.tr, value: data['account_name']?.toString() ?? 'N/A'),
+            ]),
+          ),
+          const SizedBox(height: Dimensions.paddingSizeDefault),
+          _virtualAccountInstructions(),
+        ] else ...[
+          Text(
+            'transfer_to_virtual_account_to_top_up_wallet'.tr,
+            style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+          ),
+        ],
+      ]);
     });
+  }
+
+  // Copy-account-number button — 44x44 tap target, soft-green MoonJoin treatment, ripple.
+  // Clipboard + snackbar behavior unchanged.
+  Widget _copyAccountNumberButton(String accountNumber) {
+    return Material(
+      color: Theme.of(context).primaryColor.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () async {
+          await Clipboard.setData(ClipboardData(text: accountNumber));
+          if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
+          Get.rawSnackbar(
+            message: 'account_number_copied'.tr,
+            duration: const Duration(seconds: 2),
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.black87,
+            messageText: Text(
+              'account_number_copied'.tr,
+              style: robotoMedium.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),
+            ),
+            borderRadius: Dimensions.radiusSmall.toDouble(),
+            margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+            isDismissible: true,
+          );
+        },
+        splashColor: Theme.of(context).primaryColor.withValues(alpha: 0.20),
+        highlightColor: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+        child: SizedBox(
+          width: 44, height: 44,
+          child: Icon(Icons.copy_rounded, size: 20, color: Theme.of(context).primaryColor),
+        ),
+      ),
+    );
   }
 
   Widget _virtualAccountInfoRow({required String label, required String value}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
-      const SizedBox(height: 2),
-      Text(value, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+      Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
+      const SizedBox(height: 6),
+      Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, letterSpacing: 0.3, color: Theme.of(context).textTheme.bodyLarge?.color)),
     ]);
   }
 
@@ -621,51 +661,61 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
         border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Icon(Icons.info_outline_rounded, size: 14, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 5),
+            Container(
+              height: 22, width: 22, alignment: Alignment.center,
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor, shape: BoxShape.circle),
+              child: Icon(Icons.info_outline_rounded, size: 13, color: Theme.of(context).cardColor),
+            ),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
             Text(
-              'How to Fund your Wallet'.tr,
-              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor),
+              'important_instructions'.tr,
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
             ),
           ]),
-          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-          ...List.generate(steps.length, (i) => Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Row(
+          const SizedBox(height: Dimensions.paddingSizeSmall),
+          ...List.generate(steps.length, (i) => Column(children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  height: 16, width: 16,
-                  margin: const EdgeInsets.only(top: 1, right: 7),
+                  height: 20, width: 20,
+                  margin: const EdgeInsets.only(top: 1, right: Dimensions.paddingSizeSmall),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '${i + 1}',
-                    style: robotoMedium.copyWith(fontSize: 9, color: Theme.of(context).cardColor),
+                    style: robotoBold.copyWith(fontSize: 10, color: Theme.of(context).primaryColor),
                   ),
                 ),
                 Expanded(
-                  child: Text(
-                    steps[i],
-                    style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).textTheme.bodyMedium!.color),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text(
+                      steps[i],
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyMedium!.color),
+                    ),
                   ),
                 ),
               ],
             ),
-          )),
+            if(i != steps.length - 1) Padding(
+              padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+              child: Divider(height: 1, color: Theme.of(context).primaryColor.withValues(alpha: 0.10)),
+            ),
+          ])),
         ],
       ),
     );

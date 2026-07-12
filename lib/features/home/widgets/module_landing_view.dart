@@ -188,7 +188,9 @@ class ModuleLandingView extends StatelessWidget {
       final orders = orderController.runningOrderModel?.orders;
       if (orders != null) {
         for (final o in orders) {
-          if ((o.unavailableItemNote ?? '').trim().isNotEmpty) { flagged = o; break; }
+          // Reviewable = a still-pending order the vendor flagged with an
+          // unavailable-item note. Resolved/advanced orders drop off automatically.
+          if (o.orderStatus == 'pending' && (o.unavailableItemNote ?? '').trim().isNotEmpty) { flagged = o; break; }
         }
       }
       if (flagged == null) return const SizedBox();

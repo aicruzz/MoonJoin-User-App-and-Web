@@ -13,19 +13,22 @@ class NoteAndPrescriptionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('additional_note'.tr, style: robotoMedium),
-      const SizedBox(height: Dimensions.paddingSizeSmall),
+      Row(children: [
+        Icon(Icons.description_outlined, size: 22, color: Theme.of(context).textTheme.bodyLarge?.color),
+        const SizedBox(width: Dimensions.paddingSizeSmall),
+        Text('additional_note'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+      ]),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
 
       CustomTextField(
         controller: checkoutController.noteController,
-        titleText: 'please_provide_extra_napkin'.tr,
+        titleText: 'add_a_note_for_the_restaurant_or_rider'.tr,
         showLabelText: false,
         maxLines: 3,
         inputType: TextInputType.multiline,
         inputAction: TextInputAction.done,
         capitalization: TextCapitalization.sentences,
       ),
-      const SizedBox(height: Dimensions.paddingSizeLarge),
 
       /*storeId == null && Get.find<SplashController>().configModel!.moduleConfig!.module!.orderAttachment! ? Column(
         crossAxisAlignment: CrossAxisAlignment.start,

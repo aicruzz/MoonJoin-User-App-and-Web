@@ -386,7 +386,8 @@ class _CartScreenState extends State<CartScreen> {
 
                   _notAvailableCard(context, cartController),
 
-                  _chatWithVendorCard(context, cartController),
+                  // Chat with Vendor is only available after an order is placed
+                  // (chat is order-scoped) — not exposed on the cart.
 
                   suggestedItemView(cartController.cartList),
 
@@ -571,34 +572,6 @@ class _CartScreenState extends State<CartScreen> {
             IconButton(onPressed: () => cartController.setAvailableIndex(-1), icon: const Icon(Icons.clear, size: 18)),
           ]) : const SizedBox(),
         ]),
-      ),
-    );
-  }
-
-  Widget _chatWithVendorCard(BuildContext context, CartController cartController) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
-      child: InkWell(
-        onTap: () => _openStore(cartController),
-        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-        child: Container(
-          decoration: _cardDeco(context),
-          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-          child: Row(children: [
-            Container(
-              height: 42, width: 42, alignment: Alignment.center,
-              decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.12), shape: BoxShape.circle),
-              child: Icon(Icons.chat_bubble_outline, color: Theme.of(context).primaryColor, size: 20),
-            ),
-            const SizedBox(width: Dimensions.paddingSizeSmall),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('chat_with_vendor'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
-              const SizedBox(height: 2),
-              Text('have_a_question_or_need_help'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
-            ])),
-            Icon(Icons.chevron_right, color: Theme.of(context).disabledColor, size: 22),
-          ]),
-        ),
       ),
     );
   }

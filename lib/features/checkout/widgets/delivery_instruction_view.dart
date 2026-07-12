@@ -22,11 +22,14 @@ class _DeliveryInstructionViewState extends State<DeliveryInstructionView> {
   Widget build(BuildContext context) {
 
     return Container(
+      // MoonJoin "Add More Delivery Instruction" card (Figma).
+      margin: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
         boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeExtraSmall),
+      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeExtraSmall),
       child: GetBuilder<CheckoutController>(
         builder: (orderController) {
           return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -44,10 +47,11 @@ class _DeliveryInstructionViewState extends State<DeliveryInstructionView> {
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
-                child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text('add_more_delivery_instruction'.tr, style: robotoMedium),
-
-                  Icon(Icons.add),
+                child: Row(children: [
+                  Icon(Icons.description_outlined, size: 22, color: Theme.of(context).textTheme.bodyLarge?.color),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
+                  Expanded(child: Text('add_more_delivery_instruction'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
+                  Icon(Icons.add, color: Theme.of(context).primaryColor),
                 ]),
               ),
             ),

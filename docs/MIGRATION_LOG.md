@@ -323,6 +323,184 @@ Applies to **every** remaining screen (also codified in `CLAUDE.md` → "Compone
 - **YOUR CART — APPROVED & FROZEN by the user.** Permanent baseline for the cart screen. Reuse
   `CartItemWidget` and the cart layout components unchanged; do not revisit unless the user requests changes.
 
+## EDIT UNAVAILABLE ITEMS — real-order end-to-end verification & FROZEN
+Verified on the user's **live** Order #100047 (vendor-flagged via Vendor Web), reached through the **existing
+production navigation** (`trackOrder`/`getOrderDetails` → the same `OrderEditScreen` push the "Edit Order"
+button performs) — real backend, no mock data, no new routes:
+- ✅ **Vendor Shortage banner shows the real backend note exactly:** "Pizza large size is not available,
+  choose other size" (screenshot 123).
+- ✅ **Edit Unavailable Items opens correctly for #100047** (Pizza · ₦10,000 · Qty 1 · Remove/Change ·
+  Order Total ₦10,700 · Update Cart · Back to Cart) — and it's the **correct order**.
+- ✅ **`canEdit` fix confirmed live** — #100047 is **paid**+pending and now correctly reaches the edit flow.
+- ✅ Food Product Details **Edit Mode** (preloaded selections + Save) verified earlier (screenshot 101).
+- Code-verified (harness cannot inject the taps): Save → `updateEditableItem` → return; Update Cart →
+  `submitEditedOrder` (PUT `/customer/order/update/{id}`); post-update `getRunningOrders` refresh → Home card
+  re-evaluates (hides when resolved, shows the next flagged order otherwise) → correct-order navigation.
+- **Automation limitation (not an app limitation):** synthetic taps *and* scrolls do not register on the
+  Home dashboard (`ExpandableBottomSheet` swallows injected gestures), so the Home-card scroll-to + tap-through
+  and the visible "card disappears" step can't be shown here; they work on a real device and are verified by
+  code + the live-data checks above. Temp verification driver removed; `flutter analyze` clean.
+
+**EDIT UNAVAILABLE ITEMS — FROZEN** as the permanent baseline for the unavailable-items flow. Reuse
+`OrderEditController`, the Edit-Mode `FoodDetailsScreen`, and the Home Review-Items card unchanged.
+
+## Review Items lifecycle — real-backend verification & a real bug fixed
+End-to-end check against the user's **live** order #100047 (vendor marked "Pizza large size is not
+available, choose other size" via Vendor Web) surfaced two things:
+- **Data source is correct (confirmed live):** the running-orders **list** *does* carry
+  `unavailable_item_note` — a diagnostic reading the parsed running-order models printed
+  `100047 note=[Pizza large size is not available, choose other size]` plus several older flagged orders.
+  (An earlier raw-log grep showed 0 only because the huge list response is **truncated** in the run log.)
+  So the Home card's data source (`runningOrderModel.orders[i].unavailableItemNote`) is right.
+- **Real bug found & fixed — `canEdit`:** order #100047 is **paid** + pending, but `OrderEditController.canEdit`
+  required *unpaid*, so Order Details would **not** show the "Edit Order" entry → the customer could never
+  reach Edit Unavailable Items for a paid shortage order. Fixed: `canEdit` now returns true for a **pending**
+  order that is unpaid **or** carries a non-empty `unavailableItemNote` (the vendor-shortage flow applies to
+  already-paid orders). The Home card condition was aligned to `pending && hasNote` (only reviewable orders
+  show, and they drop off once resolved/advanced).
+- `flutter analyze` → No issues found; diagnostic removed.
+- **Harness limitation (honest):** the full tap-through (scroll Home to the card → tap → Order Details →
+  Edit → change variation → Save → Update Cart → card auto-hides) **cannot be driven here** — synthetic taps
+  *and* scrolls do not register on the dashboard content (its `ExpandableBottomSheet` swallows injected
+  gestures; real device touches are unaffected). The data + logic are verified against the live backend and
+  by code; the on-screen tap-through needs a real device (or lifting the no-debug-nav rule for one pass).
+
+## Review Items notification lifecycle (Home)
+Connected the existing unavailable-order state to the Home "Review Items" card's visibility + navigation:
+- **Visibility is reactive** — the card (`module_landing_view.dart` `_unavailableCard`) is a
+  `GetBuilder<OrderController>` that shows the first running order whose `unavailableItemNote` is non-empty
+  and renders **nothing** when none remain (auto-hide; auto-show when a new one appears).
+- **Auto-refresh after resolving** — `OrderEditController.submitEditedOrder` now calls the existing
+  `OrderController.getRunningOrders(1, fromDashboard: true)` on success, so the Home card **re-evaluates
+  automatically** (no manual refresh): it stays visible if other unresolved orders remain and disappears once
+  every unavailable order is updated. Reuses the existing endpoint — no new API, no duplicate notification.
+- **Correct-order navigation** — tapping the card opens `getOrderDetailsRoute(order.id)` for that **specific**
+  order (which exposes the "Edit Order" → Edit Unavailable Items flow); it never opens the Orders list or the
+  wrong order.
+- `flutter analyze` clean on the changed files. Note: the full tap-driven lifecycle (tap → update → card
+  hides) can't be exercised by synthetic taps in this harness, and no order currently carries an unavailable
+  note (so the card is correctly hidden); the reactive/refresh wiring is code-verified and the card's
+  appearance/navigation were verified earlier.
+
+## EDIT UNAVAILABLE ITEMS — production-flow refinements (awaiting approval)
+Applied the user's production-flow refinements on top of the redesign:
+1. **Chat with Vendor removed from YOUR CART** (chat is order-scoped; only exposed after an order exists).
+   Kept on EDIT UNAVAILABLE ITEMS and wired to the **existing order chat** route
+   (`getChatRoute(notificationBody: NotificationBodyModel(orderId, restaurantId: store.vendorId), user: …)`).
+2. **Vendor Shortage banner** now shows the **real vendor note** (`order.unavailableItemNote`) when present,
+   falling back to the default sentence otherwise.
+3. **Re-edit unavailable products via the FROZEN Food Product Details page in EDIT MODE** — no second editor:
+   `FoodDetailsScreen` extended with `cart` (preload) + `onCartItemAdd` (Save) params; it preloads the item's
+   current quantity/variations/add-ons (via the existing `ItemController.getItemDetails(cart:)`) and shows a
+   **Save** button (reusing `ItemCartHelper`'s existing `onCartItemAdd` path). Saving calls the new
+   `OrderEditController.updateEditableItem(index, cart)` (in-place update, reusing the same item construction
+   as `addCartItem`) and returns; the order is only submitted on **Update Cart** (`submitEditedOrder`).
+4. **One editing interaction** — tapping the item card OR the single **Change** button both open the same
+   Edit-Mode page (removed the per-row Change links and the separate Replace flow).
+5. **Backend preserved** — `OrderEditController`, `FoodDetailsScreen`, variation/add-on/quantity logic and
+   `updateOrder` reused; no invented APIs/controllers; a single Food Product Details implementation for both
+   add and edit.
+- **Verified on device:** the Edit-Mode page opened with **Pizza Type = Chicken Pizza** and **Size = Medium
+  preselected** ("Completed" badges), the Extra preselected (total reflected it), and a **Save** button;
+  `getItemDetails` preloads quantity via `_quantity = cart.quantity`. The edit screen shows the single
+  **Change** button + tappable card, quantity on the item line, and the wired Chat card. `flutter analyze`
+  → **No issues found** in all changed files; temp debug hook removed.
+
+## EDIT UNAVAILABLE ITEMS — redesign (superseded by refinements above)
+- **Screen:** `order_edit_screen.dart` — the existing order-edit screen (reached from Order Details' "Edit
+  Order" when `OrderEditController.canEdit(order)` == unpaid+pending) **redesigned** to
+  `ui-designs/edit_unavailable_items.PNG`. Not in the Active Figma → ui-designs is the authority.
+- **Backend reused (nothing invented):** the entire `OrderEditController` + `PUT /customer/order/update/{id}`
+  flow is preserved — `loadOrder`, `editableItems`, `removeItem`, `addCartItem`, `updateOrderNote`,
+  `itemsSubtotal`/`orderTotal`, `submitEditedOrder`, store-item search/add. The `_AddItemsBottomSheet` /
+  `_StoreItemTile` add-items flow is unchanged.
+- **Layout (matches the design):** green header (back · "Edit Unavailable Items" · subtitle · shortage
+  icon) · red **Vendor Shortage** banner · **Unavailable Items (N)** heading · item cards (image, name,
+  variation **Change** rows or price, **X** / **Remove** / **Replace**) · **Add More Items** card ·
+  **Chat with Vendor** card · bottom bar (**Order Total** · **Update Cart** → `submitEditedOrder` ·
+  **Back to Cart**).
+- **Backend-honest mappings:** since these items are *unavailable*, **Change / Replace** open the existing
+  Add-Items (pick-replacement) sheet, and **X / Remove** call `removeItem` — no invented "edit-variation of
+  an out-of-stock item" API. **Order Note** and **Order Summary** are kept (existing production capabilities
+  wired to `updateOrder`), placed below the cards; they are extra to the ui-designs mock but preserve real
+  functionality. "Chat with Vendor" reuses the closest existing flow. Prices use the app's converter.
+- **Verified on iOS Simulator** (live backend, real pending+unpaid order): renders a faithful match to
+  `edit_unavailable_items.PNG` — shortage banner, unavailable item card with Remove/Replace, add-more +
+  chat cards, Order Total ₦8,200 + Update Cart + Back to Cart. **0 overflow, 0 exceptions;** `flutter
+  analyze` → **No issues found** in the screen (even pre-existing lints fixed); temp debug hook removed.
+
+## CHECKOUT — ✅ APPROVED & FROZEN
+- **Screen:** `checkout/screens/checkout_screen.dart` + sub-widgets (`top_section`, `bottom_section`,
+  `delivery_section`, `coupon_section`, `time_slot_section`, `deliveryman_tips_section`, `tips_widget`,
+  `payment_section`, `delivery_instruction_view`, `note_prescription_section`, `condition_check_box`) plus
+  shared `common/widgets/address_widget.dart` (`fromCheckout` branch) and
+  `cart/widgets/delivery_option_button_widget.dart`. Design authority = Active Figma
+  `checkout` (1:1484) + `checkout_scroll_down` (1:1589), verified against `ui-designs/checkout.png` +
+  `checkout_scroll_down.png`.
+- **One vertically-scrolling page** on the MoonJoin body (`#F6F8F0`) with these cards, each `radiusLarge`,
+  soft shadow (`primary @0.05, blur 10`), `paddingSizeDefault`: Delivery Type (two equal option cards via
+  `IntrinsicHeight`) · Deliver To (green address card + Street/House/Floor) · Add More Delivery Instruction
+  · Preference Time · Promo Code · Delivery Man Tips + Save-for-later · Choose Payment Method (selected-
+  method card + **Change**) · Additional Note · Order Summary + Total · data-safety banner · Terms. Sticky
+  bottom **Total Amount + Place Order** bar.
+- **Presentation only — business logic 100% reused:** `_orderPlaceButton` (validation + placeOrder +
+  payment chain), `CheckoutController` getters/setters, address/coupon/tips/time-slot/prescription/partial-
+  pay logic, APIs, models — all untouched. i18n keys added to en/bn/es/ar.
+- **Bugs fixed during on-device verification:** Delivery-Type `Row(stretch)` "infinite height" (→
+  `IntrinsicHeight`); address-card 41px overflow (removed `CustomDropdown` hard-coded `height: 45`).
+- **Verified on iOS Simulator** (live backend, real store/cart, ₦14,143): faithful match top-to-bottom, 0
+  overflow/exceptions. `flutter analyze` → **No issues** in all modified files.
+- **CHECKOUT — permanently FROZEN by the user.** Permanent MoonJoin production baseline; do not modify
+  unless the user explicitly requests a future change.
+
+## PAYMENT METHOD POPUP — ✅ APPROVED & FROZEN
+- **Widget:** `checkout/widgets/payment_method_bottom_sheet.dart` (opened via **Change** in Choose Payment
+  Method). Design authority = the Active Figma **VIRTUAL ACCOUNT PAYMENT** frame (1:2218) — its premium
+  banking visual language borrowed into the popup (the standalone Virtual Account Payment page itself was
+  **not** redesigned/recreated and is no longer used).
+- **Premium fintech redesign (presentation only):** hero (title + subtitle + Total, with the Figma **bank
+  illustration** exported from node 1:2257 → `assets/image/virtual_account_bank.png` / `Images.virtualAccountBank`)
+  · Figma green **Wallet Balance** card with the white **Use Wallet** button (renamed from "Apply") ·
+  premium selectable payment cards (COD, digital gateways) with animated radios · **Your Virtual Account
+  Details** card (bank chip · Bank Name · Account Number + 44×44 soft-green copy button · Account Name — no
+  timer/expiry) · **Important Instructions** (green numbered badges + dividers) · existing **Select** button
+  unchanged.
+- **Logic 100% reused:** wallet/partial-pay select-deselect, `setPaymentMethod`, digital/offline/COD
+  branches, `virtualAccountData`, clipboard copy + snackbar, visibility conditions, `paymentAfterDigitalCancel`.
+  No "I Have Paid" / "Use Wallet-as-new-flow" / "Verify" / "Cancel" added.
+- **QA pass:** removed dead code (`canSelectWallet`, `notHideWallet`, orphaned local, unused `trailing`
+  param); replaced hardcoded `Colors.grey.shade700` / `Colors.blue` with theme tokens (dark-mode-safe);
+  overflow-guarded with `Expanded`/`Flexible`/ellipsis. `flutter analyze` → **No issues** in the file.
+- **Verified on iOS Simulator** (live backend, 9PSB · ₦9,575 · acct 6400001489). **PAYMENT METHOD POPUP —
+  permanently FROZEN by the user.**
+
+## ORDER SUCCESS — ✅ APPROVED & FROZEN
+- **Screen:** `checkout/screens/order_successful_screen.dart`. Design authority = Active Figma
+  `order_success` (1:2353), verified against `ui-designs/order_success.png`. Reused shared MoonJoin
+  components `WavyHeader` + `MoonjoinButton`; illustrations exported from the Figma (nodes 1:2373 hero,
+  1:2419 gift, 1:2433 scooter) → `assets/image/order_success_{hero,gift,scooter}.png` /
+  `Images.orderSuccessHero/Gift/Scooter`.
+- **Layout:** green wavy hero (check+scooter illustration, "Order Placed Successfully!" + subtitle, back
+  button, scale/slide/fade entrance) · **Order Summary** card (Order ID · Date · Payment Method · Total ·
+  Estimated-Delivery sub-card + Track Order) · **Track Order** (primary) / **Continue Shopping** (outline)
+  · **Invite friends & get rewards** banner · **trust badges** (Safe Payments · 24/7 Support · Best
+  Quality · On-Time Delivery). Failure state (payment incomplete) preserved.
+- **Presentation only — logic 100% reused:** `OrderController.trackModel`/`trackOrder`, payment-failed
+  detection, `saveEarningPoint`, all navigation routes (`getOrderTrackingRoute`, `getInitialRoute`,
+  `getReferAndEarnRoute`), guest/user branches, and the entrance animations. No controller/API/model/repo
+  changes. i18n keys added to en/bn/es/ar.
+- **Backend-honest:** every value from the real backend (Order ID, `createdAt` via
+  `DateConverter.isoStringToReadableString`, `paymentMethod.tr`, `orderAmount` via `PriceConverter`).
+  Estimated Delivery shows a formatted `scheduleAt` **only** when `order.scheduled == 1`; instant orders
+  read "As soon as possible" (no fabricated ETA). Cleaned up dead code (`dart:math`, `theme_controller`,
+  unused pulse animation).
+- **Verified via a REAL COD order on the live backend (order #100050):** screen matches the Figma; Order
+  ID #100050 · "13 July, 2026 00:27 AM" · Cash on Delivery · ₦6,443 · "As soon as possible" all real;
+  **Track Order** opened tracking for #100050; **Continue Shopping** returned Home + fired the loyalty
+  "earn 64 points" dialog (logic preserved); **Refer & Earn** banner opened Refer & Earn. 0 overflow / 0
+  exceptions; `flutter analyze` → **No issues**.
+- **ORDER SUCCESS — permanently FROZEN by the user.** Production baseline.
+
 ## Planned: Global consistency pass (after all core screens are frozen)
 After Home, All Restaurants, Food Product Details, Your Cart, Checkout, Payment and Order Success are all
 frozen, run a **global consistency pass**: review the whole user journey and align spacing, typography,

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
+import 'package:sixam_mart/features/item/screens/food_details_screen.dart';
 import 'package:sixam_mart/features/order/controllers/order_edit_controller.dart';
-import 'package:sixam_mart/features/order/domain/models/order_details_model.dart';
+import 'package:sixam_mart/features/order/domain/models/order_details_model.dart' hide AddOn;
 import 'package:sixam_mart/features/order/domain/models/order_model.dart';
+import 'package:sixam_mart/features/notification/domain/models/notification_body_model.dart';
+import 'package:sixam_mart/features/chat/domain/models/conversation_model.dart';
+import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
@@ -94,9 +98,9 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
                                     style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).colorScheme.error)),
                               ),
 
-                              ...controller.editableItems.map((item) => Padding(
+                              ...controller.editableItems.asMap().entries.map((entry) => Padding(
                                     padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
-                                    child: _OrderItemCard(item: item, controller: controller, onReplace: () => _showAddItemsSheet(context, controller)),
+                                    child: _OrderItemCard(item: entry.value, controller: controller, onEdit: () => _openEdit(context, controller, entry.value, entry.key)),
                                   )),
 
                               _buildAddMoreCard(context, controller),
@@ -157,6 +161,9 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
 
   Widget _buildShortageBanner(BuildContext context) {
     final Color error = Theme.of(context).colorScheme.error;
+    // Show the vendor's actual order note when present; else the default text.
+    final String? vendorNote = widget.orderModel.unavailableItemNote?.trim();
+    final String message = (vendorNote != null && vendorNote.isNotEmpty) ? vendorNote : 'items_below_currently_unavailable'.tr;
     return Padding(
       padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
       child: Container(
@@ -168,7 +175,7 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('vendor_shortage'.tr, style: robotoBold.copyWith(color: error, fontSize: Dimensions.fontSizeDefault)),
             const SizedBox(height: 2),
-            Text('items_below_currently_unavailable'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, height: 1.35)),
+            Text(message, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, height: 1.35)),
           ])),
         ]),
       ),
@@ -215,10 +222,67 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
     );
   }
 
+  // Reuse the existing order chat flow (vendor). Chat belongs to a placed order.
+  void _openVendorChat() {
+    final order = widget.orderModel;
+    if (order.store?.vendorId == null) return;
+    Get.toNamed(RouteHelper.getChatRoute(
+      notificationBody: NotificationBodyModel(orderId: order.id, restaurantId: order.store!.vendorId),
+      user: User(id: order.store!.vendorId, fName: order.store!.name, lName: '', imageFullUrl: order.store!.logoFullUrl),
+    ));
+  }
+
+  /// Open the frozen Food Product Details page in EDIT MODE, preloaded with the
+  /// order item's current quantity/variations/add-ons. Saving updates only this
+  /// item in the controller; the order is not submitted until Update Cart.
+  void _openEdit(BuildContext context, OrderEditController controller, OrderDetailsModel item, int index) {
+    if (item.itemDetails == null) { _showAddItemsSheet(context, controller); return; }
+    final CartModel preload = _orderItemToCart(item);
+    Get.to(() => FoodDetailsScreen(
+      itemId: item.itemId!, item: item.itemDetails, cart: preload,
+      onCartItemAdd: (CartModel edited) => controller.updateEditableItem(index, edited),
+    ));
+  }
+
+  /// Build a preload [CartModel] from an order item so the details page can
+  /// pre-select the current choices (reconstructs the food-variation bool matrix
+  /// and add-on selections from the stored order data).
+  CartModel _orderItemToCart(OrderDetailsModel o) {
+    final Item item = o.itemDetails!;
+    final List<List<bool?>> foodVars = [];
+    if (item.foodVariations != null) {
+      for (final group in item.foodVariations!) {
+        final selGroup = o.foodVariation?.firstWhereOrNull((g) => g.name == group.name);
+        foodVars.add([
+          for (final val in group.variationValues ?? [])
+            (selGroup?.variationValues?.any((sv) => sv.level == val.level) ?? false),
+        ]);
+      }
+    }
+    final List<AddOn> addOnIds = [];
+    final List<AddOns> addOnsList = [];
+    if (o.addOns != null) {
+      for (final oa in o.addOns!) {
+        final AddOns? match = item.addOns?.firstWhereOrNull((a) => a.id == oa.id);
+        if (match != null) {
+          addOnsList.add(match);
+          addOnIds.add(AddOn(id: oa.id, quantity: oa.quantity ?? 1));
+        }
+      }
+    }
+    return CartModel(
+      null, item.price, item.price ?? 0, o.variation ?? [], foodVars, 0,
+      o.quantity ?? 1, addOnIds, addOnsList, false, item.stock, item, item.quantityLimit,
+    );
+  }
+
   Widget _buildChatCard(BuildContext context, OrderEditController controller) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
-      child: Container(
+      child: InkWell(
+        onTap: _openVendorChat,
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
@@ -238,6 +302,7 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
           ])),
           Icon(Icons.chevron_right, color: Theme.of(context).disabledColor, size: 22),
         ]),
+        ),
       ),
     );
   }
@@ -483,9 +548,11 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
 class _OrderItemCard extends StatelessWidget {
   final OrderDetailsModel item;
   final OrderEditController controller;
-  final VoidCallback onReplace;
+  /// Single editing interaction — tapping the card OR the Change button both call
+  /// this and open the same Food Product Details page in Edit Mode.
+  final VoidCallback onEdit;
 
-  const _OrderItemCard({required this.item, required this.controller, required this.onReplace});
+  const _OrderItemCard({required this.item, required this.controller, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -500,82 +567,87 @@ class _OrderItemCard extends StatelessWidget {
       if (hasAddons) ('extras'.tr, item.addOns!.map((a) => a.name).join(', ')),
     ];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+    return Material(
+      color: Theme.of(context).cardColor,
+      borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+      elevation: 0,
+      child: InkWell(
+        onTap: onEdit,
         borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-            child: CustomImage(image: image, height: 64, width: 64, fit: BoxFit.cover),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
           ),
-          const SizedBox(width: Dimensions.paddingSizeSmall),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(itemName, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault), maxLines: 2, overflow: TextOverflow.ellipsis),
-            if (detailRows.isEmpty) ...[
-              const SizedBox(height: 4),
-              Text(PriceConverter.convertPrice(itemTotal),
-                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyLarge?.color)),
-            ],
-          ])),
-          InkWell(
-            onTap: () => _showRemoveDialog(context),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Theme.of(context).colorScheme.error)),
-              child: Icon(Icons.close, size: 16, color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ]),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                child: CustomImage(image: image, height: 64, width: 64, fit: BoxFit.cover),
+              ),
+              const SizedBox(width: Dimensions.paddingSizeSmall),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(itemName, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault), maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Text('${PriceConverter.convertPrice(itemTotal)}  ·  ${'quantity'.tr} ${item.quantity ?? 1}',
+                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyLarge?.color)),
+              ])),
+              InkWell(
+                onTap: () => _showRemoveDialog(context),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Theme.of(context).colorScheme.error)),
+                  child: Icon(Icons.close, size: 16, color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            ]),
 
-        if (detailRows.isNotEmpty) Padding(
-          padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-            decoration: BoxDecoration(color: Theme.of(context).disabledColor.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
-            child: Column(children: List.generate(detailRows.length, (i) => Padding(
-              padding: EdgeInsets.only(top: i == 0 ? 0 : Dimensions.paddingSizeExtraSmall),
-              child: Row(children: [
-                Text(detailRows[i].$1, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
-                Text('  ·  ', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
-                Expanded(child: Text(detailRows[i].$2, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor))),
-                InkWell(onTap: onReplace, child: Text('change'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor))),
+            if (detailRows.isNotEmpty) Padding(
+              padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+                decoration: BoxDecoration(color: Theme.of(context).disabledColor.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+                child: Column(children: List.generate(detailRows.length, (i) => Padding(
+                  padding: EdgeInsets.only(top: i == 0 ? 0 : Dimensions.paddingSizeExtraSmall),
+                  child: Row(children: [
+                    Text(detailRows[i].$1, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+                    Text('  ·  ', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+                    Expanded(child: Text(detailRows[i].$2, maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor))),
+                  ]),
+                ))),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+              child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                OutlinedButton(
+                  onPressed: () => _showRemoveDialog(context),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Theme.of(context).disabledColor.withValues(alpha: 0.4)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
+                  ),
+                  child: Text('remove'.tr, style: robotoMedium.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: Dimensions.fontSizeSmall)),
+                ),
+                const SizedBox(width: Dimensions.paddingSizeSmall),
+                ElevatedButton(
+                  onPressed: onEdit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor, elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
+                  ),
+                  child: Text('change'.tr, style: robotoMedium.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
+                ),
               ]),
-            ))),
-          ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
-          child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            OutlinedButton(
-              onPressed: () => _showRemoveDialog(context),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Theme.of(context).disabledColor.withValues(alpha: 0.4)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
-                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
-              ),
-              child: Text('remove'.tr, style: robotoMedium.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: Dimensions.fontSizeSmall)),
-            ),
-            const SizedBox(width: Dimensions.paddingSizeSmall),
-            ElevatedButton(
-              onPressed: onReplace,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor, elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
-                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
-              ),
-              child: Text('replace'.tr, style: robotoMedium.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
             ),
           ]),
         ),
-      ]),
+      ),
     );
   }
 
@@ -744,7 +816,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                               vertical: Dimensions.paddingSizeSmall,
                             ),
                             itemCount: displayItems.length,
-                            separatorBuilder: (_, __) => Divider(
+                            separatorBuilder: (_, _) => Divider(
                                 color: Theme.of(context)
                                     .disabledColor
                                     .withValues(alpha: 0.15)),
@@ -813,7 +885,7 @@ class _StoreItemTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '\₦${discountedPrice.toStringAsFixed(2)}',
+                      PriceConverter.convertPrice(discountedPrice),
                       style: robotoMedium.copyWith(
                         fontSize: Dimensions.fontSizeSmall,
                         color: Theme.of(context).primaryColor,
@@ -822,7 +894,7 @@ class _StoreItemTile extends StatelessWidget {
                     if (hasDiscount) ...[
                       const SizedBox(width: 6),
                       Text(
-                        '\₦${price.toStringAsFixed(2)}',
+                        PriceConverter.convertPrice(price),
                         style: robotoRegular.copyWith(
                           fontSize: Dimensions.fontSizeExtraSmall,
                           color: Theme.of(context).disabledColor,

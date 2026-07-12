@@ -63,11 +63,12 @@ class _DeliveryOptionButtonWidgetState extends State<DeliveryOptionButtonWidget>
         },
         child: Container(
           decoration: BoxDecoration(
-            color: select  ? widget.fromWeb ? Theme.of(context).primaryColor.withValues(alpha: 0.1) : Theme.of(context).cardColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-            border: Border.all(color: select ? Theme.of(context).primaryColor : Colors.transparent),
+            // MoonJoin delivery-type card (Figma Checkout): green tint + border when selected.
+            color: select ? Theme.of(context).primaryColor.withValues(alpha: 0.06) : Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+            border: Border.all(color: select ? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withValues(alpha: 0.30)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
           child: Row(
             children: [
               RadioGroup(
@@ -82,25 +83,34 @@ class _DeliveryOptionButtonWidgetState extends State<DeliveryOptionButtonWidget>
                   visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
                 ),
               ),
+
+              Icon(
+                widget.value == 'delivery' ? Icons.delivery_dining : Icons.shopping_bag,
+                color: select ? Theme.of(context).primaryColor : Theme.of(context).disabledColor,
+                size: 28,
+              ),
               const SizedBox(width: Dimensions.paddingSizeSmall),
 
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(widget.title, style: robotoMedium.copyWith(color: select ? Theme.of(context).primaryColor : Theme.of(context).textTheme.bodyMedium!.color)),
-
-                Row(children: [
-                  Text(widget.value == 'delivery' ? '${'charge'.tr}: +${widget.deliveryChargeForView}' : 'free'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyMedium!.color)),
-                  const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-
-                  widget.deliveryChargeForView != PriceConverter.convertPrice(0) && widget.value == 'delivery' && checkoutController.extraCharge != null && (widget.deliveryChargeForView != '0') && widget.extraChargeForToolTip > 0 ? CustomToolTip(
-                    message: '${'this_charge_include_extra_vehicle_charge'.tr} ${PriceConverter.convertPrice(widget.extraChargeForToolTip)}',
-                    preferredDirection: AxisDirection.right,
-                    child: const Icon(Icons.info, color: Colors.blue, size: 14),
-                  ) : const SizedBox(),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: select ? Theme.of(context).primaryColor : Theme.of(context).textTheme.bodyLarge?.color)),
+                  const SizedBox(height: 2),
+                  Row(children: [
+                    Flexible(child: Text(widget.value == 'delivery' ? '${'charge'.tr}: ${widget.deliveryChargeForView}' : 'free'.tr,
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor))),
+                    widget.deliveryChargeForView != PriceConverter.convertPrice(0) && widget.value == 'delivery' && checkoutController.extraCharge != null && (widget.deliveryChargeForView != '0') && widget.extraChargeForToolTip > 0 ? Padding(
+                      padding: const EdgeInsets.only(left: Dimensions.paddingSizeExtraSmall),
+                      child: CustomToolTip(
+                        message: '${'this_charge_include_extra_vehicle_charge'.tr} ${PriceConverter.convertPrice(widget.extraChargeForToolTip)}',
+                        preferredDirection: AxisDirection.up,
+                        child: const Icon(Icons.info, color: Colors.blue, size: 14),
+                      ),
+                    ) : const SizedBox(),
+                  ]),
                 ]),
-
-              ]),
-              const SizedBox(width: Dimensions.paddingSizeSmall),
-
+              ),
             ],
           ),
         ),

@@ -204,37 +204,30 @@ class TopSection extends StatelessWidget {
         ) : const SizedBox(),
         const SizedBox(height: Dimensions.paddingSizeSmall),
 
-        // delivery option
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
-          width: double.infinity,
+        // MoonJoin Delivery Type (Figma): heading + two equal option cards on page bg.
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('delivery_type'.tr, style: robotoMedium),
-              const SizedBox(height: Dimensions.paddingSizeSmall),
+              Text('delivery_type'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+              const SizedBox(height: Dimensions.paddingSizeDefault),
 
-              storeId != null ? DeliveryOptionButtonWidget(
-                value: 'delivery', title: 'home_delivery'.tr, charge: charge,
-                isFree: checkoutController.store!.freeDelivery, fromWeb: true, total: total,
-                deliveryChargeForView: deliveryChargeForView, badWeatherCharge: badWeatherCharge, extraChargeForToolTip: extraChargeForToolTip,
-              ) : SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-                Get.find<SplashController>().configModel!.homeDeliveryStatus == 1 && checkoutController.store!.delivery! ? DeliveryOptionButtonWidget(
-                  value: 'delivery', title: 'home_delivery'.tr, charge: charge,
-                  isFree: checkoutController.store!.freeDelivery,  fromWeb: true, total: total,
-                  deliveryChargeForView: deliveryChargeForView, badWeatherCharge: badWeatherCharge, extraChargeForToolTip: extraChargeForToolTip,
-                ) : const SizedBox(),
-                const SizedBox(width: Dimensions.paddingSizeDefault),
-
-                Get.find<SplashController>().configModel!.takeawayStatus == 1 && checkoutController.store!.takeAway! ? DeliveryOptionButtonWidget(
-                  value: 'take_away', title: 'take_away'.tr, charge: deliveryCharge, isFree: true,  fromWeb: true, total: total,
-                  deliveryChargeForView: deliveryChargeForView, badWeatherCharge: badWeatherCharge, extraChargeForToolTip: extraChargeForToolTip,
-                ) : const SizedBox(),
-              ]),
-              ),
+              Builder(builder: (context) {
+                bool deliveryEnabled = storeId != null || (Get.find<SplashController>().configModel!.homeDeliveryStatus == 1 && checkoutController.store!.delivery!);
+                bool takeawayEnabled = storeId == null && Get.find<SplashController>().configModel!.takeawayStatus == 1 && checkoutController.store!.takeAway!;
+                return IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  if(deliveryEnabled) Expanded(child: DeliveryOptionButtonWidget(
+                    value: 'delivery', title: 'home_delivery'.tr, charge: charge,
+                    isFree: checkoutController.store!.freeDelivery, fromWeb: true, total: total,
+                    deliveryChargeForView: deliveryChargeForView, badWeatherCharge: badWeatherCharge, extraChargeForToolTip: extraChargeForToolTip,
+                  )),
+                  if(deliveryEnabled && takeawayEnabled) const SizedBox(width: Dimensions.paddingSizeDefault),
+                  if(takeawayEnabled) Expanded(child: DeliveryOptionButtonWidget(
+                    value: 'take_away', title: 'take_away'.tr, charge: deliveryCharge, isFree: true, fromWeb: true, total: total,
+                    deliveryChargeForView: deliveryChargeForView, badWeatherCharge: badWeatherCharge, extraChargeForToolTip: extraChargeForToolTip,
+                  )),
+                ]));
+              }),
             ],
           ),
         ),
@@ -279,11 +272,14 @@ class TopSection extends StatelessWidget {
 
         ///Payment..
         Container(
+          // MoonJoin "Choose Payment Method" card (Figma).
+          margin: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeDefault),
           decoration: isDesktop ? const BoxDecoration() : BoxDecoration(
             color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
             boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
           ),
-          padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge, horizontal: Dimensions.paddingSizeLarge),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(children: [
 
             PaymentSection(

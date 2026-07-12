@@ -9,6 +9,7 @@ import 'package:sixam_mart/common/widgets/moonjoin/wavy_header.dart';
 import 'package:sixam_mart/common/widgets/quantity_button.dart';
 import 'package:sixam_mart/common/widgets/rating_bar.dart';
 import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
+import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
 import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
@@ -32,7 +33,16 @@ class FoodDetailsScreen extends StatefulWidget {
   final bool inStorePage;
   final bool isCampaign;
   final Item? item;
-  const FoodDetailsScreen({super.key, required this.itemId, this.inStorePage = false, this.isCampaign = false, this.item});
+  /// EDIT MODE: when [cart] + [onCartItemAdd] are supplied the page preloads the
+  /// existing selections (quantity, variations, add-ons) and shows a "Save"
+  /// button that returns the edited item via [onCartItemAdd] instead of adding a
+  /// new cart entry. Same single Food Product Details implementation for both
+  /// adding and editing.
+  final CartModel? cart;
+  final Function(CartModel)? onCartItemAdd;
+  const FoodDetailsScreen({super.key, required this.itemId, this.inStorePage = false, this.isCampaign = false, this.item, this.cart, this.onCartItemAdd});
+
+  bool get isEdit => onCartItemAdd != null;
 
   @override
   State<FoodDetailsScreen> createState() => _FoodDetailsScreenState();
@@ -49,7 +59,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     if (splashController.module == null && splashController.cacheModule != null) {
       splashController.setCacheConfigModule(splashController.cacheModule);
     }
-    itemController.getItemDetails(itemId: widget.itemId, item: widget.isCampaign ? widget.item : null).then((_) {
+    itemController.getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : widget.item).then((_) {
       if (itemController.item != null) {
         _newVariation = splashController.getModuleConfig(itemController.item!.moduleType).newVariation ?? false;
         if (mounted) setState(() {});
@@ -260,11 +270,12 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             height: 50,
             isLoading: cartController.isLoading,
             radius: Dimensions.radiusLarge,
-            buttonText: stockOut ? 'out_of_stock'.tr : widget.isCampaign ? 'order_now'.tr : 'add_to_cart'.tr,
+            buttonText: stockOut ? 'out_of_stock'.tr : widget.isEdit ? 'save'.tr : widget.isCampaign ? 'order_now'.tr : 'add_to_cart'.tr,
             onPressed: stockOut ? null : () async {
               await ItemCartHelper.addOrUpdateCart(
                 context: context, item: item, itemController: itemController, data: data,
                 isCampaign: widget.isCampaign, newVariation: _newVariation,
+                cart: widget.cart, onCartItemAdd: widget.onCartItemAdd,
                 onSuccess: () => showCartSnackBar(),
               );
             },

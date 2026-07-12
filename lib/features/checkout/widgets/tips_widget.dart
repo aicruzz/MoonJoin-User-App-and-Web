@@ -20,13 +20,17 @@ class TipsWidget extends StatelessWidget {
         InkWell(
           onTap: onTap as void Function()?,
           child: Container(
-            padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical:  5, horizontal: Dimensions.paddingSizeSmall),
+            padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeDefault),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-              border: Border.all(color: ResponsiveHelper.isDesktop(context) ? Theme.of(context).primaryColor : Theme.of(context).cardColor),
-              boxShadow: ResponsiveHelper.isDesktop(context) ? [] : const [BoxShadow(color: Colors.black12, spreadRadius: 0.5, blurRadius: 0.5)],
+              // MoonJoin tip chip (Figma): white pill, green border + green text when selected.
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              border: Border.all(
+                color: ResponsiveHelper.isDesktop(context) ? Theme.of(context).primaryColor
+                    : isSelected ? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withValues(alpha: 0.35),
+                width: isSelected ? 1.2 : 1,
+              ),
             ),
             child: Column(children: [
               Padding(
@@ -36,9 +40,9 @@ class TipsWidget extends StatelessWidget {
                 ) : EdgeInsets.zero,
                 child: Text(
                   title, textDirection: TextDirection.ltr,
-                  style: robotoRegular.copyWith(
-                    color: isSelected ? Theme.of(context).cardColor : ResponsiveHelper.isDesktop(context)
-                        ? Theme.of(context).primaryColor : Theme.of(context).disabledColor,
+                  style: (isSelected ? robotoBold : robotoRegular).copyWith(
+                    color: isSelected ? Theme.of(context).primaryColor : ResponsiveHelper.isDesktop(context)
+                        ? Theme.of(context).primaryColor : Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),

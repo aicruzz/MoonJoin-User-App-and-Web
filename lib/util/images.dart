@@ -288,4 +288,12 @@ class Images {
 
   static const String mapIconExtended = 'assets/json/map-picker-1.json';
   static const String mapIconMinimised = 'assets/json/map-picker-2.json';
+
+  // MoonJoin Virtual Account Payment bank illustration (from Active Figma).
+  static const String virtualAccountBank = 'assets/image/virtual_account_bank.png';
+
+  // MoonJoin Order Success illustrations (from Active Figma order_success frame).
+  static const String orderSuccessHero = 'assets/image/order_success_hero.png';
+  static const String orderSuccessGift = 'assets/image/order_success_gift.png';
+  static const String orderSuccessScooter = 'assets/image/order_success_scooter.png';
 }

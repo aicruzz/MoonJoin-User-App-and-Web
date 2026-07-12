@@ -37,20 +37,31 @@ class _DeliveryManTipsSectionState extends State<DeliveryManTipsSection> {
         return Column(
           children: [
             (!widget.takeAway && Get.find<SplashController>().configModel!.dmTipsStatus == 1) ? Container(
+              // MoonJoin "Delivery Man Tips" card (Figma).
+              margin: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
                 boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
               ),
-              padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge, horizontal: Dimensions.paddingSizeLarge),
+              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                 Row(children: [
-                  Text('delivery_man_tips'.tr, style: robotoMedium),
+                  Icon(Icons.volunteer_activism, color: Theme.of(context).primaryColor, size: 26),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
+
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                      Text('delivery_man_tips'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                      Text('show_some_love_to_your_rider'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+                    ]),
+                  ),
 
                   JustTheTooltip(
                     backgroundColor: Colors.black87,
                     controller: widget.tooltipController3,
-                    preferredDirection: AxisDirection.right,
+                    preferredDirection: AxisDirection.left,
                     tailLength: 14,
                     tailBaseWidth: 20,
                     content: Padding(
@@ -59,12 +70,12 @@ class _DeliveryManTipsSectionState extends State<DeliveryManTipsSection> {
                     ),
                     child: InkWell(
                       onTap: () => widget.tooltipController3.showTooltip(),
-                      child: const Icon(Icons.info_outline),
+                      child: Icon(Icons.info_outline, size: 18, color: Theme.of(context).disabledColor),
                     ),
                   ),
 
                 ]),
-                const SizedBox(height: Dimensions.paddingSizeSmall),
+                const SizedBox(height: Dimensions.paddingSizeDefault),
 
                 SizedBox(
                   height: (checkoutController.selectedTips == AppConstants.tips.length-1) && checkoutController.canShowTipsField
@@ -103,19 +114,19 @@ class _DeliveryManTipsSectionState extends State<DeliveryManTipsSection> {
                 ),
                 SizedBox(height: (checkoutController.selectedTips == AppConstants.tips.length-1) && checkoutController.canShowTipsField ? Dimensions.paddingSizeExtraSmall : 0),
 
-                checkoutController.selectedTips == AppConstants.tips.length-1 ? const SizedBox() : ListTile(
-                  onTap: () => checkoutController.toggleDmTipSave(),
-                  leading: Checkbox(
-                    visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                    activeColor: Theme.of(context).primaryColor,
-                    value: checkoutController.isDmTipSave,
-                    onChanged: (bool? isChecked) => checkoutController.toggleDmTipSave(),
-                  ),
-                  title: Text('save_for_later'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
-                  contentPadding: EdgeInsets.zero,
-                  visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
-                  dense: true,
-                  horizontalTitleGap: 0,
+                checkoutController.selectedTips == AppConstants.tips.length-1 ? const SizedBox() : Padding(
+                  padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+                  child: Row(children: [
+                    Icon(Icons.bookmark_border, size: 22, color: Theme.of(context).textTheme.bodyLarge?.color),
+                    const SizedBox(width: Dimensions.paddingSizeSmall),
+                    Expanded(child: Text('save_for_later'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
+                    Switch.adaptive(
+                      value: checkoutController.isDmTipSave,
+                      activeThumbColor: Theme.of(context).primaryColor,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (bool isChecked) => checkoutController.toggleDmTipSave(),
+                    ),
+                  ]),
                 ),
                 SizedBox(height: checkoutController.selectedTips == AppConstants.tips.length-1 ? Dimensions.paddingSizeDefault : 0),
 

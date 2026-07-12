@@ -176,6 +176,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
     bool isGuestLogIn = AuthHelper.isGuestLoggedIn();
 
     return Scaffold(
+      backgroundColor: ResponsiveHelper.isDesktop(context) ? null : const Color(0xFFF6F8F0),
       appBar: CustomAppBar(title: 'checkout'.tr),
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
       body: guestCheckoutPermission || AuthHelper.isLoggedIn() ? GetBuilder<CheckoutController>(builder: (checkoutController) {

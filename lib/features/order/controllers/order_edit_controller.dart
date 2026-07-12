@@ -3,15 +3,12 @@ import 'package:get/get.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/features/order/domain/models/order_details_model.dart';
 import 'package:sixam_mart/features/order/domain/models/order_model.dart';
+import 'package:sixam_mart/features/order/controllers/order_controller.dart';
 import 'package:sixam_mart/features/order/domain/services/order_service_interface.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/cart/domain/models/cart_model.dart' as cart;
-import 'package:sixam_mart/features/item/controllers/item_controller.dart';
-import 'package:sixam_mart/features/store/domain/services/store_service_interface.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/api/api_client.dart';
 import 'package:sixam_mart/util/app_constants.dart';
-import 'dart:convert';
 
 class OrderEditController extends GetxController implements GetxService {
   final OrderServiceInterface orderServiceInterface;
@@ -49,7 +46,11 @@ class OrderEditController extends GetxController implements GetxService {
 
   // ── Check if order is editable ────────────────────────────────────────────
   static bool canEdit(OrderModel order) {
-    return order.paymentStatus == 'unpaid' && order.orderStatus == 'pending';
+    final bool hasUnavailable = (order.unavailableItemNote ?? '').trim().isNotEmpty;
+    // A pending order is editable before it is unpaid — OR when the vendor has
+    // flagged unavailable items on it (the vendor-shortage flow applies even to
+    // already-paid orders, which must be adjusted before fulfilment).
+    return order.orderStatus == 'pending' && (order.paymentStatus == 'unpaid' || hasUnavailable);
   }
 
   int? _moduleId;
@@ -197,6 +198,41 @@ class OrderEditController extends GetxController implements GetxService {
       ));
       _storeSearchItems.removeWhere((i) => i.id == item.id);
     }
+    update();
+  }
+
+  /// Replace the editable item at [index] with the edited selection returned from
+  /// the Food Product Details page (Edit Mode). Reuses the same OrderDetailsModel
+  /// construction as [addCartItem] — only that one item changes; the order is not
+  /// submitted until the user presses Update Cart.
+  void updateEditableItem(int index, cart.CartModel cartModel) {
+    if (index < 0 || index >= _editableItems.length || cartModel.item == null) return;
+    final item = cartModel.item!;
+
+    double totalAddOnPrice = 0;
+    List<AddOn> addons = [];
+    if (cartModel.addOns != null) {
+      for (int i = 0; i < cartModel.addOns!.length; i++) {
+        final addonRef = cartModel.addOns![i];
+        final addonId = cartModel.addOnIds?.firstWhereOrNull((a) => a.id == addonRef.id);
+        final qty = addonId?.quantity ?? 1;
+        addons.add(AddOn(id: addonRef.id, name: addonRef.name, price: addonRef.price, quantity: qty));
+        totalAddOnPrice += (addonRef.price ?? 0) * qty;
+      }
+    }
+
+    _editableItems[index] = OrderDetailsModel(
+      itemId: item.id,
+      orderId: _orderModel?.id,
+      price: cartModel.price,
+      quantity: cartModel.quantity,
+      variation: cartModel.variation,
+      foodVariation: _convertFoodVariations(item, cartModel.foodVariations ?? []),
+      addOns: addons,
+      totalAddOnPrice: totalAddOnPrice * (cartModel.quantity ?? 1),
+      itemDetails: item,
+      imageFullUrl: item.imageFullUrl,
+    );
     update();
   }
 
@@ -421,6 +457,12 @@ class OrderEditController extends GetxController implements GetxService {
 
       if (success) {
         debugPrint('✅ Order #${_orderModel!.id} updated successfully.');
+        // Refresh the running orders so the Home "Review Items" notification
+        // re-evaluates automatically (it hides once no order still carries an
+        // unavailable-item note). Reuses the existing endpoint — no new API.
+        if (Get.isRegistered<OrderController>()) {
+          Get.find<OrderController>().getRunningOrders(1, fromDashboard: true);
+        }
         Get.back(result: true);
         Get.snackbar(
           'Order Updated',

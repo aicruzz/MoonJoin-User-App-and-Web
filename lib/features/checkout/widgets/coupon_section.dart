@@ -30,15 +30,18 @@ class CouponSection extends StatelessWidget {
     return storeId == null ? GetBuilder<CouponController>(
       builder: (couponController) {
         return Container(
+          // MoonJoin "Promo Code" card (Figma).
+          margin: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
             boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(children: [
 
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('promo_code'.tr, style: robotoMedium),
+              Text('promo_code'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
               InkWell(
                 onTap: () {
 
@@ -152,7 +155,6 @@ class CouponSection extends StatelessWidget {
                 ),
               ]),
             ),
-            const SizedBox(height: Dimensions.paddingSizeLarge),
 
           ]),
         );

@@ -21,6 +21,50 @@ class AddressWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // MoonJoin Checkout address card (Figma): green-tinted card, icon chip, type + address.
+    if(fromCheckout) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+        ),
+        padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+        child: CustomInkWell(
+          onTap: onTap as void Function()?,
+          radius: Dimensions.radiusDefault,
+          child: Row(children: [
+            Container(
+              height: 44, width: 44,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+              ),
+              padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+              child: Image.asset(
+                address!.addressType == 'home' ? Images.homeIcon : address!.addressType == 'office' ? Images.workIcon : Images.otherIcon,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text(
+                  address!.addressType!.tr,
+                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  address!.address!,
+                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.75)),
+                  maxLines: 2, overflow: TextOverflow.ellipsis,
+                ),
+              ]),
+            ),
+          ]),
+        ),
+      );
+    }
     return Padding(
       padding: EdgeInsets.only(bottom: fromCheckout ? 0 : Dimensions.paddingSizeSmall),
       child: Container(

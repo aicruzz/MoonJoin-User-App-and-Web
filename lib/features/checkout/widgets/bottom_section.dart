@@ -72,7 +72,7 @@ class BottomSection extends StatelessWidget {
           discount: discount, addOns: addOns, deliveryCharge: deliveryCharge, variationPrice: variationPrice,
         ) : const SizedBox(),
 
-        Container(
+        isDesktop ? Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
@@ -82,10 +82,6 @@ class BottomSection extends StatelessWidget {
 
             ///Additional Note & prescription..
             NoteAndPrescriptionSection(checkoutController: checkoutController, storeId: storeId),
-
-            // isDesktop && !isGuestLoggedIn ? PartialPayView(totalPrice: total, isPrescription: storeId != null) : const SizedBox(),
-
-            !isDesktop ? pricingView(context: context, takeAway: takeAway) : const SizedBox(),
             const SizedBox(height: Dimensions.paddingSizeLarge),
 
             PrescriptionImagePickerWidget(checkoutController: checkoutController, storeId: storeId, isPrescriptionRequired: isPrescriptionRequired),
@@ -96,7 +92,7 @@ class BottomSection extends StatelessWidget {
             ExtraDiscountViewWidget(extraDiscount: extraDiscount),
             const SizedBox(height: Dimensions.paddingSizeDefault),
 
-            ResponsiveHelper.isDesktop(context) ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -123,9 +119,9 @@ class BottomSection extends StatelessWidget {
                 checkoutController.viewTotalPrice,
                 textStyle: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: checkoutController.isPartialPay ? Theme.of(context).textTheme.bodyMedium!.color : Theme.of(context).primaryColor),
               ),
-            ]) : const SizedBox(),
+            ]),
           ]),
-        ),
+        ) : _buildMobileCards(context, takeAway),
 
         ResponsiveHelper.isDesktop(context) ? Padding(
           padding: const EdgeInsets.only(top: Dimensions.paddingSizeLarge),
@@ -134,6 +130,75 @@ class BottomSection extends StatelessWidget {
 
       ]),
     );
+  }
+
+  Widget _moonCard(BuildContext context, {required Widget child}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
+      ),
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      child: child,
+    );
+  }
+
+  // MoonJoin mobile lower checkout: separate cards for Note, Order Summary, data-safety, Terms (Figma).
+  Widget _buildMobileCards(BuildContext context, bool takeAway) {
+    return Column(children: [
+
+      _moonCard(context, child: NoteAndPrescriptionSection(checkoutController: checkoutController, storeId: storeId)),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
+
+      PrescriptionImagePickerWidget(checkoutController: checkoutController, storeId: storeId, isPrescriptionRequired: isPrescriptionRequired),
+
+      _moonCard(context, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('order_summary'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+        const SizedBox(height: Dimensions.paddingSizeDefault),
+
+        pricingView(context: context, takeAway: takeAway),
+
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text('total_amount'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+          PriceConverter.convertAnimationPrice(
+            checkoutController.viewTotalPrice,
+            textStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+          ),
+        ]),
+      ])),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
+
+      ExtraDiscountViewWidget(extraDiscount: extraDiscount),
+
+      // Data-safety banner
+      Container(
+        margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        ),
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        child: Row(children: [
+          Icon(Icons.verified_user, color: Theme.of(context).primaryColor, size: 26),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text('your_personal_data_is_safe_with_us'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+            const SizedBox(height: 2),
+            Text('we_never_share_your_information_with_third_parties'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
+          ])),
+        ]),
+      ),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
+
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+        child: const CheckoutCondition(),
+      ),
+      const SizedBox(height: Dimensions.paddingSizeSmall),
+
+    ]);
   }
 
   Widget pricingView({required BuildContext context, required bool takeAway}) {

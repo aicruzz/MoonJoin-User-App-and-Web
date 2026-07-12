@@ -290,3 +290,83 @@ Requirements:
 - Before freezing a screen, verify it works correctly when reached through the real application flow.
 
 A screen is not considered complete until it has been verified through the real user journey whenever possible.
+
+## Payment Flow Authority
+
+The Checkout screen is the single order-review screen.
+
+It is responsible for:
+
+- Delivery Type
+- Delivery Address
+- Delivery Instructions
+- Delivery Time
+- Promo Code
+- Tips
+- Additional Note
+- Order Summary
+- Terms & Conditions
+
+Checkout finishes with **Place Order**.
+
+Payment experiences are NOT separate checkout screens.
+
+After Place Order is pressed:
+
+- Validate the checkout.
+- Validate the selected payment method.
+- Launch the appropriate payment flow for that payment method.
+
+Examples:
+
+- Cash on Delivery → place order directly.
+- Wallet → wallet verification/payment flow.
+- Virtual Account → Virtual Account payment dialog/sheet.
+- Card → card payment flow.
+- Other payment methods → their own existing production flow.
+
+Only after payment succeeds should the Order Success screen be displayed.
+
+Never redesign or replace an existing production payment flow unless a matching design is provided.
+
+## UI vs Business Logic Authority
+
+UI redesigns must never change production business logic.
+
+Claude may redesign:
+
+- Layout
+- Styling
+- Animations
+- Component arrangement
+- Navigation presentation
+
+Claude must not change without explicit approval:
+
+- APIs
+- Backend contracts
+- Controllers
+- Payment verification
+- Wallet logic
+- Checkout validation
+- Order processing
+- Cart calculations
+- Taxes
+- Discounts
+- Timers
+- Business rules
+
+The existing production logic should be reused whenever possible, with only the presentation layer redesigned.
+
+## Screen Freeze Policy
+
+Once a screen has been approved by the product owner:
+
+- Mark it as Frozen.
+- Do not revisit, refactor, redesign, or restyle it unless explicitly instructed.
+- Only return to a Frozen screen if:
+  - a production bug is discovered,
+  - an API/backend change requires it,
+  - or the product owner requests a redesign.
+
+This prevents regression and keeps the migration moving forward.
