@@ -63,12 +63,13 @@ class _ItemReviewWidgetState extends State<ItemReviewWidget> {
           padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
           itemBuilder: (context, index) {
             return Container(
-              padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-              margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
+              // MoonJoin card (matches the frozen design system).
+              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+              margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeDefault),
               decoration: BoxDecoration(
-                boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 1, blurRadius: 2, offset: const Offset(0, 1))],
+                boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
                 color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(Dimensions.paddingSizeSmall),
+                borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
               ),
               child: Column(children: [
 

@@ -59,7 +59,10 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     if (splashController.module == null && splashController.cacheModule != null) {
       splashController.setCacheConfigModule(splashController.cacheModule);
     }
-    itemController.getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : widget.item).then((_) {
+    // Non-campaign items must fetch full details (addOns/variations) via the API; only campaign
+    // items are rendered from the passed list payload. Passing the list item for non-campaign
+    // caused a null-check crash (initializeAddonActiveList) for items whose list payload has no addOns.
+    itemController.getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null).then((_) {
       if (itemController.item != null) {
         _newVariation = splashController.getModuleConfig(itemController.item!.moduleType).newVariation ?? false;
         if (mounted) setState(() {});

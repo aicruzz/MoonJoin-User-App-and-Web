@@ -72,7 +72,7 @@ class OrderInfoWidget extends StatelessWidget {
           ? 140 : 0) : const SizedBox(),
 
         CustomCard(
-          isBorder: false, borderRadius: isDesktop ? Dimensions.radiusDefault : 0,
+          isBorder: false, borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge,
           padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: [
 
@@ -302,7 +302,7 @@ class OrderInfoWidget extends StatelessWidget {
         SizedBox(height: Dimensions.paddingSizeSmall),
 
         parcel && order.parcelCancellation != null ? CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
@@ -381,7 +381,7 @@ class OrderInfoWidget extends StatelessWidget {
         SizedBox(height: parcel && order.parcelCancellation != null ?  Dimensions.paddingSizeSmall : 0),
 
         !isDesktop ? (parcel || orderController.orderDetails!.isNotEmpty) ? CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: parcel ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             DetailsWidget(title: 'sender_details'.tr, address: order.deliveryAddress),
@@ -446,7 +446,7 @@ class OrderInfoWidget extends StatelessWidget {
           && order.orderAttachmentFullUrl!.isNotEmpty ) ? const SizedBox(height: Dimensions.paddingSizeLarge) : const SizedBox(),
 
         (Get.find<SplashController>().getModuleConfig(order.moduleType).orderAttachment! && order.orderAttachmentFullUrl != null && order.orderAttachmentFullUrl!.isNotEmpty) ? CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             !isDesktop ? Text('prescription'.tr, style: robotoSemiBold) : const SizedBox(),
@@ -502,7 +502,7 @@ class OrderInfoWidget extends StatelessWidget {
         SizedBox(height: Get.find<SplashController>().getModuleConfig(order.moduleType).orderAttachment! && order.orderAttachmentFullUrl != null && order.orderAttachmentFullUrl!.isNotEmpty ? Dimensions.paddingSizeSmall : 0),
 
         (order.orderStatus == 'delivered' && order.orderProofFullUrl != null && order.orderProofFullUrl!.isNotEmpty) ? CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           margin: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -545,7 +545,7 @@ class OrderInfoWidget extends StatelessWidget {
         SizedBox(height: (order.deliveryMan != null && isDesktop) ? Dimensions.paddingSizeSmall : 0),
 
         order.deliveryMan != null ? CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('delivery_man_details'.tr, style: robotoSemiBold),
@@ -604,7 +604,7 @@ class OrderInfoWidget extends StatelessWidget {
         SizedBox(height: order.deliveryMan != null ? Dimensions.paddingSizeSmall : 0),
 
         (parcel &&  isDesktop) ? CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             DetailsWidget(title: 'sender_details'.tr, address: order.deliveryAddress),
@@ -619,7 +619,7 @@ class OrderInfoWidget extends StatelessWidget {
         (!parcel && isDesktop) ? const SizedBox(height: Dimensions.paddingSizeSmall) : const SizedBox(),
 
         (!parcel && order.store != null) ? CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             !isDesktop ? Text('delivery_details'.tr, style: robotoSemiBold) : const SizedBox(),
@@ -635,7 +635,7 @@ class OrderInfoWidget extends StatelessWidget {
         SizedBox(height: isDesktop ? Dimensions.paddingSizeSmall : 0),
 
         CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             !isDesktop ? Text(parcel ? 'parcel_category'.tr : Get.find<SplashController>().getModuleConfig(order.moduleType).showRestaurantText! ? 'restaurant_details'.tr : 'store_details'.tr, style: robotoSemiBold) : const SizedBox(),
@@ -721,7 +721,7 @@ class OrderInfoWidget extends StatelessWidget {
         SizedBox(height: isDesktop ? Dimensions.paddingSizeLarge : 0),
 
         CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

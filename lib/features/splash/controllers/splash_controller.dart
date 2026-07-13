@@ -297,7 +297,7 @@ class SplashController extends GetxController implements GetxService {
     }
   }
 
-  void switchModule(int index, bool fromPhone) async {
+  Future<void> switchModule(int index, bool fromPhone) async {
     if(_module == null || _module!.id != _moduleList![index].id) {
       await Get.find<SplashController>().setModule(_moduleList![index]);
 

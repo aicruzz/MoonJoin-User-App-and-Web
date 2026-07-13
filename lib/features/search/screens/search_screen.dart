@@ -4,10 +4,14 @@ import 'package:sixam_mart/common/widgets/custom_asset_image_widget.dart';
 import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
+import 'package:sixam_mart/features/notification/controllers/notification_controller.dart';
 import 'package:sixam_mart/features/search/controllers/search_controller.dart' as search;
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
+import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
+import 'package:sixam_mart/helper/route_helper.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_search_bar.dart';
 import 'package:sixam_mart/helper/voice_permission_handler.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
@@ -83,8 +87,8 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
       child: Scaffold(
         appBar: ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : null,
         endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
-        body: SafeArea(child: Padding(
-          padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+        body: SafeArea(top: false, child: Padding(
+          padding: EdgeInsets.zero,
           child: GetBuilder<search.SearchController>(builder: (searchController) {
             if(!GetPlatform.isWeb) {
               _searchController.text = searchController.searchText!;
@@ -177,68 +181,71 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                 ),
               ) : const SizedBox(),
 
-              widget.queryText!.isNotEmpty ? const SizedBox() : Center(child: ResponsiveHelper.isDesktop(context) ? const SizedBox() : Container(
-                width: Dimensions.webMaxWidth,
-                decoration: BoxDecoration(
-                  color: Get.find<ThemeController>().darkTheme ? Colors.black12 : Theme.of(context).cardColor,
-                  boxShadow: Get.find<ThemeController>().darkTheme ? null : [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), blurRadius: 3, offset: const Offset(0, 5))]
-                ),
-              padding: const EdgeInsets.only(bottom: 5),
-              child: Row(children: [
+              // Mobile: green MoonJoin hero header when showing results; the search/back
+              // row when on the suggestion landing. Desktop keeps its own layout above.
+              ResponsiveHelper.isDesktop(context) ? const SizedBox()
+                : searchController.isSearchMode ? SafeArea(bottom: false, child: Center(child: Container(
+                    width: Dimensions.webMaxWidth,
+                    decoration: BoxDecoration(
+                      color: Get.find<ThemeController>().darkTheme ? Colors.black12 : Theme.of(context).cardColor,
+                      boxShadow: Get.find<ThemeController>().darkTheme ? null : [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), blurRadius: 3, offset: const Offset(0, 5))]
+                    ),
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: Row(children: [
 
-                IconButton(
-                  onPressed: (){
-                    if(searchController.isSearchMode) {
-                      Get.back();
-                    } else {
-                      _showSuggestion = false;
-                      searchController.setSearchMode(true);
-                      searchController.setStore(false);
-                    }
-                  },
-                  icon: const Icon(Icons.arrow_back_ios_new),
-                ),
-
-                Expanded(child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.2), width: 1),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: SearchFieldWidget(
-                    controller: _searchController,
-                    radius: 40,
-                    filledColor: Theme.of(context).disabledColor.withValues(alpha: 0.05),
-                    hint: Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText!
-                        ? 'search_food_or_restaurant'.tr : 'search_item_or_store'.tr,
-                    suffixIcon: _searchController.text.isNotEmpty ? Icons.clear : Icons.keyboard_voice_sharp,
-                    prefixIcon: CupertinoIcons.search,
-                    iconPressed: () async {
-                      if(_searchController.text.isNotEmpty) {
-                        _showSuggestion = false;
-                        searchController.setSearchMode(true);
-                        searchController.setStore(false);
-                        if(GetPlatform.isWeb) {
-                          _searchController.text = '';
+                    IconButton(
+                      onPressed: (){
+                        if(searchController.isSearchMode) {
+                          Get.back();
+                        } else {
+                          _showSuggestion = false;
+                          searchController.setSearchMode(true);
+                          searchController.setStore(false);
                         }
-                      } else {
-                        await VoicePermissionHandler.openVoiceSearch(
-                          context: context,
-                          searchTextEditingController: _searchController,
-                          isDesktop: ResponsiveHelper.isDesktop(context),
-                        );
-                      }
+                      },
+                      icon: const Icon(Icons.arrow_back_ios_new),
+                    ),
 
-                    },
-                    onChanged: (text) {
-                      searchController.setSearchText(text);
-                      _searchSuggestions(text);
-                      // _searchController.text = searchController.searchText!;
-                    },
-                    onSubmit: (text) => _actionSearch(true, _searchController.text.trim(), false),
-                  ),
-                )),
-                const SizedBox(width: Dimensions.paddingSizeSmall),
-              ]))),
+                    Expanded(child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.2), width: 1),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: SearchFieldWidget(
+                        controller: _searchController,
+                        radius: 40,
+                        filledColor: Theme.of(context).disabledColor.withValues(alpha: 0.05),
+                        hint: Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText!
+                            ? 'search_food_or_restaurant'.tr : 'search_item_or_store'.tr,
+                        suffixIcon: _searchController.text.isNotEmpty ? Icons.clear : Icons.keyboard_voice_sharp,
+                        prefixIcon: CupertinoIcons.search,
+                        iconPressed: () async {
+                          if(_searchController.text.isNotEmpty) {
+                            _showSuggestion = false;
+                            searchController.setSearchMode(true);
+                            searchController.setStore(false);
+                            if(GetPlatform.isWeb) {
+                              _searchController.text = '';
+                            }
+                          } else {
+                            await VoicePermissionHandler.openVoiceSearch(
+                              context: context,
+                              searchTextEditingController: _searchController,
+                              isDesktop: ResponsiveHelper.isDesktop(context),
+                            );
+                          }
+
+                        },
+                        onChanged: (text) {
+                          searchController.setSearchText(text);
+                          _searchSuggestions(text);
+                          // _searchController.text = searchController.searchText!;
+                        },
+                        onSubmit: (text) => _actionSearch(true, _searchController.text.trim(), false),
+                      ),
+                    )),
+                    const SizedBox(width: Dimensions.paddingSizeSmall),
+                  ])))) : _searchHeroHeader(context, searchController),
 
               Expanded(child: searchController.isSearchMode ? _showSuggestion ? showSuggestions(
                 context, searchController, _itemsAndStors,
@@ -423,6 +430,100 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
           return cartController.cartList.isNotEmpty && !ResponsiveHelper.isDesktop(context) ? const BottomCartWidget() : const SizedBox();
         })
       ),
+    );
+  }
+
+  /// Green MoonJoin hero header for the search RESULTS view (items_search_list.PNG):
+  /// back + notification/cart badges, big query title, location, "N Restaurants
+  /// Available", optional hero artwork, and the search bar. Presentation only —
+  /// composes around the existing search logic (no shared row/card touched).
+  Widget _searchHeroHeader(BuildContext context, search.SearchController searchController) {
+    final Color green = Theme.of(context).primaryColor;
+    final bool showRestaurant = Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText!;
+    final String query = (searchController.searchText?.isNotEmpty ?? false)
+        ? searchController.searchText! : (widget.queryText ?? '');
+    final String address = AddressHelper.getUserAddressFromSharedPref()?.address ?? '';
+    final int storeCount = searchController.searchStoreList?.length ?? 0;
+    final String? heroImage = (searchController.searchItemList != null && searchController.searchItemList!.isNotEmpty)
+        ? searchController.searchItemList!.first.imageFullUrl : null;
+
+    return Container(
+      color: green,
+      child: SafeArea(bottom: false, child: Padding(
+        padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+          Row(children: [
+            _circleButton(context, Icons.arrow_back, 0, () {
+              if (searchController.isSearchMode) { Get.back(); }
+              else { _showSuggestion = false; searchController.setSearchMode(true); searchController.setStore(false); }
+            }),
+            const Spacer(),
+            _circleButton(context, Icons.notifications_none,
+                Get.find<NotificationController>().notificationList?.length ?? 0,
+                () => Get.toNamed(RouteHelper.getNotificationRoute())),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            _circleButton(context, Icons.shopping_cart_outlined,
+                Get.find<CartController>().cartList.length,
+                () => Get.toNamed(RouteHelper.getCartRoute())),
+          ]),
+          const SizedBox(height: Dimensions.paddingSizeSmall),
+
+          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text(query, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: robotoBold.copyWith(color: Colors.white, fontSize: 30)),
+              const SizedBox(height: 6),
+              if (address.isNotEmpty) Row(children: [
+                const Icon(Icons.location_on, color: Colors.white, size: 15),
+                const SizedBox(width: 3),
+                Flexible(child: Text(address, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: robotoRegular.copyWith(color: Colors.white.withValues(alpha: 0.9), fontSize: Dimensions.fontSizeSmall))),
+              ]),
+              const SizedBox(height: 6),
+              Text('$storeCount ${showRestaurant ? 'restaurants'.tr : 'stores'.tr} ${'available'.tr}',
+                  style: robotoBold.copyWith(color: const Color(0xFFFFC107), fontSize: Dimensions.fontSizeSmall)),
+            ])),
+            if (heroImage != null) Padding(
+              padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                child: CustomImage(image: heroImage, width: 96, height: 96, fit: BoxFit.cover),
+              ),
+            ),
+          ]),
+          const SizedBox(height: Dimensions.paddingSizeDefault),
+
+          MoonjoinSearchBar(
+            controller: _searchController,
+            hintText: showRestaurant ? 'search_food_or_restaurant'.tr : 'search_item_or_store'.tr,
+            onChanged: (text) { searchController.setSearchText(text); _searchSuggestions(text); },
+            onSubmitted: (text) => _actionSearch(true, _searchController.text.trim(), false),
+            onFilterTap: () => _actionSearch(false, _searchController.text.trim(), false),
+          ),
+        ]),
+      )),
+    );
+  }
+
+  Widget _circleButton(BuildContext context, IconData icon, int count, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap, borderRadius: BorderRadius.circular(30),
+      child: Stack(clipBehavior: Clip.none, children: [
+        Container(
+          height: 42, width: 42, alignment: Alignment.center,
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          child: Icon(icon, color: Theme.of(context).primaryColor, size: 22),
+        ),
+        if (count > 0) Positioned(
+          right: -2, top: -2,
+          child: Container(
+            height: 18, width: 18, alignment: Alignment.center,
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.error, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 1.5)),
+            child: Text(count > 9 ? '9+' : '$count', style: robotoBold.copyWith(color: Colors.white, fontSize: 9)),
+          ),
+        ),
+      ]),
     );
   }
 

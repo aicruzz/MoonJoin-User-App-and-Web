@@ -6,6 +6,29 @@ tolerated; nothing new introduced).
 
 ---
 
+## 🔒 Frozen Screen Registry (production baseline)
+Approved, frozen, production-ready. Do NOT modify unless a genuine production bug, a backend
+incompatibility, or explicit user approval to reopen. No cosmetic changes. Add each newly approved screen.
+
+- ✅ Home
+- ✅ All Restaurants
+- ✅ Food Product Details
+- ✅ Cart
+- ✅ Edit Unavailable Items
+- ✅ Checkout
+- ✅ Payment Method Popup
+- ✅ Order Success
+- ✅ Order Tracking
+- ✅ Order Details
+- ✅ Review / Rating flow
+- ✅ Order History (My Orders list)
+- ✅ Refund flow (Refund Request screen)
+- ✅ Product Details — Grocery/Others module (`ItemDetailsScreen`)
+
+**Status: Production Ready · Frozen**
+
+---
+
 ## Phase 0 — Documentation
 - **Screen completed:** none (docs only).
 - **Files modified:** `docs/DESIGN_SYSTEM.md`, `docs/UI_INDEX.md`, `docs/COMPONENTS.md`, `docs/SCREEN_FLOW.md`; created `docs/MIGRATION_REPORT.md`.
@@ -500,6 +523,176 @@ Applied the user's production-flow refinements on top of the redesign:
   "earn 64 points" dialog (logic preserved); **Refer & Earn** banner opened Refer & Earn. 0 overflow / 0
   exceptions; `flutter analyze` → **No issues**.
 - **ORDER SUCCESS — permanently FROZEN by the user.** Production baseline.
+
+## ORDER TRACKING — ✅ APPROVED & FROZEN
+- **Screen:** `order/screens/order_tracking_screen.dart` + overlay widgets
+  `order/widgets/tracking_stepper_widget.dart` and `order/widgets/track_details_view_widget.dart`. Not in
+  Active Figma / not in `/ui-designs/` (shopping module) → designed in the approved MoonJoin design system.
+- **Presentation only:** the two cards over the live `GoogleMap` now use the MoonJoin card treatment
+  (`radiusLarge` + soft shadow `primary @0.05, blur 10`), and the rider **Call**/**Chat** buttons use the
+  brand green `#2C9C44` (`primaryColor`) instead of hardcoded `Colors.green`, with cleaner icons. Reused
+  existing `CustomStepperWidget` / `AddressDetailsWidget` / `RatingBar` — no new/duplicated widgets.
+- **Logic 100% reused:** GoogleMap, markers, `setMarker`/`updateMarker`/`updateDeliverymanMarker`,
+  `zoomToFit`, location permission, the live tracking timer, and the call/chat/direction handlers are all
+  unchanged. Cleanup: removed a stray `debugPrint` and the resulting unused `bounds` local in
+  `updateMarker` (behavior-neutral; `rotation` preserved).
+- **Verified via REAL backend, in-transit order (rider EZT Adejumo, "Delivery on the way"):** stepper shows
+  Order Placed ✓ · Confirmed ✓ · Preparing ✓ · Delivery on the way ✓ · Delivered (pending); rider details
+  card shows Trip Route, real distance (1023.83 km), rider name + rating, brand-green Call/Chat; map markers
+  + live camera updates work after hot reload. Delivered orders correctly route to Order Details instead.
+  0 overflow / 0 exceptions; `flutter analyze` → **No issues**.
+- **ORDER TRACKING — permanently FROZEN by the user** (pre-authorized on passing real-backend QA).
+
+## ORDER DETAILS — ✅ APPROVED & FROZEN
+- **Screen:** `order/screens/order_details_screen.dart` + `order/widgets/order_info_widget.dart` +
+  `order/widgets/order_calcuation_widget.dart`. Not in Active Figma / not in `/ui-designs` (shopping) →
+  MoonJoin design system.
+- **Presentation only:** off-white body (`#F6F8F0`, mobile), a page gutter (one scroll-view `padding`), and
+  every section is now a MoonJoin **card** — switched the shared **`CustomCard`** wrapper's mobile
+  `borderRadius` 0 → `radiusLarge` across all sections (General Info, Item Info, Delivery Details, Delivery
+  Man, Restaurant, Payment, Billing Summary, Notes, Cancellation, Prescription/Proof, Order Status/banner).
+  Reused the existing `CustomCard` + all section widgets — no new/duplicated widgets.
+- **Logic 100% reused:** `OrderController`, APIs, models, routes, the 10s refresh timer, and every action
+  (Cancel, Edit, Review, Refund, Reorder, Switch-to-COD, Chat, Call, Track, parcel-return) unchanged.
+- **QA:** `flutter analyze` → **No issues** in modified files (one pre-existing `use_build_context_synchronously`
+  in untouched action logic remains). **Fixed a genuine memory leak** — `scrollController` is now disposed.
+- **Verified via REAL backend:** Pending #100048 renders all sections as clean cards (code 8807, Pizza
+  ₦12,000 + Soft Drink, Delivery Details, Restaurant, Payment **Unpaid** ₦14,000), 0 overflow; Delivered
+  #100050 content (rider, Paid Cash ₦6,443, billing, Review/Refund) renders in the same cards. Card
+  treatment is state-agnostic.
+- **ORDER DETAILS — permanently FROZEN by the user.** Production baseline.
+
+## REVIEW / RATING — ✅ APPROVED & FROZEN
+- **Screens:** `review/screens/rate_review_screen.dart` (Items / Delivery Man tabs) +
+  `review/widgets/item_review_widget.dart` + `review/widgets/deliver_man_review_widget.dart`. Not in Active
+  Figma / not in `/ui-designs` → MoonJoin design system.
+- **Presentation only:** off-white body (`#F6F8F0`); the per-item review card and the delivery-man
+  review/rate cards now use the MoonJoin treatment (`radiusLarge` + soft shadow `primary @0.05, blur 10`
+  + margins). Reused existing `CustomButton` (Submit), the star `RatingBar` (brand-green `primaryColor`),
+  `MyTextField` (comment), `CustomImage`, and the tab controller — no new/duplicated widgets.
+- **Logic 100% reused:** `ReviewController` (`initRatingData`, `setRating`, `setReview`, `submitReview`,
+  `canReviews`, loading/submitted state), `ReviewBodyModel`, and the Items/Delivery-Man tabs — unchanged.
+- **Verified via REAL backend (order #100050):** Items tab (Rice&Beans ₦4,000, Pizza ₦7,500 cards with
+  rating + comment + Submit) and Delivery Man tab (rider **EZT Adejumo** card + Rate His Service card) both
+  render as clean MoonJoin cards, real data, 0 overflow. `flutter analyze` → **No issues**.
+- **REVIEW / RATING — permanently FROZEN by the user.** Production baseline.
+
+## ORDER HISTORY — ✅ APPROVED & FROZEN
+- **Screens:** `order/screens/order_screen.dart` (My Orders — Running / History tabs) +
+  `order/widgets/order_view_widget.dart` (per-order row). No dedicated `/ui-designs` image / not in Active
+  Figma → MoonJoin design system ("Restyled using Design System (No Dedicated Mockup)").
+- **Presentation only:** off-white body (`#F6F8F0`); each order row is now a MoonJoin card
+  (`radiusLarge` + soft shadow `primary @0.05, blur 10` + page margins), and the inter-row divider was
+  removed in favour of card separation. Desktop keeps its existing `radiusSmall` compact rows. Reused the
+  existing `OrderViewWidget`, store image, `StatusBadge`-style status pill and item-count — no new widgets.
+- **Logic 100% reused:** `OrderController` (`getRunningOrders`, `getHistoryOrders`, pagination), the
+  Orders/Trips type switch, `TaxiOrderController` trips, guest track-order fallback — all unchanged. No
+  APIs/controllers/models/routes touched.
+- **Verified via REAL backend:** History tab renders #100051 (2 Items, **Delivered**), #100050 (1 Item,
+  **Delivered**), #100006 & #100005 (**Payment Failed**) as clean MoonJoin cards with store logo, order id,
+  date/time, status pill and item count — 0 overflow. `flutter analyze` → **No issues** in both files.
+- **ORDER HISTORY — permanently FROZEN by the user.** Production baseline.
+
+## REFUND FLOW — ✅ APPROVED & FROZEN (verification-first)
+- **Screen:** `order/screens/refund_request_screen.dart`. No dedicated `/ui-designs` image / not in Active
+  Figma → MoonJoin design system.
+- **Production logic investigated & documented before any UI change (no assumptions):**
+  - **Path B — the ONE real refund entry point.** `order_info_widget.dart:693`, an outlined "Refund This
+    Order" button **inline in the Restaurant Details card** (NOT a bottom action). Visible only when
+    `!isGuestLoggedIn && configModel.refundActiveStatus == true && orderStatus == 'delivered' && !parcel
+    && orderDetails[0].itemCampaignId == null` (campaign/flash-sale first item hides both Refund AND
+    Review — same gate at `:706`). Taps `Get.toNamed(getRefundRequestRoute(order.id))`. Screen loads
+    `OrderController.getRefundReasons()` (`GET /api/v1/customer/order/refund-reasons`); submit →
+    `OrderController.submitRefundRequest()` (`POST /api/v1/customer/order/refund-request`, multipart
+    reason/note/image[]). **No wallet logic in the frontend — refund/wallet credit is entirely backend.**
+  - **Path A — Cancel Order** (`shouldShowCancelButton`, status `pending|failed`) → `CancellationDialogueWidget`
+    → `OrderController.cancelOrder()` (`POST orderCancelUri`). This is **cancellation, not refund**; no
+    refund-reason step, no frontend wallet trigger. Path A ≠ refund flow.
+  - **Path C — "Payment Failed" orders (#100005/#100006): EXPECTED, not a bug.** `'failed'.tr` = "Payment
+    Failed" (en.json). `order_status:'failed' + digital_payment + unpaid` = a digital payment that was
+    abandoned/failed before the gateway callback completed (standard 6amMart; a `paymentFailedDetailsUri`
+    retry path exists). No inconsistency, no state mismatch, nothing paid → no refund applies.
+  - **Conclusion: no bug, no logic/backend change required.**
+- **Presentation only:** off-white body (`#F6F8F0`); the two form cards now use the MoonJoin treatment
+  (`radiusLarge` + soft shadow `primary @0.05, blur 10` + `paddingSizeDefault`). Reused existing
+  `CustomTextField`, `CustomButton` (brand-green Submit), the `DottedBorder` uploader, and the
+  `SelectedCardWidget` (brand-green checkbox) — no new/duplicated widgets, no new controllers.
+- **Logic 100% reused:** `OrderController` refund methods, `orderServiceInterface`, refund APIs, reason
+  selection and image picker — unchanged.
+- **Verified via REAL backend (order #100051, delivered):** reached through the real flow (Order Details →
+  Restaurant Details → "Refund This Order"). Screen renders live refund reasons (Item is Broken [default-
+  selected], Expired Product, "different from what Delivered", Some items not available), Comments field,
+  dotted Upload-Image, and green Submit — 0 overflow. `flutter analyze` → **No issues**.
+- **REFUND FLOW — permanently FROZEN by the user.** Production baseline.
+
+## PRODUCT DETAILS — GROCERY / OTHERS MODULE — ✅ APPROVED & FROZEN
+- **Screen:** `item/screens/item_details_screen.dart` (mobile) — the shared product page for **every non-food
+  module** (Grocery, Fuel, Fashion, Pharmacy, Market, Drink Distributor, Solar & Power). Implemented from
+  `ui-designs/…/product_details_for_grocery_and_others_module.png`.
+- **ONE reusable implementation, not a fork:** Food keeps the frozen `FoodDetailsScreen` (option-group
+  cards + Extras); grocery/others keeps `ItemDetailsScreen` (chip variations + In-Stock badge) — the two
+  approved mockups genuinely differ, but both are driven by the **same** `ItemController`, the same
+  computed `cartModel`/`cart`/`priceWithAddons`/`stock`, and the same `choiceOptions` variation model. The
+  `navigateToItemPage` split (food → FoodDetailsScreen, others → ItemDetailsScreen) is unchanged.
+- **Design:** green `WavyHeader` + controls row (back · store-icon chip + name + ★rating · share ·
+  favourite), image **carousel** (imageFullUrl + imagesFullUrl) straddling the wave with animated dots;
+  left-aligned name + white-card favourite; store name (green); price (green, with strikethrough original
+  when discounted) + `unitType` chip; ★rating + row-right **In Stock / Out of Stock** badge; `choiceOptions`
+  variations as **green/grey selectable chips** (Size/Type/Color…); light-green quantity stepper; Total
+  Amount; and a fixed **Total + qty stepper + Add-to-Cart (cart icon)** footer.
+- **Presentation only — zero logic change:** the existing inline pricing/variation/stock computation and the
+  entire add/update-to-cart + another-store-reset + campaign→checkout flow were **reused verbatim** (the
+  add-to-cart body was extracted into a private `_addToCart` with identical behaviour; only the dead
+  `_key.currentState!.shake()` app-bar hook was dropped since the mobile app bar is replaced by the body
+  header). Reused `WavyHeader`, `CustomImage`, `CustomButton`, `RatingBar`, `FavouriteController`,
+  `itemController.setCartVariationIndex` / `setImageSliderIndex` / `setQuantity`. **Desktop path
+  (`DetailsWebViewWidget`) and the desktop `QuantityButton` class are untouched.** Added `PageController`
+  disposal (no leak).
+- **Verified via REAL backend (Grocery item "Lemon" · store "Fruset"):** renders a 1:1 match to the mockup —
+  wavy header + Lemon carousel (2 dots), name + fav, ₦380 with strikethrough ₦400, "Packs" unit chip,
+  0.0★ (0), green In-Stock badge, **Color** chips (Yellow selected / Green), quantity stepper, Total ₦380,
+  Description, and the Total + qty + Add-to-Cart footer. **0 overflow, 0 exceptions from this screen.**
+  `flutter analyze` → **No issues**.
+- **Approved refinement (spacing only):** the hero image/card was moved slightly **down** so it sits
+  comfortably below the top controls row (header `top 92→132`, dots `300→340`, header height `344→384`) — no
+  change to the controls row, store info, image size, or card design. Re-verified on the Lemon page: image
+  clears the store name/rating/share/favourite, carousel + dots intact, 0 overflow, analyze clean.
+- **PRODUCT DETAILS (GROCERY/OTHERS) — permanently FROZEN by the user.** The single non-food product-details
+  baseline; reuse unchanged for Fuel/Fashion/Pharmacy/Market/Drink/Solar.
+- **Pre-existing bug observed (out of scope, NOT introduced here):** `Reviews.fromJson`
+  (`order/domain/models/order_model.dart:673`) throws `type 'String' is not a subtype of type 'int?'` when
+  parsing the **order-track** response (e.g. #100051) — a model/BE type mismatch on a `Reviews` field. It is
+  caught, doesn't break the UI, and predates this work. Flagged for a later dedicated fix (needs the exact
+  field + backend confirmation before changing the model).
+
+## ⚠️ Pre-existing issue to investigate LATER (do NOT touch during UI migration)
+- **`Reviews.fromJson` — `type 'String' is not a subtype of type 'int?'`** at
+  `lib/features/order/domain/models/order_model.dart:673` (via `OrderModel.fromJson` at `:257`), thrown while
+  parsing the **order-track** response (observed on order #100051). A `Reviews` field is declared `int?` but
+  the backend sends a `String`.
+- **Status:** pre-existing backend/model type mismatch, **not** introduced by any UI migration work. The
+  exception is caught, does not crash, and does not affect any redesigned screen.
+- **Rule:** OUT OF SCOPE for the presentation-only migration. Do **not** modify models, API parsing, backend
+  contracts, Review JSON, or Order models to "fix" this during UI work. Investigate as a dedicated task later
+  (identify the exact field, confirm the backend contract, then correct the model parse).
+
+## 🐞 Production bug fixes (crashes) — 2026-07-13
+Two "Null check operator used on a null value" crashes found while browsing the Food module were fixed
+(presentation/defensive only; no backend, models, or business rules changed):
+1. **"New on MoonJoin" strip crash (food/grocery module home).** `new_on_mart_view.dart` rendered the legacy
+   `StoreCard`, which threw a null-check on latest stores that have `logo/cover_photo/latitude == null`
+   (e.g. "Small and Cabrera Inc" from `/stores/latest`). **Fix:** the strip now reuses the **frozen
+   `MoonjoinStoreCard`** (the approved All Restaurants card — null-safe), width-boxed at 280 in a 200-tall
+   horizontal list; `onTap` opens the store via the same module-activate + `getStoreRoute` behaviour as
+   AllStoreScreen. Legacy `StoreCard` import removed. This also matches the user's request to show the All
+   Restaurants design there instead of the old card. **Verified on device:** section renders both latest
+   stores as clean cards, **0 crash**; See All still → AllStoreScreen. `flutter analyze` clean.
+2. **Food product-details crash.** `food_details_screen.dart` `initState` passed the *list* item for
+   non-campaign items (`isCampaign ? widget.item : widget.item` — copy-paste bug), so items whose list
+   payload had no `addOns` crashed in `ItemService.initializeAddonActiveList`. **Fix:** non-campaign items
+   now fetch full details (`isCampaign ? widget.item : null`), matching the grocery `ItemDetailsScreen`.
+   Defensive null-guards were also added to `initializeAddonActiveList` / `initializeAddonQtyList`
+   (`addOns?.length ?? 0`). `flutter analyze` clean. (On-device re-test pending: tap a food item.)
 
 ## Planned: Global consistency pass (after all core screens are frozen)
 After Home, All Restaurants, Food Product Details, Your Cart, Checkout, Payment and Order Success are all

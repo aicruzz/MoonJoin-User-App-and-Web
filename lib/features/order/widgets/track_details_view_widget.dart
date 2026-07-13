@@ -32,10 +32,12 @@ class TrackDetailsViewWidget extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+      // MoonJoin card treatment (matches the frozen design system).
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
         color: Theme.of(context).cardColor,
+        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
       ),
       alignment: Alignment.center,
       child: (!takeAway && track.deliveryMan == null) ? Padding(
@@ -134,13 +136,17 @@ class TrackDetailsViewWidget extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall, horizontal: Dimensions.paddingSizeSmall),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                color: Colors.green,
+                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                color: Theme.of(context).primaryColor,
               ),
-              child: Text(
-                'call'.tr,
-                style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).cardColor),
-              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.call, size: 12, color: Theme.of(context).cardColor),
+                const SizedBox(width: 4),
+                Text(
+                  'call'.tr,
+                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).cardColor),
+                ),
+              ]),
             ),
           ),
           const SizedBox(width: Dimensions.paddingSizeSmall),
@@ -148,12 +154,12 @@ class TrackDetailsViewWidget extends StatelessWidget {
           showChatPermission ? InkWell(
             onTap: callback as void Function()?,
             child: Container(
-              padding: EdgeInsets.symmetric(vertical: Get.context!.width >= 1300 ? 7 : Dimensions.paddingSizeExtraSmall, horizontal: Dimensions.paddingSizeSmall),
+              padding: EdgeInsets.symmetric(vertical: Get.context!.width >= 1300 ? 7 : Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeSmall),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                color: Colors.green,
+                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                color: Theme.of(context).primaryColor,
               ),
-              child: Icon(Icons.chat, size: 12, color: Theme.of(context).cardColor),
+              child: Icon(Icons.chat_bubble_outline_rounded, size: 14, color: Theme.of(context).cardColor),
             ),
           ) : const SizedBox(),
         ]),

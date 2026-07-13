@@ -55,7 +55,7 @@ class OrderCalculationWidget extends StatelessWidget {
       Padding(
         padding: EdgeInsets.only(top: isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeSmall),
         child: CustomCard(
-          borderRadius: isDesktop ? Dimensions.radiusDefault : 0, isBorder: false,
+          borderRadius: isDesktop ? Dimensions.radiusDefault : Dimensions.radiusLarge, isBorder: false,
           padding: EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             (isDesktop && orderController.orderDetails!.isNotEmpty) ? Container(

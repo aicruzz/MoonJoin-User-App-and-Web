@@ -32,6 +32,7 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F8F0),
       appBar: CustomAppBar(title: 'refund_request'.tr),
       body: SafeArea(
         child: GetBuilder<OrderController>(builder: (orderController) {
@@ -47,11 +48,11 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                       Container(
-                        padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
                         ),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
@@ -95,11 +96,11 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
 
                       Container(
                         width: context.width,
-                        padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
                         ),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 

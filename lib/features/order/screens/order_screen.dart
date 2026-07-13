@@ -56,7 +56,7 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
   Widget build(BuildContext context) {
     _isLoggedIn = AuthHelper.isLoggedIn();
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: ResponsiveHelper.isDesktop(context) ? Theme.of(context).colorScheme.surface : const Color(0xFFF6F8F0),
       appBar: haveTaxiModule && !ResponsiveHelper.isDesktop(context) ? null : CustomAppBar(title: 'my_orders'.tr, backButton: ResponsiveHelper.isDesktop(context)),
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: SafeArea(

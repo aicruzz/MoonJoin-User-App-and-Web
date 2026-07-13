@@ -1,11 +1,13 @@
+import 'package:sixam_mart/common/models/module_model.dart';
 import 'package:sixam_mart/common/widgets/card_design/store_card_with_distance.dart';
+import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:sixam_mart/features/store/widgets/moonjoin_store_card.dart';
 import 'package:sixam_mart/features/home/widgets/web/web_new_on_view_widget.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/card_design/store_card.dart';
 import 'package:sixam_mart/common/widgets/rating_bar.dart';
 import 'package:sixam_mart/common/widgets/title_widget.dart';
 import 'package:flutter/material.dart';
@@ -50,17 +52,26 @@ class NewOnMartView extends StatelessWidget {
                   );
                 }),
           ) : SizedBox(
-            height: 140,
+            // MoonJoin: the "New on MoonJoin" strip now reuses the frozen All Restaurants
+            // card (MoonjoinStoreCard) instead of the legacy StoreCard — same approved design,
+            // and null-safe (the legacy card threw a null-check on some latest stores).
+            height: 200,
             child: ListView.builder(
               controller: ScrollController(),
               physics: const BouncingScrollPhysics(),
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
+              padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault),
               itemCount: storeList.length,
               itemBuilder: (context, index){
                 return Padding(
                   padding: const EdgeInsets.only(right: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeSmall, top: Dimensions.paddingSizeSmall),
-                  child: StoreCard(store: storeList[index]),
+                  child: SizedBox(
+                    width: 280,
+                    child: MoonjoinStoreCard(
+                      store: storeList[index],
+                      onTap: () => _openStore(storeList[index]),
+                    ),
+                  ),
                 );
               },
             ),
@@ -68,6 +79,18 @@ class NewOnMartView extends StatelessWidget {
         ]),
       ) : const SizedBox.shrink() : const WebNewOnShimmerView();
     });
+  }
+
+  /// Ensure the store's module is active, then open its page — identical to the
+  /// frozen AllStoreScreen behaviour (no new business logic).
+  void _openStore(Store store) {
+    for (ModuleModel module in Get.find<SplashController>().moduleList ?? []) {
+      if (module.id == store.moduleId) {
+        Get.find<SplashController>().setModule(module);
+        break;
+      }
+    }
+    Get.toNamed(RouteHelper.getStoreRoute(id: store.id, page: 'store'));
   }
 }
 

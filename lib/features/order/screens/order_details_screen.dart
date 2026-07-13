@@ -81,6 +81,7 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    scrollController.dispose();
     super.dispose();
   }
 
@@ -100,6 +101,7 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
       },
       child: GetBuilder<OrderController>(builder: (orderController) {
         return Scaffold(
+          backgroundColor: isDesktop ? null : const Color(0xFFF6F8F0),
           appBar: isDesktop ? const WebMenuBar() : AppBar(
             title: Column(
               children: [
@@ -252,6 +254,7 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
               Expanded(child: SingleChildScrollView(
                 controller: scrollController,
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeDefault),
                 child: FooterView(
                   child: SizedBox(
                     width: Dimensions.webMaxWidth,

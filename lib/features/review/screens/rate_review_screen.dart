@@ -34,6 +34,7 @@ class RateReviewScreenState extends State<RateReviewScreen> with TickerProviderS
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      backgroundColor: const Color(0xFFF6F8F0),
       appBar: CustomAppBar(title: 'rate_review'.tr),
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
       body: Column(children: [

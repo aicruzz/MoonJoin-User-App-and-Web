@@ -397,21 +397,11 @@ class OrderTrackingScreenState extends State<OrderTrackingScreen> with WidgetsBi
         width: 30, imagePath: Images.userMarker,
       );
 
-      LatLngBounds? bounds;
-      debugPrint(bounds.toString());
       double rotation = 0;
       if(_controller != null) {
         if (double.parse(addressModel!.latitude!) < double.parse(store!.latitude!)) {
-          bounds = LatLngBounds(
-            southwest: LatLng(double.parse(addressModel.latitude!), double.parse(addressModel.longitude!)),
-            northeast: LatLng(double.parse(store.latitude!), double.parse(store.longitude!)),
-          );
           rotation = 0;
         }else {
-          bounds = LatLngBounds(
-            southwest: LatLng(double.parse(store.latitude!), double.parse(store.longitude!)),
-            northeast: LatLng(double.parse(addressModel.latitude!), double.parse(addressModel.longitude!)),
-          );
           rotation = 180;
         }
       }

@@ -35,14 +35,12 @@ class _DeliveryManReviewWidgetState extends State<DeliveryManReviewWidget> {
           const SizedBox(height: Dimensions.paddingSizeLarge),
 
           Container(
-            padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+            // MoonJoin card (matches the frozen design system).
+            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-              boxShadow: [BoxShadow(
-                color: Colors.grey[Get.isDarkMode ? 700 : 300]!,
-                blurRadius: 5, spreadRadius: 1,
-              )],
+              borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+              boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
             ),
             child: Column(children: [
               Text(

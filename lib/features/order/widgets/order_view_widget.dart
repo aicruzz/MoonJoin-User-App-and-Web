@@ -77,12 +77,15 @@ class OrderViewWidget extends StatelessWidget {
                         bool isPrescription = paginatedOrderModel.orders![index].prescriptionOrder!;
 
                         return Container(
-                          padding: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.all(Dimensions.paddingSizeSmall) : null,
-                          margin: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall) : null,
-                          decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
-                            color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                          // MoonJoin card row (matches the frozen list screens).
+                          padding: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.all(Dimensions.paddingSizeSmall) : const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+                          margin: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall)
+                              : const EdgeInsets.only(left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeDefault),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(ResponsiveHelper.isDesktop(context) ? Dimensions.radiusSmall : Dimensions.radiusLarge),
                             boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
-                          ) : null,
+                          ),
                           child: CustomInkWell(
                             onTap: () {
                               Get.toNamed(
@@ -213,12 +216,7 @@ class OrderViewWidget extends StatelessWidget {
 
                               ]),
 
-                              (index == paginatedOrderModel.orders!.length-1 || ResponsiveHelper.isDesktop(context)) ? const SizedBox() : Padding(
-                                padding: const EdgeInsets.only(left: 70),
-                                child: Divider(
-                                  color: Theme.of(context).disabledColor, height: Dimensions.paddingSizeLarge,
-                                ),
-                              ),
+                              const SizedBox(),
 
                             ]),
                           ),
