@@ -80,6 +80,13 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
     }
   }
 
+  @override
+  void dispose() {
+    _amountController.dispose();
+    tooltipController.dispose();
+    super.dispose();
+  }
+
   /// Returns true if 9PSB is in the active payment methods list
   bool get _is9PSBActive {
     final list = Get.find<SplashController>().configModel!.activePaymentMethodList;

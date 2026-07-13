@@ -194,7 +194,6 @@ class PaymentSection extends StatelessWidget {
               child: Row(children: [
                 Builder(
                   builder: (context) {
-                    //print('=======pay: ${checkoutController.paymentMethodIndex}==== ${checkoutController.isPartialPay}');
                     return Text(
                       checkoutController.paymentMethodIndex == 0 ? '${'cash_on_delivery'.tr} ${checkoutController.isPartialPay ? '(${'partial'.tr})' : ''}'
                           : checkoutController.paymentMethodIndex == 1 && !checkoutController.isPartialPay ? 'wallet_payment'.tr
