@@ -24,10 +24,12 @@ class ItemsView extends StatefulWidget {
   final bool inStorePage;
   final bool isFeatured;
   final bool? isFoodOrGrocery;
+  /// Hide the store name under item titles (Item Search/List screen only).
+  final bool hideItemStoreName;
   const ItemsView({super.key, required this.stores, required this.items, required this.isStore, this.isScrollable = false,
     this.shimmerLength = 20, this.padding = const EdgeInsets.all(Dimensions.paddingSizeDefault), this.noDataText,
     this.isCampaign = false, this.inStorePage = false, this.isFeatured = false,
-    this.isFoodOrGrocery = true});
+    this.isFoodOrGrocery = true, this.hideItemStoreName = false});
 
   @override
   State<ItemsView> createState() => _ItemsViewState();
@@ -72,7 +74,7 @@ class _ItemsViewState extends State<ItemsView> {
             : !ResponsiveHelper.isDesktop(context) ? ItemWidget(
             isStore: widget.isStore, item: widget.isStore ? null : widget.items![index], isFeatured: widget.isFeatured,
             store: widget.isStore ? widget.stores![index] : null, index: index, length: length, isCampaign: widget.isCampaign,
-            inStore: widget.inStorePage,
+            inStore: widget.inStorePage, hideItemStoreName: widget.hideItemStoreName,
           ) : WebItemWidget(
             isStore: widget.isStore, item: widget.isStore ? null : widget.items![index], isFeatured: widget.isFeatured,
             store: widget.isStore ? widget.stores![index] : null, index: index, length: length, isCampaign: widget.isCampaign,

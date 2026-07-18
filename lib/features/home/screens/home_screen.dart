@@ -26,6 +26,7 @@ import 'package:sixam_mart/features/home/screens/modules/grocery_home_screen.dar
 import 'package:sixam_mart/features/home/screens/modules/pharmacy_home_screen.dart';
 import 'package:sixam_mart/features/home/screens/modules/shop_home_screen.dart';
 import 'package:sixam_mart/features/parcel/controllers/parcel_controller.dart';
+import 'package:sixam_mart/features/store/screens/all_store_screen.dart';
 import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
 import 'package:sixam_mart/features/rental_module/home/screens/taxi_home_screen.dart';
 import 'package:sixam_mart/features/rental_module/rental_cart_screen/controllers/taxi_cart_controller.dart';
@@ -220,7 +221,18 @@ class _HomeScreenState extends State<HomeScreen> {
           endDrawer: const MenuDrawer(),
           endDrawerEnableOpenDragGesture: false,
           backgroundColor: Theme.of(context).colorScheme.surface,
-          body: isParcel ? const ParcelCategoryScreen() : SafeArea(
+          // MoonJoin: the Food module lands directly on the All Restaurants store list
+          // (AllStoreScreen) instead of the legacy food home — on every path (module
+          // switch, back, relaunch, cold start). Grocery/Pharmacy/Ecommerce keep their
+          // existing homes for now (not yet redesigned). AllStoreScreen has its own
+          // SafeArea + RefreshIndicator, so it's returned before the outer wrappers.
+          body: isParcel ? const ParcelCategoryScreen()
+              : (!ResponsiveHelper.isDesktop(context) && isFood) ? AllStoreScreen(
+                  key: ValueKey('module_store_list_${splashController.module?.id}'),
+                  isPopular: false, isFeatured: false, isNearbyStore: false,
+                  isTopOfferStore: false, isRecommendedStore: false, fromModule: true,
+                )
+              : SafeArea(
             // Module-landing header extends edge-to-edge behind the status bar
             // (MoonJoin design); per-module homes keep the top inset.
             top: !showMobileModule,

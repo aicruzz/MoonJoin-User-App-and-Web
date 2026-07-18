@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/common/models/module_model.dart';
+import 'package:sixam_mart/common/widgets/cart_widget.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import 'package:sixam_mart/features/brands/controllers/brands_controller.dart';
 import 'package:sixam_mart/features/category/controllers/category_controller.dart';
@@ -24,7 +25,11 @@ class AllStoreScreen extends StatefulWidget {
   final bool isNearbyStore;
   final bool isTopOfferStore;
   final bool isRecommendedStore;
-  const AllStoreScreen({super.key, required this.isPopular, required this.isFeatured, required this.isNearbyStore, required this.isTopOfferStore, required this.isRecommendedStore});
+  /// When true this screen is the module landing (shown inside the dashboard Home
+  /// tab for storefront modules), not a pushed page: the app bar shows a
+  /// module-grid toggle + notification + cart instead of a back button.
+  final bool fromModule;
+  const AllStoreScreen({super.key, required this.isPopular, required this.isFeatured, required this.isNearbyStore, required this.isTopOfferStore, required this.isRecommendedStore, this.fromModule = false});
 
   @override
   State<AllStoreScreen> createState() => _AllStoreScreenState();
@@ -147,12 +152,39 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
   }
 
   Widget _appBar(BuildContext context) {
+    final splashController = Get.find<SplashController>();
+    // Module landing: show a module-grid toggle (return to the module grid) + a
+    // notification and cart shortcut. Pushed page: show a back button.
+    final bool showGridToggle = widget.fromModule
+        && splashController.configModel?.module == null
+        && (splashController.moduleList?.length ?? 0) != 1;
     return Padding(
       padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
       child: Row(children: [
-        _circleButton(context, Icons.arrow_back, () => Get.back()),
-        const SizedBox(width: Dimensions.paddingSizeDefault),
+        widget.fromModule
+            ? (showGridToggle
+                ? _circleButton(context, Icons.grid_view_rounded, () {
+                    splashController.removeModule();
+                    Get.find<StoreController>().resetStoreData();
+                  })
+                : const SizedBox())
+            : _circleButton(context, Icons.arrow_back, () => Get.back()),
+        SizedBox(width: (widget.fromModule && !showGridToggle) ? 0 : Dimensions.paddingSizeDefault),
         Expanded(child: Text(_title(), style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge), maxLines: 1, overflow: TextOverflow.ellipsis)),
+        if (widget.fromModule) ...[
+          _circleButton(context, Icons.notifications_none, () => Get.toNamed(RouteHelper.getNotificationRoute())),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          InkWell(
+            onTap: () => Get.toNamed(RouteHelper.getCartRoute()),
+            borderRadius: BorderRadius.circular(30),
+            child: Container(
+              height: 44, width: 44,
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.10), shape: BoxShape.circle),
+              child: Center(child: CartWidget(color: Theme.of(context).primaryColor, size: 22)),
+            ),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+        ],
         _circleButton(context, Icons.search, () => Get.toNamed(RouteHelper.getSearchRoute())),
       ]),
     );
@@ -211,7 +243,8 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
             final c = categories[index];
             return RestaurantCategoryChip(
               label: c.name ?? '', imageUrl: c.imageFullUrl, index: index,
-              onTap: () => Get.toNamed(RouteHelper.getCategoryItemRoute(c.id, c.name ?? '')),
+              // Category filtering from the Store List shows stores/restaurants only (no Item tab/cards).
+              onTap: () => Get.toNamed(RouteHelper.getCategoryItemRoute(c.id, c.name ?? '', storesOnly: true)),
             );
           },
         ),

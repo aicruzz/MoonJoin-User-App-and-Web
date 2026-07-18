@@ -40,9 +40,13 @@ class ItemWidget extends StatelessWidget {
   final double? imageHeight;
   final double? imageWidth;
   final bool? isCornerTag;
+  /// When true, the store/restaurant name shown under an item's title is hidden.
+  /// Used only on the Item Search/List screen (see item_view_widget) per the
+  /// approved MoonJoin design; defaults to false so Home and store cards are unaffected.
+  final bool hideItemStoreName;
   const ItemWidget({super.key, required this.item, required this.isStore, required this.store, required this.index,
     required this.length, this.inStore = false, this.isCampaign = false, this.isFeatured = false,
-    this.fromCartSuggestion = false, this.imageHeight, this.imageWidth, this.isCornerTag = false});
+    this.fromCartSuggestion = false, this.imageHeight, this.imageWidth, this.isCornerTag = false, this.hideItemStoreName = false});
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +185,7 @@ class ItemWidget extends StatelessWidget {
                           ]),
                           const SizedBox(height: 3),
 
-                          inStore ? const SizedBox() : (isStore ? store!.address != null : item!.storeName != null) ? Text(
+                          inStore ? const SizedBox() : (isStore ? store!.address != null : (item!.storeName != null && !hideItemStoreName)) ? Text(
                             isStore ? store!.address ?? '' : item!.storeName ?? '',
                             style: robotoRegular.copyWith(
                               fontSize: Dimensions.fontSizeExtraSmall,

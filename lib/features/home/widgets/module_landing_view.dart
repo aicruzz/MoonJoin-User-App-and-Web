@@ -16,7 +16,6 @@ import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 
@@ -284,7 +283,7 @@ class _RowOfTiles extends StatelessWidget {
           shapeIndex: i < shapeIndices.length ? shapeIndices[i] : 0,
           artworkFraction: artworkFraction,
           availability: resolveModuleAvailability(m),
-          onTap: () => _openModule(m, baseIndex + i),
+          onTap: () => splashController.switchModule(baseIndex + i, true),
         ),
       );
     });
@@ -293,20 +292,6 @@ class _RowOfTiles extends StatelessWidget {
       return Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: tiles);
     }
     return _pairRow(tiles);
-  }
-
-  /// Storefront modules (food/grocery/pharmacy/ecommerce) open directly into the
-  /// All Restaurants / All Stores list (the frozen AllStoreScreen) instead of the
-  /// legacy promotional module home. Parcel and Rental keep their own homes.
-  /// Module selection + data loading is the existing [SplashController.switchModule];
-  /// only the landing destination changes (presentation/navigation, no logic added).
-  Future<void> _openModule(ModuleModel m, int index) async {
-    await splashController.switchModule(index, true);
-    final String type = (m.moduleType ?? '').toLowerCase();
-    const storefront = [AppConstants.food, AppConstants.grocery, AppConstants.pharmacy, AppConstants.ecommerce];
-    if (storefront.contains(type)) {
-      Get.toNamed(RouteHelper.getAllStoreRoute('all'));
-    }
   }
 
   Widget _pairRow(List<Widget> tiles) {

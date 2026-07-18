@@ -23,6 +23,8 @@ class ItemViewWidget extends StatelessWidget {
                   isStore: isItem, items: searchController.searchItemList, stores: searchController.searchStoreList,
                 ) : ItemsView(
                   isStore: isItem, items: searchController.searchItemList, stores: searchController.searchStoreList,
+                  // Item Search/List: hide the store name under item titles (approved MoonJoin design).
+                  hideItemStoreName: true,
                 ),
             ),
           ),

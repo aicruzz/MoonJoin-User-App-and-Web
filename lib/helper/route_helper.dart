@@ -218,10 +218,10 @@ class RouteHelper {
   }
   static String getHtmlRoute(String page) => '$html?page=$page';
   static String getCategoryRoute() => categories;
-  static String getCategoryItemRoute(int? id, String name) {
+  static String getCategoryItemRoute(int? id, String name, {bool storesOnly = false}) {
     List<int> encoded = utf8.encode(name);
     String data = base64Encode(encoded);
-    return '$categoryItem?id=$id&name=$data';
+    return '$categoryItem?id=$id&name=$data${storesOnly ? '&stores_only=true' : ''}';
   }
   static String getPopularItemRoute(bool isPopular, bool isSpecial) => '$popularItems?page=${isPopular ? 'popular' : 'reviewed'}&special=${isSpecial.toString()}';
   static String getItemCampaignRoute({bool isJustForYou = false}) => itemCampaign + (isJustForYou ? '?just-for-you=${isJustForYou.toString()}' : '');
@@ -458,7 +458,7 @@ class RouteHelper {
     GetPage(name: categoryItem, page: () {
       List<int> decode = base64Decode(Get.parameters['name']!.replaceAll(' ', '+'));
       String data = utf8.decode(decode);
-      return getRoute(CategoryItemScreen(categoryID: Get.parameters['id'], categoryName: data));
+      return getRoute(CategoryItemScreen(categoryID: Get.parameters['id'], categoryName: data, storesOnly: Get.parameters['stores_only'] == 'true'));
     }),
     GetPage(name: popularItems, page: () => getRoute(PopularItemScreen(isPopular: Get.parameters['page'] == 'popular', isSpecial: Get.parameters['special'] == 'true'))),
     GetPage(name: itemCampaign, page: () => getRoute(ItemCampaignScreen(isJustForYou: Get.parameters['just-for-you'] == 'true'))),

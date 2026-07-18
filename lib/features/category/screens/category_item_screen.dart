@@ -19,7 +19,12 @@ import 'package:get/get.dart';
 class CategoryItemScreen extends StatefulWidget {
   final String? categoryID;
   final String categoryName;
-  const CategoryItemScreen({super.key, required this.categoryID, required this.categoryName});
+  /// When true (only from the All Restaurants / Store List category chips), this
+  /// screen shows ONLY matching stores/restaurants — the Item tab is hidden and
+  /// the item list is never built. Every other category entry point keeps the
+  /// standard Item + Store tabs (storesOnly defaults to false).
+  final bool storesOnly;
+  const CategoryItemScreen({super.key, required this.categoryID, required this.categoryName, this.storesOnly = false});
 
   @override
   CategoryItemScreenState createState() => CategoryItemScreenState();
@@ -35,8 +40,14 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
   void initState() {
     super.initState();
 
-    _tabController = TabController(length: 2, initialIndex: 0, vsync: this);
+    _tabController = TabController(length: widget.storesOnly ? 1 : 2, initialIndex: 0, vsync: this);
     Get.find<CategoryController>().getSubCategoryList(widget.categoryID);
+
+    // Store-list category filtering: force store mode so the veg filter / reloads
+    // operate on stores and the item list is never fetched.
+    if (widget.storesOnly) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => Get.find<CategoryController>().setRestaurant(true));
+    }
 
     Get.find<CategoryController>().getCategoryStoreList(
       widget.categoryID, 1, Get.find<CategoryController>().type, false,
@@ -243,7 +254,7 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
                     ),
                   )) : const SizedBox(),
 
-                  Center(child: Container(
+                  widget.storesOnly ? const SizedBox() : Center(child: Container(
                     width: Dimensions.webMaxWidth,
                     color: Theme.of(context).cardColor,
                     child: TabBar(
@@ -295,7 +306,7 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          SingleChildScrollView(
+                          if (!widget.storesOnly) SingleChildScrollView(
                             controller: scrollController,
                             child: ItemsView(
                               isStore: false, items: item, stores: null, noDataText: 'no_category_item_found'.tr,
@@ -359,7 +370,7 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
                 ),
               )) : const SizedBox(),
 
-              Center(child: Container(
+              widget.storesOnly ? const SizedBox() : Center(child: Container(
                 width: Dimensions.webMaxWidth,
                 color: Theme.of(context).cardColor,
                 child: TabBar(
@@ -410,7 +421,7 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    SingleChildScrollView(
+                    if (!widget.storesOnly) SingleChildScrollView(
                       controller: scrollController,
                       child: ItemsView(
                         isStore: false, items: item, stores: null, noDataText: 'no_category_item_found'.tr,
