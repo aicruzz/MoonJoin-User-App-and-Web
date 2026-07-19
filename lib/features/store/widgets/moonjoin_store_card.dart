@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
+import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:sixam_mart/helper/date_converter.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
@@ -16,10 +18,7 @@ import 'package:sixam_mart/util/styles.dart';
 class MoonjoinStoreCard extends StatelessWidget {
   final Store store;
   final VoidCallback? onTap;
-  /// When true, render only the cover banner (no name/rating row). Used by the
-  /// featured-store carousel, which mirrors the Figma promo banner.
-  final bool bannerOnly;
-  const MoonjoinStoreCard({super.key, required this.store, this.onTap, this.bannerOnly = false});
+  const MoonjoinStoreCard({super.key, required this.store, this.onTap});
 
   static const Color _nameColor = Color(0xFF3F4044);
   static const Color _metaColor = Color(0xFFA9A9AC);
@@ -47,9 +46,25 @@ class MoonjoinStoreCard extends StatelessWidget {
     return '-${d.discount!.toStringAsFixed(0)} OFF';
   }
 
+  /// Closed-state label. Reuses the existing vendor schedule value
+  /// (`store.storeOpeningTime` = the backend `current_opening_time`, `'closed'`
+  /// when the vendor has no next opening) and the existing time formatter — the
+  /// same source `NotAvailableWidget` uses. No new open/close logic.
+  String _closedText() {
+    final String? t = store.storeOpeningTime;
+    if (t == null || t == 'closed' || store.active != true) return 'closed'.tr;
+    try {
+      return "${'closed'.tr}  •  ${'opens_at'.tr} ${DateConverter.convertRestaurantOpenTime(t)}";
+    } catch (_) {
+      return 'closed'.tr;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final String? discount = _discountText();
+    // Reuse the existing open/close calculation (StoreController.isOpenNow).
+    final bool isOpen = Get.find<StoreController>().isOpenNow(store);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
@@ -113,11 +128,38 @@ class MoonjoinStoreCard extends StatelessWidget {
                     ]),
                   ),
                 ),
+
+              // Closed state: translucent dark overlay dims the whole cover, with
+              // a premium centered status badge ("Closed" / "Closed • Opens at …").
+              if (!isOpen) ...[
+                Container(color: Colors.black.withValues(alpha: 0.55)),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(Icons.schedule_rounded, size: 15, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(_closedText(), maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: robotoSemiBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
+                        ),
+                      ]),
+                    ),
+                  ),
+                ),
+              ],
             ]),
           ),
 
-          /// Info row (hidden in banner-only / featured-carousel mode)
-          if (!bannerOnly) Padding(
+          /// Info row (name, rating · time · free-delivery, bookmark)
+          Padding(
             padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
             child: Row(children: [
               Expanded(

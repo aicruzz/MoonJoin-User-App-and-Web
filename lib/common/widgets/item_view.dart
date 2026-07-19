@@ -1,10 +1,14 @@
+import 'package:sixam_mart/common/models/module_model.dart';
 import 'package:sixam_mart/common/widgets/card_design/store_card_with_distance.dart';
 import 'package:sixam_mart/common/widgets/web_item_widget.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
+import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:sixam_mart/features/store/widgets/moonjoin_store_card.dart';
 import 'package:sixam_mart/features/home/widgets/web/widgets/store_card_widget.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
+import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import 'package:sixam_mart/common/widgets/item_shimmer.dart';
@@ -54,7 +58,13 @@ class _ItemsViewState extends State<ItemsView> {
 
     return Column(children: [
 
-      !isNull ? length > 0 ? GridView.builder(
+      !isNull ? length > 0
+      // Mobile store/restaurant lists reuse the approved All Restaurants card
+      // ([MoonjoinStoreCard]) so every listing shares one visual implementation.
+      // Desktop keeps its existing store cards; item lists are unchanged.
+      ? (widget.isStore && widget.stores != null && !ResponsiveHelper.isDesktop(context))
+        ? _moonjoinStoreList(context, length)
+        : GridView.builder(
         key: UniqueKey(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisSpacing: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtremeLarge : widget.stores != null ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeLarge,
@@ -104,6 +114,37 @@ class _ItemsViewState extends State<ItemsView> {
       ),
 
     ]);
+  }
+
+  /// Mobile store/restaurant list rendered with the shared [MoonjoinStoreCard]
+  /// (intrinsic height like the All Restaurants list — no fixed-grid clipping).
+  Widget _moonjoinStoreList(BuildContext context, int length) {
+    // Open stores first, closed after (reuses the existing open/close calc).
+    final List<Store> stores = Get.find<StoreController>().sortStoresOpenFirst(widget.stores!.whereType<Store>().toList());
+    return ListView.separated(
+      key: UniqueKey(),
+      physics: widget.isScrollable ? const BouncingScrollPhysics() : const NeverScrollableScrollPhysics(),
+      shrinkWrap: !widget.isScrollable,
+      itemCount: stores.length,
+      padding: widget.padding,
+      separatorBuilder: (context, index) => const SizedBox(height: Dimensions.paddingSizeDefault),
+      itemBuilder: (context, index) {
+        final Store store = stores[index];
+        return MoonjoinStoreCard(store: store, onTap: () => _openStore(store));
+      },
+    );
+  }
+
+  /// Open a store — activate its module first, then push its page. Mirrors the
+  /// existing store-card navigation used across the app (no new behaviour).
+  void _openStore(Store store) {
+    for (ModuleModel module in Get.find<SplashController>().moduleList ?? []) {
+      if (module.id == store.moduleId) {
+        Get.find<SplashController>().setModule(module);
+        break;
+      }
+    }
+    Get.toNamed(RouteHelper.getStoreRoute(id: store.id, page: 'store'));
   }
 }
 

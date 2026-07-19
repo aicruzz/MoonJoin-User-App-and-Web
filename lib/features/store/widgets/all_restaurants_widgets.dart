@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
-import 'package:sixam_mart/features/store/widgets/moonjoin_store_card.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 
@@ -86,27 +85,33 @@ class StoreFilterChip extends StatelessWidget {
   }
 }
 
-/// Featured-store promo carousel (Figma ALL RESTAURANTS hero): the first banner
-/// above Top Brands auto-rotates through the featured restaurants with a page
-/// indicator. Reuses the app's standard [CarouselSlider] (same package/pattern
-/// as `banner_view.dart`) — its `autoPlay` pauses on touch/manual swipe and
-/// resumes automatically, so we don't hand-roll carousel logic. Presentation
-/// only; data is the existing featured [Store] list (no invented backend).
-class FeaturedStoreCarousel extends StatefulWidget {
+/// Promotional banner carousel (Figma ALL RESTAURANTS hero): the ONE rotating
+/// banner section at the top of the store list. Data is the existing **Admin
+/// Banner feed** ([BannerController] → the promoted, paid-advertising stores
+/// configured in the Admin Panel); only store-target banners are passed in.
+/// Reuses the app's standard [CarouselSlider] (same package/pattern as
+/// `banner_view.dart`) — `autoPlay` pauses on touch/manual swipe and resumes
+/// automatically, and the slider disposes its own timer with the [State] (no
+/// leak). Presentation only; no invented backend — tap navigation is handed
+/// back via [onTapStore].
+class PromotionalBannerCarousel extends StatefulWidget {
+  /// Admin banner image URLs, parallel to [stores].
+  final List<String?> images;
+  /// The promoted store each banner links to, parallel to [images].
   final List<Store> stores;
   final void Function(Store store) onTapStore;
-  const FeaturedStoreCarousel({super.key, required this.stores, required this.onTapStore});
+  const PromotionalBannerCarousel({super.key, required this.images, required this.stores, required this.onTapStore});
 
   @override
-  State<FeaturedStoreCarousel> createState() => _FeaturedStoreCarouselState();
+  State<PromotionalBannerCarousel> createState() => _PromotionalBannerCarouselState();
 }
 
-class _FeaturedStoreCarouselState extends State<FeaturedStoreCarousel> {
+class _PromotionalBannerCarouselState extends State<PromotionalBannerCarousel> {
   int _current = 0;
 
   @override
   Widget build(BuildContext context) {
-    final stores = widget.stores;
+    final images = widget.images;
     // Match the banner card's 2.55 aspect ratio so the slider height fits the
     // card exactly (no grey gap, no overflow).
     final double cardWidth = MediaQuery.of(context).size.width - (Dimensions.paddingSizeDefault * 2);
@@ -114,11 +119,11 @@ class _FeaturedStoreCarouselState extends State<FeaturedStoreCarousel> {
 
     return Column(children: [
       CarouselSlider.builder(
-        itemCount: stores.length,
+        itemCount: images.length,
         options: CarouselOptions(
           height: sliderHeight,
           viewportFraction: 1.0,
-          autoPlay: stores.length > 1,
+          autoPlay: images.length > 1,
           autoPlayInterval: const Duration(seconds: 4),
           autoPlayAnimationDuration: const Duration(milliseconds: 700),
           autoPlayCurve: Curves.easeInOut,
@@ -126,16 +131,34 @@ class _FeaturedStoreCarouselState extends State<FeaturedStoreCarousel> {
           onPageChanged: (index, reason) => setState(() => _current = index),
         ),
         itemBuilder: (context, index, _) {
-          final store = stores[index];
+          final store = widget.stores[index];
+          final String? image = images[index];
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-            child: MoonjoinStoreCard(store: store, bannerOnly: true, onTap: () => widget.onTapStore(store)),
+            child: InkWell(
+              onTap: () => widget.onTapStore(store),
+              borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, 4))],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: AspectRatio(
+                  aspectRatio: 2.55,
+                  child: (image != null && image.isNotEmpty)
+                      ? CustomImage(image: image, fit: BoxFit.cover)
+                      : Container(color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
+                ),
+              ),
+            ),
           );
         },
       ),
-      if (stores.length > 1) ...[
+      if (images.length > 1) ...[
         const SizedBox(height: Dimensions.paddingSizeSmall),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(stores.length, (i) {
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(images.length, (i) {
           final bool active = i == _current;
           return AnimatedContainer(
             duration: const Duration(milliseconds: 250),

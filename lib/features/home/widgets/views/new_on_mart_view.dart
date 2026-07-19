@@ -51,34 +51,38 @@ class NewOnMartView extends StatelessWidget {
                     child: StoreCardWithDistance(store: storeList[index], isNewStore: isNewStore),
                   );
                 }),
-          ) : SizedBox(
-            // MoonJoin: the "New on MoonJoin" strip now reuses the frozen All Restaurants
-            // card (MoonjoinStoreCard) instead of the legacy StoreCard — same approved design,
-            // and null-safe (the legacy card threw a null-check on some latest stores).
-            height: 200,
-            child: ListView.builder(
-              controller: ScrollController(),
-              physics: const BouncingScrollPhysics(),
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault),
-              itemCount: storeList.length,
-              itemBuilder: (context, index){
-                return Padding(
-                  padding: const EdgeInsets.only(right: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeSmall, top: Dimensions.paddingSizeSmall),
-                  child: SizedBox(
-                    width: 280,
-                    child: MoonjoinStoreCard(
-                      store: storeList[index],
-                      onTap: () => _openStore(storeList[index]),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+          ) : _moonjoinStrip(storeController.sortStoresOpenFirst(storeList)),
         ]),
       ) : const SizedBox.shrink() : const WebNewOnShimmerView();
     });
+  }
+
+  /// The "New on MoonJoin" strip reuses the frozen All Restaurants card
+  /// (MoonjoinStoreCard) — same approved design + closed-store treatment — and is
+  /// fed the open-first ordering so open stores lead, consistent with the lists.
+  Widget _moonjoinStrip(List<Store> stores) {
+    return SizedBox(
+      height: 200,
+      child: ListView.builder(
+        controller: ScrollController(),
+        physics: const BouncingScrollPhysics(),
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault),
+        itemCount: stores.length,
+        itemBuilder: (context, index){
+          return Padding(
+            padding: const EdgeInsets.only(right: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeSmall, top: Dimensions.paddingSizeSmall),
+            child: SizedBox(
+              width: 280,
+              child: MoonjoinStoreCard(
+                store: stores[index],
+                onTap: () => _openStore(stores[index]),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   /// Ensure the store's module is active, then open its page — identical to the

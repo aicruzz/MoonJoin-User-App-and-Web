@@ -5,6 +5,7 @@ import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/features/search/domain/models/popular_categories_model.dart';
 import 'package:sixam_mart/features/search/domain/models/search_suggestion_model.dart';
 import 'package:sixam_mart/features/search/domain/repositories/search_repository_interface.dart';
+import 'package:sixam_mart/features/store/domain/models/store_model.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 
 class SearchRepository implements SearchRepositoryInterface {
@@ -78,6 +79,15 @@ class SearchRepository implements SearchRepositoryInterface {
       searchSuggestionModel = SearchSuggestionModel.fromJson(response.body);
     }
     return searchSuggestionModel;
+  }
+
+  @override
+  Future<Store?> getStoreDetails(int storeId) async {
+    Response response = await apiClient.getData('${AppConstants.storeDetailsUri}$storeId');
+    if (response.statusCode == 200) {
+      return Store.fromJson(response.body);
+    }
+    return null;
   }
 
   @override

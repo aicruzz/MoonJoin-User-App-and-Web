@@ -246,7 +246,14 @@ class SearchController extends GetxController implements GetxService {
             _searchStoreList = [];
             _allStoreList = [];
             _searchStoreList!.addAll(StoreModel.fromJson(response.body).stores!);
-            _allStoreList!.addAll(StoreModel.fromJson(response.body).stores!);
+            // The backend store search matches store NAMES only, so an
+            // item-type query (e.g. "Pizza") returns no stores even though
+            // some stores sell it. Complete the experience by also listing the
+            // stores that actually SELL the matching items — derived from the
+            // item search results and fetched in full via the existing
+            // store-details endpoint (no new backend, no fabricated data).
+            await _addStoresSellingItems(query);
+            _allStoreList!.addAll(_searchStoreList!);
           } else {
             _itemResultText = query;
             _searchItemList = [];
@@ -257,6 +264,35 @@ class SearchController extends GetxController implements GetxService {
         }
       }
       update();
+    }
+  }
+
+  /// Append the stores that SELL the searched items to the store results.
+  /// Reuses the existing item search (each item carries its `storeId`) and the
+  /// existing store-details endpoint to fetch full [Store] objects, skipping
+  /// any store already matched by name. No new backend, no fabricated data.
+  Future<void> _addStoresSellingItems(String query) async {
+    try {
+      final Response itemResponse = await searchServiceInterface.getSearchData(query, false);
+      if (itemResponse.statusCode != 200) return;
+      final List<Item> items = ItemModel.fromJson(itemResponse.body).items ?? [];
+      final Set<int> existingIds = _searchStoreList!.map((s) => s.id).whereType<int>().toSet();
+      final List<int> newIds = [];
+      for (final Item item in items) {
+        if (item.storeId != null && !existingIds.contains(item.storeId) && !newIds.contains(item.storeId)) {
+          newIds.add(item.storeId!);
+          if (newIds.length >= 20) break; // safety cap on the derived fetches
+        }
+      }
+      if (newIds.isEmpty) return;
+      final List<Store?> stores = await Future.wait(newIds.map((id) => searchServiceInterface.getStoreDetails(id)));
+      for (final Store? store in stores) {
+        if (store != null) {
+          _searchStoreList!.add(store);
+        }
+      }
+    } catch (_) {
+      // Best-effort enrichment — never break the primary store search.
     }
   }
 

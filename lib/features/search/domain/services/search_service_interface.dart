@@ -14,4 +14,6 @@ abstract class SearchServiceInterface {
   List<Store>? sortStoreSearchList(List<Store>? allStoreList, int storeRating, bool storeVeg, bool storeNonVeg, bool isAvailableStore, bool isDiscountedStore, int storeSortIndex);
   Future<SearchSuggestionModel?> getSearchSuggestions(String searchText);
   Future<List<PopularCategoryModel?>?> getPopularCategories();
+  /// Full store details for a single store id (reuses `stores/details/{id}`).
+  Future<Store?> getStoreDetails(int storeId);
 }

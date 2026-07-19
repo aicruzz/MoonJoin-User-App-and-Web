@@ -93,3 +93,16 @@ and hold no business logic (they only read existing controllers):
   `custom_bottom_sheet_widget`, `card_design/*`.
 - Fuel/Fashion/Market/Drink/Solar reuse the shop UI. Apartment Rental reuses car-rental widgets where
   visually identical. Never create multiple implementations of identical UI — drive it by data/config.
+
+## Single store/restaurant card — `MoonjoinStoreCard` (FROZEN)
+
+`features/store/widgets/moonjoin_store_card.dart` is the **one** mobile store/restaurant card across the app
+(All Restaurants/All Stores, category stores, search → restaurants, module-home store grid, campaign stores,
+Home "New on MoonJoin" strip). It renders cover + discount/`min_purchase` badges + logo + delivery-time pill
++ name/rating/free-delivery row + bookmark, and a **closed-store treatment** (dim overlay + centered
+"Closed • Opens at HH:MM" / "Closed" badge) driven by the existing `StoreController.isOpenNow` +
+`store.storeOpeningTime` + `DateConverter.convertRestaurantOpenTime` (no new logic). Open-first ordering uses
+the reusable `StoreController.sortStoresOpenFirst(list)`. The shared mobile store list is rendered by
+`common/widgets/item_view.dart` `ItemsView` (`_moonjoinStoreList`). **Reuse these unchanged** — do not create
+another store card. Desktop keeps its existing `card_design/store_card_with_distance` / web store cards; the
+not-yet-migrated Home per-module strips still use the legacy cards (kept, not deleted).

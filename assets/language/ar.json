@@ -283,6 +283,8 @@
   "reorder": "إعادة الطلب",
   "order_tracking": "تتبع الطلب",
   "closed_now": "مغلق الآن",
+  "closed": "مغلق",
+  "opens_at": "يفتح في",
   "are_you_sure_to_cancel": "هل أنت متأكد أنك تريد إلغاء هذا الطلب؟",
   "if_you_exit_from_payment": "إذا خرجت من عملية الدفع هذه، فسيتم فشل طلبك.",
   "favourite": "مفضل",

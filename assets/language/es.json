@@ -283,6 +283,8 @@
   "reorder": "Reordenar",
   "order_tracking": "Seguimiento de pedidos",
   "closed_now": "Cerrado ahora",
+  "closed": "Cerrado",
+  "opens_at": "Abre a las",
   "are_you_sure_to_cancel": "¿Estás seguro de que deseas cancelar este pedido?",
   "if_you_exit_from_payment": "Si sale de este proceso de pago, su pedido será rechazado.",
   "favourite": "Favorito",

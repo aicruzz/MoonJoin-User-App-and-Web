@@ -3,11 +3,13 @@ import 'package:get/get.dart';
 import 'package:sixam_mart/common/models/module_model.dart';
 import 'package:sixam_mart/common/widgets/cart_widget.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
+import 'package:sixam_mart/features/banner/controllers/banner_controller.dart';
 import 'package:sixam_mart/features/brands/controllers/brands_controller.dart';
 import 'package:sixam_mart/features/category/controllers/category_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:sixam_mart/features/store/screens/store_screen.dart';
 import 'package:sixam_mart/features/store/widgets/all_restaurants_widgets.dart';
 import 'package:sixam_mart/features/store/widgets/moonjoin_store_card.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
@@ -47,12 +49,10 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     if (Get.find<BrandsController>().brandList == null) {
       Get.find<BrandsController>().getBrandList();
     }
-    // Featured-store promo carousel reuses the existing featured backend.
-    // On the featured entry the main list already IS the featured list, so we
-    // skip the duplicate carousel there.
-    if (!widget.isFeatured) {
-      Get.find<StoreController>().getFeaturedStoreList();
-    }
+    // Promotional banner = the existing Admin Banner feed (banner images that
+    // link to the promoted / paid-advertising stores configured in the Admin
+    // Panel). Reused as-is; store-target banners are filtered at render time.
+    Get.find<BannerController>().getBannerList(false);
   }
 
   void _loadStores() {
@@ -90,7 +90,9 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
       int mins(Store s) => int.tryParse((s.deliveryTime ?? '').split('-').first.trim()) ?? 9999;
       result.sort((a, b) => mins(a).compareTo(mins(b)));
     }
-    return result;
+    // Open stores first, closed after (stable — keeps the sort above within each
+    // group). Reuses the existing open/close calc.
+    return Get.find<StoreController>().sortStoresOpenFirst(result);
   }
 
   String _title() {
@@ -110,38 +112,54 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
         child: GetBuilder<StoreController>(builder: (storeController) {
           final source = _sourceList(storeController);
           final List<Store>? stores = source == null ? null : _applyFilter(source);
-          // Featured promo carousel (existing backend). Empty/absent → falls back
-          // to the hero-card layout so the approved UI still holds.
-          final List<Store> featured = (!widget.isFeatured && _activeFilter == -1)
-              ? (storeController.featuredStoreList ?? const [])
-              : const [];
           return Column(children: [
             _appBar(context),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
                   _loadStores();
+                  Get.find<BannerController>().getBannerList(true);
                   await Get.find<CategoryController>().getCategoryList(true);
                 },
                 child: SingleChildScrollView(
                   controller: scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  child: GetBuilder<BannerController>(builder: (bannerController) {
+                    // Keep only store-target banners (the promoted / paid stores)
+                    // from the Admin Banner feed, paired with their images.
+                    final List<String?> bannerImages = [];
+                    final List<Store> bannerStores = [];
+                    final imgs = bannerController.bannerImageList;
+                    final data = bannerController.bannerDataList;
+                    if (imgs != null && data != null) {
+                      for (int i = 0; i < imgs.length && i < data.length; i++) {
+                        if (data[i] is Store) {
+                          bannerImages.add(imgs[i]);
+                          bannerStores.add(data[i] as Store);
+                        }
+                      }
+                    }
+                    // Show the rotating banner only when no filter/sort is active
+                    // (the design puts it at the very top of the default list).
+                    final bool hasBanner = _activeFilter == -1 && bannerImages.isNotEmpty;
 
-                    _searchBar(context),
-                    _categoryChips(),
-                    _filterChips(),
+                    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                    if (featured.isNotEmpty) ...[
-                      const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                      FeaturedStoreCarousel(stores: featured, onTapStore: _openStore),
-                      const SizedBox(height: Dimensions.paddingSizeSmall),
-                    ],
+                      _searchBar(context),
+                      _categoryChips(),
+                      _filterChips(),
 
-                    _storeList(context, stores, hasFeatured: featured.isNotEmpty),
+                      if (hasBanner) ...[
+                        const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                        PromotionalBannerCarousel(images: bannerImages, stores: bannerStores, onTapStore: _openStoreBanner),
+                        const SizedBox(height: Dimensions.paddingSizeSmall),
+                      ],
 
-                    const SizedBox(height: Dimensions.paddingSizeLarge),
-                  ]),
+                      _storeList(context, stores, hasBanner: hasBanner),
+
+                      const SizedBox(height: Dimensions.paddingSizeLarge),
+                    ]);
+                  }),
                 ),
               ),
             ),
@@ -309,7 +327,7 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     });
   }
 
-  Widget _storeList(BuildContext context, List<Store>? stores, {bool hasFeatured = false}) {
+  Widget _storeList(BuildContext context, List<Store>? stores, {bool hasBanner = false}) {
     if (stores == null) {
       return const Padding(
         padding: EdgeInsets.only(top: 60),
@@ -319,11 +337,11 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     if (stores.isEmpty) {
       return Column(children: [_topBrands(), const SizedBox(height: 40), NoDataScreen(text: 'no_store_available'.tr, showFooter: false)]);
     }
-    // With a featured carousel present the hero is already shown → Top Brands then
-    // the full list. Without one (fallback), the first card acts as the hero.
-    final int skip = hasFeatured ? 0 : 1;
+    // With the promotional banner present the top is already covered → Top Brands
+    // then the full list. Without one, the first card acts as the hero.
+    final int skip = hasBanner ? 0 : 1;
     return Column(children: [
-      if (!hasFeatured)
+      if (!hasBanner)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
           child: MoonjoinStoreCard(store: stores.first, onTap: () => _openStore(stores.first)),
@@ -352,5 +370,22 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
       }
     }
     Get.toNamed(RouteHelper.getStoreRoute(id: store.id, page: 'store'));
+  }
+
+  /// Promotional-banner tap → open the promoted store. Mirrors the existing
+  /// banner→store navigation in `home/widgets/views/banner_view.dart` exactly
+  /// (module activation, `page: 'banner'`, and the [StoreScreen] argument) so
+  /// the established banner deep-link behaviour is preserved.
+  void _openStoreBanner(Store store) {
+    for (ModuleModel module in Get.find<SplashController>().moduleList ?? []) {
+      if (module.id == store.moduleId) {
+        Get.find<SplashController>().setModule(module);
+        break;
+      }
+    }
+    Get.toNamed(
+      RouteHelper.getStoreRoute(id: store.id, page: 'banner'),
+      arguments: StoreScreen(store: store, fromModule: false),
+    );
   }
 }

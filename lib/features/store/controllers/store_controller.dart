@@ -605,6 +605,18 @@ class StoreController extends GetxController implements GetxService {
 
   bool isOpenNow(Store store) => store.open == 1 && store.active!;
 
+  /// Stable open-first ordering: currently-open stores keep their relative order,
+  /// then closed stores keep theirs. Reuses [isOpenNow] (no new open/close logic);
+  /// presentation ordering only, so any prior sort inside each group is preserved.
+  List<Store> sortStoresOpenFirst(List<Store> stores) {
+    final List<Store> open = [];
+    final List<Store> closed = [];
+    for (final Store store in stores) {
+      (isOpenNow(store) ? open : closed).add(store);
+    }
+    return [...open, ...closed];
+  }
+
   double? getDiscount(Store store) => store.discount != null ? store.discount!.discount : 0;
 
   String? getDiscountType(Store store) => store.discount != null ? store.discount!.discountType : 'percent';

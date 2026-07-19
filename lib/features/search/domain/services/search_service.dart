@@ -115,4 +115,9 @@ class SearchService implements SearchServiceInterface {
     return await searchRepositoryInterface.getPopularCategories();
   }
 
+  @override
+  Future<Store?> getStoreDetails(int storeId) async {
+    return await searchRepositoryInterface.getStoreDetails(storeId);
+  }
+
 }

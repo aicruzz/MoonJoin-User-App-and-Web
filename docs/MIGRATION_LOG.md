@@ -12,6 +12,8 @@ incompatibility, or explicit user approval to reopen. No cosmetic changes. Add e
 
 - ✅ Home
 - ✅ All Restaurants
+- ✅ **Store List — COMPLETE** (Promotional Banner via Admin Banner feed · unified `MoonjoinStoreCard`
+  everywhere · Search → Restaurants store-derivation · closed-store treatment + open-first ordering)
 - ✅ Food Product Details
 - ✅ Cart
 - ✅ Edit Unavailable Items
@@ -706,3 +708,82 @@ deferred global currency-format improvement, e.g. thousands-comma on animated pr
   dedicated reference image yet; kept fully functional and inherits the theme. Awaits its assigned phase.
 - **Parcel & Taxi home variants** keep their existing layouts (reached via the shell) until their phases.
 - Nothing has been removed; features without a redesigned UI remain accessible in their current form.
+
+## STORE LIST MIGRATION — ✅ APPROVED, COMPLETE & FROZEN
+The All Restaurants / All Stores experience was reopened for four connected pieces, verified live on the
+zone-7 backend and approved by the user. All logic reused; presentation-only + one authorized feature
+completion (search store-derivation).
+
+### 1. Promotional banner → Admin Banner feed (paid promotional stores)
+- Replaced the `featuredStoreList` carousel (empty on live) with the **existing Admin Banner feed**
+  (`BannerController.getBannerList → bannerImageList/bannerDataList`), filtered to **store-target**
+  (paid-advertising) banners, redesigned as `PromotionalBannerCarousel` in the MoonJoin style (same
+  `CarouselSlider` package/pattern; autoplay 4 s, pause-on-touch, dot indicator; slider disposes its own
+  timer — no leak). Tap → `_openStoreBanner` mirrors the existing `home/widgets/views/banner_view.dart`
+  store-tap exactly (`setModule` + `getStoreRoute(page:'banner')` + `StoreScreen` arg). **Verified live:** 3
+  rotating store banners (Perozona · Item7Go · Chruzz), tap opens the correct promoted store.
+- **Files:** `store/screens/all_store_screen.dart`, `store/widgets/all_restaurants_widgets.dart`
+  (`FeaturedStoreCarousel`→`PromotionalBannerCarousel`), `store/widgets/moonjoin_store_card.dart` (removed
+  the now-dead `bannerOnly` mode).
+
+### 2. Category → Stores only; Search → both (unchanged)
+- Category browsing from the store list opens a **stores/restaurants-only** list
+  (`getCategoryItemRoute(..., storesOnly:true)` → single tab, `setRestaurant(true)`; no item cards). Search
+  keeps **Items + Restaurants** tabs. (Item-search cards hide the redundant store name via
+  `hideItemStoreName`.) These were already implemented by the prior session; verified live.
+
+### 3. Unified store card everywhere (single visual implementation)
+- Every **mobile** store/restaurant list now reuses the approved **`MoonjoinStoreCard`** (no new card, no
+  duplicated design). `common/widgets/item_view.dart` `_moonjoinStoreList` renders the mobile store case as
+  a `ListView` of `MoonjoinStoreCard` (intrinsic height — no fixed-grid clipping); **desktop keeps its
+  existing store cards; item lists unchanged.** This covers **All Restaurants/All Stores** (all "see all"
+  entries), **category stores**, **search → restaurants**, the **module-home store grid**
+  (`home_screen.dart`), **campaign stores**, and the Home **"New on MoonJoin"** strip (`new_on_mart_view`).
+- **Reuse only:** legacy `StoreCardWidget`/`StoreCardWithDistance` are **kept** (still used by desktop and
+  the not-yet-migrated Home per-module strips — not deleted).
+
+### 4. Search "Restaurants" completion (item-type queries surface their stores)
+- The backend store search matches **store names only**, so "Pizza" returned 0 restaurants. Completed the
+  feature: the store branch of `SearchController.searchData` now also lists the **stores that sell the
+  matching items** — derived from the existing item search (each item carries `storeId`) and fetched in full
+  via the **existing** `stores/details/{id}` endpoint (new read-only passthrough
+  `SearchService/Repository.getStoreDetails`; deduped vs name matches; capped at 20; best-effort — never
+  breaks the primary search). **No new backend, no fabricated data.** **Verified live:** "Pizza" → Perozona
+  shown as a `MoonjoinStoreCard` ("1 Restaurant Available").
+
+### 5. Closed-store behavior (restored from the old design, modernized)
+- **Reused existing open/close logic:** `StoreController.isOpenNow(store)` (`open==1 && active`); next
+  opening from `store.storeOpeningTime` (backend `current_opening_time`, `'closed'` when none) via
+  `DateConverter.convertRestaurantOpenTime` — the same source `NotAvailableWidget` uses. No new calc.
+- **Card treatment (`moonjoin_store_card.dart`):** closed → translucent dark cover overlay + centered
+  premium status badge (clock glyph + white type, rounded translucent pill). Text: **"Closed • Opens at
+  8:00 AM"** when active + a valid next time; otherwise **"Closed"**. i18n keys `closed`, `opens_at` added to
+  en/ar/es/bn.
+- **Open-first ordering:** new reusable `StoreController.sortStoresOpenFirst(list)` (stable partition,
+  reuses `isOpenNow`) applied in `all_store_screen` `_applyFilter` (after the existing filter/sort) and in
+  `item_view` `_moonjoinStoreList` (category + search) and the New-on strip. Filter → then open-first;
+  pull-to-refresh / pagination / search re-sort on rebuild; stable → **no flicker**.
+- **Verified live** (~01:45, most stores closed): Perozona **open** (no overlay, sorted first); **Chruzz**
+  "Closed • Opens at 08:00 AM"; **SouPlug** "Closed" (no schedule); **Chicken Republic** "Closed" (inactive).
+  Consistent in search (details endpoint returns the same schedule-aware `open`). Auto open↔closed
+  transitions are data-driven from the backend `open` flag on each list load — no client timer.
+
+### Verification & freeze
+- `flutter analyze` → **No issues** in every changed file; full project **48 issues, 0 errors** (baseline
+  unchanged, no new issues). iOS build clean; **0 RenderFlex overflow, 0 exceptions** from these screens
+  (only sim-only Firebase APNS + the pre-existing `LocationService.searchLocation` bug remain).
+- **Files modified:** `store/screens/all_store_screen.dart`, `store/widgets/all_restaurants_widgets.dart`,
+  `store/widgets/moonjoin_store_card.dart`, `store/controllers/store_controller.dart` (`sortStoresOpenFirst`),
+  `common/widgets/item_view.dart`, `features/home/widgets/views/new_on_mart_view.dart`,
+  `search/controllers/search_controller.dart` + search service/repository (+interfaces) `getStoreDetails`,
+  `assets/language/{en,ar,es,bn}.json`.
+- **STORE LIST — permanently FROZEN by the user.** `MoonjoinStoreCard` (with the closed-store treatment),
+  `PromotionalBannerCarousel`, `sortStoresOpenFirst`, and the `item_view` store path are the permanent
+  baseline for **every** store/restaurant listing. Reuse unchanged; do not revisit unless the user requests.
+
+### ⚠️ Pre-existing bug to investigate later (NOT touched — do not fix during UI migration)
+- `LocationService.searchLocation` (`location_service.dart:136`) throws `NoSuchMethodError: '[]' on null`
+  (`error_message`) when the geocode/autocomplete API returns an error shape — observed live while typing a
+  location in the map search. Pre-existing (not introduced by this work); the map's own "use current
+  location" flow is unaffected. Investigate as a dedicated task (confirm the backend error contract, then
+  guard the parse).
