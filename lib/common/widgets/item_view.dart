@@ -30,10 +30,12 @@ class ItemsView extends StatefulWidget {
   final bool? isFoodOrGrocery;
   /// Hide the store name under item titles (Item Search/List screen only).
   final bool hideItemStoreName;
+  /// Render item cards in the premium Store-page dish layout (Store page only).
+  final bool premiumStoreLayout;
   const ItemsView({super.key, required this.stores, required this.items, required this.isStore, this.isScrollable = false,
     this.shimmerLength = 20, this.padding = const EdgeInsets.all(Dimensions.paddingSizeDefault), this.noDataText,
     this.isCampaign = false, this.inStorePage = false, this.isFeatured = false,
-    this.isFoodOrGrocery = true, this.hideItemStoreName = false});
+    this.isFoodOrGrocery = true, this.hideItemStoreName = false, this.premiumStoreLayout = false});
 
   @override
   State<ItemsView> createState() => _ItemsViewState();
@@ -64,6 +66,10 @@ class _ItemsViewState extends State<ItemsView> {
       // Desktop keeps its existing store cards; item lists are unchanged.
       ? (widget.isStore && widget.stores != null && !ResponsiveHelper.isDesktop(context))
         ? _moonjoinStoreList(context, length)
+        // Premium Store-page dish list: intrinsic-height ItemWidget cards (no
+        // fixed-grid clipping). Mobile item lists on the Store page only.
+        : (widget.premiumStoreLayout && !widget.isStore && !ResponsiveHelper.isDesktop(context))
+        ? _premiumItemList(context, length)
         : GridView.builder(
         key: UniqueKey(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -84,7 +90,7 @@ class _ItemsViewState extends State<ItemsView> {
             : !ResponsiveHelper.isDesktop(context) ? ItemWidget(
             isStore: widget.isStore, item: widget.isStore ? null : widget.items![index], isFeatured: widget.isFeatured,
             store: widget.isStore ? widget.stores![index] : null, index: index, length: length, isCampaign: widget.isCampaign,
-            inStore: widget.inStorePage, hideItemStoreName: widget.hideItemStoreName,
+            inStore: widget.inStorePage, hideItemStoreName: widget.hideItemStoreName, premiumStoreLayout: widget.premiumStoreLayout,
           ) : WebItemWidget(
             isStore: widget.isStore, item: widget.isStore ? null : widget.items![index], isFeatured: widget.isFeatured,
             store: widget.isStore ? widget.stores![index] : null, index: index, length: length, isCampaign: widget.isCampaign,
@@ -114,6 +120,26 @@ class _ItemsViewState extends State<ItemsView> {
       ),
 
     ]);
+  }
+
+  /// Premium Store-page dish list: the shared [ItemWidget] in its
+  /// `premiumStoreLayout` mode, in an intrinsic-height [ListView] (cards size to
+  /// content — no fixed-grid overflow). Store page only; same widget, no fork.
+  Widget _premiumItemList(BuildContext context, int length) {
+    return ListView.separated(
+      key: UniqueKey(),
+      physics: widget.isScrollable ? const BouncingScrollPhysics() : const NeverScrollableScrollPhysics(),
+      shrinkWrap: !widget.isScrollable,
+      itemCount: length,
+      padding: widget.padding,
+      separatorBuilder: (context, index) => const SizedBox(height: Dimensions.paddingSizeDefault),
+      itemBuilder: (context, index) {
+        return ItemWidget(
+          isStore: false, item: widget.items![index], store: null, index: index, length: length,
+          isCampaign: widget.isCampaign, inStore: widget.inStorePage, premiumStoreLayout: true,
+        );
+      },
+    );
   }
 
   /// Mobile store/restaurant list rendered with the shared [MoonjoinStoreCard]

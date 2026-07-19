@@ -124,16 +124,27 @@ class LocationService implements LocationServiceInterface{
   @override
   Future<List<PredictionModel>> searchLocation(String text) async {
     List<PredictionModel> predictionList = [];
-    Response response = await locationRepoInterface.searchLocation(text);
-    if (response.statusCode == 200) {
-      predictionList = [];
-      try {
-        response.body['suggestions'].forEach((prediction) => predictionList.add(PredictionModel.fromJson(prediction)));
-      } catch (e) {
-        log('$e');
+    // Fully defensive: the geocode/autocomplete API can return a non-200 with a
+    // null / non-Map body (e.g. transient errors), which used to crash on
+    // `response.body['error_message']` and hang the search. Never throw here.
+    try {
+      final Response response = await locationRepoInterface.searchLocation(text);
+      final dynamic body = response.body;
+      if (response.statusCode == 200 && body is Map && body['suggestions'] is List) {
+        for (final prediction in body['suggestions']) {
+          predictionList.add(PredictionModel.fromJson(prediction));
+        }
+      } else {
+        // Only surface a real, non-empty error message; stay silent otherwise so
+        // per-keystroke failures don't spam snackbars or interrupt typing.
+        final String? message = (body is Map && body['error_message'] != null)
+            ? body['error_message'].toString() : null;
+        if (message != null && message.isNotEmpty) {
+          showCustomSnackBar(message);
+        }
       }
-    } else {
-      showCustomSnackBar(response.body['error_message'] ?? response.bodyString);
+    } catch (e) {
+      log('searchLocation error: $e');
     }
     return predictionList;
   }

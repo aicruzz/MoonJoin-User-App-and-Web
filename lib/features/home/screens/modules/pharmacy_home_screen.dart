@@ -15,14 +15,18 @@ import 'package:sixam_mart/features/home/widgets/views/category_view.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 
 class PharmacyHomeScreen extends StatelessWidget {
-  const PharmacyHomeScreen({super.key});
+  /// See [GroceryHomeScreen.storefrontMode]: when true, render only the
+  /// pharmacy-unique sections (products-by-category, common conditions, etc.);
+  /// the banner/category/store strips come from the shared [AllStoreScreen] shell.
+  final bool storefrontMode;
+  const PharmacyHomeScreen({super.key, this.storefrontMode = false});
 
   @override
   Widget build(BuildContext context) {
     bool isLoggedIn = AuthHelper.isLoggedIn();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-      Container(
+      if (!storefrontMode) Container(
         width: MediaQuery.of(context).size.width,
         color: Theme.of(context).disabledColor.withValues(alpha: 0.1),
         child:  const Column(
@@ -33,16 +37,16 @@ class PharmacyHomeScreen extends StatelessWidget {
         ),
       ),
 
-      const CategoryView(),
+      if (!storefrontMode) const CategoryView(),
       isLoggedIn ? const VisitAgainView() : const SizedBox(),
-      const RecommendedStoreView(),
+      if (!storefrontMode) const RecommendedStoreView(),
       const ProductWithCategoriesView(),
       const HighlightWidget(),
       const MiddleSectionBannerView(),
-      const BestStoreNearbyView(),
+      if (!storefrontMode) const BestStoreNearbyView(),
       const JustForYouView(),
-      const TopOffersNearMe(),
-      const NewOnMartView(isShop: false, isPharmacy: true, isNewStore: true),
+      if (!storefrontMode) const TopOffersNearMe(),
+      if (!storefrontMode) const NewOnMartView(isShop: false, isPharmacy: true, isNewStore: true),
       const CommonConditionView(),
       const PromotionalBannerView(),
 

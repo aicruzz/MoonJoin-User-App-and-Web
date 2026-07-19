@@ -14,12 +14,24 @@ class LocationRepository implements LocationRepositoryInterface {
 
   @override
   Future<String> getAddressFromGeocode(LatLng latLng) async {
-    Response response = await apiClient.getData('${AppConstants.geocodeUri}?lat=${latLng.latitude}&lng=${latLng.longitude}', handleError: false);
     String address = 'Unknown Location Found';
-    if(response.statusCode == 200 && response.body['status'] == 'OK') {
-      address = response.body['results'][0]['formatted_address'].toString();
-    }else {
-      showCustomSnackBar(response.body['error_message'] ?? response.bodyString);
+    // Defensive: a non-200 / null / non-Map body must never crash here (this used
+    // to throw on `response.body['error_message']` and hang the location flow).
+    try {
+      final Response response = await apiClient.getData('${AppConstants.geocodeUri}?lat=${latLng.latitude}&lng=${latLng.longitude}', handleError: false);
+      final dynamic body = response.body;
+      if (response.statusCode == 200 && body is Map && body['status'] == 'OK'
+          && body['results'] is List && (body['results'] as List).isNotEmpty) {
+        address = body['results'][0]['formatted_address'].toString();
+      } else {
+        final String? message = (body is Map && body['error_message'] != null)
+            ? body['error_message'].toString() : null;
+        if (message != null && message.isNotEmpty) {
+          showCustomSnackBar(message);
+        }
+      }
+    } catch (_) {
+      // Keep the default 'Unknown Location Found' — never throw.
     }
     return address;
   }

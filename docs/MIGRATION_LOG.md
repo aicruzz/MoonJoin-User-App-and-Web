@@ -26,6 +26,11 @@ incompatibility, or explicit user approval to reopen. No cosmetic changes. Add e
 - ✅ Order History (My Orders list)
 - ✅ Refund flow (Refund Request screen)
 - ✅ Product Details — Grocery/Others module (`ItemDetailsScreen`)
+- ✅ **Store / Restaurant page — COMPLETE** (`StoreScreen` + `StoreHeroHeader` + `StoreMapView` (embedded map) +
+  premium `ItemWidget` store dish layout; shared by Food/Grocery/Pharmacy/Ecommerce storefronts)
+- ✅ **Shared storefront HOME — `AllStoreScreen` is the primary module home for ALL storefront Business Module
+  Types** (Food, Grocery + Market/Fuel/Drink/Solar, Pharmacy, Ecommerce/Fashion); each module's unique sections
+  preserved via `moduleHome` (storefront mode). One shared UI, module data differs.
 
 **Status: Production Ready · Frozen**
 
@@ -677,6 +682,97 @@ Applied the user's production-flow refinements on top of the redesign:
 - **Rule:** OUT OF SCOPE for the presentation-only migration. Do **not** modify models, API parsing, backend
   contracts, Review JSON, or Order models to "fix" this during UI work. Investigate as a dedicated task later
   (identify the exact field, confirm the backend contract, then correct the model parse).
+
+## STORE / RESTAURANT PAGE — ✅ APPROVED, COMPLETE & FROZEN
+The full mobile Store/Restaurant page (`store/screens/store_screen.dart`) redesigned to
+`ui-designs/…/store_or_restaurant.PNG`, plus a **new premium embedded Map Card**. Approved by the user and
+frozen as the **single shared storefront page for Food / Grocery / Pharmacy / Ecommerce** (Grocery module
+includes Market, Fuel & Gas, Drink Distributor, Solar & Power). Presentation-only; all logic reused.
+
+### New/changed
+- **`store/widgets/store_hero_header.dart` (NEW, FROZEN)** — green hero (rounded bottom curve; search pill
+  straddles the green→content transition): UPPERCASE name, cuisines (from category names), ★rating·delivery,
+  **full vendor address** (`store.address`), "N Dishes/Items Available", cover image, and back · favourite ·
+  share · notification · cart (favourite/share kept but visually subtle — no feature removed). In-store search
+  pill (`getSearchStoreItemRoute`) + filter-chip row (Filters·Sort·Cuisine·Price·Delivery Time·More →
+  existing `FilterWidget`). Reuses `StoreFilterChip`, `FavouriteController`, `NotificationController`,
+  `CartController`, `StoreController.isStoreOpenNow`.
+- **`store/widgets/store_map_view.dart` (NEW, FROZEN)** — premium embedded **location-awareness** map (NOT
+  navigation): store + user markers, straight-line distance, **View on Map → expands the card in place**
+  (animated, stays on the page; gesture-claiming interactive map for pan/zoom/explore); floating actions
+  **Re-center · My Location · Directions Preview** (route polyline + road distance/ETA via the existing
+  `direction-api`/`distance-api`, no live tracking) **· Open in Google Maps**. Reuses the existing store
+  lat/lng, Google Maps integration, `AddressHelper`, `Geolocator`, `url_launcher`, `ApiClient`. Single map
+  instance, lazy route fetch, controller disposed. Placed after the store info, before Categories.
+- **`common/widgets/item_widget.dart` — premium Store dish layout (EXTENDED, not forked)** — new opt-in
+  `premiumStoreLayout` (default false → every other screen unaffected): **uniform 122×122 image** (ClipRRect +
+  `BoxFit.cover`, fixed card height so portrait/landscape images are all identical, no stretch/overflow),
+  name, veg/non-veg, favourite, ★rating, price + old-price + `/unitType`, organic tag, **View Details** →
+  existing item navigation. **Real Item data only — no fabricated badges/chips/ingredient dots** (backend has
+  no such fields; user-confirmed). `common/widgets/item_view.dart` gains a `premiumStoreLayout` flag +
+  intrinsic-height `_premiumItemList`; the Store page passes it on its item list.
+- **`store/screens/store_screen.dart`** — mobile `SliverAppBar` → `StoreHeroHeader`; inserted `StoreMapView`;
+  item list uses `premiumStoreLayout: true`; removed 5 now-dead imports. **Desktop path untouched.**
+- i18n: `explore/away/recenter/my_location/directions_preview/open_in_google_maps/dishes/search_for/food/in/
+  cuisine` added to en/ar/es/bn.
+
+### Production bug fixed (user-requested)
+- **Location search/geocode hang** — `LocationService.searchLocation` and
+  `LocationRepository.getAddressFromGeocode` crashed on `response.body['error_message']` when the API returned
+  a null/non-Map body (`NoSuchMethodError: '[]' on null`), hanging the location search. Both are now **fully
+  guarded** (try/catch + `is Map` checks) — they can never throw/hang and only surface a real error message.
+  No backend/API change. (This resolves the earlier "⚠️ Pre-existing issue" note about the map location flow.)
+
+### Verification
+- Live on iOS Simulator (Perozona, zone 7): hero header (rounded transition, straddling search, full address),
+  embedded map (store+user pins, "3.7 km away"), **View on Map** expand-in-place, **Directions Preview**
+  ("5.2 km · 13 min" route), and **uniform premium dish cards** (View Details) — all confirmed, **0 overflow /
+  0 exceptions** (only sim-only Firebase APNS). `flutter analyze` → **No issues** in changed files; full
+  project **48 issues, 0 errors** (baseline unchanged).
+- **Cross-module reuse is architectural:** `StoreScreen` is the single `/store` route (module-agnostic), so
+  the new header/map/dish layout serve **all storefront modules** automatically; product details keep the
+  two frozen impls (`FoodDetailsScreen` for food, `ItemDetailsScreen` for grocery/pharmacy/ecommerce), split
+  by `ItemController.navigateToItemPage`.
+
+### FROZEN — official production storefront (do not redesign without explicit approval)
+`StoreScreen`, `StoreHeroHeader`, `StoreMapView`, premium `ItemWidget` (store layout), `MoonjoinStoreCard`,
+`AllStoreScreen`, and the store search/filters/categories/list/closed-open/promo-banner/map components are the
+**single reusable storefront** for Food/Grocery/Pharmacy/Ecommerce. Reuse everywhere; only module data/APIs/
+models/logic differ. Rental will reuse these components after its own redesign (later phase).
+
+### Module HOME reuse — ✅ IMPLEMENTED & VERIFIED (clean home + discovery filters)
+The approved `AllStoreScreen` storefront is the **primary module home for EVERY storefront Business Module
+Type** — Food, Grocery (+ Market, Fuel & Gas, Drink Distributor, Solar & Power — all `moduleType == grocery`),
+Pharmacy, Ecommerce (Fashion) — not hidden behind "See All". One shared implementation; only module data/
+terminology differ ("All Restaurants" for food, "New on MoonJoin" for others).
+- **`home_screen.dart`** — all storefront modules (`isFood || isGrocery || isPharmacy || isShop`) route to
+  `AllStoreScreen(fromModule: true)`. Parcel keeps `ParcelCategoryScreen`; taxi/desktop unchanged.
+- **The home stays CLEAN** — exactly the approved All Restaurants layout: promo banner · category chips · filter
+  chips · Top Brands · `MoonjoinStoreCard` store list. **No module sections are auto-rendered as homepage
+  blocks** (an earlier `moduleHome`-injection approach was replaced by the user's correction). The
+  `storefrontMode` flag added to `GroceryHomeScreen`/`PharmacyHomeScreen`/`ShopHomeScreen` is unused by the
+  storefront home (defaults false → legacy screens unchanged) and left in place; those screens' sections are
+  NOT deleted.
+- **Discovery filter chips (module features on demand):** `AllStoreScreen`'s filter row gained **Special Offer**,
+  **Most Popular Items**, and **Nearby [Restaurants/Stores/Pharmacies/Shops]** (module-aware term via
+  `moduleType`). Tapping one reveals results in place (frozen designs, real data only):
+  - Special Offer → existing `ItemController.discountedItemList` as premium `ItemWidget` cards.
+  - Most Popular Items → existing `ItemController.popularItemList` as premium `ItemWidget` cards (no invented
+    ranking).
+  - Nearby → the loaded store list sorted by real distance (`Geolocator` + `AddressHelper`) as `MoonjoinStoreCard`.
+  New i18n: `nearby_restaurants/pharmacies/shops` (en/ar/es/bn). Only behaviour was added — the frozen
+  `StoreHeroHeader`/`StoreMapView`/`MoonjoinStoreCard`/premium `ItemWidget`/banner/category/filter designs are
+  untouched.
+- **Top Brands fallback fix (user-requested):** when the admin promo rotation banner is NOT configured,
+  `AllStoreScreen` no longer promotes the first store to a hero card above Top Brands. **Top Brands is the top
+  element, then the full store list** (`_storeList` hero + skip removed).
+- **Verified live:** Grocery home is clean (categories · filter chips · **Top Brands at top** (no banner) · store
+  list with closed treatment); Food shows the rotating admin banner + Top Brands + full list (no hero);
+  **Most Popular Items** chip → popular items as premium cards; **Nearby Restaurants** term correct for Food.
+  0 overflow / 0 exceptions. Pharmacy/Ecommerce use the identical moduleType-driven path.
+- **Minor polish noted (not blocking):** the `AllStoreScreen` search-pill placeholder is still the food-worded
+  `search_for_food_restaurants_or_cuisines`; a module-aware placeholder (items/stores/products) is a small
+  future tweak.
 
 ## 🐞 Production bug fixes (crashes) — 2026-07-13
 Two "Null check operator used on a null value" crashes found while browsing the Food module were fixed

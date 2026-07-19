@@ -2,10 +2,8 @@ import 'package:flutter/rendering.dart';
 import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
 import 'package:sixam_mart/features/category/controllers/category_controller.dart';
 import 'package:sixam_mart/features/checkout/controllers/checkout_controller.dart';
-import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
 import 'package:sixam_mart/features/category/domain/models/category_model.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
@@ -13,13 +11,11 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/item_view.dart';
 import 'package:sixam_mart/common/widgets/item_widget.dart';
@@ -29,9 +25,10 @@ import 'package:sixam_mart/common/widgets/web_item_view.dart';
 import 'package:sixam_mart/common/widgets/web_item_widget.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/features/checkout/screens/checkout_screen.dart';
-import 'package:sixam_mart/features/store/widgets/customizable_space_bar_widget.dart';
 import 'package:sixam_mart/features/store/widgets/store_banner_widget.dart';
 import 'package:sixam_mart/features/store/widgets/store_description_view_widget.dart';
+import 'package:sixam_mart/features/store/widgets/store_hero_header.dart';
+import 'package:sixam_mart/features/store/widgets/store_map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/store/widgets/store_details_screen_shimmer_widget.dart';
@@ -165,185 +162,7 @@ class _StoreScreenState extends State<StoreScreen> {
                     ]),
                   ))),
                 ),
-              ) : SliverAppBar(
-                expandedHeight: 300, toolbarHeight: 100,
-                pinned: true, floating: false, elevation: 0.5,
-                backgroundColor: Theme.of(context).cardColor,
-                leading: IconButton(
-                  icon: Container(
-                    height: 50, width: 50,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).primaryColor),
-                    alignment: Alignment.center,
-                    child: Icon(Icons.chevron_left, color: Theme.of(context).cardColor),
-                  ),
-                  onPressed: () => Get.back(),
-                ),
-                flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: EdgeInsets.zero,
-                  centerTitle: true,
-                  expandedTitleScale: 1.1,
-                  title: CustomizableSpaceBarWidget(
-                    builder: (context, scrollingRate) {
-                      return Container(
-                        height: store!.discount != null ? 165 : 100,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusLarge)),
-                        ),
-                        child: Column(
-                          children: [
-                            store.discount != null ? Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor.withValues(alpha: 1 - scrollingRate),
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusLarge)),
-                              ),
-                              padding: EdgeInsets.all(Dimensions.paddingSizeSmall - (GetPlatform.isAndroid ? (scrollingRate * Dimensions.paddingSizeSmall) : 0)),
-                              child: Text('${store.discount!.discountType == 'percent' ? '${store.discount!.discount}%'
-                                  : PriceConverter.convertPrice(store.discount!.discount)} '
-                                  '${'discount_will_be_applicable_when_order_amount_exceeds_is_more_than'.tr} ${PriceConverter.convertPrice(store.discount!.minPurchase)},'
-                                  ' ${'Max'.tr}: ${PriceConverter.convertPrice(store.discount!.maxDiscount)} ${'discount_is_applicable'.tr}',
-                                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall,
-                                  color: Colors.white.withValues(alpha: 1 - scrollingRate),
-                                ),
-                                textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis,
-                              ),
-                            ) : const SizedBox(),
-
-                            Container(
-                              color: Theme.of(context).cardColor.withValues(alpha: scrollingRate),
-                              padding: EdgeInsets.only(
-                                bottom: 0,
-                                left: Get.find<LocalizationController>().isLtr ? 40 * scrollingRate : 0,
-                                right: Get.find<LocalizationController>().isLtr ? 0 : 40 * scrollingRate,
-                              ),
-                              child: Align(
-                                alignment: Alignment.bottomLeft,
-                                child: Container(
-                                  height: 89, color: Theme.of(context).cardColor.withValues(alpha: scrollingRate == 0.0 ? 1 : 0),
-                                  padding: EdgeInsets.only(
-                                    left: Get.find<LocalizationController>().isLtr ? 20 : 0,
-                                    right: Get.find<LocalizationController>().isLtr ? 0 : 20,
-                                  ),
-                                  child: Row(children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                      child: Stack(children: [
-                                        CustomImage(
-                                          image: '${store.logoFullUrl}',
-                                          height: 60 - (scrollingRate * 15), width: 70 - (scrollingRate * 15), fit: BoxFit.cover,
-                                        ),
-
-                                        storeController.isStoreOpenNow(store.active!, store.schedules) ? const SizedBox() : Positioned(
-                                          bottom: 0, left: 0, right: 0,
-                                          child: Container(
-                                            height: 30,
-                                            alignment: Alignment.center,
-                                            decoration: BoxDecoration(
-                                              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(Dimensions.radiusSmall)),
-                                              color: Colors.black.withValues(alpha: 0.6),
-                                            ),
-                                            child: Text(
-                                              'closed_now'.tr, textAlign: TextAlign.center,
-                                              style: robotoRegular.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),
-                                            ),
-                                          ),
-                                        ),
-                                      ]),
-                                    ),
-                                    const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,mainAxisAlignment: MainAxisAlignment.center, children: [
-                                      Row(children: [
-                                        Expanded(child: Text(
-                                          store.name!, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge - (scrollingRate * 3), color: Theme.of(context).textTheme.bodyMedium!.color),
-                                          maxLines: 1, overflow: TextOverflow.ellipsis,
-                                        )),
-                                        const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                      ]),
-                                      const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                                      Text(
-                                        store.address ?? '', maxLines: 1, overflow: TextOverflow.ellipsis,
-                                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall - (scrollingRate * 2), color: Theme.of(context).disabledColor),
-                                      ),
-                                      SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraSmall : 0),
-                                      Row(children: [
-                                        Flexible(
-                                          child: Text('minimum_order'.tr, style: robotoRegular.copyWith(
-                                            fontSize: Dimensions.fontSizeExtraSmall - (scrollingRate * 2), color: Theme.of(context).disabledColor,
-                                          ), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                        ),
-                                        const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-                                        Text(
-                                          PriceConverter.convertPrice(store.minimumOrder), textDirection: TextDirection.ltr,
-                                          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall - (scrollingRate * 2), color: Theme.of(context).primaryColor),
-                                        ),
-                                      ]),
-                                    ])),
-
-                                    GetBuilder<FavouriteController>(builder: (favouriteController) {
-                                      bool isWished = favouriteController.wishStoreIdList.contains(store!.id);
-                                      return InkWell(
-                                        onTap: () {
-                                          if(AuthHelper.isLoggedIn()) {
-                                            isWished ? favouriteController.removeFromFavouriteList(store!.id, true)
-                                                : favouriteController.addToFavouriteList(null, store?.id, true);
-                                          }else {
-                                            showCustomSnackBar('you_are_not_logged_in'.tr);
-                                          }
-                                        },
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                                          ),
-                                          padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                                          child: Icon(
-                                            isWished ? Icons.favorite : Icons.favorite_border,
-                                            color: isWished ? Theme.of(context).primaryColor : Theme.of(context).disabledColor,
-                                            size: 24  - (scrollingRate * 4),
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                                    const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                    AppConstants.webHostedUrl.isNotEmpty ? InkWell(
-                                      onTap: () {
-                                        storeController.shareStore();
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                                        ),
-                                        padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                                        child: Icon(
-                                          Icons.share, size: 24  - (scrollingRate * 4),
-                                        ),
-                                      ),
-                                    ) : const SizedBox(),
-                                    const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                  ]),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  background: CustomImage(
-                    fit: BoxFit.cover,
-                    image: '${store!.coverPhotoFullUrl}',
-                  ),
-                ),
-                actions: const [
-                  SizedBox(),
-                ],
-              ),
+              ) : SliverToBoxAdapter(child: StoreHeroHeader(store: store!)),
 
               (ResponsiveHelper.isDesktop(context)  && storeController.recommendedItemModel != null && storeController.recommendedItemModel!.items!.isNotEmpty)
               ? SliverToBoxAdapter(
@@ -633,8 +452,14 @@ class _StoreScreenState extends State<StoreScreen> {
                 color: Theme.of(context).cardColor,
                 child: Column(children: [
 
-                  ResponsiveHelper.isDesktop(context) ? const SizedBox() : StoreDescriptionViewWidget(store: store),
-                  const SizedBox(height: Dimensions.paddingSizeSmall),
+                  // Store info (name/rating/location/delivery) now lives in the
+                  // green hero header (StoreHeroHeader) on mobile.
+                  const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+
+                  // NEW premium embedded store-location map — after the store info
+                  // section, before Categories (shared across all storefront modules).
+                  if (!ResponsiveHelper.isDesktop(context) && storeController.store != null)
+                    StoreMapView(store: storeController.store!),
 
                   store?.announcementActive??false ? Container(
                     decoration: BoxDecoration(
@@ -803,8 +628,9 @@ class _StoreScreenState extends State<StoreScreen> {
                     items: (storeController.categoryList!.isNotEmpty && storeController.storeItemModel != null)
                         ? storeController.storeItemModel!.items : null,
                     inStorePage: true,
+                    premiumStoreLayout: true,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: Dimensions.paddingSizeSmall,
+                      horizontal: Dimensions.paddingSizeDefault,
                       vertical: Dimensions.paddingSizeSmall,
                     ),
                   ),

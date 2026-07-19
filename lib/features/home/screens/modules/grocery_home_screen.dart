@@ -20,14 +20,21 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 
 
 class GroceryHomeScreen extends StatelessWidget {
-  const GroceryHomeScreen({super.key});
+  /// When true, render ONLY the module-unique sections (flash sale, offers,
+  /// popular/reviewed/for-you items, promo banners). The banner/category/store
+  /// strips are omitted because the approved [AllStoreScreen] shell already
+  /// provides the promo banner, category chips and the store list. Lets Grocery
+  /// reuse the shared storefront home without duplicating those sections or
+  /// losing any feature.
+  final bool storefrontMode;
+  const GroceryHomeScreen({super.key, this.storefrontMode = false});
 
   @override
   Widget build(BuildContext context) {
     bool isLoggedIn = AuthHelper.isLoggedIn();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-      Container(
+      if (!storefrontMode) Container(
         width: MediaQuery.of(context).size.width,
         color: Theme.of(context).disabledColor.withValues(alpha: 0.1),
         child:  const Column(
@@ -38,21 +45,21 @@ class GroceryHomeScreen extends StatelessWidget {
         ),
       ),
 
-      const CategoryView(),
+      if (!storefrontMode) const CategoryView(),
       isLoggedIn ? const VisitAgainView() : const SizedBox(),
-      const RecommendedStoreView(),
+      if (!storefrontMode) const RecommendedStoreView(),
       const SpecialOfferView(isFood: false, isShop: false),
       const HighlightWidget(),
       const FlashSaleViewWidget(),
-      const BestStoreNearbyView(),
+      if (!storefrontMode) const BestStoreNearbyView(),
       const MostPopularItemView(isFood: false, isShop: false),
       const MiddleSectionBannerView(),
       const BestReviewItemView(),
       const JustForYouView(),
-      const TopOffersNearMe(),
+      if (!storefrontMode) const TopOffersNearMe(),
       const ItemThatYouLoveView(forShop: false),
       isLoggedIn ? const PromoCodeBannerView() : const SizedBox(),
-      const NewOnMartView(isPharmacy: false, isShop: false),
+      if (!storefrontMode) const NewOnMartView(isPharmacy: false, isShop: false),
       const PromotionalBannerView(),
     ]);
   }

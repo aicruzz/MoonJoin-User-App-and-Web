@@ -44,9 +44,16 @@ class ItemWidget extends StatelessWidget {
   /// Used only on the Item Search/List screen (see item_view_widget) per the
   /// approved MoonJoin design; defaults to false so Home and store cards are unaffected.
   final bool hideItemStoreName;
+  /// Premium Store-page dish layout (design `store_or_restaurant.png`): larger
+  /// rounded image, bold title, rating, price + old-price + `/unitType`, organic
+  /// badge and a "View Details" action — rendered from **real Item data only**.
+  /// Opt-in so every existing usage (Cart/Search/Category/Home) is unaffected;
+  /// same widget, one shared implementation (no fork). Item items only.
+  final bool premiumStoreLayout;
   const ItemWidget({super.key, required this.item, required this.isStore, required this.store, required this.index,
     required this.length, this.inStore = false, this.isCampaign = false, this.isFeatured = false,
-    this.fromCartSuggestion = false, this.imageHeight, this.imageWidth, this.isCornerTag = false, this.hideItemStoreName = false});
+    this.fromCartSuggestion = false, this.imageHeight, this.imageWidth, this.isCornerTag = false, this.hideItemStoreName = false,
+    this.premiumStoreLayout = false});
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +77,10 @@ class ItemWidget extends StatelessWidget {
       discount = item!.discount;
       discountType = item!.discountType;
       isAvailable = DateConverter.isAvailable(item!.availableTimeStarts, item!.availableTimeEnds);
+    }
+
+    if (premiumStoreLayout && !isStore && item != null) {
+      return _premiumStoreDishCard(context, discount, discountType, isAvailable);
     }
 
     return Stack(
@@ -295,6 +306,100 @@ class ItemWidget extends StatelessWidget {
         )) : const SizedBox(),
 
       ],
+    );
+  }
+
+  /// Premium Store-page dish card (design `store_or_restaurant.png`) — real Item
+  /// data only, no fabricated badges/chips. Reuses the existing image, discount,
+  /// organic and favourite treatments and the existing item navigation.
+  Widget _premiumStoreDishCard(BuildContext context, double? discount, String? discountType, bool isAvailable) {
+    final bool showVeg = Get.find<SplashController>().configModel!.moduleConfig!.module!.vegNonVeg! && Get.find<SplashController>().configModel!.toggleVegNonVeg!;
+    final bool showUnit = Get.find<SplashController>().configModel!.moduleConfig!.module!.unit! && item!.unitType != null && item!.unitType!.isNotEmpty;
+    final Color primary = Theme.of(context).primaryColor;
+
+    return Container(
+      height: 122,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2))],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: CustomInkWell(
+        onTap: () => Get.find<ItemController>().navigateToItemPage(item, context, inStore: inStore, isCampaign: isCampaign),
+        radius: Dimensions.radiusLarge,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+
+          // Uniform image: fills the fixed 122×122 area (cover-cropped, centered,
+          // never stretched) so every dish image is exactly the same size
+          // regardless of the original portrait/landscape aspect ratio.
+          SizedBox(
+            width: 122,
+            child: Stack(fit: StackFit.expand, children: [
+              CustomImage(image: '${item!.imageFullUrl}', fit: BoxFit.cover),
+              DiscountTag(discount: discount, discountType: discountType, freeDelivery: false),
+              OrganicTag(item: item!, placeInImage: true),
+              isAvailable ? const SizedBox() : NotAvailableWidget(isStore: false, isAllSideRound: false),
+            ]),
+          ),
+
+          Expanded(child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(child: Text(item!.name ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
+                if (showVeg) ...[
+                  const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                  Image.asset(item!.veg == 0 ? Images.nonVegImage : Images.vegImage, height: 12, width: 12, fit: BoxFit.contain),
+                ],
+                const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                GetBuilder<FavouriteController>(builder: (favouriteController) {
+                  final bool isWished = favouriteController.wishItemIdList.contains(item!.id);
+                  return CustomFavouriteWidget(isWished: isWished, isStore: false, store: null, item: item);
+                }),
+              ]),
+
+              if ((item!.ratingCount ?? 0) > 0)
+                Row(children: [
+                  Icon(Icons.star, size: 14, color: Colors.amber.shade600),
+                  const SizedBox(width: 3),
+                  Text(item!.avgRating!.toStringAsFixed(1), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+                  const SizedBox(width: 3),
+                  Text('(${item!.ratingCount})', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor)),
+                ]),
+
+              Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Expanded(child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Flexible(child: Text(PriceConverter.convertPrice(item!.price, discount: discount, discountType: discountType),
+                      maxLines: 1, overflow: TextOverflow.ellipsis, textDirection: TextDirection.ltr,
+                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: primary))),
+                  if ((discount ?? 0) > 0) ...[
+                    const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                    Text(PriceConverter.convertPrice(item!.price), textDirection: TextDirection.ltr,
+                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor, decoration: TextDecoration.lineThrough)),
+                  ],
+                  if (showUnit) Flexible(child: Text(' /${item!.unitType}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor))),
+                ])),
+                const SizedBox(width: Dimensions.paddingSizeSmall),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                    border: Border.all(color: primary),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text('view_details'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: primary)),
+                    Icon(Icons.chevron_right, size: 14, color: primary),
+                  ]),
+                ),
+              ]),
+            ]),
+          )),
+        ]),
+      ),
     );
   }
 }

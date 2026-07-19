@@ -370,3 +370,320 @@ Once a screen has been approved by the product owner:
   - or the product owner requests a redesign.
 
 This prevents regression and keeps the migration moving forward.
+
+## PRIMARY PRINCIPLE
+
+Before creating ANY new widget, screen, component, card, section, layout or animation:
+
+1. Search the codebase.
+2. Search COMPONENTS.md.
+3. Search MIGRATION_LOG.md.
+4. Search ui-designs.
+5. Search ACTIVE_FIGMA.md.
+
+If an approved implementation already exists:
+
+REUSE IT.
+
+Never duplicate.
+
+Never fork.
+
+Never redesign.
+
+Never create another version.
+
+MoonJoin is built from reusable components, not copied implementations.
+
+# MoonJoin Development Workflow (MANDATORY)
+
+This workflow is mandatory.
+
+Never skip any step.
+
+This project already has an established migration process.
+
+Every new Claude session MUST continue the same workflow instead of inventing a new one.
+
+--------------------------------------------------
+
+STEP 1
+
+Before touching ANY code:
+
+Read completely:
+
+CLAUDE.md
+
+docs/
+
+ui-designs/
+
+ACTIVE_FIGMA.md
+
+DESIGN_SYSTEM.md
+
+UI_INDEX.md
+
+COMPONENTS.md
+
+SCREEN_FLOW.md
+
+MIGRATION_LOG.md
+
+Read every document completely.
+
+Do not assume.
+
+Do not skip.
+
+--------------------------------------------------
+
+STEP 2
+
+Study every UI image.
+
+The UI images inside ui-designs are the official source of truth.
+
+If ACTIVE_FIGMA.md exists, treat it as higher priority.
+
+Never redesign from imagination.
+
+Always compare your implementation against:
+
+• ui-designs
+• ACTIVE_FIGMA.md
+• Existing approved components
+
+--------------------------------------------------
+
+STEP 3
+
+Before changing code:
+
+Identify whether this screen already has an approved reusable widget.
+
+If yes:
+
+Reuse it.
+
+Never recreate it.
+
+Never duplicate widgets.
+
+--------------------------------------------------
+
+STEP 4
+
+Before writing code:
+
+Understand:
+
+Route
+
+Controller
+
+Repository
+
+Service
+
+API
+
+Model
+
+Shared widgets
+
+Business logic
+
+Only replace UI.
+
+Never replace business logic.
+
+--------------------------------------------------
+
+STEP 5
+
+Implement ONLY ONE SCREEN.
+
+Never implement multiple screens together.
+
+--------------------------------------------------
+
+STEP 6
+
+Immediately launch the iOS Simulator.
+
+Run the application.
+
+Compare the screen side-by-side with:
+
+Figma
+
+ui-designs image
+
+Adjust spacing, padding, typography, shadows, radius, animations until they visually match.
+
+Do not rely only on Flutter code.
+
+Always verify visually.
+
+--------------------------------------------------
+
+STEP 7
+
+After implementation:
+
+Run:
+
+flutter analyze
+
+Resolve every issue introduced by your changes.
+
+Never introduce new warnings or errors.
+
+--------------------------------------------------
+
+STEP 8
+
+Produce a QA report containing:
+
+Files changed
+
+Widgets reused
+
+New reusable widgets
+
+Logic reused
+
+Business logic preserved
+
+API preserved
+
+Controllers preserved
+
+Repositories preserved
+
+Services preserved
+
+Runtime verification
+
+flutter analyze status
+
+Regression audit
+
+Honest notes
+
+--------------------------------------------------
+
+STEP 9
+
+STOP.
+
+Never continue automatically.
+
+Wait for explicit approval.
+
+--------------------------------------------------
+
+STEP 10
+
+Only after approval:
+
+Update:
+
+MIGRATION_LOG.md
+
+COMPONENTS.md
+
+SCREEN_FLOW.md
+
+UI_INDEX.md
+
+Frozen Registry
+
+Mark the screen as FROZEN.
+
+--------------------------------------------------
+
+STEP 11
+
+Only after the migration has been frozen may you begin the next screen.
+
+--------------------------------------------------
+
+Approved screens are LOCKED.
+
+Never redesign a frozen screen unless specifically instructed.
+
+Only reuse its widgets.
+
+--------------------------------------------------
+
+Business Module Reuse Policy
+
+MoonJoin has six business module types:
+
+• Food
+• Grocery
+• Pharmacy
+• E-commerce
+• Parcel
+• Rental
+
+Food, Grocery, Pharmacy and E-commerce intentionally share almost every screen.
+
+Never duplicate these UIs.
+
+Always reuse the approved shared widgets.
+
+Only Product Details differs:
+
+Food:
+
+product_details_for_only_food.png
+
+Everything else:
+
+product_details_for_grocery_and_others_module.png
+
+Store pages
+
+Category pages
+
+Search
+
+Lists
+
+Cards
+
+Checkout
+
+Cart
+
+Order
+
+Filters
+
+Headers
+
+Animations
+
+must all reuse the same approved widgets.
+
+--------------------------------------------------
+
+Never Guess
+
+If documentation and code disagree:
+
+Stop.
+
+Read the documentation again.
+
+Never guess.
+
+Never invent.
+
+--------------------------------------------------
+
+Every implementation must look visually identical to the approved Figma or ui-designs image before requesting approval.

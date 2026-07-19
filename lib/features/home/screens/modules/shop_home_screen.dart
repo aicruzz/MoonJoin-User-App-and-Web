@@ -21,14 +21,20 @@ import 'package:sixam_mart/features/home/widgets/banner_view.dart';
 import 'package:sixam_mart/features/home/widgets/views/category_view.dart';
 
 class ShopHomeScreen extends StatelessWidget {
-  const ShopHomeScreen({super.key});
+  /// See [GroceryHomeScreen.storefrontMode]: when true, render only the
+  /// ecommerce-unique sections (flash sale, featured categories, products-by-
+  /// category, popular/for-you items, promo banners); the banner/category/store/
+  /// brand strips come from the shared [AllStoreScreen] shell (which has its own
+  /// promo banner, category chips, Top Brands and store list).
+  final bool storefrontMode;
+  const ShopHomeScreen({super.key, this.storefrontMode = false});
 
   @override
   Widget build(BuildContext context) {
     bool isLoggedIn = AuthHelper.isLoggedIn();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-      Container(
+      if (!storefrontMode) Container(
         width: MediaQuery.of(context).size.width,
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -44,22 +50,22 @@ class ShopHomeScreen extends StatelessWidget {
         ),
       ),
 
-      const CategoryView(),
+      if (!storefrontMode) const CategoryView(),
       isLoggedIn ? const VisitAgainView() : const SizedBox(),
-      const RecommendedStoreView(),
+      if (!storefrontMode) const RecommendedStoreView(),
       const MostPopularItemView(isFood: false, isShop: true),
       const FlashSaleViewWidget(),
       const MiddleSectionBannerView(),
       const HighlightWidget(),
-      const PopularStoreView(),
-      const BrandsViewWidget(),
+      if (!storefrontMode) const PopularStoreView(),
+      if (!storefrontMode) const BrandsViewWidget(),
       const SpecialOfferView(isFood: false, isShop: true),
       const ProductWithCategoriesView(fromShop: true),
       const JustForYouView(),
-      const TopOffersNearMe(),
+      if (!storefrontMode) const TopOffersNearMe(),
       const FeaturedCategoriesView(),
       const ItemThatYouLoveView(forShop: true,),
-      const NewOnMartView(isShop: true,isPharmacy: false),
+      if (!storefrontMode) const NewOnMartView(isShop: true,isPharmacy: false),
       const PromotionalBannerView(),
     ]);
   }

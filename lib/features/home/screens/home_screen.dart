@@ -227,7 +227,14 @@ class _HomeScreenState extends State<HomeScreen> {
           // existing homes for now (not yet redesigned). AllStoreScreen has its own
           // SafeArea + RefreshIndicator, so it's returned before the outer wrappers.
           body: isParcel ? const ParcelCategoryScreen()
-              : (!ResponsiveHelper.isDesktop(context) && isFood) ? AllStoreScreen(
+              // MoonJoin: EVERY storefront Business Module Type (Food, Grocery+Market/
+              // Fuel/Drink/Solar, Pharmacy, Ecommerce/Fashion — all via moduleType) lands
+              // on the approved shared storefront home (AllStoreScreen) as the PRIMARY
+              // experience. The home stays CLEAN (banner · categories · filter chips ·
+              // store list) exactly like the approved All Restaurants layout — module
+              // features (special offer / popular items / nearby) are exposed as
+              // discovery filter chips inside AllStoreScreen, not as homepage sections.
+              : (!ResponsiveHelper.isDesktop(context) && (isFood || isGrocery || isPharmacy || isShop)) ? AllStoreScreen(
                   key: ValueKey('module_store_list_${splashController.module?.id}'),
                   isPopular: false, isFeatured: false, isNearbyStore: false,
                   isTopOfferStore: false, isRecommendedStore: false, fromModule: true,

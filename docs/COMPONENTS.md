@@ -106,3 +106,19 @@ the reusable `StoreController.sortStoresOpenFirst(list)`. The shared mobile stor
 `common/widgets/item_view.dart` `ItemsView` (`_moonjoinStoreList`). **Reuse these unchanged** — do not create
 another store card. Desktop keeps its existing `card_design/store_card_with_distance` / web store cards; the
 not-yet-migrated Home per-module strips still use the legacy cards (kept, not deleted).
+
+## Store / Restaurant page components (FROZEN — official shared storefront page)
+
+The Store page (`store/screens/store_screen.dart`, single `/store` route) is shared by **Food / Grocery /
+Pharmacy / Ecommerce** (Grocery = Grocery, Market, Fuel & Gas, Drink Distributor, Solar & Power). Reuse these;
+never duplicate them per module. Only module data/APIs/models/logic differ — the UI is shared.
+
+| Widget | File | Purpose |
+|---|---|---|
+| `StoreHeroHeader` | `features/store/widgets/store_hero_header.dart` | Green store hero (rounded bottom curve; search pill straddles the transition): name, cuisines, ★rating·delivery, full address, "N items available", cover image, back·favourite·share·notification·cart, in-store search pill + filter chips. Reuses `StoreFilterChip` + existing controllers/routes. |
+| `StoreMapView` | `features/store/widgets/store_map_view.dart` | Premium embedded location-awareness map (NOT navigation): store+user markers, distance, **View on Map** expands in place, floating Re-center/My-Location/Directions-Preview(route+ETA)/Open-in-Google-Maps. Reuses Google Maps + `direction-api`/`distance-api` + `AddressHelper` + `url_launcher`; single map instance. |
+| **`ItemWidget` premium store layout** | `common/widgets/item_widget.dart` (opt-in `premiumStoreLayout`) | The **one** item card, extended (not forked): uniform 122×122 image, name, veg, favourite, ★rating, price+old-price+`/unitType`, organic tag, View Details. Real Item data only. Default off — all other screens unchanged. Flows via `ItemsView.premiumStoreLayout` → `_premiumItemList`. |
+
+**Reuse rule:** these + `MoonjoinStoreCard` + `AllStoreScreen` are the frozen storefront. When Rental is
+redesigned it will reuse `StoreHeroHeader`, `StoreMapView`, search, filter chips, cards, dialogs, loading/
+empty states where appropriate; only Rental-specific booking screens get their own UI.

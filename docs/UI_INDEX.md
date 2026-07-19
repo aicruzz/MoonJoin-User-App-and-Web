@@ -9,7 +9,8 @@ screen. Screens with **no** image are restyled from the Design System and marked
 | Image | Flutter screen | Status |
 |---|---|---|
 | `home.png` | module-landing = `home/screens/home_screen.dart` (`showMobileModule` path) → redesigned `home/widgets/module_landing_view.dart`; shell = `dashboard/screens/dashboard_screen.dart` | Redesigned (Phase 4) |
-| `restaurant_list.PNG` | `store/screens/all_store_screen.dart` | Existing |
+| `restaurant_list.PNG` | `store/screens/all_store_screen.dart` | Redesigned · **Frozen** (All Restaurants / shared store list) |
+| `store_or_restaurant.PNG` | `store/screens/store_screen.dart` (+ `store_hero_header`, `store_map_view`, premium `item_widget`) | Redesigned · **Frozen** (shared storefront page for Food/Grocery/Pharmacy/Ecommerce) |
 | `items_ search_list.PNG` | `search/screens/search_screen.dart`, `store/screens/store_item_search_screen.dart` | Existing |
 | `product_details_for_only_food.PNG` | `item/screens/item_details_screen.dart` (food variant; currently `common/widgets/item_bottom_sheet.dart`) | Existing |
 | `product_details_for_grocery_and_others_module.png` | `item/screens/item_details_screen.dart` (grocery/others) | Existing |

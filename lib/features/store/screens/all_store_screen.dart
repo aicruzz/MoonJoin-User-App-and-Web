@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:sixam_mart/common/models/module_model.dart';
 import 'package:sixam_mart/common/widgets/cart_widget.dart';
+import 'package:sixam_mart/common/widgets/item_view.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import 'package:sixam_mart/features/banner/controllers/banner_controller.dart';
 import 'package:sixam_mart/features/brands/controllers/brands_controller.dart';
 import 'package:sixam_mart/features/category/controllers/category_controller.dart';
+import 'package:sixam_mart/features/item/controllers/item_controller.dart';
+import 'package:sixam_mart/features/item/domain/models/item_model.dart';
+import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
@@ -40,6 +45,9 @@ class AllStoreScreen extends StatefulWidget {
 class _AllStoreScreenState extends State<AllStoreScreen> {
   final ScrollController scrollController = ScrollController();
   int _activeFilter = -1; // -1 none, 0 fast delivery, 1 free delivery, 2 top rated
+  // Discovery filter (module features exposed on demand, not as homepage blocks):
+  // -1 none, 0 Special Offer (discounted items), 1 Most Popular Items, 2 Nearby stores.
+  int _discovery = -1;
 
   @override
   void initState() {
@@ -139,9 +147,9 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
                         }
                       }
                     }
-                    // Show the rotating banner only when no filter/sort is active
-                    // (the design puts it at the very top of the default list).
-                    final bool hasBanner = _activeFilter == -1 && bannerImages.isNotEmpty;
+                    // Show the rotating banner only when no filter/sort/discovery is
+                    // active (the design puts it at the very top of the default list).
+                    final bool hasBanner = _activeFilter == -1 && _discovery == -1 && bannerImages.isNotEmpty;
 
                     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
@@ -155,7 +163,12 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
                         const SizedBox(height: Dimensions.paddingSizeSmall),
                       ],
 
-                      _storeList(context, stores, hasBanner: hasBanner),
+                      // A discovery chip (Special Offer / Most Popular / Nearby) reveals
+                      // its results on demand; otherwise the clean approved store list.
+                      if (_discovery != -1)
+                        _discoveryContent(context, storeController)
+                      else
+                        _storeList(context, stores),
 
                       const SizedBox(height: Dimensions.paddingSizeLarge),
                     ]);
@@ -272,21 +285,104 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
 
   Widget _filterChips() {
     void toggle(int i) => setState(() => _activeFilter = _activeFilter == i ? -1 : i);
+    // Discovery chips expose module features on demand (they don't appear as
+    // homepage blocks). Toggling one clears the plain sort/filter and vice-versa.
+    void toggleDiscovery(int i) => setState(() {
+      _discovery = _discovery == i ? -1 : i;
+      if (_discovery != -1) _activeFilter = -1;
+    });
+    final Color primary = Theme.of(context).primaryColor;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeExtraSmall),
       child: Row(children: [
-        StoreFilterChip(label: 'filters'.tr, icon: Icons.tune, iconColor: Theme.of(context).primaryColor, labelColor: Theme.of(context).primaryColor, onTap: () {}),
+        StoreFilterChip(label: 'filters'.tr, icon: Icons.tune, iconColor: primary, labelColor: primary, onTap: () {}),
         const SizedBox(width: Dimensions.paddingSizeSmall),
         StoreFilterChip(label: 'sort'.tr, trailingDropdown: true, selected: _activeFilter == 2, onTap: () => toggle(2)),
         const SizedBox(width: Dimensions.paddingSizeSmall),
         StoreFilterChip(label: 'fast_delivery'.tr, icon: Icons.bolt, iconColor: Colors.amber.shade700, selected: _activeFilter == 0, onTap: () => toggle(0)),
         const SizedBox(width: Dimensions.paddingSizeSmall),
-        StoreFilterChip(label: 'free_delivery'.tr, icon: Icons.favorite, iconColor: Theme.of(context).primaryColor, selected: _activeFilter == 1, onTap: () => toggle(1)),
+        StoreFilterChip(label: 'free_delivery'.tr, icon: Icons.favorite, iconColor: primary, selected: _activeFilter == 1, onTap: () => toggle(1)),
         const SizedBox(width: Dimensions.paddingSizeSmall),
         StoreFilterChip(label: 'top_rated'.tr, icon: Icons.star, iconColor: Colors.amber.shade700, selected: _activeFilter == 2, onTap: () => toggle(2)),
+        const SizedBox(width: Dimensions.paddingSizeSmall),
+        // Discovery filters (module features on demand)
+        StoreFilterChip(label: 'special_offer'.tr, icon: Icons.local_offer_outlined, iconColor: primary, selected: _discovery == 0, onTap: () => toggleDiscovery(0)),
+        const SizedBox(width: Dimensions.paddingSizeSmall),
+        StoreFilterChip(label: 'most_popular_items'.tr, icon: Icons.local_fire_department_outlined, iconColor: Colors.amber.shade700, selected: _discovery == 1, onTap: () => toggleDiscovery(1)),
+        const SizedBox(width: Dimensions.paddingSizeSmall),
+        StoreFilterChip(label: _nearbyTerm(), icon: Icons.near_me_outlined, iconColor: primary, selected: _discovery == 2, onTap: () => toggleDiscovery(2)),
       ]),
     );
+  }
+
+  /// Module-aware "Nearby …" label (Food→Restaurants, Grocery→Stores,
+  /// Pharmacy→Pharmacies, Ecommerce→Shops). Uses the active module type.
+  String _nearbyTerm() {
+    final mt = Get.find<SplashController>().module?.moduleType?.toString() ?? '';
+    if (mt == AppConstants.food) return 'nearby_restaurants'.tr;
+    if (mt == AppConstants.pharmacy) return 'nearby_pharmacies'.tr;
+    if (mt == AppConstants.ecommerce) return 'nearby_shops'.tr;
+    return 'nearby_stores'.tr;
+  }
+
+  /// Discovery results, on demand. Special Offer / Most Popular reuse the existing
+  /// discounted/popular ITEM lists (no invented ranking); Nearby reuses the loaded
+  /// store list sorted by real distance (existing location logic). No new backend.
+  Widget _discoveryContent(BuildContext context, StoreController storeController) {
+    if (_discovery == 0) {
+      return _itemDiscoveryList(context, Get.find<ItemController>().discountedItemList);
+    } else if (_discovery == 1) {
+      return _itemDiscoveryList(context, Get.find<ItemController>().popularItemList);
+    } else {
+      final source = _sourceList(storeController);
+      if (source == null) {
+        return const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: CircularProgressIndicator()));
+      }
+      final List<Store> sorted = _sortByDistance(List<Store>.from(source));
+      if (sorted.isEmpty) {
+        return Padding(padding: const EdgeInsets.only(top: 40), child: NoDataScreen(text: 'no_store_available'.tr, showFooter: false));
+      }
+      return ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+        itemCount: sorted.length,
+        separatorBuilder: (context, index) => const SizedBox(height: Dimensions.paddingSizeDefault),
+        itemBuilder: (context, index) => MoonjoinStoreCard(store: sorted[index], onTap: () => _openStore(sorted[index])),
+      );
+    }
+  }
+
+  Widget _itemDiscoveryList(BuildContext context, List<Item>? items) {
+    if (items == null) {
+      return const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: CircularProgressIndicator()));
+    }
+    if (items.isEmpty) {
+      return Padding(padding: const EdgeInsets.only(top: 40), child: NoDataScreen(text: 'no_item_available'.tr, showFooter: false));
+    }
+    // Reuse the frozen premium ItemWidget layout via ItemsView (real item data).
+    return ItemsView(
+      isStore: false, stores: null, items: items,
+      premiumStoreLayout: true,
+      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+    );
+  }
+
+  /// Sort stores by real distance from the user's saved location (existing logic).
+  List<Store> _sortByDistance(List<Store> list) {
+    final addr = AddressHelper.getUserAddressFromSharedPref();
+    final double? ulat = double.tryParse(addr?.latitude ?? '');
+    final double? ulng = double.tryParse(addr?.longitude ?? '');
+    if (ulat == null || ulng == null) return list;
+    double dist(Store s) {
+      final la = double.tryParse(s.latitude ?? '');
+      final ln = double.tryParse(s.longitude ?? '');
+      if (la == null || ln == null) return double.infinity;
+      return Geolocator.distanceBetween(ulat, ulng, la, ln);
+    }
+    list.sort((a, b) => dist(a).compareTo(dist(b)));
+    return list;
   }
 
   Widget _topBrands() {
@@ -327,7 +423,7 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     });
   }
 
-  Widget _storeList(BuildContext context, List<Store>? stores, {bool hasBanner = false}) {
+  Widget _storeList(BuildContext context, List<Store>? stores) {
     if (stores == null) {
       return const Padding(
         padding: EdgeInsets.only(top: 60),
@@ -337,24 +433,20 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     if (stores.isEmpty) {
       return Column(children: [_topBrands(), const SizedBox(height: 40), NoDataScreen(text: 'no_store_available'.tr, showFooter: false)]);
     }
-    // With the promotional banner present the top is already covered → Top Brands
-    // then the full list. Without one, the first card acts as the hero.
-    final int skip = hasBanner ? 0 : 1;
+    // Top Brands sits at the top of the listing, then the full store list.
+    // When the admin promo rotation banner exists it renders above (in build);
+    // when it does NOT, Top Brands is the top element — the first store is NOT
+    // promoted to a hero card (no fallback hero).
     return Column(children: [
-      if (!hasBanner)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-          child: MoonjoinStoreCard(store: stores.first, onTap: () => _openStore(stores.first)),
-        ),
       _topBrands(),
       ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-        itemCount: stores.length - skip,
+        itemCount: stores.length,
         separatorBuilder: (context, index) => const SizedBox(height: Dimensions.paddingSizeDefault),
         itemBuilder: (context, index) {
-          final store = stores[index + skip];
+          final store = stores[index];
           return MoonjoinStoreCard(store: store, onTap: () => _openStore(store));
         },
       ),
