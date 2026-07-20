@@ -928,15 +928,43 @@ per-screen — so every list card, Product Details, add sheet, and Your Cart inh
 
 ---
 
-## Bug fix — Food Product Details hero image safe-area (no redesign)
+## Food Product Details — hero image safe-area fix — ✅ APPROVED • COMPLETE • FROZEN
 
 Food Product Details (`FoodDetailsScreen`) hero image sat too high (`Positioned(top: 92)` in a `330`-tall
-header), landing inside the top-controls band (safe-area top + 34px control height) so it touched the
-back / store name / rating / share / favourite. Fixed by reusing the **Grocery** details
-(`item_details_screen.dart`) hero offset **`top: 132`**, and growing the header box `330 → 370` so the
-taller Food image (210) isn't clipped and its spacing below is preserved.
+header), landing inside the top-controls band (safe-area top + 34px control height). Fixed by reusing the
+**Grocery** details (`item_details_screen.dart`) hero offset **`top: 132`**, and growing the header box
+`330 → 370` so the taller Food image (210) isn't clipped and its spacing below is preserved.
 
-- **File:** `features/item/screens/food_details_screen.dart` (`_header` — two values: `top` 92→132,
-  `SizedBox.height` 330→370). No other change; Food design/header/buttons/animations/logic untouched.
-- **Grocery Details unchanged** (not modified). Verified live: image clears all header controls, no overflow.
-  `flutter analyze` **48 issues, 0 errors** (baseline unchanged).
+- `FoodDetailsScreen` hero image now **respects the correct safe area** and no longer touches the **Back
+  button, Favourite button, Share button, Store badge, Store name, Rating, or header information**.
+- **Grocery Product Details was intentionally NOT modified** (`item_details_screen.dart` untouched).
+- **Only two layout values changed** (`_header`: `top` 92→132, `SizedBox.height` 330→370). **No redesign.**
+- **Preserved:** business logic, APIs, navigation, animations, typography, layout, buttons, icons.
+- **No overflow.** `flutter analyze` **48 issues, 0 errors** (baseline unchanged). Verified live on simulator.
+- **File:** `features/item/screens/food_details_screen.dart`.
+- **FROZEN by the user** — do not redesign or modify unless the product owner explicitly approves.
+
+---
+
+## Shared component architecture audit (before Parcel/Rental) — ✅ COMPLETE
+
+Project-wide word-matched search for duplicate reusable components (search bars, filter/category chips,
+store cards, product cards, rating, price, favourite, quantity, empty/error states, loading, promo banners,
+hero headers, map cards). Result: **one implementation per shared production responsibility.**
+
+- **Single production implementation confirmed:** Quantity → `CartCountView`/`QuantityButton`→`setQuantity`;
+  mobile store card → `MoonjoinStoreCard` (frozen); product card → `ItemWidget` (+`CartCountView`); hero →
+  `StoreHeroHeader` (store) / `WavyHeader` (details); map → `StoreMapView` (frozen); banner → the approved
+  rotating promo carousel. Desktop/web `card_design/store_card*` and feature-specific search bars
+  (chat/location/rental) are **legitimate platform/module variants**, not duplicates.
+- **Deleted — dead duplicates of a FROZEN production component (verified 0 references, barrel exports
+  removed):** `moonjoin/restaurant_card.dart` (`RestaurantCard` → superseded by `MoonjoinStoreCard`),
+  `moonjoin/product_card.dart` (`ProductCard` → superseded by `ItemWidget`), `moonjoin/promotion_banner.dart`
+  (`PromotionBanner` → superseded by the approved rotating Promo Banner). (Earlier: `quantity_stepper.dart` +
+  `floating_checkout_bar.dart`.)
+- **Kept — Reserved Shared Foundation Components (unused, NOT duplicates of a frozen component):** generic
+  primitives left in `moonjoin/` for upcoming modules (Parcel / Rental / Short Apartment Rental) — dialogs,
+  bottom sheets, text field, empty/error states, loading skeletons, success banner, information card, cart
+  summary card, status badge, price row, filter chip, variation/option selectors, bottom action bar, module
+  icon/card. Documented in COMPONENTS.md as **Reserved Shared Foundation (Unused)**. Do not delete.
+- `flutter analyze` **48 issues, 0 errors** after deletions (baseline unchanged).

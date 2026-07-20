@@ -48,9 +48,6 @@ prices/ratings are pre-formatted strings. Import the barrel `moonjoin/moonjoin_c
 | `CategoryTile` | `category_tile.dart` | Module tile = `OrganicModuleIcon` + label. `shapeIndex`, `artworkFraction`, and `availability` (`ModuleAvailability`: enabled interactive / **unavailable** dimmed+desaturated+non-interactive, no layout shift / disabled omitted upstream). |
 | `ModuleCard` | `module_card.dart` | Card-surface module entry (icon + title + subtitle); composes `ModuleIcon` |
 | `SectionHeader` | `section_header.dart` | Section title + optional "See all" action |
-| `ProductCard` | `product_card.dart` | Item card: image, name, price/old price, rating, discount, favourite, add button |
-| `RestaurantCard` | `restaurant_card.dart` | Store/provider card: banner, logo, name, rating, delivery time, distance |
-| `PromotionBanner` | `promotion_banner.dart` | Offer card (title/subtitle/image) for carousels |
 | `StatusBadge` | `status_badge.dart` | Pill for statuses/tags (In Stock, Non-Veg, order status, rating) — filled or tinted |
 | `PriceRow` / `PriceView` | `price_row.dart` | Bill line (label+value, total/discount variants) / inline price with strikethrough old price |
 | `MoonjoinFilterChip` / `FilterChipBar` | `filter_chip_widget.dart` | Selectable pill / horizontal chip row |
@@ -69,6 +66,17 @@ prices/ratings are pre-formatted strings. Import the barrel `moonjoin/moonjoin_c
 | `MoonjoinTextField` | `moonjoin_text_field.dart` | Rounded form input (label, prefix/suffix, obscure, error) |
 
 **Barrel:** `moonjoin/moonjoin_components.dart` re-exports all of the above.
+
+**Reserved Shared Foundation Components (Unused).** Most of this library is not yet wired into a live screen.
+**Live** today: `WavyHeader`, `MoonjoinModuleHeader`, `MoonjoinSearchBar`, `OrganicModuleIcon`, `CategoryTile`,
+`SectionHeader`, `MoonjoinButton`. The remaining components (dialogs, bottom sheets, text field, empty/error
+states, loading skeletons, success banner, information card, cart summary card, status badge, price row,
+filter chip, variation/option selectors, bottom action bar, module icon/card) are **unused but reserved** as
+generic foundation for upcoming modules (Parcel / Rental / Short Apartment Rental) — **keep, do not delete.**
+Components that duplicated an already-approved **frozen** production component were removed instead:
+`RestaurantCard` (→ `MoonjoinStoreCard`), `ProductCard` (→ `ItemWidget`), `PromotionBanner` (→ the approved
+rotating Promo Banner), `QuantityStepper` + `FloatingCheckoutBar` (→ the Shared Quantity Control). Rule going
+forward: **one implementation per shared production responsibility — never two.**
 
 **Navigation shell (Phase 3):** the 4-tab bottom bar lives in the rebuilt
 `dashboard/screens/dashboard_screen.dart` and reuses `MoonjoinModuleHeader` (cart + notification header
@@ -91,6 +99,57 @@ and hold no business logic (they only read existing controllers):
   `custom_bottom_sheet_widget`, `card_design/*`.
 - Fuel/Fashion/Market/Drink/Solar reuse the shop UI. Apartment Rental reuses car-rental widgets where
   visually identical. Never create multiple implementations of identical UI — drive it by data/config.
+
+## Official Product Details architecture — exactly TWO implementations
+
+MoonJoin has **only two** Product Details screens. **No third implementation may ever be created.**
+
+1. **Food Product Details — `features/item/screens/food_details_screen.dart` (`FoodDetailsScreen`) — FROZEN.**
+   Used only by the **Food** business module. Food-specific layout (green wavy hero, Veg/Non-Veg, required
+   option groups, food add-ons). Hero image safe-area is fixed & frozen (see MIGRATION_LOG).
+2. **Shared Product Details — `features/item/screens/item_details_screen.dart` (`ItemDetailsScreen`) — FROZEN.**
+   Used by **every other storefront module**: Grocery, Market, Fuel & Gas, Drink Distributor, Solar & Power
+   (all Grocery module type), Pharmacy, and Fashion (Ecommerce). Image carousel hero + variations/add-ons.
+
+Only module data / APIs / terminology / business logic differ — the two UIs above are the complete set.
+
+## Frozen Registry — official reusable production components (LOCKED)
+
+These are approved, production, reusable. **Do not redesign or modify any of them without explicit product
+owner approval.** Every storefront business module must reuse them.
+
+| # | Frozen component | Location |
+|---|---|---|
+| 1 | **Shared Storefront Home** (`AllStoreScreen`) | `features/store/screens/all_store_screen.dart` |
+| 2 | **Shared Store / Restaurant Page** | `features/store/screens/store_screen.dart` (single `/store` route) |
+| 3 | **Shared `MoonjoinStoreCard`** | `features/store/widgets/moonjoin_store_card.dart` |
+| 4 | **Shared `StoreHeroHeader`** | `features/store/widgets/store_hero_header.dart` |
+| 5 | **Shared `StoreMapView`** (map card) | `features/store/widgets/store_map_view.dart` |
+| 6 | **Shared Quantity Control** | `common/widgets/cart_count_view.dart` + `QuantityButton` → `CartController.setQuantity` |
+| 7 | **Food Product Details** (`FoodDetailsScreen`) | `features/item/screens/food_details_screen.dart` |
+| 8 | **Shared Product Details** (`ItemDetailsScreen`) | `features/item/screens/item_details_screen.dart` |
+
+Together these form the **official MoonJoin reusable storefront foundation**. No future redesign should
+recreate them; reuse them unchanged.
+
+## Business Module Types (permanent) — six only
+
+MoonJoin has **only six** official Business Module Types. Visible modules map onto them; never redesign a
+visible module independently — reuse its Business Module Type implementation. Only data / APIs / terminology
+/ business logic differ.
+
+| Business Module Type | Visible modules mapped to it |
+|---|---|
+| **Food** | Food |
+| **Grocery** | Grocery, Market, Fuel & Gas, Drink Distributor, Solar & Power |
+| **Pharmacy** | Pharmacy |
+| **Ecommerce** | Fashion |
+| **Parcel** | Package Delivery |
+| **Rental** | Car Rental, Short Apartment Rental |
+
+Rental note: Car Rental and Short Apartment Rental share the **Rental** business module — when Rental begins,
+reuse the Car Rental architecture; use mock repositories only where the backend isn't yet available; never
+invent backend APIs.
 
 ## Shared Quantity Control — Official MoonJoin Quantity System (FROZEN)
 
