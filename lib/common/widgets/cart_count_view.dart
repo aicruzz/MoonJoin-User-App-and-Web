@@ -4,6 +4,7 @@ import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 
 class CartCountView extends StatelessWidget {
@@ -17,6 +18,8 @@ class CartCountView extends StatelessWidget {
     return GetBuilder<CartController>(builder: (cartController) {
       int cartQty = cartController.cartQuantity(item.id!);
       int cartIndex = cartController.isExistInCart(item.id, cartController.cartVariant(item.id!), false, null);
+      // At quantity 1 the minus becomes a delete affordance, matching Your Cart.
+      bool showRemoveIcon = cartIndex != -1 && (cartController.cartList[cartIndex].quantity ?? 1) <= 1;
       return cartQty != 0 ? Center(
         child: Container(
           width: 100,
@@ -27,7 +30,10 @@ class CartCountView extends StatelessWidget {
           ),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             InkWell(
-              onTap: cartController.isLoading ? null : () {
+              // Always active so rapid taps keep decrementing instantly and the
+              // tap is always absorbed here (never falls through to the card /
+              // opens product details) even while a background sync is in flight.
+              onTap: () {
                 if (cartController.cartList[cartIndex].quantity! > 1) {
                   cartController.setDirectlyAddToCartIndex(index);
                   cartController.setQuantity(false, cartIndex, cartController.cartList[cartIndex].stock, cartController.cartList[cartIndex].item!.quantityLimit);
@@ -37,28 +43,31 @@ class CartCountView extends StatelessWidget {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
+                  color: showRemoveIcon ? Theme.of(context).colorScheme.error.withValues(alpha: 0.08) : Theme.of(context).cardColor,
                   shape: BoxShape.circle,
-                  // border: Border.all(color: Theme.of(context).primaryColor),
                   boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
                 ),
                 padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                child: Icon(
-                  Icons.remove, size: 16,
-                ),
+                child: showRemoveIcon
+                    ? Image.asset(Images.delete, height: 16, color: Theme.of(context).colorScheme.error)
+                    : const Icon(Icons.remove, size: 16),
               ),
             ),
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
-              child: cartController.isLoading && cartController.directAddCartItemIndex == index
-                  ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator())
-                  : Text(cartQty.toString(), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
-              ) ,
+              // Always show the live quantity (never a spinner) so +/- feels
+              // instant — the local quantity updates immediately and the online
+              // sync happens in the background (matches removeFromCart's optimistic
+              // behaviour). Buttons stay briefly disabled during sync (below).
+              child: Text(cartQty.toString(), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
             ),
 
             InkWell(
-              onTap: cartController.isLoading ? null : () {
+              // Always active so rapid taps keep incrementing instantly and the
+              // tap is always absorbed here (never falls through to the card /
+              // opens product details) even while a background sync is in flight.
+              onTap: () {
                 cartController.setDirectlyAddToCartIndex(index);
                 cartController.setQuantity(true, cartIndex, cartController.cartList[cartIndex].stock, cartController.cartList[cartIndex].quantityLimit);
               },

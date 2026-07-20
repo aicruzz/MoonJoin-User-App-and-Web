@@ -477,7 +477,12 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => SearchController(searchServiceInterface: Get.find()));
   Get.lazyPut(() => CouponController(couponServiceInterface: Get.find()));
   Get.lazyPut(() => OrderController(orderServiceInterface: Get.find()));
-  Get.lazyPut(() => OrderEditController(orderServiceInterface: Get.find()));
+  // Pass the already-created service instance directly (captured) rather than a
+  // fresh Get.find(): OrderEditController is built lazily (only when the Edit
+  // Unavailable Items screen opens), by which time SmartManagement may have
+  // disposed the lazily-registered OrderServiceInterface — which crashed the Edit
+  // screen with "OrderServiceInterface not found".
+  Get.lazyPut(() => OrderEditController(orderServiceInterface: orderServiceInterface), fenix: true);
   Get.lazyPut(() => NotificationController(notificationServiceInterface: Get.find()));
   Get.lazyPut(() => CampaignController(campaignServiceInterface: Get.find()));
   Get.lazyPut(() => ParcelController(parcelServiceInterface: Get.find()));

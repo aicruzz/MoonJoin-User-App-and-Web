@@ -53,12 +53,10 @@ prices/ratings are pre-formatted strings. Import the barrel `moonjoin/moonjoin_c
 | `PromotionBanner` | `promotion_banner.dart` | Offer card (title/subtitle/image) for carousels |
 | `StatusBadge` | `status_badge.dart` | Pill for statuses/tags (In Stock, Non-Veg, order status, rating) — filled or tinted |
 | `PriceRow` / `PriceView` | `price_row.dart` | Bill line (label+value, total/discount variants) / inline price with strikethrough old price |
-| `QuantityStepper` | `quantity_stepper.dart` | − n + control |
 | `MoonjoinFilterChip` / `FilterChipBar` | `filter_chip_widget.dart` | Selectable pill / horizontal chip row |
 | `VariationSelector` | `variation_selector.dart` | Chip toggles for grocery variations (Size/Type) |
 | `OptionGroupSelector` (`OptionItem`) | `option_group_selector.dart` | Food radio-card / checkbox-card option groups with Required/Optional tag |
 | `BottomActionBar` | `bottom_action_bar.dart` | Pinned footer surface (card bg, top shadow, safe area) |
-| `FloatingCheckoutBar` | `floating_checkout_bar.dart` | Details footer: Total + `QuantityStepper` + Add To Cart (composes `BottomActionBar`) |
 | `MoonjoinEmptyState` | `empty_state_widget.dart` | Empty-state placeholder + optional action |
 | `MoonjoinErrorState` | `error_state_widget.dart` | Error/no-connection state + retry |
 | `SkeletonBox` / `MoonjoinSkeleton` / `SkeletonListLoader` | `loading_skeleton.dart` | Shimmer skeleton primitives + ready-made list loader (uses `shimmer_animation`) |
@@ -93,6 +91,33 @@ and hold no business logic (they only read existing controllers):
   `custom_bottom_sheet_widget`, `card_design/*`.
 - Fuel/Fashion/Market/Drink/Solar reuse the shop UI. Apartment Rental reuses car-rental widgets where
   visually identical. Never create multiple implementations of identical UI — drive it by data/config.
+
+## Shared Quantity Control — Official MoonJoin Quantity System (FROZEN)
+
+The **one** quantity control for every storefront module (Food, Grocery, Market, Fuel & Gas, Drink
+Distributor, Solar & Power, Pharmacy, Fashion/Ecommerce). There must be **no other** quantity widget in the
+storefront — the former `QuantityStepper` + `FloatingCheckoutBar` (unused scaffolding) were **deleted**.
+
+- **In-list control — `common/widgets/cart_count_view.dart` (`CartCountView`)**: qty 0 → styled **Add**
+  (or `child`); qty ≥ 1 → `[ − n + ]`. Used by every storefront list card (`ItemWidget` both layouts,
+  `card_design/item_card`, flash-sale / review / "items you love" / medicine cards, view-all, web item widget).
+- **Details / add sheet — `QuantityButton` → `CartController.setQuantity` / `ItemController.setQuantity`**:
+  Product Details, `item_bottom_sheet`, `food_details`. Shared primitive + shared logic (not a second system).
+- **Your Cart — `cart_item_widget.dart`** uses `QuantityButton` → the same `CartController.setQuantity`.
+
+**Behaviour (all callers, single source `CartController.setQuantity`):**
+- **Optimistic + instant** — quantity + `calculationCart()` + `update()` fire immediately; **never** a spinner
+  in place of the number.
+- **Debounced backend sync (500ms)** — rapid taps send **one** `updateCartQuantityOnline` carrying the final
+  quantity (`_scheduleQuantitySync` + `_quantitySyncTimers`). No concurrent update/refetch races.
+- **Pending-quantity preservation** — `_pendingQuantities` is re-applied after `getCartDataOnline()` so an
+  in-flight refetch (incl. pull-to-refresh) can never revert a just-changed number.
+- **Always-active buttons** — `+/−` always absorb the tap (never fall through to open Product Details).
+- **Qty = 1 → Delete** — the minus becomes `Images.delete` + error tint (matches Your Cart's `showRemoveIcon`).
+- **Live cart totals** update on every tap.
+
+Preserves all business logic/APIs/signatures (`decideItemQuantity`, `calculateDiscountedPrice`,
+`updateCartQuantityOnline`, `getCartDataOnline`). **Reuse unchanged — do not create another quantity widget.**
 
 ## Single store/restaurant card — `MoonjoinStoreCard` (FROZEN)
 

@@ -60,9 +60,16 @@ class OrderEditController extends GetxController implements GetxService {
     _orderModel = order;
     _moduleId = moduleId;
     _orderNote = order.orderNote;
-    _editableItems = details
-        .map((d) => OrderDetailsModel.fromJson(d.toJson()))
-        .toList();
+    // Deep-copy each already-parsed detail so edits don't mutate the original.
+    // Guard the round-trip: a re-parse must never crash the Edit screen (some
+    // order/track payloads carry fields that trip the model's type parsing).
+    _editableItems = details.map((d) {
+      try {
+        return OrderDetailsModel.fromJson(d.toJson());
+      } catch (_) {
+        return d;
+      }
+    }).toList();
     _isInitializing = false;
     update();
     final resolvedStoreId = storeId ?? order.store?.id;

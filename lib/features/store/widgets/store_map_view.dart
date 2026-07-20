@@ -335,19 +335,24 @@ class _StoreMapViewState extends State<StoreMapView> {
           ),
         ),
 
-      // Right-side floating actions
+      // Right-side floating actions. Wrapped in an OverflowBox so the fixed-
+      // height button column never asserts a RenderFlex overflow while the card
+      // is animating open (150→380); the card clips any transient overflow.
       Positioned(
         right: Dimensions.paddingSizeSmall, top: 0, bottom: 0,
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
-          _circleAction(Icons.store_mall_directory_outlined, _recenterStore, tooltip: 'recenter'.tr),
-          const SizedBox(height: Dimensions.paddingSizeSmall),
-          _circleAction(Icons.my_location, _goToMyLocation, tooltip: 'my_location'.tr),
-          const SizedBox(height: Dimensions.paddingSizeSmall),
-          _circleAction(_routeLoading ? null : Icons.alt_route, _routeLoading ? null : _showDirectionsPreview,
-              tooltip: 'directions_preview'.tr, loading: _routeLoading),
-          const SizedBox(height: Dimensions.paddingSizeSmall),
-          _circleAction(Icons.open_in_new, _openInGoogleMaps, tooltip: 'open_in_google_maps'.tr),
-        ]),
+        child: OverflowBox(
+          minHeight: 0, maxHeight: double.infinity, alignment: Alignment.center,
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
+            _circleAction(Icons.store_mall_directory_outlined, _recenterStore, tooltip: 'recenter'.tr),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+            _circleAction(Icons.my_location, _goToMyLocation, tooltip: 'my_location'.tr),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+            _circleAction(_routeLoading ? null : Icons.alt_route, _routeLoading ? null : _showDirectionsPreview,
+                tooltip: 'directions_preview'.tr, loading: _routeLoading),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+            _circleAction(Icons.open_in_new, _openInGoogleMaps, tooltip: 'open_in_google_maps'.tr),
+          ]),
+        ),
       ),
     ]);
   }

@@ -191,12 +191,14 @@ class OrderInfoWidget extends StatelessWidget {
             order.unavailableItemNote != null ? Column(children: [
               Divider(height: Dimensions.paddingSizeLarge, color: Theme.of(context).disabledColor.withValues(alpha: 0.5)),
 
-              Row(children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('${'unavailable_item_note'.tr}: ', style: robotoMedium),
 
-                Text(
-                  order.unavailableItemNote ?? '',
-                  style: robotoRegular,
+                Expanded(
+                  child: Text(
+                    order.unavailableItemNote ?? '',
+                    style: robotoRegular,
+                  ),
                 ),
               ]),
             ]) : const SizedBox(),

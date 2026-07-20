@@ -883,3 +883,60 @@ completion (search store-derivation).
   location in the map search. Pre-existing (not introduced by this work); the map's own "use current
   location" flow is unaffected. Investigate as a dedicated task (confirm the backend error contract, then
   guard the parse).
+
+---
+
+## Shared Quantity Control — Official MoonJoin Quantity System — ✅ APPROVED, COMPLETE & FROZEN
+
+The single reusable quantity control for **every** storefront module (Food, Grocery, Market, Fuel & Gas,
+Drink Distributor, Solar & Power, Pharmacy, Fashion/Ecommerce). Fix applied to **shared cart logic**, not
+per-screen — so every list card, Product Details, add sheet, and Your Cart inherit it. See COMPONENTS.md
+**"Shared Quantity Control (FROZEN)"**.
+
+### Problem → root cause → fix
+- **Spinner + wait:** `CartCountView` swapped the number for a `CircularProgressIndicator` during the online
+  round-trip → now **always shows the live number** (optimistic).
+- **Second tap opened Product Details:** `+/−` `InkWell`s had `onTap: isLoading ? null : …`; a null `onTap`
+  stops absorbing the tap → it hit the card beneath. Now **always-active** so the tap is always absorbed.
+- **Rapid taps reverted (5→4):** each tap fired an online update, and every `updateCartQuantityOnline` calls
+  `getCartDataOnline()` which **replaces `_cartList`**; out-of-order refetches clobbered the newer value.
+  Fixed with **optimistic update + 500ms debounced sync** (`_scheduleQuantitySync`, `_quantitySyncTimers`)
+  and **pending-quantity preservation** (`_pendingQuantities` re-applied after every `getCartDataOnline`).
+- **Qty = 1 delete icon everywhere:** `CartCountView` minus becomes `Images.delete` + error tint at qty 1
+  (matches Your Cart's `QuantityButton(showRemoveIcon:)`).
+
+### Project-wide audit (duplicate removal)
+- All storefront list cards confirmed on `CartCountView`; Product Details / add sheet / Your Cart on the
+  shared `QuantityButton` → `CartController.setQuantity`. **One quantity system.**
+- **Deleted unused duplicate scaffolding:** `moonjoin/quantity_stepper.dart` (`QuantityStepper`) and
+  `moonjoin/floating_checkout_bar.dart` (`FloatingCheckoutBar`) — verified referenced by no screen; barrel
+  exports removed. `moonjoin/product_card.dart` has only an `onAdd` icon (no quantity logic) and is unused.
+
+### Verification & freeze
+- `flutter analyze` → **48 issues, 0 errors** (baseline unchanged, no new issues). Live on iOS Simulator:
+  rapid + held at **5** (no revert), qty-1 **red delete** icon renders + removes, cart totals update live,
+  no spinner, second tap never opened details.
+- **Files modified:** `features/cart/controllers/cart_controller.dart` (optimistic + debounce + pending
+  preservation), `common/widgets/cart_count_view.dart` (live number, always-active, qty-1 delete),
+  `features/cart/widgets/cart_item_widget.dart` (always-active buttons). **Deleted:**
+  `moonjoin/quantity_stepper.dart`, `moonjoin/floating_checkout_bar.dart` (+ barrel export lines).
+- **Business logic preserved:** same services/APIs/signatures (`decideItemQuantity`,
+  `calculateDiscountedPrice`, `updateCartQuantityOnline`, `getCartDataOnline`) — only call timing/coalescing
+  and UI state changed.
+- **FROZEN by the user** as the official shared quantity control. Reuse unchanged; never create another
+  quantity widget.
+
+---
+
+## Bug fix — Food Product Details hero image safe-area (no redesign)
+
+Food Product Details (`FoodDetailsScreen`) hero image sat too high (`Positioned(top: 92)` in a `330`-tall
+header), landing inside the top-controls band (safe-area top + 34px control height) so it touched the
+back / store name / rating / share / favourite. Fixed by reusing the **Grocery** details
+(`item_details_screen.dart`) hero offset **`top: 132`**, and growing the header box `330 → 370` so the
+taller Food image (210) isn't clipped and its spacing below is preserved.
+
+- **File:** `features/item/screens/food_details_screen.dart` (`_header` — two values: `top` 92→132,
+  `SizedBox.height` 330→370). No other change; Food design/header/buttons/animations/logic untouched.
+- **Grocery Details unchanged** (not modified). Verified live: image clears all header controls, no overflow.
+  `flutter analyze` **48 issues, 0 errors** (baseline unchanged).

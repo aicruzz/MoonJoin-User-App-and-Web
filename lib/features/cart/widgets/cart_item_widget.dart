@@ -184,7 +184,9 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         QuantityButton(
-                          onTap: cartController.isLoading ? null : () {
+                          // Always active: quantity updates instantly and syncs in
+                          // the background (debounced), matching the shared behaviour.
+                          onTap: () {
                             if (widget.cart.quantity! > 1) {
                               Get.find<CartController>().setQuantity(false, widget.cartIndex, widget.cart.stock, widget.cart.quantityLimit);
                             } else {
@@ -199,12 +201,13 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                           child: Text(widget.cart.quantity.toString(), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
                         ),
                         QuantityButton(
-                          onTap: cartController.isLoading ? null : () {
+                          // Always active: quantity updates instantly and syncs in
+                          // the background (debounced), matching the shared behaviour.
+                          onTap: () {
                             Get.find<CartController>().forcefullySetModule(Get.find<CartController>().cartList[0].item!.moduleId!);
                             Get.find<CartController>().setQuantity(true, widget.cartIndex, widget.cart.stock, widget.cart.quantityLimit);
                           },
                           isIncrement: true,
-                          color: cartController.isLoading ? Theme.of(context).disabledColor : null,
                         ),
                       ]),
                     );

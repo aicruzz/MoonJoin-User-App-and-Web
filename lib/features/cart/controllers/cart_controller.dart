@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/common/models/module_model.dart';
@@ -20,6 +21,13 @@ class CartController extends GetxController implements GetxService {
 
   List<CartModel> _cartList = [];
   List<CartModel> get cartList => _cartList;
+
+  // Debounced-sync state for the shared +/- quantity controls. Rapid taps update
+  // the quantity instantly (optimistically) and are coalesced into a single
+  // backend update per cart line once the taps settle, so concurrent online
+  // updates + full-cart refetches can no longer race and revert the number.
+  final Map<int, Timer> _quantitySyncTimers = {};
+  final Map<int, int> _pendingQuantities = {};
 
   double _subTotal = 0;
   double get subTotal => _subTotal;
@@ -163,22 +171,50 @@ class CartController extends GetxController implements GetxService {
   }
 
   Future<void> setQuantity(bool isIncrement, int cartIndex, int? stock, int ? quantityLimit) async {
-    _isLoading = true;
-    update();
-
+    // Update the quantity locally and refresh the UI immediately so +/- feels
+    // instant. The backend sync is debounced below.
     _cartList[cartIndex].quantity = await cartServiceInterface.decideItemQuantity(isIncrement, _cartList, cartIndex, stock, quantityLimit, Get.find<SplashController>().configModel!.moduleConfig!.module!.stock!);
 
-    double discountedPrice = await cartServiceInterface.calculateDiscountedPrice(_cartList[cartIndex], _cartList[cartIndex].quantity!, ModuleHelper.getModuleConfig(_cartList[cartIndex].item!.moduleType).newVariation!);
+    int cartId = _cartList[cartIndex].id!;
+    _pendingQuantities[cartId] = _cartList[cartIndex].quantity!;
+
     if(ModuleHelper.getModuleConfig(_cartList[cartIndex].item!.moduleType).newVariation!) {
      await Get.find<ItemController>().setExistInCart(_cartList[cartIndex].item, null, notify: true);
     }
+    calculationCart();
+    update();
 
-    await updateCartQuantityOnline(_cartList[cartIndex].id!, discountedPrice, _cartList[cartIndex].quantity!);
+    _scheduleQuantitySync(cartId);
+  }
 
+  // Debounce the backend quantity update: rapid +/- taps only trigger ONE online
+  // update carrying the final quantity, once the taps settle (500ms). This stops
+  // the concurrent updates + refetches that previously reverted the number.
+  void _scheduleQuantitySync(int cartId) {
+    _quantitySyncTimers[cartId]?.cancel();
+    _quantitySyncTimers[cartId] = Timer(const Duration(milliseconds: 500), () async {
+      _quantitySyncTimers.remove(cartId);
+      int index = _cartList.indexWhere((cart) => cart.id == cartId);
+      if(index == -1) {
+        _pendingQuantities.remove(cartId);
+        return;
+      }
+      int quantity = _pendingQuantities[cartId] ?? _cartList[index].quantity!;
+      double discountedPrice = await cartServiceInterface.calculateDiscountedPrice(_cartList[index], quantity, ModuleHelper.getModuleConfig(_cartList[index].item!.moduleType).newVariation!);
+      await updateCartQuantityOnline(cartId, discountedPrice, quantity);
+      // Only clear the pending marker if no newer tap arrived while syncing.
+      if(_pendingQuantities[cartId] == quantity) {
+        _pendingQuantities.remove(cartId);
+      }
+    });
   }
 
   Future<void> removeFromCart(int index, {Item? item}) async {
     int cartId = _cartList[index].id!;
+    // Cancel any pending debounced quantity sync for this line before removing it.
+    _quantitySyncTimers[cartId]?.cancel();
+    _quantitySyncTimers.remove(cartId);
+    _pendingQuantities.remove(cartId);
     _cartList.removeAt(index);
     update();
     Get.find<ItemController>().cartIndexSet();
@@ -265,6 +301,16 @@ class CartController extends GetxController implements GetxService {
       if(onlineCartList != null) {
         _cartList = [];
         _cartList.addAll(cartServiceInterface.formatOnlineCartToLocalCart(onlineCartModel: onlineCartList));
+        // Keep any quantity the user just changed that hasn't finished syncing,
+        // so an in-flight refetch can't momentarily revert the number.
+        if(_pendingQuantities.isNotEmpty) {
+          for(int i = 0; i < _cartList.length; i++) {
+            int? pending = _pendingQuantities[_cartList[i].id];
+            if(pending != null) {
+              _cartList[i].quantity = pending;
+            }
+          }
+        }
         calculationCart();
       }
       _isLoading = false;

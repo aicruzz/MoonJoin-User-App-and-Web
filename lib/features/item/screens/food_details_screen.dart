@@ -140,15 +140,17 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   Widget _header(BuildContext context, Item item) {
     final Color green = Theme.of(context).primaryColor;
     return SizedBox(
-      height: 330,
+      height: 370,
       child: Stack(clipBehavior: Clip.none, children: [
 
         // Green wave
         Positioned(top: 0, left: 0, right: 0, child: WavyHeader(height: 250, color: green)),
 
-        // Hero image straddling the wave
+        // Hero image straddling the wave — top offset matches the Grocery details
+        // page (item_details_screen) so it clears the top controls/header safe area
+        // and never touches back/store/share/favourite/rating.
         Positioned(
-          top: 92, left: 0, right: 0,
+          top: 132, left: 0, right: 0,
           child: Center(child: InkWell(
             onTap: widget.isCampaign ? null : () => Get.toNamed(RouteHelper.getItemImagesRoute(item)),
             child: ClipRRect(

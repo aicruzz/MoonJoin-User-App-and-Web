@@ -1,4 +1,6 @@
 import 'package:sixam_mart/common/widgets/cart_count_view.dart';
+import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
+import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/common/widgets/corner_banner/banner.dart';
 import 'package:sixam_mart/common/widgets/corner_banner/corner_discount_tag.dart';
 import 'package:sixam_mart/common/widgets/custom_asset_image_widget.dart';
@@ -348,12 +350,20 @@ class ItemWidget extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
 
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(child: Text(item!.name ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
-                if (showVeg) ...[
-                  const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-                  Image.asset(item!.veg == 0 ? Images.nonVegImage : Images.vegImage, height: 12, width: 12, fit: BoxFit.contain),
-                ],
+                // Veg/Non-Veg indicator sits IMMEDIATELY after the item name (the
+                // approved MoonJoin position) — hugging the title, never beside the
+                // favourite/rating/price/image.
+                Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Flexible(child: Text(item!.name ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
+                  if (showVeg) ...[
+                    const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Image.asset(item!.veg == 0 ? Images.nonVegImage : Images.vegImage, height: 12, width: 12, fit: BoxFit.contain),
+                    ),
+                  ],
+                ])),
                 const SizedBox(width: Dimensions.paddingSizeExtraSmall),
                 GetBuilder<FavouriteController>(builder: (favouriteController) {
                   final bool isWished = favouriteController.wishItemIdList.contains(item!.id);
@@ -384,22 +394,59 @@ class ItemWidget extends StatelessWidget {
                       style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor))),
                 ])),
                 const SizedBox(width: Dimensions.paddingSizeSmall),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    border: Border.all(color: primary),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Text('view_details'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: primary)),
-                    Icon(Icons.chevron_right, size: 14, color: primary),
-                  ]),
-                ),
+                // Inline cart control: reuses the existing CartCountView (which
+                // reuses CartController add/quantity/remove + APIs). Items that
+                // still need option selection keep "View Details" until they are
+                // in the cart; option-free / already-added items show [- Qty +].
+                GetBuilder<CartController>(builder: (cartController) {
+                  final bool inCart = cartController.cartQuantity(item!.id!) > 0;
+                  if (!inCart && _itemRequiresOptions()) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                        border: Border.all(color: primary),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text('view_details'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: primary)),
+                        Icon(Icons.chevron_right, size: 14, color: primary),
+                      ]),
+                    );
+                  }
+                  return CartCountView(
+                    item: item!, index: index,
+                    // Styled Add button shown by CartCountView when qty == 0.
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: 6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                        border: Border.all(color: primary),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.add, size: 15, color: primary),
+                        const SizedBox(width: 3),
+                        Text('add'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: primary)),
+                      ]),
+                    ),
+                  );
+                }),
               ]),
             ]),
           )),
         ]),
       ),
     );
+  }
+
+  /// Whether the item needs option selection before it can be added — matches
+  /// the existing `ItemController.itemDirectlyAddToCart` rule (food: has food
+  /// variations; others: has variations). Such items keep "View Details" until
+  /// configured; option-free items are added directly.
+  bool _itemRequiresOptions() {
+    final bool isFood = item!.moduleType == AppConstants.food;
+    if (isFood) {
+      return item!.foodVariations != null && item!.foodVariations!.isNotEmpty;
+    }
+    return item!.variations != null && item!.variations!.isNotEmpty;
   }
 }
