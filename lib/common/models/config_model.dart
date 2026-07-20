@@ -64,6 +64,9 @@ class ConfigModel {
   bool? additionalChargeStatus;
   String? additionalChargeName;
   double? additionCharge;
+  // Parcel Package Protection config (backend-ready; null until the backend sends them).
+  bool? packageProtectionStatus;
+  double? packageProtectionPercentage;
   List<PaymentBody>? activePaymentMethodList;
   DigitalPaymentInfo? digitalPaymentInfo;
   bool? addFundStatus;
@@ -157,6 +160,8 @@ class ConfigModel {
     this.additionalChargeStatus,
     this.additionalChargeName,
     this.additionCharge,
+    this.packageProtectionStatus,
+    this.packageProtectionPercentage,
     this.activePaymentMethodList,
     this.digitalPaymentInfo,
     this.addFundStatus,
@@ -270,6 +275,8 @@ class ConfigModel {
     additionalChargeStatus = json['additional_charge_status'] == 1;
     additionalChargeName = json['additional_charge_name'];
     additionCharge = json['additional_charge']?.toDouble() ?? 0;
+    packageProtectionStatus = json['package_protection_status'] == null ? null : (json['package_protection_status'] == 1 || json['package_protection_status'] == true);
+    packageProtectionPercentage = json['package_protection_percentage']?.toDouble();
     if (json['active_payment_method_list'] != null) {
       activePaymentMethodList = <PaymentBody>[];
       json['active_payment_method_list'].forEach((v) {
@@ -384,6 +391,8 @@ class ConfigModel {
     data['additional_charge_status'] = additionalChargeStatus;
     data['additional_charge_name'] = additionalChargeName;
     data['additional_charge'] = additionCharge;
+    data['package_protection_status'] = packageProtectionStatus;
+    data['package_protection_percentage'] = packageProtectionPercentage;
     if (activePaymentMethodList != null) {
       data['active_payment_method_list'] = activePaymentMethodList!.map((v) => v.toJson()).toList();
     }

@@ -1756,5 +1756,14 @@
   "support": "Soporte",
   "quality": "Calidad",
   "on_time": "Puntual",
-  "nine_psb_virtual_account": "Cuenta Virtual 9PSB"
+  "nine_psb_virtual_account": "Cuenta Virtual 9PSB",
+  "package_protection": "Protección del Paquete",
+  "apply_package_protection": "Aplicar Protección del Paquete",
+  "package_protection_description": "Usa nuestro seguro para proteger tu paquete contra incidentes inesperados. ¡Te tenemos cubierto!",
+  "how_much_is_the_package_worth": "¿Cuánto vale el paquete?",
+  "enter_package_value": "Ingresa el valor del paquete",
+  "package_value": "Valor del Paquete",
+  "protection_fee": "Tarifa de Protección",
+  "unselect": "Deseleccionar",
+  "please_enter_package_value": "Por favor ingresa el valor del paquete"
 }

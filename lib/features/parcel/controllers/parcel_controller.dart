@@ -15,6 +15,7 @@ import 'package:sixam_mart/features/parcel/domain/models/parcel_category_model.d
 import 'package:sixam_mart/features/parcel/domain/models/video_content_model.dart';
 import 'package:sixam_mart/features/parcel/domain/models/why_choose_model.dart';
 import 'package:sixam_mart/features/parcel/domain/services/parcel_service_interface.dart';
+import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/payment/domain/models/offline_method_model.dart';
 import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
@@ -118,6 +119,55 @@ class ParcelController extends GetxController implements GetxService {
 
   List<Reason>? _parcelCancellationReasons;
   List<Reason>? get parcelCancellationReasons => _parcelCancellationReasons;
+
+  // ── Package Protection (frontend architecture; backend integration marked) ──
+  bool _packageProtectionSelected = false;
+  bool get packageProtectionSelected => _packageProtectionSelected;
+
+  double _packageValue = 0;
+  double get packageValue => _packageValue;
+
+  // ── Package Protection configuration (backend-driven) ──
+  // The frontend ALWAYS reads these two values from backend configuration
+  // (`ConfigModel.packageProtectionStatus` / `packageProtectionPercentage`). Once the
+  // backend sends them, everything below uses them automatically — no UI/flow change.
+  //
+  // TODO(BACKEND): Remove fallback after backend configuration is available.
+  // The ONLY place a temporary development value lives (do not spread elsewhere).
+  // `percentage` is expressed exactly as the backend will send it — a PERCENT number
+  // (e.g. 1.5 = 1.5%), NOT a fraction — so backend integration needs no calculation change.
+  static const bool _packageProtectionEnabledFallback = true;
+  static const double _packageProtectionPercentageFallback = 1.0; // 1%
+
+  bool get packageProtectionEnabled =>
+      Get.find<SplashController>().configModel?.packageProtectionStatus ?? _packageProtectionEnabledFallback;
+
+  double get packageProtectionPercentage =>
+      Get.find<SplashController>().configModel?.packageProtectionPercentage ?? _packageProtectionPercentageFallback;
+
+  // protectionFee = declared value × (percentage / 100), matching the backend
+  // `package_protection_percentage` format (e.g. 1.5). Never hardcoded in the UI.
+  double get protectionFee => (_packageProtectionSelected && _packageValue > 0) ? (_packageValue * packageProtectionPercentage / 100) : 0;
+
+  void togglePackageProtection() {
+    _packageProtectionSelected = !_packageProtectionSelected;
+    if(!_packageProtectionSelected) {
+      _packageValue = 0;
+    }
+    update();
+  }
+
+  void setPackageValue(double value, {bool notify = true}) {
+    _packageValue = value < 0 ? 0 : value;
+    if(notify) {
+      update();
+    }
+  }
+
+  void resetPackageProtection() {
+    _packageProtectionSelected = false;
+    _packageValue = 0;
+  }
 
   void showTipsField(){
     _canShowTipsField = !_canShowTipsField;

@@ -160,10 +160,29 @@ Location) are both **FROZEN**. Both reuse the frozen **`WavyHeader`** for their
 green headers (Screen 1 header: `parcel/widgets/parcel_app_bar_widget.dart`; Screen 2 header inline in
 `parcel_location_screen.dart` with a 2-step indicator), the shared `CartController` cart-count, and shared
 routes. Screen 2 also reuses shared `CustomCard` / `CustomTextField` (prefixIcon) / `CustomButton` and the
-existing `ParcelViewWidget` + `SavedAddressBottomSheet`. Screen 3 (Parcel Request — complete, awaiting freeze
-approval) is the parcel checkout: it reuses the white `CustomAppBar` + shared `CardWidget`, `TripFromToCard`,
-`TipsWidget` (Figma-styled), `PaymentButton`, `CheckoutCondition`, `CustomButton`, and parcel `DetailsWidget`
-(restyled with a leading avatar). No new shared component and no frozen component modified. Parcel-specific widgets (restyled in place, not
+existing `ParcelViewWidget` + `SavedAddressBottomSheet`. Screen 3 (Parcel Request — approved) is the parcel
+checkout: it reuses the white `CustomAppBar` + shared `CardWidget`, `TripFromToCard`, `TipsWidget`,
+`CheckoutCondition`, `CustomButton`, and parcel `DetailsWidget` (restyled with a leading avatar).
+
+**Parcel payment = the shared payment architecture.** Screen 3 now uses the **shared `PaymentSection`** card +
+`PaymentMethodBottomSheet` (the same one used by Food/Grocery/Pharmacy/Ecommerce), driven by
+`CheckoutController` and synced into `ParcelController` at confirm-time — one shared "Choose Payment Method"
+implementation across every module. Delivery Man Tips uses the shared `TipsWidget` chip; the tips-section
+height overflow was fixed in the shared `deliveryman_tips_section.dart`.
+
+**Package Protection — Frontend: COMPLETE · Backend: READY FOR CONFIGURATION · Status: NOT FROZEN.** New
+Parcel Request section (between Delivery Man Tips and Charge Pay By). **Config-driven & backend-ready:**
+`ConfigModel` has nullable `packageProtectionStatus` + `packageProtectionPercentage` (parsed from the config
+API; null until the backend sends them). `ParcelController.packageProtectionEnabled` /
+`packageProtectionPercentage` read those config values; the whole section is gated on
+`packageProtectionEnabled`, and `protectionFee = packageValue × (packageProtectionPercentage / 100)` feeds
+the existing Order Summary/Total (percentage is a percent number, e.g. `package_protection_percentage: 1.5`).
+Backend config fields required: `package_protection_status`, `package_protection_percentage`. The **only** temporary dev fallback lives in one isolated place (two consts in
+`ParcelController`, marked `TODO(BACKEND): Remove fallback…`) — no hardcoded percentage in the UI/flow. After
+backend integration only the config source changes; UI/controller/calc/widgets stay identical. Reuses
+`CardWidget` / `CustomTextField` (`isAmount`) / `PriceConverter` / `AnimatedSize`; nothing sent to the API yet
+(integration point + unused `PlaceOrderBodyModel.extraPackagingAmount` documented). No new shared component
+and no frozen component modified. Parcel-specific widgets (restyled in place, not
 duplicated): `DeliverItemCardWidget` (category card + dashboard parcel sheet), `ServiceInfoListWidget`
 (numbered "get services" steps, wraps backend `videoContent.bannerContents`), `GetServiceVideoWidget`. The
 "Why Choose Us" and "Video Content / Get Service" sections are backend/admin-driven (empty until admin
@@ -224,3 +243,11 @@ never duplicate them per module. Only module data/APIs/models/logic differ — t
 **Reuse rule:** these + `MoonjoinStoreCard` + `AllStoreScreen` are the frozen storefront. When Rental is
 redesigned it will reuse `StoreHeroHeader`, `StoreMapView`, search, filter chips, cards, dialogs, loading/
 empty states where appropriate; only Rental-specific booking screens get their own UI.
+
+## Backend Integration Queue Reference
+
+Frontend components/features that are complete but waiting for backend are listed in
+**`docs/BACKEND_INTEGRATION_QUEUE.md`**. Before adding any API, model, or admin setting for a MoonJoin
+feature, check that queue first and adapt the backend to the approved frontend contract — do not redesign the
+frontend. Permanent rule: complete all three apps' frontends (User → Vendor → Delivery Man) before backend,
+documenting gaps as *Frontend Complete — Waiting for Backend Integration*.

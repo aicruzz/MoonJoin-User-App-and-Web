@@ -1772,5 +1772,14 @@
   "support": "Support",
   "quality": "Quality",
   "on_time": "On-Time",
-  "nine_psb_virtual_account": "9PSB Virtual Account"
+  "nine_psb_virtual_account": "9PSB Virtual Account",
+  "package_protection": "Package Protection",
+  "apply_package_protection": "Apply Package Protection",
+  "package_protection_description": "Use our insurance to safeguard your package against unexpected incidents. We've got you covered!",
+  "how_much_is_the_package_worth": "How much is the package worth?",
+  "enter_package_value": "Enter package value",
+  "package_value": "Package Value",
+  "protection_fee": "Protection Fee",
+  "unselect": "Unselect",
+  "please_enter_package_value": "Please enter the package value"
 }

@@ -1756,5 +1756,14 @@
   "support": "الدعم",
   "quality": "الجودة",
   "on_time": "في الموعد",
-  "nine_psb_virtual_account": "حساب 9PSB الافتراضي"
+  "nine_psb_virtual_account": "حساب 9PSB الافتراضي",
+  "package_protection": "حماية الطرد",
+  "apply_package_protection": "تطبيق حماية الطرد",
+  "package_protection_description": "استخدم تأميننا لحماية طردك من الحوادث غير المتوقعة. نحن نغطيك!",
+  "how_much_is_the_package_worth": "كم تبلغ قيمة الطرد؟",
+  "enter_package_value": "أدخل قيمة الطرد",
+  "package_value": "قيمة الطرد",
+  "protection_fee": "رسوم الحماية",
+  "unselect": "إلغاء التحديد",
+  "please_enter_package_value": "يرجى إدخال قيمة الطرد"
 }

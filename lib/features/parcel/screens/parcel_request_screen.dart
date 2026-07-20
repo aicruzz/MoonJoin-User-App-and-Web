@@ -2,7 +2,6 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:sixam_mart/common/widgets/custom_tool_tip_widget.dart';
 import 'package:sixam_mart/features/checkout/widgets/guest_create_account.dart';
 import 'package:sixam_mart/features/parcel/widgets/from_to_address_card.dart';
@@ -34,10 +33,8 @@ import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
 import 'package:sixam_mart/features/checkout/widgets/condition_check_box.dart';
-import 'package:sixam_mart/features/payment/widgets/offline_payment_button.dart';
-import 'package:sixam_mart/features/checkout/widgets/payment_button.dart';
+import 'package:sixam_mart/features/checkout/widgets/payment_section.dart';
 import 'package:sixam_mart/features/checkout/widgets/tips_widget.dart';
-import 'package:sixam_mart/features/profile/widgets/virtual_account_bottom_sheet.dart';
 import 'package:sixam_mart/features/parcel/widgets/card_widget.dart';
 import 'package:sixam_mart/features/parcel/widgets/delivery_instruction_bottom_sheet_widget.dart';
 import 'package:sixam_mart/features/parcel/widgets/details_widget.dart';
@@ -54,16 +51,17 @@ class ParcelRequestScreen extends StatefulWidget {
 
 class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
   final TextEditingController _tipController = TextEditingController();
+  final TextEditingController _packageValueController = TextEditingController();
   final TextEditingController _guestPasswordController = TextEditingController();
   final TextEditingController _guestConfirmPasswordController = TextEditingController();
   final FocusNode _guestPasswordNode = FocusNode();
   final FocusNode _guestConfirmPasswordNode = FocusNode();
+  final FocusNode _packageValueNode = FocusNode();
   bool _isLoggedIn = AuthHelper.isLoggedIn();
   bool? _isCashOnDeliveryActive = false;
   bool? _isDigitalPaymentActive = false;
   bool _isOfflinePaymentActive = false;
   bool canCheckSmall = false;
-  final JustTheController tooltipController = JustTheController();
 
   @override
   void initState() {
@@ -78,6 +76,9 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
     Get.find<ParcelController>().getOfflineMethodList();
     Get.find<ParcelController>().getDmTipMostTapped();
     Get.find<ParcelController>().setPaymentIndex(-1, false);
+    // Shared payment component drives selection via CheckoutController.
+    Get.find<CheckoutController>().setPaymentMethod(-1, isUpdate: false);
+    Get.find<CheckoutController>().getOfflineMethodList();
     Get.find<ParcelController>().getDistance(widget.pickedUpAddress, widget.destinationAddress);
     Get.find<CheckoutController>().getSurgePrice(
       zoneId: widget.pickedUpAddress.zoneId.toString(), moduleId: ModuleHelper.getModule()?.id.toString() ?? (ModuleHelper.getCacheModule()?.id.toString() ?? '0'),
@@ -108,6 +109,8 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
     Get.find<ParcelController>().setCustomNoteController('', notify: false);
     Get.find<ParcelController>().setSelectedIndex(-1);
     Get.find<ParcelController>().setCustomNote('');
+    Get.find<ParcelController>().resetPackageProtection();
+    _packageValueController.clear();
   }
 
   @override
@@ -159,7 +162,7 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
               }
 
               dmTips = parcelController.tips;
-              total = charge + dmTips + additionalCharge + checkoutController.orderTax!;
+              total = charge + dmTips + additionalCharge + checkoutController.orderTax! + parcelController.protectionFee;
             }
 
             return GetBuilder<CheckoutController>(builder: (checkoutController) {
@@ -442,15 +445,18 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
                     ) : const SizedBox.shrink(),
                     SizedBox(height: (Get.find<SplashController>().configModel!.dmTipsStatus == 1) ? Dimensions.paddingSizeDefault : 0),
 
+                    parcelController.packageProtectionEnabled
+                        ? _packageProtectionSection(context, parcelController) : const SizedBox(),
+
                     Text('charge_pay_by'.tr, style: robotoMedium),
                     const SizedBox(height: Dimensions.paddingSizeExtraSmall),
                     Row(children: [
                       Expanded(child: InkWell(
-                        onTap: () => parcelController.setPayerIndex(0, true),
+                        onTap: () => _setPayer(parcelController, 0),
                         child: Row(children: [
                           RadioGroup<String>(
                             groupValue: parcelController.payerTypes[parcelController.payerIndex],
-                            onChanged: (String? payerType) => parcelController.setPayerIndex(0, true),
+                            onChanged: (String? payerType) => _setPayer(parcelController, 0),
                             child: Radio<String>(
                               value: parcelController.payerTypes[0],
                               activeColor: Theme.of(context).primaryColor,
@@ -460,11 +466,11 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
                         ]),
                       )),
                       _isCashOnDeliveryActive! ? Expanded(child: InkWell(
-                        onTap: () => parcelController.setPayerIndex(1, true),
+                        onTap: () => _setPayer(parcelController, 1),
                         child: Row(children: [
                           RadioGroup<String>(
                             groupValue: parcelController.payerTypes[parcelController.payerIndex],
-                            onChanged: (String? payerType) => parcelController.setPayerIndex(1, true),
+                            onChanged: (String? payerType) => _setPayer(parcelController, 1),
                             child: Radio<String>(
                               value: parcelController.payerTypes[1],
                               activeColor: Theme.of(context).primaryColor,
@@ -476,107 +482,17 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
                     ]),
                     const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                    Row(children: [
-                      _isCashOnDeliveryActive! ? Expanded(
-                        child: PaymentButton(
-                          icon: Images.cashOnDelivery,
-                          title: 'cash_on_delivery'.tr,
-                          subtitle: 'pay_your_payment_after_getting_item'.tr,
-                          isSelected: parcelController.paymentIndex == 0,
-                          onTap: () => parcelController.setPaymentIndex(0, true),
-                        ),
-                      ) : const SizedBox(),
-                      SizedBox(width: (Get.find<SplashController>().configModel!.customerWalletStatus == 1 && parcelController.payerIndex == 0 && !isGuestLoggedIn) ? Dimensions.paddingSizeLarge : 0),
-
-                      (Get.find<SplashController>().configModel!.customerWalletStatus == 1 && parcelController.payerIndex == 0 && !isGuestLoggedIn) ? Expanded(
-                        child: PaymentButton(
-                          icon: Images.wallet,
-                          title: 'wallet_payment'.tr,
-                          subtitle: 'pay_from_your_existing_balance'.tr,
-                          isSelected: parcelController.paymentIndex == 1,
-                          onTap: () => parcelController.setPaymentIndex(1, true),
-                        ),
-                      ) : const SizedBox(),
-                    ]),
-                    const SizedBox(height: Dimensions.paddingSizeSmall),
-
-                    (_isDigitalPaymentActive! && parcelController.payerIndex == 0) ? Column(children: [
-                      Row(children: [
-                        Text('pay_via_online'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
-                        Text(
-                          'faster_and_secure_way_to_pay_bill'.tr,
-                          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
-                        ),
-                      ]),
-                      const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                      ListView.builder(
-                          itemCount: Get.find<SplashController>().configModel!.activePaymentMethodList!.length,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index){
-                            final method = Get.find<SplashController>().configModel!.activePaymentMethodList![index];
-                            final bool is9Psb = method.getWay?.toLowerCase() == '9psb';
-                            bool isSelected = parcelController.paymentIndex == 2 && method.getWay! == parcelController.digitalPaymentName;
-                            return InkWell(
-                              onTap: (){
-                                parcelController.setPaymentIndex(2, true);
-                                parcelController.changeDigitalPaymentName(method.getWay!);
-                                if(is9Psb) {
-                                  // Reuse the shared MoonJoin Virtual Account flow (same controller / API /
-                                  // popup as wallet top-up): generate then show the existing popup immediately.
-                                  Get.find<ProfileController>().generateVirtualAccount();
-                                  showModalBottomSheet(
-                                    context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-                                    builder: (_) => const VirtualAccountBottomSheet(),
-                                  );
-                                }
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: isSelected ? Colors.blue.withValues(alpha: 0.05) : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault)
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeLarge),
-                                child: Row(children: [
-                                  Container(
-                                    height: 20, width: 20,
-                                    decoration: BoxDecoration(
-                                        shape: BoxShape.circle, color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
-                                        border: Border.all(color: Theme.of(context).disabledColor)
-                                    ),
-                                    child: Icon(Icons.check, color: Theme.of(context).cardColor, size: 16),
-                                  ),
-                                  const SizedBox(width: Dimensions.paddingSizeDefault),
-
-                                  CustomImage(
-                                    height: 20, fit: BoxFit.contain,
-                                    image: method.getWayImageFullUrl!,
-                                  ),
-                                  const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                  Text(
-                                    is9Psb ? 'nine_psb_virtual_account'.tr : method.getWayTitle!,
-                                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
-                                  ),
-                                ]),
-                              ),
-                            );
-                          }),
-
-                    ]) : const SizedBox(),
-
-                    parcelController.offlineMethodList != null && parcelController.payerIndex == 0 ? OfflinePaymentButton(
-                      isSelected: parcelController.paymentIndex == 3,
-                      offlineMethodList: parcelController.offlineMethodList!,
-                      isOfflinePaymentActive: _isOfflinePaymentActive,
-                      disablePayment: parcelController.offlineMethodList!.isEmpty,
-                      onTap: () {
-                        parcelController.setPaymentIndex(3, true);
-                      },
-                      parcelController: parcelController,
-                      forParcel: true, checkoutController: Get.find<CheckoutController>(), tooltipController: tooltipController,
-                    ) : const SizedBox(),
+                    // Shared MoonJoin "Choose Payment Method" card (same component/controller/bottom-sheet
+                    // as Food/Grocery/Pharmacy/Ecommerce checkout). Charge Pay By above gates availability:
+                    // when the Receiver pays, only Cash on Delivery is offered.
+                    PaymentSection(
+                      checkoutController: checkoutController,
+                      total: total,
+                      isCashOnDeliveryActive: _isCashOnDeliveryActive!,
+                      isDigitalPaymentActive: _isDigitalPaymentActive! && parcelController.payerIndex == 0,
+                      isWalletActive: Get.find<SplashController>().configModel!.customerWalletStatus == 1 && parcelController.payerIndex == 0 && !isGuestLoggedIn,
+                      isOfflinePaymentActive: _isOfflinePaymentActive && parcelController.payerIndex == 0,
+                    ),
 
                     const SizedBox(height: Dimensions.paddingSizeSmall),
 
@@ -606,6 +522,18 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
                         Text('(+) ${PriceConverter.convertPrice(dmTips)}', style: robotoRegular, textDirection: TextDirection.ltr),
                       ],
                     ) : const SizedBox.shrink(),
+                    SizedBox(height: Get.find<SplashController>().configModel!.dmTipsStatus == 1 ? Dimensions.paddingSizeSmall : 0),
+
+                    // Package Protection fee — appears only when protection is selected.
+                    parcelController.protectionFee > 0 ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('package_protection'.tr, style: robotoRegular),
+                        Text('(+) ${PriceConverter.convertPrice(parcelController.protectionFee)}', style: robotoRegular, textDirection: TextDirection.ltr),
+                      ],
+                    ) : const SizedBox.shrink(),
+                    SizedBox(height: parcelController.protectionFee > 0 ? Dimensions.paddingSizeSmall : 0),
+
                     SizedBox(height: Get.find<SplashController>().configModel!.additionalChargeStatus! ? Dimensions.paddingSizeSmall : 0),
 
                     ((checkoutController.taxIncluded == null) || (checkoutController.taxIncluded == 1)) ? const SizedBox() : Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -664,6 +592,123 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
     );
   }
 
+  /// Package Protection (new feature). Premium card with a Select/Unselect button
+  /// that expands a declared-value field + fee summary. The Protection Fee is a
+  /// percentage of the declared value (percentage sourced from ParcelController's
+  /// config-ready placeholder — never hardcoded here). Reuses CardWidget,
+  /// CustomTextField and PriceConverter; no frozen component touched.
+  Widget _packageProtectionSection(BuildContext context, ParcelController parcelController) {
+    final bool selected = parcelController.packageProtectionSelected;
+    final Color green = Theme.of(context).primaryColor;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('package_protection'.tr, style: robotoMedium),
+      const SizedBox(height: Dimensions.paddingSizeSmall),
+
+      CardWidget(child: Column(children: [
+
+        Row(children: [
+          Container(
+            height: 44, width: 44, alignment: Alignment.center,
+            decoration: BoxDecoration(color: green.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+            child: Icon(Icons.shield_outlined, color: green, size: 24),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text('apply_package_protection'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+            const SizedBox(height: 2),
+            Text('package_protection_description'.tr, maxLines: 3, overflow: TextOverflow.ellipsis,
+                style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
+          ])),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+
+          InkWell(
+            onTap: () {
+              parcelController.togglePackageProtection();
+              if (parcelController.packageProtectionSelected) {
+                // UX: focus the amount field + open the numeric keyboard immediately.
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) FocusScope.of(context).requestFocus(_packageValueNode);
+                });
+              } else {
+                // Clear the entered amount; the fee is already removed by the controller.
+                _packageValueController.clear();
+              }
+            },
+            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+              decoration: BoxDecoration(
+                color: selected ? Colors.transparent : green,
+                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                border: Border.all(color: green, width: 1.2),
+              ),
+              child: Text(selected ? 'unselect'.tr : 'select'.tr,
+                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: selected ? green : Colors.white)),
+            ),
+          ),
+        ]),
+
+        // Smooth expand / collapse — no page refresh.
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut, alignment: Alignment.topCenter,
+          child: selected ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+              child: Divider(height: 1, color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
+            ),
+
+            Row(children: [
+              Text('how_much_is_the_package_worth'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+              Text(' *', style: robotoMedium.copyWith(color: Theme.of(context).colorScheme.error)),
+            ]),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+
+            CustomTextField(
+              hintText: 'enter_package_value'.tr,
+              controller: _packageValueController,
+              focusNode: _packageValueNode,
+              inputType: TextInputType.number,
+              isAmount: true,
+              showTitle: false,
+              inputAction: TextInputAction.done,
+              onChanged: (String value) {
+                parcelController.setPackageValue(double.tryParse(value) ?? 0);
+              },
+            ),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+
+            Container(
+              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+              decoration: BoxDecoration(color: green.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+              child: Column(children: [
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text('package_value'.tr, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor)),
+                  Text(PriceConverter.convertPrice(parcelController.packageValue), style: robotoMedium, textDirection: TextDirection.ltr),
+                ]),
+                const SizedBox(height: Dimensions.paddingSizeSmall),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text('protection_fee'.tr, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor)),
+                  Text(PriceConverter.convertPrice(parcelController.protectionFee), style: robotoMedium.copyWith(color: green), textDirection: TextDirection.ltr),
+                ]),
+              ]),
+            ),
+          ]) : const SizedBox(width: double.infinity),
+        ),
+      ])),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
+    ]);
+  }
+
+  /// Charge Pay By. When the Receiver pays, the parcel is Cash on Delivery
+  /// (collected by the delivery man on delivery), so COD is auto-selected and no
+  /// payment method needs choosing. When the Sender pays, a method is required.
+  void _setPayer(ParcelController parcelController, int index) {
+    parcelController.setPayerIndex(index, true);
+    Get.find<CheckoutController>().setPaymentMethod(index == 1 ? 0 : -1);
+  }
+
   Widget _bottomButton(ParcelController parcelController, double charge, {bool isGuestLoggedIn = false}) {
 
     bool isInstructionSelected = parcelController.selectedIndexNote != -1;
@@ -678,8 +723,10 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
           showCustomSnackBar('delivery_fee_not_set_yet'.tr);
         }else if(parcelController.tips < 0) {
           showCustomSnackBar('tips_can_not_be_negative'.tr);
-        }else if(parcelController.paymentIndex == -1) {
+        }else if(Get.find<CheckoutController>().paymentMethodIndex == -1) {
           showCustomSnackBar('please_select_payment_method_first'.tr);
+        }else if(parcelController.packageProtectionSelected && parcelController.packageValue <= 0) {
+          showCustomSnackBar('please_enter_package_value'.tr);
         }else if(isGuestLoggedIn && Get.find<CheckoutController>().isCreateAccount && _guestPasswordController.text.isEmpty) {
           showCustomSnackBar('enter_password'.tr);
         }else if(isGuestLoggedIn && Get.find<CheckoutController>().isCreateAccount && _guestConfirmPasswordController.text.isEmpty) {
@@ -687,6 +734,24 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
         }else if(isGuestLoggedIn && Get.find<CheckoutController>().isCreateAccount && (_guestPasswordController.text != _guestConfirmPasswordController.text)) {
           showCustomSnackBar('confirm_password_does_not_matched'.tr);
         }else {
+
+          // Sync the shared payment selection into ParcelController so the existing
+          // placeOrder / parcelCallback (which read parcelController.paymentIndex) stay unchanged.
+          parcelController.setPaymentIndex(Get.find<CheckoutController>().paymentMethodIndex, false);
+          parcelController.changeDigitalPaymentName(Get.find<CheckoutController>().digitalPaymentName ?? '');
+
+          // ── PACKAGE PROTECTION — BACKEND INTEGRATION POINT (placeholder) ──
+          // Frontend is ready: parcelController.packageProtectionEnabled / packageProtectionPercentage
+          // (from ConfigModel) + packageProtectionSelected / packageValue / protectionFee.
+          // When the backend adds Package Protection to the parcel place-order API, send here — via
+          // THIS existing parcel order flow / PlaceOrderBodyModel (no new order/payment system) — exactly:
+          //   "package_protection":     parcelController.packageProtectionSelected,   // true/false
+          //   "package_value":          parcelController.packageValue,                // e.g. 100000
+          //   "package_protection_fee": parcelController.protectionFee,               // e.g. 1000
+          // and add protectionFee to `orderAmount`. PlaceOrderBodyModel already exposes the unused
+          // `extraPackagingAmount` (null for parcel) as an alternative channel if the backend prefers it.
+          // Nothing is sent yet — the fee is display-only, so existing parcel ordering is unaffected and
+          // no API contract is changed.
 
           PlaceOrderBodyModel placeOrderBody = PlaceOrderBodyModel(
             cart: [], couponDiscountAmount: null, distance: parcelController.distance, scheduleAt: null,

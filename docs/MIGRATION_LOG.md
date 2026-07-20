@@ -1090,3 +1090,68 @@ no regressions. Place-order / payment flow preserved (unchanged).
 
 ### Files
 `features/parcel/widgets/details_widget.dart`, `features/parcel/screens/parcel_request_screen.dart`.
+
+---
+
+## PARCEL — Screen 3 payment refinement: shared "Choose Payment Method" + Package Protection
+
+Post-approval refinements to the (approved) Parcel Request screen. Presentation/reuse only.
+
+### Shared payment architecture (reuse, not new)
+- Replaced Parcel's inline payment section (COD/Wallet `PaymentButton`s, "Pay Via Online" digital list, the
+  9PSB option + a short-lived Virtual Account popup, and `OfflinePaymentButton`) with the **shared
+  `PaymentSection`** card (`checkout/widgets/payment_section.dart`) + `PaymentMethodBottomSheet` — the exact
+  component/controller/sheet used by Food/Grocery/Pharmacy/Ecommerce. Selection is driven by
+  `CheckoutController`; at confirm-time it is **synced** into `ParcelController` so the existing
+  `placeOrder`/`parcelCallback` (and backend) stay unchanged. Removed now-unused imports/widgets
+  (`payment_button`, `offline_payment_button`, `virtual_account_bottom_sheet`, `just_the_tooltip`).
+- **Charge Pay By = Receiver** auto-selects Cash on Delivery (collected by the delivery man) so Confirm goes
+  through with no payment prompt — restores the original behaviour; **Sender** still requires a method.
+- Delivery Man Tips overflow (5px) fixed in the **shared** `deliveryman_tips_section.dart` (60→66),
+  correcting Food/Grocery/Pharmacy/Ecommerce at once. `TipsWidget` was already the shared chip.
+
+### Package Protection — Frontend: COMPLETE · Backend: READY FOR CONFIGURATION · NOT FROZEN
+New Parcel Request section between Delivery Man Tips and Charge Pay By. **No backend feature exists** (audited
+parcel controller/repo/service/models/config); built as a clean, backend-ready frontend architecture — **no
+invented APIs**.
+- **Config-driven (backend-ready):** `ConfigModel` gained two nullable, forward-compatible fields —
+  `packageProtectionStatus` and `packageProtectionPercentage` (parsed from `package_protection_status` /
+  `package_protection_percentage`; null until the backend sends them). `ParcelController` exposes
+  `packageProtectionEnabled` + `packageProtectionPercentage` that **read those config values**, so after
+  backend integration only the configuration source changes — not the UI, controller flow, calc, or widgets.
+  The temporary dev fallback lives in **one isolated place** (two consts in `ParcelController`) marked
+  `TODO(BACKEND): Remove fallback after backend configuration is available`. The whole section is gated on
+  `packageProtectionEnabled`, so the backend can switch it off with no code change.
+- State on `ParcelController` (isolated): `packageProtectionSelected`, `packageValue`, `protectionFee`,
+  `togglePackageProtection`, `setPackageValue`, `resetPackageProtection`. **No hardcoded percentage anywhere
+  in the UI/flow.**
+- `protectionFee = packageValue × (packageProtectionPercentage / 100)`; the percentage is a **percent number**
+  in the SAME format the backend will send (`package_protection_percentage: 1.5` = 1.5%), so integration needs
+  no calc change. Flows into the **existing** Order Summary ("Package Protection" line) + Total (single shared
+  calc — no new total system). Instant updates.
+- **Backend fields required:** `package_protection_status`, `package_protection_percentage` (config). At the
+  parcel place-order integration point, send `package_protection` (bool) / `package_value` / `package_protection_fee`
+  through the **existing** parcel order flow (no new order/payment system) and add the fee to `orderAmount`.
+- UI reuses `CardWidget`, `CustomTextField` (`isAmount` currency input), `PriceConverter`, `AnimatedSize`
+  (smooth expand/collapse). Select → focuses the amount field + numeric keyboard; Unselect → clears amount,
+  removes fee, collapses. Validation: when selected, package value required and > 0.
+- **Order placement unchanged** — a clearly-marked backend-integration point documents what to send when
+  ready (declared value + fee + selected flag; add to `orderAmount`) and notes the existing unused
+  `PlaceOrderBodyModel.extraPackagingAmount` as a candidate channel. Fee is display-only for now, so existing
+  parcel ordering (protection off or on) is unaffected.
+- i18n added to en/ar/es/bn. `flutter analyze` **48 / 0**. **Not frozen — pending backend integration.**
+
+### Files
+`features/parcel/screens/parcel_request_screen.dart`, `features/parcel/controllers/parcel_controller.dart`,
+`features/checkout/widgets/deliveryman_tips_section.dart`, `assets/language/{en,ar,es,bn}.json`.
+
+---
+
+## Backend Integration Queue Reference
+
+Frontend features that are complete/approved but waiting for backend (API / config / database / admin) are
+tracked in **`docs/BACKEND_INTEGRATION_QUEUE.md`** — the single source of truth. **Future backend work MUST
+check that file before creating APIs, models, or admin settings**, and must adapt to the approved frontend
+contract (never redesign the frontend when backend starts). Currently queued: **Parcel Package Protection**
+(config + order fields) and **Parcel "Why Choose Us" / "Get Service"** (admin configuration of existing
+endpoints).

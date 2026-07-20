@@ -79,7 +79,7 @@ class _DeliveryManTipsSectionState extends State<DeliveryManTipsSection> {
 
                 SizedBox(
                   height: (checkoutController.selectedTips == AppConstants.tips.length-1) && checkoutController.canShowTipsField
-                      ? 0 : ResponsiveHelper.isDesktop(context) ? 80 : 60,
+                      ? 0 : ResponsiveHelper.isDesktop(context) ? 80 : 66,
                   child: (checkoutController.selectedTips == AppConstants.tips.length-1) && checkoutController.canShowTipsField
                   ? const SizedBox() : ListView.builder(
                     scrollDirection: Axis.horizontal,
