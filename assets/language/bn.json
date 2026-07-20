@@ -1648,6 +1648,10 @@
   "microphone_restricted": "মাইক্রোফোন অ্যাক্সেস সীমাবদ্ধ",
   "open_settings": "সেটিংস খুলুন",
   "what_would_you_like_to_send": "আপনি কি পাঠাতে চান?",
+  "package_delivery": "প্যাকেজ ডেলিভারি",
+  "send_packages_to_your_loved_ones": "আপনার প্রিয়জনদের কাছে প্যাকেজ পাঠান",
+  "provide_pickup_location_and_sender_details": "পিকআপ অবস্থান এবং প্রেরকের বিবরণ দিন",
+  "your_information_is_secure_message": "আপনার তথ্য নিরাপদ এবং শুধুমাত্র ডেলিভারির জন্য ব্যবহার করা হবে।",
   "experience_the_best_with_us": "আমাদের সাথে সেরা অভিজ্ঞতা নিন",
   "receiver_address": "গ্রহীতার ঠিকানা",
   "change_address": "ঠিকানা পরিবর্তন করুন",
@@ -1751,5 +1755,6 @@
   "24_7": "২৪/৭",
   "support": "সাপোর্ট",
   "quality": "মান",
-  "on_time": "সময়মতো"
+  "on_time": "সময়মতো",
+  "nine_psb_virtual_account": "9PSB ভার্চুয়াল অ্যাকাউন্ট"
 }

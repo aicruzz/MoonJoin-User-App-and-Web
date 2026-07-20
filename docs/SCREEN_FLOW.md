@@ -55,6 +55,20 @@ Apartment Home → Search list → Provider item list → Apartment details → 
 My Booking History → View booking → Cancel booking
 ```
 
+## Parcel (Package Delivery) flow
+
+```
+Home → (select Package Delivery module) → Parcel Home/Category [FROZEN]
+  → tap a category → Parcel Location (2-step: Sender → Receiver)
+  → Parcel Request (review + tips + charge-payer + payment + summary + terms)
+  → Place Order → payment flow → Order Success  (reuses shared order/checkout/payment)
+```
+
+Parcel Home entry: `home_screen.dart` renders `ParcelCategoryScreen` when the selected module's
+`moduleType == AppConstants.parcel`. Routes: `/parcel-category`, `/parcel-location`, `/parcel-request`
+(unchanged). Screen 1 (Parcel Home/Category) FROZEN; Screen 2 (Parcel Location) FROZEN; Screen 3
+(Parcel Request) complete (awaiting freeze approval).
+
 ## Auth / entry flow
 
 ```

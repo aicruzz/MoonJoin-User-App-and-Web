@@ -1648,6 +1648,10 @@
   "microphone_restricted": "تم تقييد الوصول إلى الميكروفون",
   "open_settings": "فتح الإعدادات",
   "what_would_you_like_to_send": "ماذا تود أن ترسل؟",
+  "package_delivery": "توصيل الطرود",
+  "send_packages_to_your_loved_ones": "أرسل الطرود إلى أحبائك",
+  "provide_pickup_location_and_sender_details": "قدّم موقع الاستلام وبيانات المرسل",
+  "your_information_is_secure_message": "معلوماتك آمنة وستُستخدم فقط لأغراض التوصيل.",
   "experience_the_best_with_us": "اختبر الأفضل معنا",
   "receiver_address": "عنوان المستلم",
   "change_address": "تغيير العنوان",
@@ -1751,5 +1755,6 @@
   "24_7": "24/7",
   "support": "الدعم",
   "quality": "الجودة",
-  "on_time": "في الموعد"
+  "on_time": "في الموعد",
+  "nine_psb_virtual_account": "حساب 9PSB الافتراضي"
 }

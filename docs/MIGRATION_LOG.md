@@ -968,3 +968,125 @@ hero headers, map cards). Result: **one implementation per shared production res
   summary card, status badge, price row, filter chip, variation/option selectors, bottom action bar, module
   icon/card. Documented in COMPONENTS.md as **Reserved Shared Foundation (Unused)**. Do not delete.
 - `flutter analyze` **48 issues, 0 errors** after deletions (baseline unchanged).
+
+---
+
+## PARCEL — Screen 1: Parcel Home / Category — ✅ APPROVED • COMPLETE • FROZEN
+
+First screen of the **Parcel** Business Module Type (visible module: Package Delivery). Design authority:
+`ui-designs/Parcel/parcel_home.png` (Parcel is not in the Active Figma → ui-designs fallback). Presentation
+only — no controller/repository/service/API/model/route/business-logic changes.
+
+### What changed (presentation only)
+- **Header** `features/parcel/widgets/parcel_app_bar_widget.dart` — rebuilt as a Parcel-specific green wavy
+  header that **reuses the frozen `WavyHeader`**: back button, amber module glyph, module name +
+  "Send packages to your loved ones", search + cart icons (cart badge = `CartController.cartList.length`),
+  and a white location pill (address → location screen) with a notification bell. No frozen component modified.
+- **Category cards** `features/parcel/widgets/deliver_item_card_widget.dart` — restyled the `isDeliverItem`
+  card: illustration fills the upper portion of the card (`Expanded` + `BoxFit.contain`, full image, no crop,
+  no distortion), bold centered title, gray 2-line description. API unchanged (still used by the dashboard
+  parcel sheet).
+- **"Experience the best with us"** — restyled `mobileExperienceView` into a single tinted feature strip
+  (icon + green title + subtitle, vertical dividers), **wrapping the backend `whyChoose` banners**.
+- **"Easiest way to get services"** `features/parcel/widgets/sevice_info_list_widget.dart` — redesigned into a
+  numbered step flow (green numbered circles + dotted connectors + title/subtitle), **wrapping the backend
+  `videoContent.bannerContents`**; the backend video/image banner is preserved in a MoonJoin card above it.
+- **Promo banner** (admin `parcelOtherBanner`) preserved; collapses cleanly when empty.
+- Category grid cell height set to 190 (mobile) so the full illustration is large enough to match the design.
+- i18n keys `package_delivery`, `send_packages_to_your_loved_ones` added to en/ar/es/bn.
+
+### Reused (no duplication)
+Frozen `WavyHeader`; `CartController` (cart count); shared routes (`getSearchRoute`, `getCartRoute`,
+`getNotificationRoute`, `getParcelLocationRoute`); `CustomImage`; existing parcel widgets
+(`DeliverItemCardWidget`, `ServiceInfoListWidget`, `GetServiceVideoWidget`) restyled in place — no new widgets.
+
+### Backend investigation (two blank sections)
+Confirmed from **live API responses**, not guessed: `GET /api/v1/other-banners/why-choose` → `{banners: []}`
+and `GET /api/v1/other-banners/video-content` → `{banner_contents: []}`. **Root cause: admin has not
+configured these sections** (not a code bug, not local assets, not a load failure). The UI wraps the backend
+and renders empty until admin populates them. Configure via:
+- Why Choose Us: API `/api/v1/other-banners/why-choose`, model `WhyChooseModel → Banners`
+  (image / title / short_description).
+- Video Content / Get Service: API `/api/v1/other-banners/video-content`, model `VideoContentModel`
+  (banner_type, banner_image_full_url / banner_video, banner_contents value pairs).
+
+### Verification
+Live backend (zone Ogbomoso). `flutter analyze` **48 issues, 0 errors** (baseline unchanged). No overflow,
+no distortion, no build errors. Temporary debug logging added during investigation was fully removed.
+Business logic / APIs / controllers / repositories / models / routes / navigation preserved.
+
+### Files
+`features/parcel/screens/parcel_category_screen.dart`, `features/parcel/widgets/parcel_app_bar_widget.dart`,
+`features/parcel/widgets/deliver_item_card_widget.dart`, `features/parcel/widgets/sevice_info_list_widget.dart`,
+`assets/language/{en,ar,es,bn}.json`. **FROZEN by the user.**
+
+---
+
+## PARCEL — Screen 2: Parcel Location — ✅ APPROVED • COMPLETE • FROZEN
+
+Second Parcel screen (2-step Sender/Receiver wizard). Design authority `ui-designs/Parcel/parcel_details.png`
+(not in Figma). Presentation only — TabController, TabBarView, validation, Google Places, map picker, saved
+addresses, country-code, and navigation all preserved.
+
+### What changed (presentation only)
+- **Header** (`parcel_location_screen.dart`) — replaced the plain `CustomAppBar` (mobile) with a green wavy
+  header **reusing the frozen `WavyHeader`**: white back button, "Parcel Location" title +
+  "Provide pickup location and sender details" subtitle, and a **2-step (1 → 2) indicator** driven by the
+  sender/receiver tab (`parcelController.isSender`). Desktop keeps `CustomAppBar`.
+- **Sender / Receiver toggle** — restyled into a segmented pill with a person icon + label per tab (active =
+  green fill, white text). Same `TabBar`/`_tabController` + the `onTap` sender-validation logic preserved.
+- **Form** (`parcel_view_widget.dart`) — pickup/delivery + Sender/Receiver Information cards restyled
+  (`CustomCard` rounded + side margins); field prefix icons added (street `signpost`, house `home`, floor
+  `stairs`, name `person`); added the **security reassurance note** ("Your information is secure…") with a
+  shield glyph. The Google-Places `TypeAheadField`, "Change Address" saved-address sheet, "Select from map"
+  picker, and all controllers/validation are unchanged.
+- i18n keys `provide_pickup_location_and_sender_details`, `your_information_is_secure_message` added to
+  en/ar/es/bn.
+
+### Reused (no duplication)
+Frozen `WavyHeader`; shared `CustomCard`, `CustomTextField` (prefixIcon), `CustomButton`; existing parcel
+widgets `ParcelViewWidget`, `SavedAddressBottomSheet`; shared location/address controllers + routes.
+
+### Verification
+Live backend. `flutter analyze` **48 issues, 0 errors** (baseline unchanged; the 2 info lints in
+`parcel_view_widget.dart:144` are pre-existing, untouched). Header + step indicator + toggle verified on
+simulator; "Change Address" opens the saved-address sheet; sender/receiver switching, Google Places, map
+picker, and Continue navigation preserved. No overflow, no build errors.
+
+### Files
+`features/parcel/screens/parcel_location_screen.dart`, `features/parcel/widgets/parcel_view_widget.dart`,
+`assets/language/{en,ar,es,bn}.json`.
+
+---
+
+## PARCEL — Screen 3: Parcel Request — ✅ COMPLETE & VERIFIED (awaiting freeze approval)
+
+Third/final Parcel screen (the parcel "checkout"/review). Design authority `ui-designs/Parcel/parcel_request.PNG`
++ `parcel_request_scroll_down.PNG` (not in Figma). Presentation only — charge calc, place-order,
+payment/offline flow, order tax, and navigation all preserved.
+
+### State found → what changed
+The screen already contained every design section in order and reused MoonJoin-styled shared widgets
+(`CardWidget`, `TripFromToCard`, `TipsWidget` [already Figma-styled], `PaymentButton`, `CheckoutCondition`,
+`CustomButton`) + the white `CustomAppBar` header that matches the design. So the redesign was minimal:
+- **`details_widget.dart`** — added the design's leading **avatar square** to the Sender/Receiver detail
+  cards (person glyph in a tinted rounded square); name/phone/email rows preserved.
+- **`parcel_request_screen.dart`** — fixed a **5px RenderFlex overflow** in the Delivery Man Tips row (tips
+  `SizedBox` height 60 → 66). No other change.
+
+### Backend-driven sections (handled, not fabricated)
+Distance + Delivery Fee (`getDistance`/`extraCharge` → "Calculating" then live values, e.g. 0.00 km / ₦700);
+Delivery Man Tips (config `dmTipsStatus`, `getDmTipMostTapped`); Charge Pay By; payment methods
+(zone/config: COD, wallet, digital `activePaymentMethodList`, offline); Order Summary (computed: fee, tips,
+VAT, additional charge, total); terms. All render from live config/order APIs and degrade gracefully when a
+capability is disabled. No admin configuration missing for this screen.
+
+### Verification
+Live backend (Ogbomoso). Verified on simulator top + scrolled — category dashed card, Sender/Receiver cards
+(with avatar), Address Information (dotted connector), Distance/Fee, instruction, tips (no overflow),
+Charge Pay By, Cash on Delivery / Wallet, Pay Via Online (9psb / Pay Offline), Order Summary, Confirm — all
+match the design. `flutter analyze` **48 issues, 0 errors** (baseline unchanged). No overflow, no build errors,
+no regressions. Place-order / payment flow preserved (unchanged).
+
+### Files
+`features/parcel/widgets/details_widget.dart`, `features/parcel/screens/parcel_request_screen.dart`.

@@ -1648,6 +1648,10 @@
   "microphone_restricted": "El acceso al micrófono está restringido",
   "open_settings": "Abrir Configuración",
   "what_would_you_like_to_send": "¿Qué te gustaría enviar?",
+  "package_delivery": "Entrega de paquetes",
+  "send_packages_to_your_loved_ones": "Envía paquetes a tus seres queridos",
+  "provide_pickup_location_and_sender_details": "Proporciona la ubicación de recogida y los datos del remitente",
+  "your_information_is_secure_message": "Tu información es segura y solo se usará para fines de entrega.",
   "experience_the_best_with_us": "Experimenta lo mejor con nosotros",
   "receiver_address": "Dirección del Destinatario",
   "change_address": "Cambiar Dirección",
@@ -1751,5 +1755,6 @@
   "24_7": "24/7",
   "support": "Soporte",
   "quality": "Calidad",
-  "on_time": "Puntual"
+  "on_time": "Puntual",
+  "nine_psb_virtual_account": "Cuenta Virtual 9PSB"
 }

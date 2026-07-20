@@ -18,6 +18,7 @@ import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/wavy_header.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
@@ -134,103 +135,142 @@ class _ParcelLocationScreenState extends State<ParcelLocationScreen> with Ticker
 
   @override
   Widget build(BuildContext context) {
+    bool isDesktop = ResponsiveHelper.isDesktop(context);
     return Scaffold(
-      appBar: CustomAppBar(title: 'parcel_location'.tr),
+      appBar: isDesktop ? CustomAppBar(title: 'parcel_location'.tr) : null,
       endDrawer: const MenuDrawer(),
       endDrawerEnableOpenDragGesture: false,
-      body: SafeArea(
-        child: GetBuilder<ParcelController>(builder: (parcelController) {
-          return Column(children: [
+      body: GetBuilder<ParcelController>(builder: (parcelController) {
+        return Column(children: [
 
-            Expanded(child: Column(children: [
+          if(!isDesktop) _header(context, parcelController),
 
-              Center(
-                child: Container(
-                  alignment: Alignment.center,
-                  width: Dimensions.webMaxWidth,
-                  margin: EdgeInsets.all(Dimensions.paddingSizeDefault),
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).disabledColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                  ),
-                  child: Column(
-                    children: [
+          Expanded(child: Column(children: [
 
-                      TabBar(
-                        padding: EdgeInsets.zero,
-                        labelPadding: EdgeInsets.zero,
-                        controller: _tabController,
-                        indicatorColor: Colors.transparent,
-                        indicatorWeight: 0.1,
-                        unselectedLabelColor: Colors.black,
-                        onTap: (int index) {
-                          if(index == 1) {
-                            _validateSender(parcelController);
-                          }
-                        },
-                        unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
-                        labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
-                        tabs: [
-                          Container(
-                            padding: EdgeInsets.all(Dimensions.paddingSizeSmall),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: parcelController.isSender ? Theme.of(context).primaryColor : null,
-                              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                            ),
-                            child: Text(
-                              'sender_info'.tr,
-                              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: parcelController.isSender ? Theme.of(context).cardColor : Theme.of(context).primaryColor),
-                            ),
-                          ),
-
-                          Container(
-                            padding: EdgeInsets.all(Dimensions.paddingSizeSmall),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: parcelController.isSender ? null : Theme.of(context).primaryColor,
-                              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                            ),
-                            child: Text(
-                              'receiver_info'.tr,
-                              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: parcelController.isSender ? Theme.of(context).primaryColor : Theme.of(context).cardColor),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                    ],
-                  ),
+            Center(
+              child: Container(
+                alignment: Alignment.center,
+                width: Dimensions.webMaxWidth,
+                margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).disabledColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                ),
+                child: TabBar(
+                  padding: EdgeInsets.zero,
+                  labelPadding: EdgeInsets.zero,
+                  controller: _tabController,
+                  indicatorColor: Colors.transparent,
+                  indicatorWeight: 0.1,
+                  dividerColor: Colors.transparent,
+                  onTap: (int index) {
+                    if(index == 1) {
+                      _validateSender(parcelController);
+                    }
+                  },
+                  tabs: [
+                    _toggleTab(context, 'sender_info'.tr, parcelController.isSender),
+                    _toggleTab(context, 'receiver_info'.tr, !parcelController.isSender),
+                  ],
                 ),
               ),
+            ),
 
-              Expanded(child: TabBarView(
-                controller: _tabController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  ParcelViewWidget(
-                    isSender: true, nameController: _senderNameController, phoneController: _senderPhoneController, bottomButton: _bottomButton(),
-                    streetController: _senderStreetNumberController, floorController: _senderFloorController, houseController: _senderHouseController,
-                    countryCode: parcelController.senderCountryCode, guestEmailController: _guestSenderEmailController,
-                    senderAddressController: _senderAddressController, receiverAddressController: _receiverAddressController,
-                  ),
+            Expanded(child: TabBarView(
+              controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                ParcelViewWidget(
+                  isSender: true, nameController: _senderNameController, phoneController: _senderPhoneController, bottomButton: _bottomButton(),
+                  streetController: _senderStreetNumberController, floorController: _senderFloorController, houseController: _senderHouseController,
+                  countryCode: parcelController.senderCountryCode, guestEmailController: _guestSenderEmailController,
+                  senderAddressController: _senderAddressController, receiverAddressController: _receiverAddressController,
+                ),
 
-                  ParcelViewWidget(
-                    isSender: false, nameController: _receiverNameController, phoneController: _receiverPhoneController, bottomButton: _bottomButton(),
-                    streetController: _receiverStreetNumberController, floorController: _receiverFloorController, houseController: _receiverHouseController,
-                    countryCode: parcelController.receiverCountryCode, guestEmailController: _guestReceiverEmailController,
-                    senderAddressController: _senderAddressController, receiverAddressController: _receiverAddressController,
-                  ),
-                ],
-              )),
-            ])),
+                ParcelViewWidget(
+                  isSender: false, nameController: _receiverNameController, phoneController: _receiverPhoneController, bottomButton: _bottomButton(),
+                  streetController: _receiverStreetNumberController, floorController: _receiverFloorController, houseController: _receiverHouseController,
+                  countryCode: parcelController.receiverCountryCode, guestEmailController: _guestReceiverEmailController,
+                  senderAddressController: _senderAddressController, receiverAddressController: _receiverAddressController,
+                ),
+              ],
+            )),
+          ])),
 
-            ResponsiveHelper.isDesktop(context) ? const SizedBox() : _bottomButton(),
+          isDesktop ? const SizedBox() : SafeArea(top: false, child: _bottomButton()),
 
-          ]);
-        }),
+        ]);
+      }),
+    );
+  }
+
+  /// Green wavy header (reuses the frozen WavyHeader): back button, title +
+  /// subtitle, and the 2-step (1 → 2) indicator driven by the sender/receiver tab.
+  Widget _header(BuildContext context, ParcelController parcelController) {
+    final Color green = Theme.of(context).primaryColor;
+    final double topInset = MediaQuery.of(context).padding.top;
+    final int step = parcelController.isSender ? 1 : 2;
+    return SizedBox(
+      height: topInset + 150,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Positioned(top: 0, left: 0, right: 0, child: WavyHeader(height: topInset + 150, color: green)),
+
+        Positioned(
+          top: topInset + Dimensions.paddingSizeExtraSmall, left: Dimensions.paddingSizeDefault,
+          child: InkWell(
+            onTap: () => Get.back(),
+            customBorder: const CircleBorder(),
+            child: Container(
+              height: 42, width: 42, alignment: Alignment.center,
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              child: Icon(Icons.arrow_back, color: green, size: 20),
+            ),
+          ),
+        ),
+
+        Positioned(
+          top: topInset + Dimensions.paddingSizeSmall, left: 64, right: 64,
+          child: Column(children: [
+            Text('parcel_location'.tr, textAlign: TextAlign.center,
+                style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeExtraLarge)),
+            const SizedBox(height: 2),
+            Text('provide_pickup_location_and_sender_details'.tr, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: robotoRegular.copyWith(color: Colors.white.withValues(alpha: 0.9), fontSize: Dimensions.fontSizeSmall)),
+            const SizedBox(height: Dimensions.paddingSizeDefault),
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              _stepCircle(context, '1', step >= 1),
+              Container(width: 44, height: 2, color: Colors.white.withValues(alpha: step >= 2 ? 0.9 : 0.35)),
+              _stepCircle(context, '2', step >= 2),
+            ]),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  Widget _stepCircle(BuildContext context, String n, bool active) {
+    return Container(
+      height: 28, width: 28, alignment: Alignment.center,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: active ? Colors.white : Colors.white.withValues(alpha: 0.25)),
+      child: Text(n, style: robotoBold.copyWith(color: active ? Theme.of(context).primaryColor : Colors.white, fontSize: Dimensions.fontSizeSmall)),
+    );
+  }
+
+  Widget _toggleTab(BuildContext context, String label, bool active) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall + 2),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: active ? Theme.of(context).primaryColor : null,
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
       ),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.person_outline, size: 18, color: active ? Colors.white : Theme.of(context).primaryColor),
+        const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+        Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: active ? Colors.white : Theme.of(context).primaryColor))),
+      ]),
     );
   }
 

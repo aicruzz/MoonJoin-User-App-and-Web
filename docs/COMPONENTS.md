@@ -128,6 +128,8 @@ owner approval.** Every storefront business module must reuse them.
 | 6 | **Shared Quantity Control** | `common/widgets/cart_count_view.dart` + `QuantityButton` → `CartController.setQuantity` |
 | 7 | **Food Product Details** (`FoodDetailsScreen`) | `features/item/screens/food_details_screen.dart` |
 | 8 | **Shared Product Details** (`ItemDetailsScreen`) | `features/item/screens/item_details_screen.dart` |
+| 9 | **Parcel Screen 1** (Parcel Home/Category) | `features/parcel/screens/parcel_category_screen.dart` |
+| 10 | **Parcel Screen 2** (Parcel Location) | `features/parcel/screens/parcel_location_screen.dart` |
 
 Together these form the **official MoonJoin reusable storefront foundation**. No future redesign should
 recreate them; reuse them unchanged.
@@ -150,6 +152,22 @@ visible module independently — reuse its Business Module Type implementation. 
 Rental note: Car Rental and Short Apartment Rental share the **Rental** business module — when Rental begins,
 reuse the Car Rental architecture; use mock repositories only where the backend isn't yet available; never
 invent backend APIs.
+
+## Parcel (Package Delivery) components — migration in progress
+
+Parcel is redesigned from `ui-designs/Parcel/`. Screen 1 (Parcel Home/Category) and Screen 2 (Parcel
+Location) are both **FROZEN**. Both reuse the frozen **`WavyHeader`** for their
+green headers (Screen 1 header: `parcel/widgets/parcel_app_bar_widget.dart`; Screen 2 header inline in
+`parcel_location_screen.dart` with a 2-step indicator), the shared `CartController` cart-count, and shared
+routes. Screen 2 also reuses shared `CustomCard` / `CustomTextField` (prefixIcon) / `CustomButton` and the
+existing `ParcelViewWidget` + `SavedAddressBottomSheet`. Screen 3 (Parcel Request — complete, awaiting freeze
+approval) is the parcel checkout: it reuses the white `CustomAppBar` + shared `CardWidget`, `TripFromToCard`,
+`TipsWidget` (Figma-styled), `PaymentButton`, `CheckoutCondition`, `CustomButton`, and parcel `DetailsWidget`
+(restyled with a leading avatar). No new shared component and no frozen component modified. Parcel-specific widgets (restyled in place, not
+duplicated): `DeliverItemCardWidget` (category card + dashboard parcel sheet), `ServiceInfoListWidget`
+(numbered "get services" steps, wraps backend `videoContent.bannerContents`), `GetServiceVideoWidget`. The
+"Why Choose Us" and "Video Content / Get Service" sections are backend/admin-driven (empty until admin
+configures them — see MIGRATION_LOG).
 
 ## Shared Quantity Control — Official MoonJoin Quantity System (FROZEN)
 

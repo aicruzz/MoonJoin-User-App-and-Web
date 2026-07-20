@@ -68,6 +68,16 @@ screen. Screens with **no** image are restyled from the Design System and marked
 | `order_status_pop_up.png` | `order/widgets/cancellation_dialogue_widget.dart` + tracking steppers | Existing |
 | `voice_search.png` | `search/widgets/voice_search_bottom_sheet.dart` | Existing |
 
+## Parcel (Package Delivery) — Business Module Type
+
+Design authority: `ui-designs/Parcel/` (not in Active Figma). Flow: Parcel Home → Parcel Location → Parcel Request.
+
+| Design image | Screen | Status |
+|---|---|---|
+| `Parcel/parcel_home.png` | `parcel/screens/parcel_category_screen.dart` (Parcel Home / Category) | ✅ FROZEN |
+| `Parcel/parcel_details.png` | `parcel/screens/parcel_location_screen.dart` (Parcel Location, 2-step) | ✅ FROZEN |
+| `Parcel/parcel_request.PNG` + `parcel_request_scroll_down.PNG` | `parcel/screens/parcel_request_screen.dart` (Parcel Request) | ✅ complete (awaiting freeze approval) |
+
 ## Screens with NO design image — "Restyled using Design System (No Dedicated Mockup)"
 
 sign_in / sign_up / new_user_setup, verification / forget_pass / new_pass, splash, onboard, language,

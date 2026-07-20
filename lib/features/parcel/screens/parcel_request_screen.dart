@@ -37,6 +37,7 @@ import 'package:sixam_mart/features/checkout/widgets/condition_check_box.dart';
 import 'package:sixam_mart/features/payment/widgets/offline_payment_button.dart';
 import 'package:sixam_mart/features/checkout/widgets/payment_button.dart';
 import 'package:sixam_mart/features/checkout/widgets/tips_widget.dart';
+import 'package:sixam_mart/features/profile/widgets/virtual_account_bottom_sheet.dart';
 import 'package:sixam_mart/features/parcel/widgets/card_widget.dart';
 import 'package:sixam_mart/features/parcel/widgets/delivery_instruction_bottom_sheet_widget.dart';
 import 'package:sixam_mart/features/parcel/widgets/details_widget.dart';
@@ -342,7 +343,7 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
                         const SizedBox(height: Dimensions.paddingSizeSmall),
 
                         SizedBox(
-                          height: (parcelController.selectedTips == AppConstants.tips.length-1) && parcelController.canShowTipsField ? 0 : 60,
+                          height: (parcelController.selectedTips == AppConstants.tips.length-1) && parcelController.canShowTipsField ? 0 : 66,
                           child: (parcelController.selectedTips == AppConstants.tips.length-1) && parcelController.canShowTipsField ? const SizedBox() : ListView.builder(
                             scrollDirection: Axis.horizontal,
                             shrinkWrap: true,
@@ -514,11 +515,22 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index){
-                            bool isSelected = parcelController.paymentIndex == 2 && Get.find<SplashController>().configModel!.activePaymentMethodList![index].getWay! == parcelController.digitalPaymentName;
+                            final method = Get.find<SplashController>().configModel!.activePaymentMethodList![index];
+                            final bool is9Psb = method.getWay?.toLowerCase() == '9psb';
+                            bool isSelected = parcelController.paymentIndex == 2 && method.getWay! == parcelController.digitalPaymentName;
                             return InkWell(
                               onTap: (){
                                 parcelController.setPaymentIndex(2, true);
-                                parcelController.changeDigitalPaymentName(Get.find<SplashController>().configModel!.activePaymentMethodList![index].getWay!);
+                                parcelController.changeDigitalPaymentName(method.getWay!);
+                                if(is9Psb) {
+                                  // Reuse the shared MoonJoin Virtual Account flow (same controller / API /
+                                  // popup as wallet top-up): generate then show the existing popup immediately.
+                                  Get.find<ProfileController>().generateVirtualAccount();
+                                  showModalBottomSheet(
+                                    context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+                                    builder: (_) => const VirtualAccountBottomSheet(),
+                                  );
+                                }
                               },
                               child: Container(
                                 decoration: BoxDecoration(
@@ -539,12 +551,12 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
 
                                   CustomImage(
                                     height: 20, fit: BoxFit.contain,
-                                    image: Get.find<SplashController>().configModel!.activePaymentMethodList![index].getWayImageFullUrl!,
+                                    image: method.getWayImageFullUrl!,
                                   ),
                                   const SizedBox(width: Dimensions.paddingSizeSmall),
 
                                   Text(
-                                    Get.find<SplashController>().configModel!.activePaymentMethodList![index].getWayTitle!,
+                                    is9Psb ? 'nine_psb_virtual_account'.tr : method.getWayTitle!,
                                     style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
                                   ),
                                 ]),

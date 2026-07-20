@@ -43,163 +43,180 @@ class _ParcelCategoryScreenState extends State<ParcelCategoryScreen> {
   Widget build(BuildContext context) {
     bool isDesktop = ResponsiveHelper.isDesktop(context);
     return Scaffold(
-      appBar: isDesktop ? null : const ParcelAppBarWidget(),
+      appBar: null,
       body: GetBuilder<ParcelController>(builder: (parcelController) {
         return GetBuilder<BannerController>(builder: (bannerController) {
 
           bool showVideoAndServices = parcelController.videoContentDetails != null && (parcelController.videoContentDetails!.bannerVideo != null || parcelController.videoContentDetails!.bannerImageFullUrl != null);
           return Stack(clipBehavior: Clip.none, children: [
 
-            RefreshIndicator(
-              onRefresh: () async {
-                await Get.find<ParcelController>().getParcelCategoryList();
-                await Get.find<BannerController>().getParcelOtherBannerList(true);
-                await Get.find<ParcelController>().getWhyChooseDetails();
-                await Get.find<ParcelController>().getVideoContentDetails();
-              },
-              child: SingleChildScrollView(
-                child: FooterView(child: SizedBox(width: Dimensions.webMaxWidth,
-                    child: Column(crossAxisAlignment: isDesktop ? CrossAxisAlignment.center : CrossAxisAlignment.start, children: [
+            Column(children: [
 
-                      const SizedBox(height: Dimensions.paddingSizeLarge),
+              if(!isDesktop) const ParcelAppBarWidget(),
 
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
-                        child: Text('what_would_you_like_to_send'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                      ),
-                      const SizedBox(height: Dimensions.paddingSizeSmall),
+              Expanded(child: RefreshIndicator(
+                onRefresh: () async {
+                  await Get.find<ParcelController>().getParcelCategoryList();
+                  await Get.find<BannerController>().getParcelOtherBannerList(true);
+                  await Get.find<ParcelController>().getWhyChooseDetails();
+                  await Get.find<ParcelController>().getVideoContentDetails();
+                },
+                child: SingleChildScrollView(
+                  child: FooterView(child: SizedBox(width: Dimensions.webMaxWidth,
+                      child: Column(crossAxisAlignment: isDesktop ? CrossAxisAlignment.center : CrossAxisAlignment.start, children: [
 
-                      parcelController.parcelCategoryList != null ? parcelController.parcelCategoryList!.isNotEmpty ? GridView.builder(
-                        controller: ScrollController(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: isDesktop ? 3 : 2,
-                          crossAxisSpacing: isDesktop ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeSmall,
-                          mainAxisSpacing: isDesktop ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeSmall,
-                          mainAxisExtent: isDesktop ? 100 : 110,
+                        SizedBox(height: isDesktop ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeDefault),
+
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
+                          child: Text('what_would_you_like_to_send'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
                         ),
-                        itemCount: parcelController.parcelCategoryList!.length,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
-                        itemBuilder: (context, index) {
-                          return DeliverItemCardWidget(
-                            isDeliverItem: true,
-                            image: '${parcelController.parcelCategoryList![index].imageFullUrl}',
-                            itemName: parcelController.parcelCategoryList![index].name!,
-                            description: parcelController.parcelCategoryList![index].description!,
-                            onTap: () {
-                              Get.toNamed(RouteHelper.getParcelLocationRoute(parcelController.parcelCategoryList![index]));
-                            },
-                          );
-                        },
-                      ) : Center(child: Text('no_parcel_category_found'.tr)) : ParcelShimmer(isEnabled: parcelController.parcelCategoryList == null, isDeliveryItem: true),
-                      const SizedBox(height: Dimensions.paddingSizeLarge),
+                        const SizedBox(height: Dimensions.paddingSizeSmall),
 
-
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
-                        child: bannerController.parcelOtherBannerModel != null && bannerController.parcelOtherBannerModel!.banners != null ? bannerController.parcelOtherBannerModel!.banners!.isNotEmpty ? CarouselSlider.builder(
-                          itemCount: bannerController.parcelOtherBannerModel!.banners!.length,
-                          options: CarouselOptions(
-                            autoPlay: true,
-                            height: isDesktop ? 395 : 120,
-                            enlargeCenterPage: true,
-                            disableCenter: true,
-                            viewportFraction: 1,
-                            autoPlayInterval: const Duration(seconds: 5),
-                            onPageChanged: (index, reason) {
-                              bannerController.setCurrentIndex(index, false);
-                            },
+                        parcelController.parcelCategoryList != null ? parcelController.parcelCategoryList!.isNotEmpty ? GridView.builder(
+                          controller: ScrollController(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: isDesktop ? 3 : 2,
+                            crossAxisSpacing: Dimensions.paddingSizeSmall,
+                            mainAxisSpacing: Dimensions.paddingSizeSmall,
+                            mainAxisExtent: isDesktop ? 175 : 190,
                           ),
-                          itemBuilder: (context, index, realIndex) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                              child: CustomImage(
-                                image: '${bannerController.parcelOtherBannerModel!.banners![index].imageFullUrl}',
-                              ),
+                          itemCount: parcelController.parcelCategoryList!.length,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
+                          itemBuilder: (context, index) {
+                            return DeliverItemCardWidget(
+                              isDeliverItem: true,
+                              image: '${parcelController.parcelCategoryList![index].imageFullUrl}',
+                              itemName: parcelController.parcelCategoryList![index].name!,
+                              description: parcelController.parcelCategoryList![index].description!,
+                              onTap: () {
+                                Get.toNamed(RouteHelper.getParcelLocationRoute(parcelController.parcelCategoryList![index]));
+                              },
                             );
                           },
-                        ) : const SizedBox() : Shimmer(
-                          duration: const Duration(seconds: 2),
-                          enabled: true,
-                          child: Container(
-                            width: MediaQuery.of(context).size.width,
-                            height: isDesktop ? 395 : 150,
-                            padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+                        ) : Center(child: Text('no_parcel_category_found'.tr)) : ParcelShimmer(isEnabled: parcelController.parcelCategoryList == null, isDeliveryItem: true),
+                        const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeLarge),
 
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
-                        child: Text('experience_the_best_with_us'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                      ),
-                      const SizedBox(height: Dimensions.paddingSizeSmall),
-
-                      parcelController.whyChooseDetails != null
-                          ? isDesktop ? webExperienceView(isDesktop, parcelController) : mobileExperienceView(isDesktop, parcelController)
-                        : ParcelShimmer(isEnabled: parcelController.parcelCategoryList == null, isDeliveryItem: false),
-                      const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                      Align(
-                        alignment: Get.find<LocalizationController>().isLtr ? Alignment.centerLeft : Alignment.centerRight,
-                        child: Padding(
+                        // Optional admin promotional banner (backend-driven; collapses when empty)
+                        (bannerController.parcelOtherBannerModel != null && bannerController.parcelOtherBannerModel!.banners != null)
+                            ? bannerController.parcelOtherBannerModel!.banners!.isNotEmpty ? Padding(
                           padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
-                          child: Text('easiest_way_to_get_services'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                        ),
-                      ),
-                      const SizedBox(height: Dimensions.paddingSizeSmall),
-
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal:isDesktop ? 0 : Dimensions.paddingSizeLarge),
-                        child: parcelController.videoContentDetails != null ? isDesktop ? Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-
-                          showVideoAndServices ? Expanded(
-                            child: parcelController.videoContentDetails!.bannerType == 'image' ? ClipRRect(
-                              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                              child: CustomImage(
-                                image: '${parcelController.videoContentDetails!.bannerImageFullUrl}',
+                          child: CarouselSlider.builder(
+                            itemCount: bannerController.parcelOtherBannerModel!.banners!.length,
+                            options: CarouselOptions(
+                              autoPlay: true,
+                              height: isDesktop ? 395 : 120,
+                              enlargeCenterPage: true,
+                              disableCenter: true,
+                              viewportFraction: 1,
+                              autoPlayInterval: const Duration(seconds: 5),
+                              onPageChanged: (index, reason) {
+                                bannerController.setCurrentIndex(index, false);
+                              },
+                            ),
+                            itemBuilder: (context, index, realIndex) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                child: CustomImage(
+                                  image: '${bannerController.parcelOtherBannerModel!.banners![index].imageFullUrl}',
+                                ),
+                              );
+                            },
+                          ),
+                        ) : const SizedBox() : Padding(
+                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
+                          child: Shimmer(
+                            duration: const Duration(seconds: 2),
+                            enabled: true,
+                            child: Container(
+                              width: MediaQuery.of(context).size.width,
+                              height: isDesktop ? 395 : 150,
+                              padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                               ),
-                            ) : parcelController.videoContentDetails!.bannerType == 'video' ? GetServiceVideoWidget(youtubeVideoUrl: parcelController.videoContentDetails!.bannerVideo ?? '', fileVideoUrl: '',) : GetServiceVideoWidget(
-                              youtubeVideoUrl: '',
-                              fileVideoUrl: '${parcelController.videoContentDetails!.bannerVideoContentFullUrl}',
-                            ),
-                          ) : const SizedBox(),
-                          const SizedBox(width: 125),
-
-                          Expanded(
-                            child: ServiceInfoListWidget(
-                              parcelController: parcelController,
                             ),
                           ),
-                        ]) : Column(children: [
+                        ),
+                        SizedBox(height: (bannerController.parcelOtherBannerModel?.banners?.isEmpty ?? false) ? 0 : (isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeLarge)),
 
-                          parcelController.videoContentDetails!.bannerType == 'image' ? ClipRRect(
-                            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                            child: CustomImage(
-                              image: '${parcelController.videoContentDetails!.bannerImageFullUrl}',
-                            ),
-                          ) : parcelController.videoContentDetails!.bannerType == 'video' ? GetServiceVideoWidget(youtubeVideoUrl: parcelController.videoContentDetails!.bannerVideo ?? '', fileVideoUrl: '',) : GetServiceVideoWidget(
-                            youtubeVideoUrl: '',
-                            fileVideoUrl: '${parcelController.videoContentDetails!.bannerVideoContentFullUrl}',
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
+                          child: Text('experience_the_best_with_us'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                        ),
+                        const SizedBox(height: Dimensions.paddingSizeSmall),
+
+                        parcelController.whyChooseDetails != null
+                            ? isDesktop ? webExperienceView(isDesktop, parcelController) : mobileExperienceView(isDesktop, parcelController)
+                          : ParcelShimmer(isEnabled: parcelController.parcelCategoryList == null, isDeliveryItem: false),
+                        const SizedBox(height: Dimensions.paddingSizeLarge),
+
+                        Align(
+                          alignment: Get.find<LocalizationController>().isLtr ? Alignment.centerLeft : Alignment.centerRight,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
+                            child: Text('easiest_way_to_get_services'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
                           ),
+                        ),
+                        const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                          const SizedBox(height: Dimensions.paddingSizeLarge),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal:isDesktop ? 0 : Dimensions.paddingSizeLarge),
+                          child: parcelController.videoContentDetails != null ? isDesktop ? Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
 
-                          ServiceInfoListWidget(parcelController: parcelController),
-                        ]) : const VideoContentDetailsShimmer(),
-                      ),
+                            showVideoAndServices ? Expanded(
+                              child: parcelController.videoContentDetails!.bannerType == 'image' ? ClipRRect(
+                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                child: CustomImage(
+                                  image: '${parcelController.videoContentDetails!.bannerImageFullUrl}',
+                                ),
+                              ) : parcelController.videoContentDetails!.bannerType == 'video' ? GetServiceVideoWidget(youtubeVideoUrl: parcelController.videoContentDetails!.bannerVideo ?? '', fileVideoUrl: '',) : GetServiceVideoWidget(
+                                youtubeVideoUrl: '',
+                                fileVideoUrl: '${parcelController.videoContentDetails!.bannerVideoContentFullUrl}',
+                              ),
+                            ) : const SizedBox(),
+                            const SizedBox(width: 125),
 
-                      SizedBox(height: isDesktop ? 0 : 100),
-                    ]))),
-                  ),
-            ),
+                            Expanded(
+                              child: ServiceInfoListWidget(
+                                parcelController: parcelController,
+                              ),
+                            ),
+                          ]) : Column(children: [
+
+                            // Preserve the backend video/image content inside a MoonJoin card
+                            if(showVideoAndServices) ...[
+                              parcelController.videoContentDetails!.bannerType == 'image' ? ClipRRect(
+                                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                child: CustomImage(
+                                  image: '${parcelController.videoContentDetails!.bannerImageFullUrl}',
+                                ),
+                              ) : parcelController.videoContentDetails!.bannerType == 'video' ? ClipRRect(
+                                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                child: GetServiceVideoWidget(youtubeVideoUrl: parcelController.videoContentDetails!.bannerVideo ?? '', fileVideoUrl: '',),
+                              ) : ClipRRect(
+                                borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                child: GetServiceVideoWidget(
+                                  youtubeVideoUrl: '',
+                                  fileVideoUrl: '${parcelController.videoContentDetails!.bannerVideoContentFullUrl}',
+                                ),
+                              ),
+                              const SizedBox(height: Dimensions.paddingSizeLarge),
+                            ],
+
+                            ServiceInfoListWidget(parcelController: parcelController),
+                          ]) : const VideoContentDetailsShimmer(),
+                        ),
+
+                        SizedBox(height: isDesktop ? 0 : 100),
+                      ]))),
+                    ),
+              )),
+            ]),
 
             isDesktop ? const Positioned(right: 0, top: 0, bottom: 0, child: Center(child: ModuleWidget())) : const SizedBox(),
 
@@ -232,31 +249,38 @@ class _ParcelCategoryScreenState extends State<ParcelCategoryScreen> {
     );
   }
 
+  /// "Experience the best with us" — a single tinted strip of feature columns
+  /// (icon + green title + subtitle), driven by the backend `whyChoose` banners.
   Widget mobileExperienceView(bool isDesktop, ParcelController parcelController) {
+    final banners = parcelController.whyChooseDetails!.banners ?? [];
+    if (banners.isEmpty) return const SizedBox();
+
+    List<Widget> children = [];
+    for (int i = 0; i < banners.length; i++) {
+      children.add(Expanded(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          CustomImage(image: '${banners[i].imageFullUrl}', height: 30, width: 30, fit: BoxFit.contain),
+          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+          Text(banners[i].title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+              style: robotoBold.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeExtraSmall)),
+          const SizedBox(height: 2),
+          Text(banners[i].shortDescription ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+              style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeExtraSmall)),
+        ]),
+      ));
+      if (i != banners.length - 1) {
+        children.add(Container(width: 1, height: 46, color: Theme.of(context).disabledColor.withValues(alpha: 0.2)));
+      }
+    }
+
     return Container(
-      height: 80,
-      margin: const EdgeInsets.symmetric(vertical: 3),
-      child: ListView.builder(
-          itemCount: parcelController.whyChooseDetails!.banners!.length,
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.only(
-            left: Get.find<LocalizationController>().isLtr ? Dimensions.paddingSizeLarge : 0,
-            right: Get.find<LocalizationController>().isLtr ? 0 : Dimensions.paddingSizeLarge,
-          ),
-          itemBuilder: (context, index) {
-        return Container(
-          width: context.width * 0.75,
-          margin: EdgeInsets.only(
-            right: Get.find<LocalizationController>().isLtr ? Dimensions.paddingSizeSmall : 0,
-            left: Get.find<LocalizationController>().isLtr ? 0 : Dimensions.paddingSizeSmall,
-          ),
-          child: DeliverItemCardWidget(
-            image: '${parcelController.whyChooseDetails!.banners![index].imageFullUrl}',
-            itemName: parcelController.whyChooseDetails!.banners![index].title!,
-            description: parcelController.whyChooseDetails!.banners![index].shortDescription!,
-          ),
-        );
-      }),
+      margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+      padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault, horizontal: Dimensions.paddingSizeSmall),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
   }
 }
@@ -273,16 +297,16 @@ class ParcelShimmer extends StatelessWidget {
     return GridView.builder(
       gridDelegate: isDeliveryItem ? SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: isDesktop ? 3 : 2,
-        crossAxisSpacing: isDesktop ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeSmall,
-        mainAxisSpacing: isDesktop ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeSmall,
-        mainAxisExtent: isDesktop ? 100 : 75,
+        crossAxisSpacing: Dimensions.paddingSizeSmall,
+        mainAxisSpacing: Dimensions.paddingSizeSmall,
+        mainAxisExtent: isDesktop ? 175 : 190,
       ) : SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: isDesktop ? 3 : ResponsiveHelper.isTab(context) ? 2 : 1,
         crossAxisSpacing: isDesktop ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeSmall,
         mainAxisSpacing: isDesktop ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeSmall,
         mainAxisExtent: isDesktop ? 100 : 80,
       ),
-      itemCount: 7,
+      itemCount: isDeliveryItem ? 6 : 4,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeLarge),
@@ -296,21 +320,18 @@ class ParcelShimmer extends StatelessWidget {
           child: Shimmer(
             duration: const Duration(seconds: 2),
             enabled: isEnabled,
-            child: Row(children: [
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
               Container(
                 height: 50, width: 50, alignment: Alignment.center,
                 padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
                 decoration: BoxDecoration(color: Colors.grey[300], shape: BoxShape.circle),
               ),
-              const SizedBox(width: Dimensions.paddingSizeSmall),
+              const SizedBox(height: Dimensions.paddingSizeSmall),
 
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                Container(height: 15, width: 200, color: Colors.grey[300]),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                Container(height: 15, width: 100, color: Colors.grey[300]),
-              ])),
-              const SizedBox(width: Dimensions.paddingSizeSmall),
+              Container(height: 12, width: 90, color: Colors.grey[300]),
+              const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+              Container(height: 12, width: 60, color: Colors.grey[300]),
             ]),
           ),
         );
@@ -417,4 +438,3 @@ class VideoContentDetailsShimmer extends StatelessWidget {
     ]);
   }
 }
-

@@ -1664,6 +1664,10 @@
   "microphone_restricted": "Microphone access is restricted",
   "open_settings": "Open Settings",
   "what_would_you_like_to_send": "What would you like to send?",
+  "package_delivery": "Package Delivery",
+  "send_packages_to_your_loved_ones": "Send packages to your loved ones",
+  "provide_pickup_location_and_sender_details": "Provide pickup location and sender details",
+  "your_information_is_secure_message": "Your information is secure and will only be used for delivery purposes.",
   "experience_the_best_with_us": "Experience the best with us",
   "receiver_address": "Receiver Address",
   "change_address": "Change Address",
@@ -1767,5 +1771,6 @@
   "24_7": "24/7",
   "support": "Support",
   "quality": "Quality",
-  "on_time": "On-Time"
+  "on_time": "On-Time",
+  "nine_psb_virtual_account": "9PSB Virtual Account"
 }

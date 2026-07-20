@@ -83,8 +83,11 @@ class _ParcelViewWidgetState extends State<ParcelViewWidget> {
           child: Center(child: FooterView(
             child: SizedBox(width: Dimensions.webMaxWidth, child: Column(children: [
 
+              SizedBox(height: isDesktop ? 0 : Dimensions.paddingSizeSmall),
+
               CustomCard(
-                borderRadius: isDesktop ? Dimensions.radiusDefault : 0,
+                borderRadius: Dimensions.radiusDefault,
+                margin: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeDefault),
                 isBorder: false,
                 padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                 child: Column(children: [
@@ -352,6 +355,7 @@ class _ParcelViewWidgetState extends State<ParcelViewWidget> {
                     focusNode: streetNode,
                     nextFocus: houseNode,
                     controller: widget.streetController,
+                    prefixIcon: Icons.signpost_outlined,
                   ) : const SizedBox(),
                   SizedBox(height: !isDesktop ? Dimensions.paddingSizeLarge : 0),
 
@@ -377,6 +381,7 @@ class _ParcelViewWidgetState extends State<ParcelViewWidget> {
                           focusNode: houseNode,
                           nextFocus: floorNode,
                           controller: widget.houseController,
+                          prefixIcon: Icons.home_outlined,
                         ),
                       ),
                       const SizedBox(width: Dimensions.paddingSizeSmall),
@@ -389,6 +394,7 @@ class _ParcelViewWidgetState extends State<ParcelViewWidget> {
                           focusNode: floorNode,
                           nextFocus: nameNode,
                           controller: widget.floorController,
+                          prefixIcon: Icons.stairs_outlined,
                         ),
                       ),
                     ],
@@ -398,7 +404,8 @@ class _ParcelViewWidgetState extends State<ParcelViewWidget> {
               const SizedBox(height: Dimensions.paddingSizeLarge),
 
               CustomCard(
-                borderRadius: isDesktop ? Dimensions.radiusDefault : 0,
+                borderRadius: Dimensions.radiusDefault,
+                margin: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeDefault),
                 isBorder: false,
                 padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -414,6 +421,7 @@ class _ParcelViewWidgetState extends State<ParcelViewWidget> {
                     nextFocus: phoneNode,
                     controller: widget.nameController,
                     required: true,
+                    prefixIcon: Icons.person_outline,
                   ),
                   const SizedBox(height: Dimensions.paddingSizeLarge),
 
@@ -448,6 +456,29 @@ class _ParcelViewWidgetState extends State<ParcelViewWidget> {
 
                 ]),
               ),
+
+              const SizedBox(height: Dimensions.paddingSizeLarge),
+
+              // Security reassurance note (matches the design)
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.paddingSizeDefault),
+                padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                ),
+                child: Row(children: [
+                  Container(
+                    height: 40, width: 40, alignment: Alignment.center,
+                    decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.12), shape: BoxShape.circle),
+                    child: Icon(Icons.verified_user_outlined, color: Theme.of(context).primaryColor, size: 20),
+                  ),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
+                  Expanded(child: Text('your_information_is_secure_message'.tr,
+                      style: robotoRegular.copyWith(color: Theme.of(context).textTheme.bodyLarge!.color, fontSize: Dimensions.fontSizeSmall))),
+                ]),
+              ),
+              const SizedBox(height: Dimensions.paddingSizeDefault),
 
               ResponsiveHelper.isDesktop(context) ? Padding(
                 padding: EdgeInsets.symmetric(vertical: Dimensions.fontSizeSmall),

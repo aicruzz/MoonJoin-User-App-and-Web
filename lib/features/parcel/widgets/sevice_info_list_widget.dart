@@ -1,70 +1,79 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/features/parcel/controllers/parcel_controller.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 
+/// "Easiest way to get services" — a numbered step flow (matching the Parcel
+/// design) built from the backend `videoContentDetails.bannerContents` (even
+/// entries = step title, odd entries = step description). Presentation only; the
+/// backend content is wrapped by the design, never replaced.
 class ServiceInfoListWidget extends StatelessWidget {
   final ParcelController parcelController;
   const ServiceInfoListWidget({super.key, required this.parcelController});
 
   @override
   Widget build(BuildContext context) {
-    List<String>? title;
-    List<String>? subTitle;
-    if(parcelController.videoContentDetails != null) {
-      title = [];
-      subTitle = [];
-      for(int i=0; i<parcelController.videoContentDetails!.bannerContents!.length; i++) {
-        if(i%2 == 0){
-          title.add(parcelController.videoContentDetails!.bannerContents![i].value ?? '');
-        } else {
-          subTitle.add(parcelController.videoContentDetails!.bannerContents![i].value ?? '');
-        }
+    if (parcelController.videoContentDetails == null) return const SizedBox();
+
+    final List<String> title = [];
+    final List<String> subTitle = [];
+    final contents = parcelController.videoContentDetails!.bannerContents ?? [];
+    for (int i = 0; i < contents.length; i++) {
+      if (i % 2 == 0) {
+        title.add(contents[i].value ?? '');
+      } else {
+        subTitle.add(contents[i].value ?? '');
       }
     }
-    return parcelController.videoContentDetails != null ? ListView.builder(
-      physics: const ScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: title!.length,
-      padding: EdgeInsets.zero,
-      itemBuilder: (context, index) {
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    if (title.isEmpty) return const SizedBox();
+
+    final Color green = Theme.of(context).primaryColor;
+    final int count = title.length;
+
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: List.generate(count, (i) {
+      return Expanded(
+        child: Column(children: [
+
+          // Numbered circle + connecting dotted line to neighbours
+          Row(children: [
+            Expanded(child: i == 0 ? const SizedBox() : _dottedLine(context)),
+            Container(
+              height: 28, width: 28, alignment: Alignment.center,
+              decoration: BoxDecoration(color: green, shape: BoxShape.circle),
+              child: Text('${i + 1}', style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall)),
+            ),
+            Expanded(child: i == count - 1 ? const SizedBox() : _dottedLine(context)),
+          ]),
+          const SizedBox(height: Dimensions.paddingSizeSmall),
 
           Padding(
-            padding: const EdgeInsets.only(left: 8.0),
-            child: Row(children: [
-              Container(
-                // height: 14, width: 14,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Theme.of(context).primaryColor,
-                ),
-                padding: const EdgeInsets.all(2),
-                child: Icon(Icons.check, color: Colors.white, size: 10,),
-              ),
-              const SizedBox(width: Dimensions.paddingSizeDefault),
-
-              Flexible(child: Text(title![index], style: robotoBold, maxLines: 1, overflow: TextOverflow.ellipsis)),
-            ]),
-          ),
-
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: 22.5),
-            margin: EdgeInsets.only(left: Get.find<LocalizationController>().isLtr ? 15 : 0, right: Get.find<LocalizationController>().isLtr ? 0 : 7),
-            decoration: BoxDecoration(
-              border: index == title.length - 1 ? null : Border(left: Get.find<LocalizationController>().isLtr ? BorderSide(width: 1, color: Theme.of(context).disabledColor)
-                  : BorderSide.none, right: Get.find<LocalizationController>().isLtr ? BorderSide.none : BorderSide(width: 1, color: Theme.of(context).disabledColor)),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Text(
-              subTitle![index],
-              style: robotoRegular.copyWith(color: Theme.of(context).disabledColor),
-              textAlign: TextAlign.justify,
+              title[i], maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+              style: robotoBold.copyWith(color: green, fontSize: Dimensions.fontSizeSmall),
             ),
           ),
-        ]);
-      },
-    ) : const SizedBox();
+          const SizedBox(height: 2),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              i < subTitle.length ? subTitle[i] : '',
+              maxLines: 3, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+              style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeExtraSmall),
+            ),
+          ),
+        ]),
+      );
+    }));
+  }
+
+  Widget _dottedLine(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final int dashCount = (constraints.maxWidth / 7).floor().clamp(0, 40);
+      return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: List.generate(dashCount, (_) {
+        return Container(width: 3, height: 1.5, color: Theme.of(context).disabledColor.withValues(alpha: 0.5));
+      }));
+    });
   }
 }

@@ -19,7 +19,7 @@ class DeliverItemCardWidget extends StatelessWidget {
       padding: EdgeInsets.all(isDeliverItem ? 0 : Dimensions.paddingSizeSmall),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        border: isDeliverItem ? null : Border.all(color: Theme.of(context).disabledColor, width: 0.5),
+        border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: isDeliverItem ? 0.15 : 1), width: 0.5),
         borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
         boxShadow: isDeliverItem ? [BoxShadow(
           color: Theme.of(context).disabledColor.withValues(alpha: 0.2),
@@ -29,14 +29,18 @@ class DeliverItemCardWidget extends StatelessWidget {
       child: isDeliverItem ? CustomInkWell(
         onTap: onTap,
         radius: Dimensions.radiusDefault,
-        padding: EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall, horizontal: Dimensions.paddingSizeSmall),
+        padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault, horizontal: Dimensions.paddingSizeSmall),
         child: Column(children: [
-          CustomImage(
-            image: image,
-            width: 45,
-          ),
+          // Illustration fills the upper portion of the (unchanged) card. Full
+          // image, no cropping (BoxFit.contain = complete art, no distortion),
+          // sized to the largest the locked card height allows.
+          Expanded(child: Padding(
+            padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
+            child: CustomImage(image: image, fit: BoxFit.contain),
+          )),
 
-          Text(itemName, maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoMedium),
+          Text(itemName, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: robotoBold),
+          const SizedBox(height: 2),
 
           Text(
             description,
