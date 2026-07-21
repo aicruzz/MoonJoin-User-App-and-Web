@@ -1793,5 +1793,8 @@
   "all_car_rentals": "সব গাড়ি ভাড়া",
   "search_for_cars_brands_or_locations": "গাড়ি, ব্র্যান্ড বা লোকেশন খুঁজুন",
   "self_drive": "নিজে চালান",
-  "with_driver": "চালকসহ"
+  "with_driver": "চালকসহ",
+  "transmission": "ট্রান্সমিশন",
+  "most_relevant": "সবচেয়ে প্রাসঙ্গিক",
+  "vehicles_found": "যানবাহন পাওয়া গেছে"
 }

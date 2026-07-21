@@ -9,7 +9,13 @@ class TaxiAddFavouriteView extends StatelessWidget {
   final VehicleModel? vehicle;
   final int? providerId;
   final int? favIconSize;
-  const TaxiAddFavouriteView({super.key, this.providerId, this.vehicle, this.favIconSize});
+
+  /// Heart colour. Default `null` → the theme primary colour, i.e. unchanged for
+  /// every existing call site. Surfaces that place the heart on a coloured hero
+  /// (the Rental provider header) pass white so it stays legible.
+  final Color? iconColor;
+
+  const TaxiAddFavouriteView({super.key, this.providerId, this.vehicle, this.favIconSize, this.iconColor});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +41,7 @@ class TaxiAddFavouriteView extends StatelessWidget {
             showCustomSnackBar('you_are_not_logged_in'.tr);
           }
         },
-        child: Icon(isWished ? Icons.favorite : Icons.favorite_border, color: Theme.of(context).primaryColor, size: favIconSize?.toDouble()),
+        child: Icon(isWished ? Icons.favorite : Icons.favorite_border, color: iconColor ?? Theme.of(context).primaryColor, size: favIconSize?.toDouble()),
       );
     });
   }

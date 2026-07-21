@@ -422,6 +422,38 @@ pattern** with rental data, so it was **left as-is** (no redesign, no duplicate 
 (`PaginatedListView`, `NoDataScreen`, `CustomImage`, existing favourite logic) and follows the same structure.
 The three deltas are cosmetic alignment that can be scheduled deliberately rather than bundled into Screen 2.
 
+> **RESOLVED — Rental Screen 4 (Provider Details).** The three deltas above were the deliberate schedule this
+> audit recommended, and Screen 4 closed two of them: the page now uses the green hero
+> (`RentalProviderHeroHeader`, below) and a `MoonjoinSkeleton` loading state instead of a bare
+> `CircularProgressIndicator`. Delta 3 (share button) stays out — the rental provider payload exposes no share
+> URL/slug, so there is nothing real to share; it is not faked. See MIGRATION_LOG.md.
+
+---
+
+## `RentalProviderHeroHeader` — Rental Provider page hero (visual clone of the frozen `StoreHeroHeader`)
+
+**File:** `lib/features/rental_module/vendor/widgets/rental_provider_hero_header.dart`
+
+- **Visual clone of `StoreHeroHeader`.** Identical green hero with the rounded bottom curve
+  (`radiusExtraLarge`), identical `SafeArea` + padding geometry, identical 42px action circles and 38px subtle
+  circles, identical badge geometry, identical name (28 bold) / ★rating / location / amber `0xFFFFC107` count
+  typography, identical 104px hero image at `radiusLarge`, and the identical 52px search pill straddling the
+  green → content transition (same shadow, same trailing tune button).
+- **Why a clone rather than literal reuse:** `StoreHeroHeader` is **frozen** and typed to `Store`, reading
+  store/delivery-only data (`deliveryTime`, cuisines via `StoreController`, `FavouriteController`,
+  `CartController`, the store item search route). A rental provider has none of those. Same resolution already
+  recorded for `RentalProviderCard` vs the frozen `MoonjoinStoreCard`: **adapt the data, clone the visual,
+  never fork the design.**
+- **Reuses existing rental logic only** — `TaxiAddFavouriteView` (existing provider wish-list),
+  `TaxiCartController` + `TaxiCartScreen` (existing rental cart), `NotificationController` +
+  `RouteHelper.getNotificationRoute()`. No new business logic, no new favourite/cart implementation.
+- **Real backend data only** — `name`, `avg_rating`, `rating_count`, `address`, `cover_photo_full_url`, and the
+  vehicle count from the real `get-provider-vehicles` `totalSize`. Nothing fabricated.
+
+**Additive parameter on a shared rental component (backward compatible):**
+`TaxiAddFavouriteView.iconColor` — default `null` → theme primary, i.e. **every existing call site renders
+exactly as before**. The provider hero passes white so the heart stays legible on the green.
+
 ---
 
 ## 🔒 Rental Screen 2 component status — FROZEN

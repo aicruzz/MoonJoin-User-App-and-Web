@@ -1809,5 +1809,8 @@
   "all_car_rentals": "All Car Rentals",
   "search_for_cars_brands_or_locations": "Search for cars, brands or locations",
   "self_drive": "Self Drive",
-  "with_driver": "With Driver"
+  "with_driver": "With Driver",
+  "transmission": "Transmission",
+  "most_relevant": "Most Relevant",
+  "vehicles_found": "Vehicles Found"
 }

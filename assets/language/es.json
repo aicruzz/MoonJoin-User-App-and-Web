@@ -1793,5 +1793,8 @@
   "all_car_rentals": "Todos los alquileres de autos",
   "search_for_cars_brands_or_locations": "Busca autos, marcas o ubicaciones",
   "self_drive": "Conducción propia",
-  "with_driver": "Con conductor"
+  "with_driver": "Con conductor",
+  "transmission": "Transmisión",
+  "most_relevant": "Más relevante",
+  "vehicles_found": "Vehículos encontrados"
 }

@@ -31,6 +31,13 @@ class TaxiVendorModel {
   int? nonVeg;
   int? orderCount;
   int? totalOrder;
+
+  /// Provider's total vehicle count — the real `total_vehicle_count` field already
+  /// returned by `get-provider-details`. Used by the Provider page hero so the
+  /// "N vehicles available" figure is the provider's true total and does not shrink
+  /// when a category filter or search narrows the list below.
+  int? totalVehicleCount;
+
   int? moduleId;
   int? orderPlaceToScheduleInterval;
   int? featured;
@@ -177,8 +184,15 @@ class TaxiVendorModel {
     deliveryTime = json['delivery_time'];
     veg = json['veg'];
     nonVeg = json['non_veg'];
-    orderCount = json['order_count'];
-    totalOrder = json['total_order'];
+    // BUGFIX: `get-provider-details` serialises these counters as **strings**
+    // (`"order_count": "0"`), while the model types them `int?`. The raw assignment
+    // threw `type 'String' is not a subtype of type 'int?'`, which aborted
+    // `TaxiVendorModel.fromJson` — leaving `taxiVendor` null and the whole Rental
+    // Provider page stuck on its loading state forever. Parsed defensively so the
+    // page works whether the backend sends a number or a numeric string.
+    orderCount = _asInt(json['order_count']);
+    totalOrder = _asInt(json['total_order']);
+    totalVehicleCount = _asInt(json['total_vehicle_count']);
     moduleId = json['module_id'];
     orderPlaceToScheduleInterval = json['order_place_to_schedule_interval'];
     featured = json['featured'];
@@ -237,6 +251,15 @@ class TaxiVendorModel {
     }
   }
 
+  /// Tolerates the backend sending an integer counter as a numeric string.
+  /// Returns null for null/unparseable input — never a fabricated default.
+  static int? _asInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
@@ -273,6 +296,7 @@ class TaxiVendorModel {
     data['non_veg'] = nonVeg;
     data['order_count'] = orderCount;
     data['total_order'] = totalOrder;
+    data['total_vehicle_count'] = totalVehicleCount;
     data['module_id'] = moduleId;
     data['order_place_to_schedule_interval'] =
         orderPlaceToScheduleInterval;

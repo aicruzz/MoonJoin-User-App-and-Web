@@ -1541,3 +1541,105 @@ simplified, the Provider List endpoint becomes the source, and **no UI redesign 
 
 **Frozen screens** (Screen 1 Rental Home, Screen 2 All Car Rentals) may only change for verified bug fixes,
 backend integration, or documentation. **No redesign.**
+
+---
+
+## 🔍 Audit — "What is Screen 3?" (performed before any Screen 3/4 code)
+
+Compared: the approved Car Rental designs (`ui-designs/Car_Rental/`, incl. `car_rental_provider_item_list.png`
+and its Apartment twin `apt_rental_provider_item_list.png`) · the post-Screen-2 implementation ·
+MIGRATION_LOG.md · COMPONENTS.md · BACKEND_INTEGRATION_QUEUE.md. Findings:
+
+**1. Screen 3 (Provider List) already exists — it was built inside Screen 2.**
+The Screen 2 provider-flow restructure moved the provider layer into `AllVehicleScreen`:
+`_providerList()` derives providers via `RentalProviderAdapter.fromVehicles()` and renders each as a
+`RentalProviderCard`, which navigates to `VendorDetailScreen`. This mirrors Food exactly
+(`All Restaurants → restaurant banners → Restaurant page`), where the restaurant list likewise lives *inside*
+the listing page rather than on a separate screen. There is also **no standalone provider-list design** in
+`ui-designs/Car_Rental/` — no such asset exists. Building a separate Provider List screen would therefore
+duplicate an existing, frozen implementation to satisfy a number in a list.
+**Conclusion: Screen 3 is absorbed into Screen 2 and frozen with it. No separate screen will be built.**
+
+**2. `car_rental_provider_item_list.png` is the Provider DETAIL page, not a provider list.**
+Evidence: (a) MIGRATION_LOG.md already records the mapping —
+`Rental Provider page (car_rental_provider_item_list.png) → store_or_restaurant.png (approved Store page)`;
+(b) the design's body is a list of **vehicles** (item cards with price + View Details), not of providers;
+(c) its Apartment twin `apt_rental_provider_item_list.png` is identically a list of **apartments**;
+(d) `car_rental_search_list.png` is a separate screen for the search flow (it has the Items/Providers tabs).
+The filename means *"a provider's item list"*.
+
+**Honest note on an ambiguity:** the design's hero reads "Car Rentals / Lekki, Lagos / 128 Cars Available"
+rather than a provider identity, which read alone could suggest a location-scoped listing. The hero is a
+**generic template** — the search screen fills the same hero with the query ("Lexus"), and the Apartment twin
+fills it with "Lekki Apartments". On the Provider page it is filled with the provider's real identity
+(name · rating · address · vehicle count), which is also what the approved Store page does. Resolved by the
+recorded mapping above rather than re-litigated.
+
+**Decision: the next screen is Screen 4 — Provider Details.** It was never migrated — `VendorDetailScreen` was
+still the legacy 6amMart layout, carried through Screen 2 as an explicitly *accepted, non-blocking* delta.
+
+---
+
+## 🔒 Rental Screen 3 — Provider List — ABSORBED INTO SCREEN 2 · FROZEN
+
+Not a separate screen. Implemented and frozen as part of Screen 2 (`all_vehicle_screen.dart` `_providerList`),
+using `RentalProviderAdapter` + `RentalProviderCard` over real backend provider data. Do not create a
+standalone Provider List screen. When Queue Item #10 (Provider List endpoint) ships, **only the adapter
+changes** — no UI redesign, no new screen.
+
+---
+
+## Phase — Rental Screen 4: Provider Details (Provider Item List)
+
+- **Screen:** `lib/features/rental_module/vendor/screens/vendor_detail_screen.dart` (`VendorDetailScreen`).
+- **Design authority:** `ui-designs/Car_Rental/car_rental_provider_item_list.png` (Rental is not in the Active
+  Figma). Page architecture reuses the approved MoonJoin **Store page** (`store_or_restaurant.png`).
+- **Reached through the real journey:** Home → Rental → All Car Rentals → Provider banner → **Provider Details**.
+
+**PAGE-LEVEL REUSE — the approved Store page, section for section**
+
+| Section | Reused implementation |
+|---|---|
+| Green hero + actions + search pill | **`RentalProviderHeroHeader`** — visual clone of the frozen `StoreHeroHeader` |
+| Filter chips | approved shared **`StoreFilterChip`** |
+| Category strip | **`RestaurantCategoryChip`** — THE MoonJoin category component (frozen, unchanged) |
+| Provider banners | existing **`ProviderBannerWidget`** |
+| Rating + reviews entry | existing **`TaxiRatingBar`** + existing `ReviewDetailsScreen` |
+| Vehicle list | existing **`VendorVehicleCard`** |
+| Pagination | approved **`PaginatedListView`** |
+| Empty state | approved **`NoDataScreen`** |
+| Loading | shared **`MoonjoinSkeleton` / `SkeletonBox` / `SkeletonListLoader`** |
+
+**One new component** — `RentalProviderHeroHeader` (rationale in COMPONENTS.md: `StoreHeroHeader` is frozen and
+typed to `Store`). **One additive parameter** — `TaxiAddFavouriteView.iconColor`, default `null` → prior
+behaviour, so every existing call site is byte-for-byte unchanged.
+
+**Business logic preserved — presentation only.** Every controller call is the pre-existing rental
+implementation: `getTaxiVendorDetails` · `getVendorBannerList` · `getVendorVehicleList` (search, category,
+pagination) · `getVendorVehicleCategoryList` · `initFilterSetup` · `setCategoryId` · existing
+`VehicleFilterWidget` sheet · existing `SearchVehicleScreen` · existing `TaxiFavouriteController` favourite ·
+existing `TaxiCartController` cart · existing `ReviewDetailsScreen`. **No API changed, no repository changed,
+no service changed, no model changed.**
+
+**Chip behaviour (nothing faked).** Filters / Price / Seats / More open the existing rental filter sheet (real
+backend filtering: price range, brands, vehicle type, seats, air conditioning). Sort sorts the loaded **real**
+vehicles client-side on real price / `avg_rating` fields — identical to the approved Food chips and frozen
+Screen 2, no API call, no fake data. **Transmission is rendered but inert**: `transmission_type` exists on each
+vehicle but there is **no transmission filter parameter** on `get-provider-vehicles` → documented as
+**BACKEND_INTEGRATION_QUEUE.md item 14**, activates unchanged when the backend supports it.
+
+**Deltas vs the design (deliberate, MoonJoin-wins):**
+1. **"Explore … / View on Map" card not adopted.** `StoreMapView` is frozen and typed to `Store`. Cloning a
+   full interactive map widget is a materially larger surface than a header clone, and the provider payload's
+   lat/lng is already reachable. Scheduled deliberately rather than bundled into this screen.
+2. **Vehicle card** stays the existing `VendorVehicleCard` rather than the design's horizontal card — reuse
+   over redesign; the card is shared rental UI and is not this screen's subject.
+3. **Share button** not added — the rental provider payload exposes no share URL/slug, so there is nothing real
+   to share. Not faked.
+
+**Previously-recorded deltas now CLOSED:** green hero header adopted (was delta 1 of the Screen 2 freeze);
+loading shimmer adopted (was delta 2).
+
+**Not deleted:** `SearchAndFilterWidget` (its search icon / filter icon / category row are now served by the
+hero pill, the chip row and the category strip) is **left on disk, untouched**, per the standing no-automatic-
+deletion rule — to be resolved in the single post-Rental dead-code audit, not opportunistically here.

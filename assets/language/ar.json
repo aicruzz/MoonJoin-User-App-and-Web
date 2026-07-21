@@ -1793,5 +1793,8 @@
   "all_car_rentals": "جميع تأجير السيارات",
   "search_for_cars_brands_or_locations": "ابحث عن سيارات أو ماركات أو مواقع",
   "self_drive": "قيادة ذاتية",
-  "with_driver": "مع سائق"
+  "with_driver": "مع سائق",
+  "transmission": "ناقل الحركة",
+  "most_relevant": "الأكثر صلة",
+  "vehicles_found": "المركبات الموجودة"
 }

@@ -500,6 +500,39 @@ shows the same categories. **Nothing is faked.** The approved category UI is **f
 
 ---
 
+### 14. Rental Provider Details — **Transmission** filter
+
+- **Module:** Rental · **App:** User App · **Status:** **Frontend Complete — Waiting for Backend**
+- **Location:** Provider Details (`VendorDetailScreen`) → filter chip row → **Transmission**.
+
+The approved design (`ui-designs/Car_Rental/car_rental_provider_item_list.png`) shows a **Transmission** chip
+alongside Filters · Sort · Price · Seats · More.
+
+**Existing backend capability.** Each vehicle already returns `transmission_type` (Automatic / Manual) — the
+Provider Details vehicle card and the provider feature badges both read it. But
+`get-provider-vehicles` accepts **no transmission filter parameter**, and the existing rental filter sheet
+(`VehicleFilterWidget`) has no transmission section — it filters by price range, brands, vehicle type, seats
+and air conditioning only.
+
+**Current frontend behaviour (nothing faked).** The chip is **fully rendered and inert**. It does not navigate
+to an unrelated screen and it does not fake client-side filtering. Every other chip in the row is wired to real
+backend behaviour: Filters / Price / Seats / More open the existing filter sheet (real backend filtering), and
+Sort sorts the loaded real vehicles client-side exactly like the approved Food chips and frozen Screen 2.
+
+**Required BACKEND work** — add `transmission_type` (`automatic` | `manual`, repeatable) as a filter parameter
+on `GET /api/v1/rental/vehicle/get-provider-vehicles` and on the vehicle browse/search endpoints.
+
+**Required VENDOR APP work** — none beyond what exists; vendors already set a vehicle's transmission type.
+
+**Required ADMIN work** — expose transmission as a filterable attribute in Vehicle Management (consistent with
+seats / vehicle type / air conditioning).
+
+**Frontend Integration Point** — add a Transmission section to the existing `VehicleFilterWidget` and pass the
+selected value through the existing `getVendorVehicleList` call. **No UI redesign required** — the chip already
+exists in its final position.
+
+---
+
 ## MoonJoin Development Rule (permanent)
 
 **Before implementing backend, complete all frontend applications first:**
