@@ -297,8 +297,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
 
-                  /// App Bar
-                  SliverAppBar(
+                  /// App Bar — white greeting bar. Hidden for Rental (taxi), which renders its
+                  /// own green wavy "Car Rental & Short Apt Rental" header inside TaxiHomeScreen.
+                  isTaxi ? const SliverToBoxAdapter() : SliverAppBar(
                     floating: true,
                     elevation: 0,
                     automaticallyImplyLeading: false,

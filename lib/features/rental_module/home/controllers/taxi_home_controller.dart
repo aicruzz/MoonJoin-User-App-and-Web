@@ -286,6 +286,14 @@ class TaxiHomeController extends GetxController implements GetxService {
     update();
   }
 
+  /// Clears ONLY the category selection (the Rental Home "All" tile), leaving every
+  /// other filter (price, brand, seating, A/C, trip type) untouched. Additive helper —
+  /// existing filter logic is unchanged.
+  void clearSelectedCategories() {
+    _selectedCategoryIds = [];
+    update();
+  }
+
   void addOrRemoveCategory(int id) {
     if(_selectedCategoryIds.contains(id)) {
       _selectedCategoryIds.removeWhere((i)=> (i==id));

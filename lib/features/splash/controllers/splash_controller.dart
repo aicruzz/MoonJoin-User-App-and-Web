@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sixam_mart/common/enums/data_source_enum.dart';
 import 'package:sixam_mart/common/models/response_model.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
@@ -105,18 +106,38 @@ class SplashController extends GetxController implements GetxService {
     Response response;
     if(source == DataSourceEnum.local && !fromDemoReset) {
       response = await splashServiceInterface.getConfigData(source: DataSourceEnum.local);
-      _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody);
+      await _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody);
       getConfigData(loadModuleData: loadModuleData, loadLandingData: loadLandingData, source: DataSourceEnum.client);
 
     } else {
       response = await splashServiceInterface.getConfigData(source: DataSourceEnum.client);
-      _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody);
+      bool loaded = await _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody);
+
+      // Startup resilience: the backend returned a non-JSON response (HTML challenge /
+      // rate-limit / edge error) while a connection exists — keep the loading state
+      // and retry after a short delay. Continues automatically once valid JSON is
+      // received. No effect when the backend is healthy (loaded == true).
+      if(!loaded && _hasConnection) {
+        await Future.delayed(const Duration(seconds: 3));
+        getConfigData(
+          loadModuleData: loadModuleData, loadLandingData: loadLandingData,
+          source: DataSourceEnum.client, fromMainFunction: fromMainFunction,
+          fromDemoReset: fromDemoReset, notificationBody: notificationBody,
+        );
+      }
     }
 
   }
 
-  Future<void> _handleConfigResponse(Response response, bool loadModuleData, bool loadLandingData, bool fromMainFunction, bool fromDemoReset, NotificationBodyModel? notificationBody) async {
-    if(response.statusCode == 200) {
+  Future<bool> _handleConfigResponse(Response response, bool loadModuleData, bool loadLandingData, bool fromMainFunction, bool fromDemoReset, NotificationBodyModel? notificationBody) async {
+    // Only treat it as a valid config when the body is actually a JSON object.
+    // Startup resilience: if the backend/edge returns a non-JSON response (e.g. an
+    // HTML "please wait"/rate-limit/Cloudflare challenge, or a 415/HTML error page),
+    // response.body is a String — do NOT feed it to ConfigModel.fromJson (that would
+    // crash and freeze the splash). Instead return false so the caller retries. When
+    // the backend is healthy the config is always a Map, so this behaves exactly as
+    // before (no production behaviour change, full backward compatibility).
+    if(response.statusCode == 200 && response.body is Map) {
       _data = response.body;
       _configModel = ConfigModel.fromJson(response.body);
       if(_configModel!.module != null) {
@@ -135,12 +156,17 @@ class SplashController extends GetxController implements GetxService {
         route(body: notificationBody);
       }
       _onRemoveLoader();
-    }else {
+      update();
+      return true;
+    } else {
       if(response.statusText == ApiClient.noInternetMessage) {
         _hasConnection = false;
+      } else if(kDebugMode) {
+        print('Config response was not valid JSON (status: ${response.statusCode}) — keeping loading state and retrying config…');
       }
+      update();
+      return false;
     }
-    update();
   }
 
   Future<void> _mainConfigRouting() async {

@@ -31,6 +31,18 @@ incompatibility, or explicit user approval to reopen. No cosmetic changes. Add e
 - ✅ **Shared storefront HOME — `AllStoreScreen` is the primary module home for ALL storefront Business Module
   Types** (Food, Grocery + Market/Fuel/Drink/Solar, Pharmacy, Ecommerce/Fashion); each module's unique sections
   preserved via `moduleHome` (storefront mode). One shared UI, module data differs.
+- ✅ **Rental Screen 1 — Rental Home (Car & Apt Rental)** — **Production Ready (Frontend)** (`TaxiHomeScreen`) — one shared Rental Business
+  Module Type covering Car Rental (existing Taxi backend) + Short Apartment Rental (UI-layer placeholder,
+  no backend). MoonJoin `WavyHeader` + search pill, backend-driven categories via `MoonjoinCategoryTile`,
+  backend-ready hero cards, `RentalPopularCard` rows, module back-navigation via `removeModule()`.
+
+- ✅ **Rental Screen 2 — Car Rental Listing (All Car Rentals)** — **Production Ready (Frontend)**
+  (`AllVehicleScreen`) — page-level reuse of the approved All Restaurants architecture with Rental data;
+  provider-filter chips rendered but inert pending backend/vendor (queue item 9).
+
+- ✅ **Rental Screen 2 — All Car Rentals** — **Production Ready (Frontend) · FROZEN** (`AllVehicleScreen`) —
+  Provider Banner → Provider Detail Page → Vehicle List, mirroring the Food All Restaurants flow; provider
+  adapter derives real providers from real vehicle data pending the Provider List endpoint.
 
 **Status: Production Ready · Frozen**
 
@@ -1155,3 +1167,377 @@ check that file before creating APIs, models, or admin settings**, and must adap
 contract (never redesign the frontend when backend starts). Currently queued: **Parcel Package Protection**
 (config + order fields) and **Parcel "Why Choose Us" / "Get Service"** (admin configuration of existing
 endpoints).
+
+---
+
+## Phase — Rental Screen 1: Rental Home (Car & Apt Rental) 🔒 FROZEN
+
+- **Screen completed:** Rental Home — `lib/features/rental_module/home/screens/taxi_home_screen.dart`
+  (`TaxiHomeScreen`), the module home for the shared **Rental** Business Module Type.
+- **Module model:** ONE Rental module containing **Car Rental** (existing "taxi" backend) and **Short
+  Apartment Rental** (no backend — isolated UI-layer placeholder, `TODO(BACKEND)`, **no mock repository**).
+
+**Design authority applied.** Where `ui-designs/Car_Rental/rental_home.png` conflicted with the approved
+MoonJoin design system, **MoonJoin won** (permanent rule): the signature `WavyHeader` was kept rather than the
+mock's flat header, and the category row uses the approved MoonJoin category UI/UX rather than the mock's
+chips. The mock supplied page layout, content arrangement and screen flow only.
+
+**Reused (not recreated)**
+- `WavyHeader`, `CustomImage`, `Dimensions`, `styles.dart`, theme colours, `shimmer_animation`.
+- **Back to all-modules dashboard:** the *exact* approved action from the standard home app bar —
+  `SplashController.removeModule()` + `StoreController.resetStoreData()`. No new navigation logic. (The
+  standard app bar is suppressed on Rental because this screen draws its own header, which had removed the
+  affordance — restored in the Rental header.)
+- **All existing Rental backend logic:** `TaxiHomeController` (`getVehicleCategoryList`, `selectedCategoryIds`,
+  `addOrRemoveCategory`, `getSelectedCars(categoryIds:)`, banners, top-rated cars, coupons, trips, favourites),
+  repositories, services, models and routes — untouched.
+
+**New reusable component**
+- `MoonjoinCategoryTile` (`lib/common/widgets/moonjoin/moonjoin_category_tile.dart`) — the approved MoonJoin
+  category UI/UX as a data-agnostic tile, reusable by any module. Declares no styling values of its own.
+- `RentalPopularCard` (`lib/features/rental_module/home/widgets/rental_popular_card.dart`) — one listing-card
+  layout shared by the Car Rental and Short Apartment Rental rows.
+
+**Categories.** Rental reuses the approved MoonJoin Category UI/UX while preserving the Rental module's
+existing backend category filtering behaviour. Data is 100% backend-driven from the existing
+`GET /api/v1/rental/vehicle/category-list` (admin: Car & Apt Rental → Vehicle Management → Categories) —
+names, images and count are never hardcoded; admin create/rename/delete needs no frontend change. A leading
+**"All"** tile is active by default when nothing is selected. Additive controller helper
+`clearSelectedCategories()` added for the "All" tile (existing filter logic unchanged; `resetFilter()` was not
+reused because it also clears price/brand/seating/A-C).
+
+**Backend-pending (documented in `docs/BACKEND_INTEGRATION_QUEUE.md`, nothing invented)**
+- **Hero Cards** — image / title / subtitle / CTA text / CTA action / sort order / status / target
+  (Car Rental | Apartment Rental | Both). Admin: Car & Apt Rental → Dashboard → Hero Cards (after Trip
+  Management, before Promotion Management).
+- **Category `type`** (car vs apartment) — the only gap in the otherwise complete category backend.
+- **Short Apartment Rental** — listing / details / booking.
+
+**Fixes included**
+- Blank Rental Home: `Row(crossAxisAlignment: stretch)` inside the vertical `SingleChildScrollView` could not
+  be laid out (`RenderBox was not laid out`) → whole screen rendered white. Wrapped in `IntrinsicHeight`.
+- Category row overflow: sized to the approved MoonJoin category-row geometry (height 160) so 2-line labels
+  never overflow.
+
+**Verification** — `flutter analyze` **48 issues / 0 errors** (baseline held); build **0 errors**; runtime
+verified on the iOS Simulator against the live backend, reached through the real journey
+(Home dashboard → Car & Apt Rental).
+
+### Final Production Audit (post-freeze verification)
+
+**Runtime audit** — verified against the live backend on the iOS Simulator, with the screen actually exercised
+(`category-list`, `banners`, `top-rated`, `coupon`, `trip-list`, `wish-list` all fired): **0** RenderFlex
+overflows, **0** bottom overflows, **0** `RenderBox was not laid out`, **0** widget exceptions, **0** overflow
+indicators, **0** null-check exceptions. API call counts scale linearly with screen mounts — no rebuild loop.
+
+**Shared-component reuse fixes (audit findings, no redesign)**
+1. The header search field was hand-built → replaced with the shared **`MoonjoinSearchBar`** (`readOnly` +
+   `onTap` tap-to-search). Rental now has no bespoke search styling.
+2. Category loading used a bespoke shimmer, and the popular rows used a raw `CircularProgressIndicator` →
+   both now use the shared **`MoonjoinSkeleton` + `SkeletonBox`** primitives, so loading states match the
+   MoonJoin design system.
+
+**Hardcoded-data audit** — **zero** hardcoded user-facing strings on Screen 1 (all text via i18n `.tr`). The
+only frontend-supplied data is the three items already documented in `BACKEND_INTEGRATION_QUEUE.md`: the two
+hero images, the apartment placeholder list, and the apartment "coming soon" affordances. Categories, banners,
+vehicles, coupons, trips and favourites all come from the existing backend.
+
+**Backend audit** — **no fake APIs, no mock repositories, no duplicated business logic** (verified: no
+mock/fake/dummy anywhere in `lib/features/rental_module/`). Screen 1 connects every backend capability
+appropriate to a module home: `getTaxiBannerList`, `getTopRatedCarList`, `getVehicleCategoryList`,
+`getTaxiCouponList`, trips, favourites, address. The remaining controller capabilities (`getSelectedCars`,
+`getTaxiBrandList`, `getVehicleDetails`, `getPopularSearchList`, `getHistoryTripList`) belong to later Rental
+screens and are intentionally not called here.
+
+**⚠️ Potential Cleanup After Rental Completion — DO NOT DELETE YET.**
+`top_rated_vehicle_widget.dart` and `horizontal_vehicle_card.dart` are the pre-redesign vehicle-card
+implementations. After Screen 1 adopted `RentalPopularCard`, `TopRatedVehicleWidget` is referenced only by
+itself and `HorizontalVehicleCard` only by it — both are currently unreachable.
+
+**Decision (product owner):** leave them untouched. The Rental module is still being built and they may still
+suit **Rental Listing · Provider List · Provider Details · Booking History · future Rental screens**. Deleting
+now creates unnecessary risk. **After the entire Rental module is complete, run one final dead-code audit
+across the whole Rental module before removing anything.**
+
+**Status: 🔒 FROZEN — Production Ready (Frontend).** UI approved · UX approved · shared components approved ·
+backend-ready · no redesign required · ready for future backend integration. Do not redesign. Only reuse its
+components.
+
+---
+
+## 🧭 Rental Module Architecture (PERMANENT RULE — applies to every remaining Rental screen)
+
+**Flow separation.** Complete **Car Rental first**, then Short Apartment Rental. Tapping the Car Rental hero
+card enters the **Car Rental flow only** (designs: `ui-designs/Car_Rental/`). Tapping the Short Apt Rental hero
+card enters the **Apartment flow only** (designs: `ui-designs/Apartment_Rental/`). Never mix the two flows.
+Do not begin Apartment implementation until the Car Rental flow is complete and approved.
+
+**Screen order**
+1. Rental Home ✅ **FROZEN — Production Ready (Frontend)**
+2. Car Rental Listing ← *current*
+3. Rental Provider List
+4. Rental Provider Details
+5. Rental Checkout
+6. Rental Booking Success
+7. Rental Booking History
+
+Then (only after the whole Car Rental flow is approved): Apartment Home → Listing → Provider → Details →
+Checkout → Booking → Booking History.
+
+**Reuse approved MoonJoin PAGES, not just components.** Many Rental pages are functionally identical to pages
+that already exist. Do **not** redesign them — reuse the approved page architecture and replace only the data:
+
+| Rental page | Reuses the architecture of |
+|---|---|
+| Car Rental Listing (`car_rental.png`) | `restaurant_list.png` (approved Food/storefront listing) |
+| Rental Provider page (`car_rental_provider_item_list.png`) | `store_or_restaurant.png` (approved Store page) |
+| Rental Search | the approved MoonJoin/Food **Search** implementation |
+| Checkout | the approved frozen Checkout + Choose Payment Method |
+
+Reuse layout, search behaviour, filter placement, banner behaviour, category behaviour, pagination, spacing,
+loading states, skeletons, empty states, animations, cards, buttons and navigation. Replace **only** vehicle
+data, rental-specific information and rental features.
+
+**MoonJoin always wins.** If a `ui-design` conflicts with an approved MoonJoin page or component, MoonJoin
+wins. The mock supplies only page arrangement, feature placement, screen flow and rental-specific content —
+it never replaces an approved MoonJoin UI component.
+
+**Category behaviour.** No category selected → default Rental page. Category selected → show the
+providers/items in that Rental category, with provider banners and related content presented the same polished
+way Food behaves after category selection — using the Rental backend and Rental category controller, and
+reusing existing banner behaviour rather than a new implementation.
+
+**Per-screen process.** Audit the existing Rental backend first (APIs, controllers, repositories, services,
+models, filters, search, sorting, banners, categories, providers, favourites, booking) and reuse every existing
+capability. Never duplicate business logic, never fake repositories, never invent APIs. Anything missing →
+complete the frontend professionally with clean integration points and document it in
+`BACKEND_INTEGRATION_QUEUE.md` as **Frontend Complete – Waiting for Backend Integration**. Then stop and report.
+
+---
+
+## Phase — Rental Screen 2: Car Rental Listing 🔒 FROZEN
+
+- **Screen completed:** All Car Rentals — `lib/features/rental_module/home/screens/all_vehicle_screen.dart`
+  (`AllVehicleScreen`), reached from Rental Home → Explore Cars / See All.
+- **Design authority:** `ui-designs/Car_Rental/car_rental.png` for layout/content/flow; **MoonJoin wins** on
+  every component.
+
+**PAGE-LEVEL REUSE — the approved All Restaurants page (`AllStoreScreen`), section for section**
+
+| Section | Reused implementation |
+|---|---|
+| App bar + circle actions | `AllStoreScreen._appBar` / `_circleButton` pattern |
+| Search field | `AllStoreScreen._searchBar` pattern |
+| Category row | shared **`MoonjoinCategoryTile`** |
+| Filter chips | approved **`StoreFilterChip`** |
+| Banner | existing rental **`BannerWidget`** |
+| Top Brands | `AllStoreScreen._topBrands` pattern + **`TopBrandCard`** |
+| Vehicle list | existing shared **`VehicleCard`** (the module's card) |
+| Pagination | approved **`PaginatedListView`** |
+| Loading | shared **`MoonjoinSkeleton` / `SkeletonBox`** |
+
+**Zero new components. Zero duplicated widgets. Zero duplicated business logic.**
+
+**Backend reused** — `getTopRatedCarList` (paginated browse), `getVehicleCategoryList`, `getTaxiBrandList`,
+rental banners, `VehicleCard`'s existing favourite/booking logic, and the existing trip-context flow
+(`TaxiLocationSuggestionScreen` → `SelectVehicleScreen`) for real vehicle filtering.
+
+**Shared-component enhancement** — `TopBrandCard` gained an optional `showCount` (default `true`), so every
+existing module renders identically; Rental passes `false` because the brand API has no `vehicles_count`.
+Additive only, no fork, no regression. See COMPONENTS.md.
+
+**Refinement pass (post-review)**
+1. **Category component unified** — both Rental screens now use **THE** shared MoonJoin Category Component
+   (`MoonjoinCategoryTile` = the Food Home category, adapted to `VehicleCategoryModel`). Screen 2 previously
+   used `RestaurantCategoryChip`, whose image is inset by `paddingSizeSmall` inside a 64px circle with
+   `BoxFit.contain` (~48px effective) — correct for the Food All Restaurants page, wrong as a second category
+   look. Screen 2's row geometry was also aligned to Screen 1 (height 160, `paddingSizeDefault`). The frozen
+   `RestaurantCategoryChip` and the Food All Restaurants page were **not** touched.
+2. **No module-specific visual tuning** — an interim Rental-only icon→title spacing tweak was **reverted**; the
+   shared tile matches Food Home exactly. Every call site passes data only (`label` / `image` / `icon` /
+   `selected` / `onTap`) — zero visual overrides. Future Food Home category improvements propagate to Rental
+   automatically.
+3. **Hero cards (Screen 1)** — the whole card is now tappable; the CTA button remains.
+4. **Sort & Top Rated chips now function** — using the approved Food pattern: **client-side sort of the
+   already-loaded real vehicles** (`dayWisePrice`/`hourlyPrice` for Sort, `avgRating` for Top Rated), with
+   selected state and toggle-off. No new API call, no fake data. They no longer navigate to the pickup flow.
+
+**Deliberately NOT implemented — no backend exists (documented, never faked)**
+- **Category Type** (Dashboard / Car Rental Home / Apartment Rental Home) → queue item 7.
+- **Screen 1 Popular-section category filtering** → queue item 8.
+- **Provider filtering** (Self Drive / With Driver / Top Rated) → queue item 9. There is **no provider list or
+  search endpoint at all**; every provider API requires an already-known id. Those three chips are therefore
+  **rendered but inert** — they do not navigate to the pickup flow (which is not what they mean) and they do
+  not fake filtering. They activate unchanged once the provider endpoints exist. Item 9 carries the full
+  **Backend + Vendor App + Admin** contract.
+
+**Verification** — `flutter analyze` **48 / 0**; build **0 errors**; runtime clean (0 overflow, 0 RenderFlex,
+0 exceptions) on the iOS Simulator against the live backend, reached through the real journey.
+
+**Status: 🔒 FROZEN — Production Ready (Frontend).** Do not redesign. Only reuse its components.
+
+---
+
+## Rental Screen 2 — Provider-flow restructure (post-review, pending approval)
+
+Screen 2 previously listed **vehicle cards** directly. Corrected to mirror the approved Food module flow:
+
+```
+Rental Home → All Car Rentals → Provider banner → Provider page → Vehicle list
+Food Home   → All Restaurants → Restaurant banner → Restaurant page → Food list
+```
+
+**Provider adapter (temporary production adapter).** No provider list endpoint exists, but every vehicle
+embeds a **real backend `Provider`** object. `RentalProviderAdapter` groups loaded vehicles by `provider.id`
+and aggregates feature badges from real vehicle fields. Nothing fabricated. When the Provider List endpoint
+ships, **only the adapter changes** — see BACKEND_INTEGRATION_QUEUE.md item 10.
+
+**`RentalProviderCard`** — permanent visual clone of the frozen `MoonjoinStoreCard` (identical radius, shadow,
+cover ratio, badge geometry, logo, typography, bookmark position), with delivery concepts replaced by vehicle
+feature badges. Frozen card untouched; Food unaffected. Bookmark reuses the existing `TaxiFavouriteController`
+provider wish-list.
+
+**Provider page** — reuses the existing approved rental `VendorDetailScreen`, which already lists that
+provider's vehicles.
+
+**Screen 1 search rewired** — the search bar now opens the existing `SearchVehicleScreen` (search behaviour,
+matching Food) instead of the Location screen. **The location / trip-context flow is fully intact** and still
+used by Screen 2's Filters/Sort and the booking journey — nothing was deleted.
+
+**Category component** — both Rental screens use THE single MoonJoin Category Component
+(`MoonjoinCategoryTile`), identical geometry and spacing, backend data only. The tile draws a circular tinted
+surface because rental category artwork is transparent icon PNGs rather than photographs; without it the icons
+render with no circle. If photo-style category images are uploaded, the surface is unnecessary.
+
+**Verification** — `flutter analyze` **48 / 0**; build **0 errors**; runtime **0 overflow / 0 RenderFlex /
+0 RenderBox / 0 exceptions / 0 null-check**.
+
+**Status: NOT frozen — awaiting product-owner visual approval.**
+
+---
+
+## Rental Screen 2 — behaviour corrections (All Car Rentals)
+
+**Category UI: APPROVED & FROZEN.** Both Rental screens use THE approved MoonJoin category component
+(`RestaurantCategoryChip`, the one used by Food / All Restaurants). No second category component exists.
+Additive optional params only — `imageFit`, `imagePadding`, `fallbackIcon`, `selected` — every default
+preserving existing modules byte-identically. **Do not change category geometry, colours or layout.**
+Category **Type** (Dashboard / Car Rental Home / Apartment Rental Home) is a backend/admin enhancement only —
+queue item 13.
+
+**Navigation corrected — nothing now routes to the Location page from this screen:**
+- **Search bar** and **top search icon** → the existing **Rental Search screen** (`SearchVehicleScreen`).
+- The **Location / trip-context flow is untouched and retained** for the booking journey, trip context and
+  vehicle-selection flow — only this screen's navigation changed.
+
+**Chip behaviour now matches the approved Food pattern:**
+- **Sort** → client-side sort of loaded vehicles by real price. **Top Rated** → client-side sort by real
+  `avg_rating`. No API call, no fake data.
+- **Filters**, **Self Drive**, **With Driver**, **browse category**, **Top Brands card** → rendered but
+  **inert**, because their backend does not exist. They are never routed to an unrelated screen and never fake
+  filtering. Queue item 11.
+
+**Discovery order matches Food** — Category → Filter chips → Banner → Top Brands → **Provider banners** →
+Provider page → Vehicle list. Vehicles are never the first discovery layer.
+
+**Provider cover mapping verified** (queue item 12): the card reads the real `cover_photo_full_url` with a
+`meta_image_full_url` fallback, and `logo_full_url`. A placeholder means the backend supplied neither for that
+provider — the mapping is correct; vendor banner upload is the outstanding work.
+
+**Verification** — `flutter analyze` **48 / 0**; build **0 errors**; runtime clean.
+
+**Status: NOT frozen — awaiting product-owner visual approval.**
+
+---
+
+## 🔒 Rental Screen 2 — All Car Rentals — PRODUCTION READY (FRONTEND) · FROZEN
+
+**Screen:** `lib/features/rental_module/home/screens/all_vehicle_screen.dart` (`AllVehicleScreen`).
+**Approved architecture** (mirrors the Food module exactly):
+
+```
+Rental Home → All Car Rentals → Provider Banner → Provider Detail Page → Vehicle List
+Food  Home  → All Restaurants → Restaurant Banner → Restaurant Page    → Food List
+```
+
+### Provider adapter architecture
+No provider list endpoint exists, but every vehicle embeds a **real backend `Provider`** object.
+`RentalProviderAdapter` groups loaded vehicles by `provider.id`, preserving backend order, and aggregates each
+provider's feature badges from that provider's own vehicles. **Nothing is fabricated.**
+
+```
+TODAY    Vehicle API → group by provider.id → RentalProviderCard
+FUTURE   Provider List API →                  RentalProviderCard
+```
+
+**Migration plan:** when the Provider List endpoint ships, replace **only** `rental_provider_adapter.dart`.
+`RentalProviderCard` and every screen using it **must not change**. Known interim limitation: the derived list
+contains only providers holding a vehicle in the loaded page, and paginates by vehicles rather than providers.
+
+### Provider banner mapping (verified end-to-end)
+`cover_photo_full_url` → falls back to `meta_image_full_url` → neutral placeholder (never fabricated);
+logo from `logo_full_url`. The mapping is **correct**; an empty banner means the backend returned no value for
+that provider (Vendor App upload work — queue item 12).
+
+### Dynamic feature badge system
+Badges derive **only** from real backend fields — `air_condition`→AC, `tag`→Luxury, `fuel_type`→
+Petrol/Diesel/Electric/Gas, `transmission_type`→Automatic/Manual, `type`→SUV/Sedan/Coupe/Pickup/Convertible,
+`seating_capacity`→Seats. A badge appears solely because the backend returned that value. **Zero hardcoding.**
+
+### Reused (no duplication)
+`StoreFilterChip` · `TopBrandCard` (+ additive `showCount`) · `RestaurantCategoryChip` (+ additive `imageFit` /
+`imagePadding` / `fallbackIcon` / `selected`) · `PaginatedListView` · `NoDataScreen` · `CustomImage` ·
+`MoonjoinSkeleton`/`SkeletonBox` · rental `BannerWidget` · `VendorDetailScreen` · `VendorVehicleCard` ·
+existing `TaxiFavouriteController` favourite logic. **Every additive parameter defaults to prior behaviour, so
+Food/Grocery/Pharmacy/Fashion/Parcel are unaffected.**
+
+### Chip behaviour
+**Sort** (real price) and **Top Rated** (real `avg_rating`) sort client-side, exactly like Food — no API call,
+no fake data. **Filters · Self Drive · With Driver · browse category · Top Brands card** are rendered but
+**inert** pending backend; they never route to an unrelated screen and never fake filtering (queue item 11).
+
+### Accepted non-blocking deltas on the Provider Detail page (product-owner decision)
+1. **Green hero header not adopted** — Rental keeps its own cover-banner identity; `StoreHeroHeader` not forced.
+2. **Loading shimmer** — current behaviour accepted; optional future enhancement.
+3. **Share button** — not required for this freeze; optional future enhancement.
+
+### Verification
+`flutter analyze` **48 / 0** · build **0 errors** · runtime **0 overflow / 0 RenderFlex / 0 RenderBox /
+0 exceptions / 0 null-check** · no fake data · no duplicate UI components · no hardcoded rental features ·
+**category frozen and untouched** · **Food module unaffected**.
+
+**Status: 🔒 FROZEN — Production Ready (Frontend).** Do not redesign. Only reuse its components.
+
+---
+
+## ⚙️ PERMANENT MoonJoin Engineering Rule — User App First (never block on backend)
+
+**Never stop User App development waiting for Backend, Vendor App or Admin Panel work.**
+
+1. **User App first.** Complete every screen to production quality. If a backend capability exists, use it. If
+   it does not but **real backend data can be adapted**, build the feature with an adapter over that real data.
+   Never fake APIs or data, never hardcode production content, never duplicate UI components.
+2. **Backend ready.** On discovering a missing capability, do not stop — prepare the User App and document the
+   Backend, Vendor App and Admin Panel work in `BACKEND_INTEGRATION_QUEUE.md` in enough detail to implement
+   those codebases later **without redesigning the User App**.
+3. **Adapter rule.** Adapters are acceptable **only** when built from real backend data, and are **temporary**.
+   When the proper endpoint ships: replace **only the adapter** — never redesign the UI, never change
+   navigation, never change component architecture. Only the data source changes.
+4. **Production architecture — always:**
+   `Backend → Repository → Controller → Adapter (if temporarily required) → UI`
+   **Never** `Backend → UI`. Never duplicate UI because of a backend limitation.
+5. **UI rules.** Reuse approved MoonJoin components; adapt before creating. Only build a Rental-specific
+   component when an approved one **physically cannot** carry Rental data — and then reuse identical spacing,
+   typography, elevation, radius, colours, animations, loading states, shadows, paddings and dimensions.
+
+**Queue documentation must include, per missing capability:** Backend (API contract, request params, response
+model, pagination, filtering, sorting, searching, validation) · Vendor App (screens, settings, uploads, feature
+configuration, provider controls) · Admin Panel (approval workflow, moderation, management screens, analytics,
+configuration).
+
+**Screen 3 decision (recorded):** proceed **without** waiting for Queue Item #10. Continue using
+`RentalProviderAdapter` built from real vehicle/provider data. When Item #10 ships, the adapter is removed or
+simplified, the Provider List endpoint becomes the source, and **no UI redesign is permitted.**
+
+**Frozen screens** (Screen 1 Rental Home, Screen 2 All Car Rentals) may only change for verified bug fixes,
+backend integration, or documentation. **No redesign.**

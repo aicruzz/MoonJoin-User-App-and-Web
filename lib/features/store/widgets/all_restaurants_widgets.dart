@@ -13,7 +13,36 @@ class RestaurantCategoryChip extends StatelessWidget {
   final String? imageUrl;
   final int index;
   final VoidCallback? onTap;
-  const RestaurantCategoryChip({super.key, required this.label, this.imageUrl, this.index = 0, this.onTap});
+
+  /// How the category artwork is fitted. Default `BoxFit.contain` — unchanged for
+  /// every existing module.
+  final BoxFit imageFit;
+
+  /// Inset around the artwork inside the circle. Default `paddingSizeSmall` —
+  /// unchanged for every existing module. Modules whose admin artwork is a
+  /// transparent icon (rather than a photo) can reduce it so the icon reads at full
+  /// size instead of appearing small inside the circle.
+  final EdgeInsetsGeometry? imagePadding;
+
+  /// Glyph used when no artwork exists (e.g. a leading "All" entry).
+  /// Default `Icons.category` — unchanged for every existing module.
+  final IconData fallbackIcon;
+
+  /// Selected affordance for modules whose categories filter in place.
+  /// Default `false` — unchanged for every existing module.
+  final bool selected;
+
+  const RestaurantCategoryChip({
+    super.key,
+    required this.label,
+    this.imageUrl,
+    this.index = 0,
+    this.onTap,
+    this.imageFit = BoxFit.contain,
+    this.imagePadding,
+    this.fallbackIcon = Icons.category,
+    this.selected = false,
+  });
 
   static const List<Color> _tints = [
     Color(0xFFEAF6EC), Color(0xFFFDF3E4), Color(0xFFFDECEC), Color(0xFFE9F7F2), Color(0xFFF3EEFB),
@@ -27,11 +56,15 @@ class RestaurantCategoryChip extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Container(
           height: 64, width: 64,
-          padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-          decoration: BoxDecoration(color: _tints[index % _tints.length], shape: BoxShape.circle),
+          padding: imagePadding ?? const EdgeInsets.all(Dimensions.paddingSizeSmall),
+          decoration: BoxDecoration(
+            color: _tints[index % _tints.length],
+            shape: BoxShape.circle,
+            border: selected ? Border.all(color: Theme.of(context).primaryColor, width: 2) : null,
+          ),
           child: (imageUrl != null && imageUrl!.isNotEmpty)
-              ? ClipOval(child: CustomImage(image: imageUrl!, fit: BoxFit.contain))
-              : Icon(Icons.category, color: Theme.of(context).primaryColor),
+              ? ClipOval(child: CustomImage(image: imageUrl!, fit: imageFit))
+              : Icon(fallbackIcon, color: Theme.of(context).primaryColor),
         ),
         const SizedBox(height: Dimensions.paddingSizeExtraSmall),
         SizedBox(
@@ -182,7 +215,14 @@ class TopBrandCard extends StatelessWidget {
   final String? imageUrl;
   final int itemCount;
   final VoidCallback? onTap;
-  const TopBrandCard({super.key, required this.name, this.imageUrl, this.itemCount = 0, this.onTap});
+
+  /// Whether to render the "N+ items" line. Defaults to `true`, so every existing
+  /// caller behaves exactly as before. Modules whose backend does not yet supply a
+  /// count pass `false` rather than displaying a misleading `0+` (e.g. Rental brands,
+  /// pending `vehicles_count` — see docs/BACKEND_INTEGRATION_QUEUE.md).
+  final bool showCount;
+
+  const TopBrandCard({super.key, required this.name, this.imageUrl, this.itemCount = 0, this.onTap, this.showCount = true});
 
   @override
   Widget build(BuildContext context) {
@@ -207,8 +247,10 @@ class TopBrandCard extends StatelessWidget {
           const SizedBox(height: Dimensions.paddingSizeSmall),
           Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
               style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall)),
-          const SizedBox(height: 2),
-          Text('$itemCount+ ${'items'.tr}', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor)),
+          if (showCount) ...[
+            const SizedBox(height: 2),
+            Text('$itemCount+ ${'items'.tr}', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor)),
+          ],
         ]),
       ),
     );

@@ -19,7 +19,9 @@ frontend when backend starts.**
   - Backend integration queue only (the items below).
   - Vendor App frontend.
   - Delivery Man App frontend.
-  - Rental frontend redesign (Car Rental + Short Apartment Rental — not started).
+  - Rental frontend redesign: ✅ **Screen 1 Rental Home (FROZEN)** ✅ **Screen 2 All Car Rentals (FROZEN)**;
+    next → Rental Provider List / Provider Details / Checkout / Booking Success / Booking History, then the
+    Short Apartment Rental flow.
 
 ---
 
@@ -33,6 +35,18 @@ Meaning:
 - Backend API / config / database / admin implementation is pending.
 - Do **not** redesign the frontend when backend starts.
 - Backend should adapt to the approved frontend contract.
+
+**Frontend Complete — Waiting for Backend/Vendor Integration**
+
+Same as above, but the feature ALSO requires Vendor App and/or Admin Panel work before it can function
+(e.g. vendors must be able to declare what their provider supports). The User App renders the complete UI and
+prepares every integration point; controls that depend on the missing capability stay **inert** — never faked,
+never wired to an unrelated flow, never fed placeholder data.
+
+**Permanent rule.** When a feature cannot work because backend or vendor functionality does not exist yet, the
+User App must still: render the complete UI · prepare all integration points · avoid fake data · avoid fake
+behaviour · document the exact Backend / Vendor / Admin contract here. Backend and Vendor App work then starts
+from a precise contract instead of rediscovering requirements.
 
 ---
 
@@ -125,6 +139,367 @@ automatically once data exists and collapse gracefully while empty.
 
 ---
 
+### 3. Rental Home — Hero Images (Car Rental & Apartment Rental)
+
+- **Module:** Rental (Car Rental + Short Apartment Rental)
+- **App:** User App
+- **Status:** Frontend Complete — Waiting for Backend Integration
+- **Location:** User App → Rental Home (Car & Apt Rental) → the two hero cards near the top.
+
+**Frontend Completed**
+- The two hero cards render a **dynamic, backend-ready image** (no fixed/hardcoded hero artwork in the
+  frontend). Each card has a **dominant, premium image area** (128px tall, full-width, rounded) that supports
+  large portrait/landscape promotional images with **`BoxFit.cover` (aspect ratio preserved, no stretching)**.
+- Images currently load from **temporary placeholder assets** (`kPlaceholderCarHeroImage`,
+  `kPlaceholderAptHeroImage`) via the shared `CustomImage` widget, which already supports remote URLs +
+  graceful placeholder fallback — so swapping to admin URLs needs **no widget change**.
+
+**Frontend Files**
+- `lib/features/rental_module/apartment_placeholder/apartment_placeholder.dart` — `kPlaceholderCarHeroImage`,
+  `kPlaceholderAptHeroImage` (`TODO(BACKEND)`).
+- `lib/features/rental_module/home/screens/taxi_home_screen.dart` — `_heroCard` renders the dynamic image.
+
+**Required Backend Work — full Hero Card contract (not just the image)**
+- **Admin location:** Car & Apt Rental → Sidebar → **Dashboard** → **Hero Cards**, placed **after Trip
+  Management** and **before Promotion Management**.
+- Admin manages the **two hero cards separately** (Car Rental, Short Apartment Rental), each supplying:
+
+| Field | Purpose | Frontend param (already exists) |
+|---|---|---|
+| `image_full_url` | hero image | `image` |
+| `title` | card heading | `title` |
+| `subtitle` | supporting line | `desc` |
+| `cta_text` | button label | `buttonText` |
+| `cta_action` | where the button goes | `onExplore` |
+| `sort_order` | display order of the cards | list order |
+| `status` | enable / disable the card | card shown or omitted |
+| `target` | `car_rental` \| `apartment_rental` \| `both` — which home(s) the card appears on | which home renders it |
+
+- The frontend `_heroCard` **already takes the five content inputs** (image, title, subtitle, CTA text, CTA
+  action), so the backend response maps 1:1. `sort_order`, `status` and `target` are list-level concerns
+  handled where the cards are assembled — a disabled card is omitted, ordering follows `sort_order`, and
+  `target` selects which home (Combined / Car Rental / Apartment Rental) renders each card. **No widget change.**
+- No production copy is hardcoded: titles/subtitles/CTA labels currently come from the i18n layer and the
+  images from the two placeholder constants — all five are single, clearly marked swap points.
+
+**Backend Integration Notes** — return the two hero card objects; bind them to the five existing params.
+No layout / widget / UI change required.
+
+---
+
+### 4. Rental Home — Categories (⚠️ ALREADY BACKEND-INTEGRATED — only the car/apartment split is missing)
+
+- **Module:** Rental (Car Rental + Short Apartment Rental)
+- **App:** User App
+- **Status:** **Backend already exists and is wired** — nothing hardcoded. Only **category type
+  (Car vs Apartment)** is missing, which is expected until Apartment Rental has a backend.
+
+**Audit result (existing backend — REUSED, not recreated)**
+| Capability | Exists? | Where |
+|---|---|---|
+| Category list API | ✅ | `GET /api/v1/rental/vehicle/category-list` (`AppConstants.getVehicleCategoriesUri`) |
+| Category model (id / name / image_full_url) | ✅ | `VehicleCategoryModel` |
+| Controller fetch | ✅ | `TaxiHomeController.getVehicleCategoryList()` |
+| Category IDs + selection state | ✅ | `TaxiHomeController.selectedCategoryIds` / `addOrRemoveCategory(id)` |
+| Backend filtering by category | ✅ | `getSelectedCars(... categoryIds: _selectedCategoryIds ...)` |
+| **Category type (Car vs Apartment)** | ❌ | **missing — see below** |
+| **Parent categories** | ❌ | not present (not currently needed) |
+
+**Frontend Completed** — Rental reuses the approved **MoonJoin Category UI/UX** while preserving the Rental
+module's **existing backend category filtering behaviour**. The row renders the **real backend categories**
+(admin: Car & Apt Rental → Vehicle Management → Categories). Category **names, images and count are 100%
+backend-driven** — nothing hardcoded. Uses the shared `MoonjoinCategoryTile`, with a leading **"All"** tile
+active by default when nothing is selected, and selection driven by the **existing** controller state.
+Creating / renaming / deleting a category in admin needs **no frontend change**.
+
+**Frontend Files**
+- `lib/common/widgets/moonjoin/moonjoin_category_tile.dart` — shared MoonJoin category tile.
+- `lib/features/rental_module/home/screens/taxi_home_screen.dart` — `_categoryChips` (backend-driven).
+- `lib/features/rental_module/home/controllers/taxi_home_controller.dart` — additive
+  `clearSelectedCategories()` (the "All" tile); all existing filter logic untouched.
+
+**Required Backend Work (the only gap)**
+- Add a **category type** (e.g. `type: car | apartment`) to the Rental category model + list API, so:
+  - **Combined Rental Home** → show all categories (current behaviour, already works).
+  - **Car Rental Home** → only `car` categories.
+  - **Apartment Rental Home** → only `apartment` categories.
+- Extend the existing filter endpoints to accept that type. **Do not create a new category system** — extend
+  the existing one.
+
+**Backend Integration Notes** — add the type field + an optional `type` query param to the existing
+`category-list` endpoint. The frontend then passes the type per home screen; no redesign, no new widget.
+
+---
+
+### 5. Car Rental Listing — Browse-mode filtering (no trip context)
+
+- **Module:** Rental (Car Rental) · **App:** User App
+- **Status:** Frontend Complete — Waiting for Backend Integration
+- **Location:** User App → Rental Home → Explore Cars / See All → **All Car Rentals** listing.
+
+**Existing backend limitation (audited)**
+- `getTopRatedCarList(offset)` — the browse endpoint (`/api/v1/rental/vehicle/top-rated`) accepts **only an
+  offset**. No category, brand, sort, price, seating or drive-type parameters.
+- `category_ids` (and every other filter) exists **only** on `getSelectedCars(...)`
+  (`/api/v1/rental/vehicle/search/`), which **requires `pickupTime` + pickup location** — the controller
+  null-asserts `finalTripDateTime!` and `fromAddress!`.
+- `getVehicleCategories(offset)` returns the category **list** only; it is not a filtering endpoint.
+
+**Conclusion: there is NO browse-mode filtering in the Rental backend today.**
+
+**Frontend Completed** — the listing renders the approved filter affordances (Filters, Sort, Self Drive, With
+Driver, Top Rated, Search, Category) using approved shared components, and **none of them fake filtering**.
+Each one routes into the **existing approved trip-context flow** (pickup location → date → time), which
+continues to `SelectVehicleScreen` where the existing backend performs the real filtering. This is the single
+filtering flow — no second filtering implementation exists.
+
+**Required Backend Enhancement**
+- Allow filtering **without trip context** — either add the filter params to the browse endpoint
+  (`category_ids`, `brand_ids`, `sort`, `min_price`/`max_price`, `seating_capacity`, `air_condition`,
+  drive type) **or** make `pickup_time` / `pickup_location` optional on the search endpoint.
+- Once available, the listing can filter in place; the chips simply call the existing controller instead of
+  opening the trip flow. **No UI redesign required.**
+
+---
+
+### 6. Rental Brands — missing `vehicles_count`
+
+- **Module:** Rental (Car Rental) · **App:** User App
+- **Status:** Frontend Complete — Waiting for Backend Integration
+- **Location:** All Car Rentals listing → **Top Brands** section.
+
+**Existing backend limitation** — the rental brand list (`/api/v1/rental/vehicle/brand-list` → `Brands`)
+returns `id`, `image`, `name`, `image_full_url` only. There is **no vehicle count**, so the design's
+"50+ cars" line cannot be populated.
+
+**Frontend Completed** — reuses the approved shared `TopBrandCard`. Because no count exists, Rental passes
+`showCount: false` so the count line is **hidden** rather than showing a fabricated `0+`. `showCount` is a new
+**optional, backward-compatible** parameter defaulting to `true`, so Food/Grocery/Pharmacy/Fashion/Parcel
+render exactly as before. No duplicate brand card was created.
+
+**Required Backend Enhancement** — expose `vehicles_count` per rental brand.
+
+**Backend Integration Notes** — when the field lands, pass it as `itemCount` and drop `showCount: false`.
+**No widget redesign required.**
+
+---
+
+### 7. Rental Category **Type** (Dashboard / Car Rental Home / Apartment Rental Home)
+
+- **Module:** Rental · **App:** User App
+- **Status:** Frontend Complete — Waiting for Backend Integration
+- **Admin location:** Car & Apt Rental → **Vehicle Management → Categories**
+
+**Existing backend limitation** — Category Management has only **one** category type. `/api/v1/rental/vehicle/category-list`
+returns a flat list (`id`, `name`, `image`, `image_full_url`) with **no type/scope field**. Every rental category
+therefore appears on **both** Rental Home (Screen 1) and All Car Rentals (Screen 2).
+
+**Required Backend Enhancement** — add a **Type** field when creating a category, so each category belongs to
+exactly one surface:
+
+| Type | Shown on | Example |
+|---|---|---|
+| `dashboard_page` | Rental Home (Screen 1) | Featured |
+| `car_rental_home` | Car Rental Listing (Screen 2) | SUV, Luxury |
+| `apartment_rental_home` | Apartment Listing (future) | Beach Apartment |
+
+Expose it on the category model and accept an optional `type` filter on `category-list`.
+
+**Frontend Integration Point** — both screens call the same
+`TaxiHomeController.getVehicleCategoryList()` and render via the shared `MoonjoinCategoryTile`. When `type`
+exists, each screen passes its own type (or filters the returned list by type). **No UI redesign required.**
+Until then the current shared-category behaviour is intentionally retained — nothing faked.
+
+---
+
+### 8. Rental Browse — Category filtering of the Popular sections (Screen 1)
+
+- **Module:** Rental · **App:** User App
+- **Status:** Frontend Complete — Waiting for Backend Integration
+
+**Desired behaviour** — selecting a Dashboard category on Rental Home updates only the **Popular Car Rentals** /
+**Popular Apartment Rentals** sections below the rotating banner; no selection shows everything (current, correct).
+
+**Existing backend limitation** — the browse endpoint `getTopRatedCarList(offset)`
+(`/api/v1/rental/vehicle/top-rated`) accepts **only an offset**. It has no `category_ids` parameter, so the
+Popular sections cannot be filtered by category. (`category_ids` exists only on `getSelectedCars`, which
+requires pickup time + location — see item 5.)
+
+**Required Backend Enhancement** — accept `category_ids` (and ideally a `type`) on the top-rated/browse endpoint.
+
+**Frontend Integration Point** — the selection state already exists (`selectedCategoryIds`,
+`addOrRemoveCategory`, `clearSelectedCategories`). When the endpoint accepts the param, pass it and the
+sections filter in place. **No UI redesign required.** Default "All" behaviour is preserved meanwhile.
+
+---
+
+### 9. Rental **Provider** listing, filtering & provider banners
+
+- **Module:** Rental · **App:** User App
+- **Status:** **Frontend Complete — Waiting for Backend/Vendor Integration**
+- **Location:** All Car Rentals → filter chips (Self Drive / With Driver / Top Rated) → provider results.
+
+**Desired behaviour** (mirroring the approved Food All-Restaurants experience): tapping a chip filters the
+**provider** list below Top Brands (Self Drive → providers offering self-drive; With Driver → providers offering
+driver service; Top Rated → providers sorted by rating); provider banners update; tapping a provider opens that
+provider's vehicle listing.
+
+**Existing backend limitation — this has NO backend at all.** Every provider endpoint requires an ID that is
+already known:
+| Endpoint | Requires |
+|---|---|
+| `/api/v1/rental/provider/get-provider-details/{id}` | provider id |
+| `/api/v1/rental/banners/{id}` (provider banners) | provider id |
+| `/api/v1/rental/vehicle/get-provider-vehicles?provider_id=` | provider id |
+| `/api/v1/rental/provider/get-provider-reviews/{id}` | provider id |
+
+There is **no provider list / provider search endpoint**, and no self-drive, with-driver or rating filter or
+sort. A provider list therefore cannot be rendered or filtered at all — so this was **not** implemented and
+**not** faked.
+
+**Current frontend behaviour (production-ready, nothing faked)** — the chips are **fully rendered** and
+**inert**: they do NOT navigate to the pickup-location flow (that is not what they mean) and they do NOT fake
+filtering. They activate unchanged the moment the endpoints below exist.
+
+**Required BACKEND work**
+1. **Provider List endpoint** (paginated), e.g. `GET /api/v1/rental/provider/list?offset=&limit=`, returning per
+   provider: `id`, `name`, `logo_full_url`, `cover_banner_full_url`, `rating`, `rating_count`,
+   `provider_type`, `self_drive` (bool), `with_driver` (bool), `featured` (bool), `popular` (bool),
+   `verified` (bool), `categories[]`, `location`/`zone`, `distance`, `service_availability`.
+2. **Filter / sort / search params:** `self_drive`, `with_driver`, `sort=rating|popular|featured`,
+   `category_ids`, `location`/`zone`, `search`.
+
+**Required VENDOR APP work** — vendors configure their own provider profile:
+`Supports Self Drive` · `Supports Driver Service` · `Provider Categories` · `Featured Provider` ·
+`Operating Area` · `Service Availability` · `Cover Banner` · `Logo` · `Gallery` · `Rating settings`.
+
+**Required ADMIN work** — **Car & Apt Rental → Provider Management**:
+`Provider List` · `Provider Approval` · `Featured Providers` · `Top Rated Providers` · `Self Drive Providers` ·
+`With Driver Providers` · `Provider Categories` · `Provider Banner Management`.
+
+**Frontend Integration Point** — once the list endpoint exists, the provider list slots in below Top Brands,
+reusing the **approved MoonJoin store/restaurant card + provider banner components** (Rental data only, no
+redesign — see COMPONENTS.md), and the existing chips call it. Provider → vehicle listing navigation already
+exists (`get-provider-vehicles`, which already supports `category_ids`). **No UI redesign required.**
+
+---
+
+### 10. Rental Provider Adapter (Temporary Production Adapter) + Provider backend
+
+- **Module:** Rental · **App:** User App
+- **Status:** **Frontend Complete — Waiting for Backend/Vendor Integration**
+- **Location:** All Car Rentals → Provider banners → Provider page → Vehicle list.
+
+**The adapter (today vs future)**
+
+```
+TODAY    Vehicle API → group by provider.id → RentalProviderCard
+FUTURE   Provider List API →                  RentalProviderCard
+```
+
+Every vehicle returned by the existing vehicle APIs embeds a **real backend `Provider`
+object** (`id`, `name`, `logo_full_url`, `cover_photo_full_url`, `avg_rating`, `rating_count`, `discount`).
+`RentalProviderAdapter` groups the loaded vehicles by `provider.id` and aggregates each provider's **feature
+badges** from real vehicle fields (`air_condition`, `tag`, `fuel_type`, `transmission_type`, `type`,
+`seating_capacity`). **Nothing is fabricated — a badge appears only because the backend returned that value.**
+
+**Known limitation** — the derived list contains only providers that have a vehicle in the currently loaded
+page, so it is **not a complete provider directory** and paginates by vehicles, not providers.
+
+**When the Provider List endpoint ships, replace ONLY the adapter. `RentalProviderCard` must not change.**
+
+**Required BACKEND work**
+- **Provider List endpoint** + **provider pagination** · **provider filtering** · **provider search** ·
+  **provider sort**
+- Provider fields: **Self Drive** · **With Driver** · **Featured Provider** · **Verified Provider** ·
+  **Operating Area** · **Availability** · **Gallery** · **Provider categories** · **Provider vehicle count**
+
+**Required VENDOR APP work** — vendors configure their own provider profile:
+**Self Drive toggle** · **Driver Service toggle** · **Featured toggle** · **Category assignment** ·
+**Banner upload** · **Gallery upload** · **Availability** · **Operating Area** · **Vehicle Features**
+
+**Required ADMIN work** — **Provider Management**:
+**Featured** · **Top Rated** · **Self Drive** · **With Driver** · **Category** · **Banner Management** ·
+**Approval** · **Verification** · **Availability** · **Statistics**
+
+**Frontend Files**
+- `lib/features/rental_module/provider_adapter/rental_provider_adapter.dart` — the adapter (the ONLY file that
+  changes when the endpoint ships).
+- `lib/features/rental_module/provider_adapter/rental_provider_card.dart` — permanent provider banner
+  (visual clone of `MoonjoinStoreCard`).
+- `lib/features/rental_module/home/screens/all_vehicle_screen.dart` — renders the provider list.
+
+---
+
+### 11. All Car Rentals — inert affordances (Filters, Brands, browse category filtering)
+
+- **Module:** Rental · **App:** User App
+- **Status:** **Frontend Complete — Production Ready — Waiting for Backend Integration**
+
+**Rule applied:** an affordance whose backend does not exist is rendered but **inert**. It is never wired to an
+unrelated screen (previously these opened the Location page, which was wrong) and never fakes filtering.
+
+| Affordance | State today | Why |
+|---|---|---|
+| **Sort** | ✅ working | client-side sort of loaded vehicles by real price (`day_wise_price`/`hourly_price`) — Food pattern |
+| **Top Rated** | ✅ working | client-side sort by real `avg_rating` — Food pattern |
+| **Filters** | inert | multi-criteria filtering exists only on `getSelectedCars`, which requires pickup time + location |
+| **Self Drive / With Driver** | inert | no such field on any vehicle/provider model, and no provider list endpoint |
+| **Category (browse)** | inert | browse endpoint `top-rated` accepts only an offset; `category_ids` requires trip context |
+| **Top Brands card** | inert | no brand-filtered browse endpoint |
+
+**Required Backend Enhancement** — accept `category_ids`, `brand_ids`, `sort`, price/seating/AC and drive-type
+params on the browse endpoint **without** requiring `pickup_time`/`pickup_location`; add `self_drive` /
+`with_driver` to the vehicle/provider models.
+
+**Frontend Integration Point** — each chip already has its handler location; wiring the call is the only change.
+**No UI redesign required.**
+
+---
+
+### 12. Rental Provider cover image / logo (Vendor App)
+
+- **Module:** Rental · **App:** User App + **Vendor App**
+- **Status:** **Frontend Complete — Waiting for Vendor/Backend Integration**
+
+**Frontend mapping (verified):** `RentalProviderCard` reads `provider.cover_photo_full_url`, falling back to
+`provider.meta_image_full_url`, and `provider.logo_full_url` for the logo — the real fields on the backend
+`Provider` object embedded in every vehicle. If a provider's cover renders as a neutral placeholder, the
+backend supplied **neither** field for that provider; the frontend mapping is correct and needs no change.
+
+**Verified end-to-end chain (Vendor App → Backend → User App):**
+
+| Link | Finding |
+|---|---|
+| **User App displays** | `cover_photo_full_url` → falls back to `meta_image_full_url`; logo from `logo_full_url` |
+| **Backend returns** | the `Provider` object embedded in every vehicle exposes `logo`, `cover_photo`, `logo_full_url`, `cover_photo_full_url`, `meta_image_full_url` — the fields exist on the model |
+| **Fallback order** | `cover_photo_full_url` → `meta_image_full_url` → neutral placeholder (never fabricated) |
+| **Conclusion** | the **frontend mapping is correct and needs no change**. A placeholder means the backend returned an empty value for that provider. |
+
+**Required VENDOR APP work** — provider **Banner/Cover upload**, **Logo upload**, **Gallery** (confirm the
+Vendor App writes to `cover_photo`, i.e. the field the provider payload exposes as `cover_photo_full_url`).
+**Required BACKEND work** — return `cover_photo_full_url` / `logo_full_url` on the provider payload (and on the
+future Provider List endpoint).
+
+**Expected final behaviour** — once a vendor uploads a banner, the User App displays it automatically with
+**no code change**.
+
+---
+
+### 13. Rental Category **Type** (admin enhancement — frontend already prepared)
+
+- **Module:** Rental · **App:** User App · **Status:** **Frontend Complete — Waiting for Backend/Admin**
+- **Admin location:** Car & Apt Rental → **Vehicle Management → Category → Add Category**
+
+Add a **Category Type** selector: **Dashboard Page** · **Car Rental Home** · **Apartment Rental Home**.
+Return `type` on the category model and accept it as an optional filter on `category-list`.
+
+**Current behaviour is intentional and not a defect:** with a single untyped category list, every Rental page
+shows the same categories. **Nothing is faked.** The approved category UI is **frozen**; when the backend sends
+`type`, each screen filters by its own type — **no redesign, no widget change**.
+
+---
+
 ## MoonJoin Development Rule (permanent)
 
 **Before implementing backend, complete all frontend applications first:**
@@ -171,7 +546,9 @@ Brands, Popular/Reviewed/Discounted product sections, Flash sale, Promotional ca
 - **Parcel:** Package Protection → **Waiting for Backend Integration** (see item 1 above). Why Choose Us /
   Get Service steps → **Waiting for Admin Configuration** (see item 2 above). Parcel categories, delivery
   instructions, cancellation reasons, distance/fee calc → already integrated.
-- **Rental (Car Rental + Short Apartment Rental):** frontend **not yet redesigned** (existing `rental_module`
-  = "taxi"). Short Apartment Rental will be built with mock repositories where the backend is missing; those
-  mock/placeholder points will be added to THIS queue when Rental frontend work begins. Nothing to integrate
-  yet.
+- **Rental (Car Rental + Short Apartment Rental):** frontend redesign **in progress** (existing `rental_module`
+  = "taxi"). **Rental Home (Screen 1)** is being built by reusing approved MoonJoin components. Car Rental uses
+  the existing Taxi backend; Short Apartment Rental has no backend and uses an **isolated UI-layer placeholder**
+  (`apartment_placeholder.dart`, `TODO(BACKEND)`) — **no mock repository**. Backend-pending Rental items now in
+  this queue: **Hero Images** (item 3), **Category Images** (item 4), and **Short Apartment Rental** listing/
+  details/booking (to be added as those screens are built).
