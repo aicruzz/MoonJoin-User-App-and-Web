@@ -115,16 +115,29 @@ class RiderAddressInputField extends StatelessWidget {
                   onSelected: (PredictionModel suggestion) async {
                     await taxiLocationController.setLocationFromPlace(suggestion.placeId, suggestion.description, isFormAddress, mapController);
 
-                    if(userData != null) {
+                    // Only pop back to a LIVE map (original flow: this field was
+                    // reopened from the map). Entered from Vehicle Details there is
+                    // no map beneath — stay until both fields are set.
+                    if(userData != null && mapController != null) {
                       Get.back();
                     }
 
                     if (taxiLocationController.fromAddress != null && taxiLocationController.toAddress != null) {
                       taxiLocationController.updateCameraMovingStatus(false);
-                      Get.to(() => TaxiLocationScreen(
-                        fromAddress: taxiLocationController.fromAddress, toAddress: taxiLocationController.toAddress,
-                        fromSuggestionScreen: userData == null, userData: userData, vehicle: vehicle,
-                      ));
+                      if((userData != null || vehicle != null) && mapController == null) {
+                        // Cart-edit entered from Vehicle Details: REPLACE the Location
+                        // page with the map, so the confirm's existing single
+                        // `Get.back()` (after updateUserData) lands on Vehicle Details.
+                        Get.off(() => TaxiLocationScreen(
+                          fromAddress: taxiLocationController.fromAddress, toAddress: taxiLocationController.toAddress,
+                          fromSuggestionScreen: false, userData: userData, vehicle: vehicle,
+                        ));
+                      } else {
+                        Get.to(() => TaxiLocationScreen(
+                          fromAddress: taxiLocationController.fromAddress, toAddress: taxiLocationController.toAddress,
+                          fromSuggestionScreen: userData == null, userData: userData, vehicle: vehicle,
+                        ));
+                      }
                     }
 
                   },

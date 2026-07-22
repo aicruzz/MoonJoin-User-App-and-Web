@@ -1796,5 +1796,15 @@
   "with_driver": "Con conductor",
   "transmission": "Transmisión",
   "most_relevant": "Más relevante",
-  "vehicles_found": "Vehículos encontrados"
+  "vehicles_found": "Vehículos encontrados",
+  "photo_gallery": "Galería de fotos",
+  "pay_to_driver_on_trip": "Pagar al conductor en el viaje",
+  "pay_to_apartment_provider": "Pagar al proveedor del apartamento",
+  "dropoff_location": "Lugar de destino",
+  "need_help_contact_your_provider_anytime": "¿Necesitas ayuda? Contacta a tu proveedor en cualquier momento",
+  "okay_got_it": "¡Vale, entendido!",
+  "great_choice_booking_confirmed": "¡Gran elección! Tu reserva ha sido confirmada y lo estamos preparando todo para ti.",
+  "booking_request": "Solicitud de reserva",
+  "schedule_booking_request": "Solicitud de reserva programada",
+  "successful": "Exitosa"
 }

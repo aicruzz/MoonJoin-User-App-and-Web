@@ -91,7 +91,7 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
               _categoryChips(taxiHomeController),
               _filterChips(context),
 
-              const SizedBox(height: Dimensions.paddingSizeSmall),
+              const SizedBox(height: Dimensions.paddingSizeExtraSmall),
               const BannerWidget(),
 
               const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -171,11 +171,11 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
     // one used by Food/All Restaurants and every approved module. Rental shares it;
     // only the backend data differs. Never substitute another category widget here.
     return SizedBox(
-      height: 160,
+      height: 108,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, top: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeDefault),
+        padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, top: Dimensions.paddingSizeSmall, bottom: Dimensions.paddingSizeSmall),
         itemCount: categories.length,
         separatorBuilder: (context, index) => const SizedBox(width: Dimensions.paddingSizeDefault),
         itemBuilder: (context, index) {

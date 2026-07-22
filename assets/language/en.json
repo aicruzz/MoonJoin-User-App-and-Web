@@ -1812,5 +1812,15 @@
   "with_driver": "With Driver",
   "transmission": "Transmission",
   "most_relevant": "Most Relevant",
-  "vehicles_found": "Vehicles Found"
+  "vehicles_found": "Vehicles Found",
+  "photo_gallery": "Photo Gallery",
+  "pay_to_driver_on_trip": "Pay to Driver on Trip",
+  "pay_to_apartment_provider": "Pay to Apartment Provider",
+  "dropoff_location": "Dropoff Location",
+  "need_help_contact_your_provider_anytime": "Need help? Contact your provider anytime",
+  "okay_got_it": "Okay, Got it!",
+  "great_choice_booking_confirmed": "Great choice! Your booking has been confirmed and we're getting everything ready for you.",
+  "booking_request": "Booking Request",
+  "schedule_booking_request": "Schedule Booking Request",
+  "successful": "Successful"
 }

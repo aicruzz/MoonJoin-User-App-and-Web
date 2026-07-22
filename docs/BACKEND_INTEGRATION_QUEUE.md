@@ -19,9 +19,9 @@ frontend when backend starts.**
   - Backend integration queue only (the items below).
   - Vendor App frontend.
   - Delivery Man App frontend.
-  - Rental frontend redesign: ✅ **Screen 1 Rental Home (FROZEN)** ✅ **Screen 2 All Car Rentals (FROZEN)**;
-    next → Rental Provider List / Provider Details / Checkout / Booking Success / Booking History, then the
-    Short Apartment Rental flow.
+  - Rental frontend redesign: ✅ **Screen 1 Rental Home (FROZEN)** ✅ **Screen 2 All Car Rentals (FROZEN)**
+    ✅ **Screen 3 Provider List (ABSORBED INTO SCREEN 2, FROZEN)** ✅ **Screen 4 Provider Details (FROZEN)** ✅ **Vehicle Details (FROZEN)** ✅ **Checkout (FROZEN, MASTER payment implementation)** ✅ **Booking Success (FROZEN)** — **CAR RENTAL FLOW COMPLETE**;
+    next → Rental Checkout / Booking Success / Booking History, then the Short Apartment Rental flow.
 
 ---
 
@@ -530,6 +530,45 @@ seats / vehicle type / air conditioning).
 **Frontend Integration Point** — add a Transmission section to the existing `VehicleFilterWidget` and pass the
 selected value through the existing `getVendorVehicleList` call. **No UI redesign required** — the chip already
 exists in its final position.
+
+---
+
+### 15. ~~Vehicle Details — vehicle location/area line~~ **RESOLVED — not a backend gap**
+
+- **Module:** Rental · **App:** User App · **Status:** ✅ **Resolved (product-owner clarification)**
+
+Initially logged as a missing vehicle-location field. **Incorrect.** The design's location line
+("📍 Lekki Phase 1") is the **user's selected browsing location** — the same real source every approved
+MoonJoin header uses (`AddressHelper.getUserAddressFromSharedPref()?.address`, cf. the Home header and the
+"Ikeja, Lagos" / "Lekki, Lagos" lines across the Rental designs). `VehicleDetailsScreen._header` now renders
+it from that source. **No backend, Vendor App or Admin work required.**
+
+---
+
+### 16. Rental Checkout — **Pay Now** at booking (payer/timing + payment method)
+
+- **Module:** Rental (Car + future Short Apt) · **App:** User App · **Status:** **Frontend Complete — Waiting for Backend**
+- **Location:** Rental Checkout (`TaxiCheckoutScreen`) → Payment section.
+
+**Frontend Completed** — Parcel-format payer/timing selector: **Pay Now** · **Pay to Driver on Trip**
+(default; apt flow will use `pay_to_apartment_provider`). Pay Now reveals the approved shared
+**`PaymentSection`** (same component/controller/bottom-sheet as Food/Grocery/Pharmacy/Ecommerce/Parcel),
+gated by zone+config digital/wallet/offline flags; cash is deliberately excluded from Pay Now because cash IS
+the pay-on-trip option. Nothing faked: Confirm Booking always runs the real `trip-book` flow.
+
+**Backend reality (verified):** `POST trip-book` accepts **no payment fields**, and the production payment
+(`makePayment` + `TaxiPaymentBottomSheet`) is only offered once `trip_status == completed`. Pay-at-booking is
+therefore architecturally impossible today.
+
+**Required BACKEND work** — accept `payment_timing` (`pay_now` | `pay_on_trip`) and `payment_method` (wallet /
+digital gateway / offline) on `trip-book`; for `pay_now`, return the trip id + payment redirect (reuse the
+existing `makeTripPayment` contract) so the app can launch the EXISTING payment flow immediately after booking.
+
+**Required ADMIN work** — surface the booking's payment timing/status in trip management.
+
+**Frontend Integration Point** — the marked block in `TaxiCheckoutScreen` (search `PAY-NOW — BACKEND
+INTEGRATION POINT`); selector state `_payTimingIndex`, method via the shared `CheckoutController`.
+**No UI redesign required.**
 
 ---
 

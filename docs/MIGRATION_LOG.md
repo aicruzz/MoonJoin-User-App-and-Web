@@ -42,7 +42,34 @@ incompatibility, or explicit user approval to reopen. No cosmetic changes. Add e
 
 - ✅ **Rental Screen 2 — All Car Rentals** — **Production Ready (Frontend) · FROZEN** (`AllVehicleScreen`) —
   Provider Banner → Provider Detail Page → Vehicle List, mirroring the Food All Restaurants flow; provider
-  adapter derives real providers from real vehicle data pending the Provider List endpoint.
+  adapter derives real providers from real vehicle data pending the Provider List endpoint. Provider-card
+  feature badges parse the backend `tag` JSON-array into clean tokens ("Lexus", "Luxury") — presentation-only.
+
+- ✅ **Rental Screen 3 — Provider List — ABSORBED INTO SCREEN 2 · FROZEN** — not a separate screen; the provider
+  layer lives inside `AllVehicleScreen` (`RentalProviderAdapter` → `RentalProviderCard`), mirroring how the Food
+  restaurant list lives inside All Restaurants. No standalone provider-list design exists.
+
+- ✅ **Rental — Booking Success** — **Production Ready (Frontend) · FROZEN**
+  (`ConfirmBookingRequestBottomSheet`) — design `booking_request_successful.png`; real trip data + provider
+  call; auto-opens over Trip Details after a real booking.
+
+- ✅ **Rental — Checkout** — **Production Ready (Frontend) · FROZEN** (`TaxiCheckoutScreen`) — existing
+  production checkout preserved (already matching `car_rental_checkout.png` section-for-section) + the
+  Payment section: Parcel-format payer selector (Pay Now | Pay to Driver on Trip) + approved shared
+  `PaymentSection`. **MASTER payment implementation — Short Apt Rental reuses it exactly (wording only).**
+
+- ✅ **Rental — Vehicle Details** — **Production Ready (Frontend) · FROZEN** (`VehicleDetailsScreen`) — design
+  `car_rental_details.png` (+ in-page trip-type variant); real trip context (Location page → map confirm),
+  direct trip-type selection, live estimate calculation, silent auto-retry loading, cart-backed
+  Proceed-to-Checkout. Zero new shared components.
+
+- ✅ **Rental Screen 4 — Provider Details (Provider Item List)** — **Production Ready (Frontend) · FROZEN**
+  (`VendorDetailScreen`) — page-level reuse of the approved Store page: green hero (`RentalProviderHeroHeader`,
+  a visual clone of the frozen Store-typed `StoreHeroHeader`) → search pill → filter chips → real category strip
+  → provider banners → "N found" + client-side sort → paginated `VendorVehicleCard` list. 100% real backend
+  data. Fixed a pre-existing `get-provider-details` string-counter parse crash that had made the page unreachable.
+  Transmission chip inert pending backend (queue item 14); "View on Map" card / share button are documented
+  deltas (frozen `Store`-typed `StoreMapView`, no share URL).
 
 **Status: Production Ready · Frozen**
 
@@ -1643,3 +1670,302 @@ loading shimmer adopted (was delta 2).
 **Not deleted:** `SearchAndFilterWidget` (its search icon / filter icon / category row are now served by the
 hero pill, the chip row and the category strip) is **left on disk, untouched**, per the standing no-automatic-
 deletion rule — to be resolved in the single post-Rental dead-code audit, not opportunistically here.
+
+### 🐞 Production bugs found & fixed (both blocked the page from working)
+
+1. **Provider Details never rendered — `get-provider-details` parse crash.** The backend serialises the
+   provider counters as **strings** (`"order_count": "0"`, `"total_order": "0"`, `"total_vehicle_count": "1"`),
+   while `TaxiVendorModel` types them `int?`. The raw assignment threw
+   `type 'String' is not a subtype of type 'int?'`, which aborted `TaxiVendorModel.fromJson` — leaving
+   `taxiVendor` null so the page hung on its loading state **forever**. This was a pre-existing bug that made the
+   whole legacy provider page unreachable; it surfaced immediately once the page was migrated. Fixed with a
+   defensive `_asInt()` that accepts either a number or a numeric string and returns `null` (never a fabricated
+   default) for absent/unparseable values. Also mapped the real `total_vehicle_count` field so the hero shows the
+   provider's true vehicle total. Regression test: `test/rental/taxi_vendor_model_test.dart` (3 cases: string
+   counters, int counters, absent→null) — **all pass**. Verified at runtime: the page now renders fully.
+2. **Duplicate "All" category chip.** `TaxiVendorController.getVendorVehicleCategoryList()` already prepends an
+   "All" entry (`id: -1`, which the repository maps to an unfiltered request). The first screen build added a
+   *second* synthetic "All". Fixed by rendering the controller's list as-is (no synthetic prepend) and defaulting
+   the selected id to `-1`. Verified at runtime: a single "All" now shows.
+
+### Verification (before freeze)
+- **`flutter analyze`** → **48 issues, 0 from rental** (identical to the pre-existing baseline).
+- **Unit** → `test/rental/taxi_vendor_model_test.dart` 3/3 pass.
+- **Runtime (iOS Simulator, real backend, provider 39 "Peeprate Car Rental")** — full flow
+  Home → All Car Rentals → provider card → **Provider Details** → back. Page renders completely with **100%
+  real backend data** (name, rating, address, cover photo, `total_vehicle_count`, real categories, real vehicle
+  card). Log clean: **0 subtype / 0 RenderFlex / 0 overflow / 0 RenderBox / 0 null-check / 0 unhandled
+  exceptions** (only unrelated APNS/Firebase simulator-environment noise). Category strip shows a single "All"
+  (dedup fix confirmed). Back-navigation confirmed. Every displayed field verified to come from the backend —
+  nothing hardcoded or fabricated.
+
+**Status: 🔒 FROZEN — Production Ready (Frontend).** Approved by the product owner. Do not redesign, refactor or
+restyle. Only reuse its components. May change only for verified bug fixes, backend integration, or docs.
+
+---
+
+## 🔒 Rental Screen 2 — provider-card badge formatting — ISOLATED PRODUCTION POLISH (Screen 2 stays FROZEN)
+
+**Bug.** The provider card on **All Car Rentals** displayed the raw backend `tag` value — a stringified JSON
+array — as a badge: `["lexus"]`. Not production quality.
+
+**Fix (presentation only).** `RentalProviderAdapter._badgesFor` now parses `tag` into clean, individually
+title-cased tokens via a new private `_parseTags` helper: JSON-decodes the array (`["Lexus"]` → `Lexus`;
+`["Luxury","Premium"]` → `Luxury`, `Premium`), with a defensive bracket/quote-strip + comma-split fallback for
+plain or malformed values. Renders **"Lexus" / "Luxury" / "SUV"** etc.
+
+**Strict scope — nothing else touched:**
+- **Backend model unchanged** — `VehicleModel.tag` still `String?`, assigned raw.
+- **Adapter architecture unchanged** — still groups real vehicles by `provider.id`; only badge *formatting*
+  changed. Still derived from real backend fields; nothing invented.
+- **Screen 2 not unfrozen / not redesigned** — no layout, component, navigation or business-logic change.
+- **Other modules unaffected** — `RentalProviderAdapter` is referenced only inside the rental module
+  (`all_vehicle_screen.dart`, `rental_provider_card.dart`); Food/Grocery/Pharmacy/Fashion/Parcel do not use it.
+
+**Verification** — new `test/rental/rental_provider_adapter_test.dart` (4 cases: single-element array,
+multi-element array, plain string, null/empty) **all pass**; total rental tests **7/7**. `flutter analyze`
+**48/0 baseline**. Screen 2 remains 🔒 FROZEN apart from this isolated formatting fix.
+
+---
+
+## Phase — Rental: Vehicle Details (design audit + implementation)
+
+### Design audit (before any code)
+- **`car_rental_details.png` is the Vehicle Details page.** `car_rental_details_trip_type.png` is the SAME
+  page with **Per Day** selected — it only reveals the trip-type-dependent sections ("Estimate Days" row,
+  bottom estimate/price). **One page, not two.** `car_rental_checkout.png` reviewed for flow continuity
+  (Details → Checkout → Booking Success), not implemented in this phase.
+- **Flow position:** Provider Details → vehicle card → **Vehicle Details** → Checkout.
+
+### Model/backend audit — what the design shows vs what is REAL
+| Design element | Real source | Status |
+|---|---|---|
+| Name, ★rating "(N+)" | `name`, `avg_rating`, `total_reviews` | ✅ real |
+| Feature pills (Seats/Transmission/Fuel/AC) | `seating_capacity`, `transmission_type`, `fuel_type`, `air_condition` | ✅ real |
+| Location line ("Lekki Phase 1") | **the user's selected location** — `AddressHelper.getUserAddressFromSharedPref()?.address`, the same source as every approved MoonJoin header (product-owner clarification; queue item 15 resolved) | ✅ real |
+| Hero image / gallery | `thumbnail_full_url` / `images_full_url` | ✅ real (gallery hidden when backend returns none) |
+| Trip Type cards + Start From prices | `trip_distance/hourly/day_wise` flags + real prices + discount | ✅ real |
+| Where to go / Pickup Time / Estimate | existing trip context (`TaxiLocationController`) or the cart's real `userData` | ✅ real |
+| Estimated km/hr/day + total | existing distance/duration APIs + the pre-existing price calculation | ✅ real |
+
+### Reuse (no duplicate components)
+Existing **`TripTypeCard`** (interactive pre-cart via `selectTripType`, locked to the cart's real
+`rentalType` in-cart — both are its own existing modes) · existing **`DateTimePickerSheet`** (handles cart and
+pre-cart pickup-time editing) · existing **`TaxiLocationSuggestionScreen`** (destination + real
+distance/duration) · existing **`CustomTextField`** estimate inputs with the SAME controllers/validation as
+the production location bottom sheet · frozen shared **`QuantityButton` → `setQuantity`** quantity system ·
+`CustomButton` · `CustomImage` · existing `_addToCart` / `decideAddToCart` / `removeFromCart` /
+`_calculateDiscount` logic **verbatim** · "Add More Vehicle +" reuses the cart screen's exact behaviour ·
+production **`TaxiCheckoutScreen`** (no-arg, reads the cart — same contract as from the cart screen).
+One local presentation-only addition: `_DashedBorderPainter` (the design's dashed "Add More Vehicle"
+container; private to the screen, not a shared component).
+
+### Flow decision — "Proceed to Checkout"
+The cart remains the single source checkout reads. Proceed: in cart → open checkout · no trip context →
+existing destination flow (`TaxiLocationSuggestionScreen`) · trip context ready → the SAME validation as the
+production location bottom sheet, then the existing `addToCart`, then checkout once the backend confirms.
+The multi-vehicle path still runs `decideAddToCart`'s existing dialog flow and never auto-navigates over it.
+
+### Deltas vs the previous legacy screen (design-driven, logic preserved)
+Removed FROM VIEW per the approved design (all still real data, none deleted from the codebase):
+description block, "similar vehicles" count chip, provider info card (providers are reached through the real
+journey — the page is entered from the Provider page), app-bar cart icon. The in-cart **quantity stepper**
+(not drawn in the design) is retained in the bottom bar — removing it would delete working production cart
+functionality; frozen shared quantity system reused unchanged.
+
+### 🐞 Production bug found & fixed during runtime verification
+**Vehicle Details never rendered — `get-vehicle-details` parse crash.** The details endpoint serialises
+`total_vehicles` as a **string** (`"1"`) while the list endpoints send integers; `VehicleModel` types it
+`int?`, so `fromJson` threw `type 'String' is not a subtype of type 'int?'` and `vehicleDetailsModel` stayed
+null — the page hung on its loader forever. Pre-existing (the legacy details screen used the same model and
+endpoint, so it crashed identically). Fixed with the same defensive `_asInt()` resolution as
+`TaxiVendorModel` (number or numeric string; absent stays null — nothing fabricated), applied to
+`total_vehicles` and `total_vehicle_count`. Verified against the raw API response. Regression test:
+`test/rental/vehicle_model_test.dart` (3 cases) — rental suite now **10/10**.
+
+**Location-line correction (product owner).** Queue item 15 was withdrawn: the design's "📍 Lekki Phase 1" is
+the **user's selected browsing location**, not a vehicle field. The header now renders it from
+`AddressHelper.getUserAddressFromSharedPref()?.address` — the identical source as every approved MoonJoin
+header. No backend work required.
+
+**Status: implementation complete — verification in progress; NOT yet frozen.**
+
+### Vehicle Details — post-review corrections (product owner)
+1. **Where-to-go**: hint-only when empty (never pre-filled); once pickup+destination confirmed, replaced by the
+   EXISTING `TripFromToCard` (both filled + edit pencil), old-design behaviour.
+2. **Location page early-redirect bug fixed**: in cart-edit mode entered from Vehicle Details (no live map),
+   tapping a recent/saved address popped back immediately with the old destination. The unconditional
+   `Get.back()` in `MapRecentSavedAddress` was correct only when reopened FROM the map (`mapController` set);
+   now it pops only then — otherwise the page waits for both fields and confirms on the map, like pre-cart.
+3. **Trip Type**: direct selection on tap (no popup), both modes — the card's own existing
+   `selectTripType` behaviours. In-cart changes persist through the production cart-update logic
+   (`checkTypeInCart` → `updateUserData`/`TripVehicleListDialog`) on Proceed to Checkout.
+4. **Instant estimate calculation**: estimate inputs now `setState` per keystroke so the bottom-bar
+   estimate/price recomputes live — no trip-type re-tap, no popup.
+
+**📌 RECORDED FOR CHECKOUT (REVISED by product owner, same day):** DO include the approved **Choose Payment
+Method** card on Rental checkout — Car AND Short Apt Rental — reusing the frozen component **unedited**.
+Above the card, add a payer/timing selector (e.g. "Pay now" vs "Pay to driver on trip" / "Pay to apartment
+provider" — naming may be adapted for clarity), using the SAME format the **Parcel request page** uses for
+choosing who pays (its sender/receiver payer selector). Existing production booking flow stays intact.
+
+### Vehicle Details — final stabilisation round (all product-owner verified on device)
+1. **Cart-edit location stack fixed**: entered from Vehicle Details, the map now REPLACES the Location page
+   (`Get.off`), so the existing post-update `Get.back()` lands on Vehicle Details — no Location page
+   re-appearing with cleared fields. Original map-reopen flow untouched (guarded on `mapController != null`).
+   Deliberately NOT a copy of the legacy stack (which had its own misbehaviour — product owner): the flow is
+   now deterministic: Details → Location → Map → confirm → Details.
+2. **Trip Type**: direct tap-to-select in both modes (no popup, no duplicated section); in-cart changes persist
+   via the production update on Proceed. Verified working by the product owner.
+3. **Instant estimate recalculation** via `onChanged` setState. Verified.
+4. **Infinite-loader defect fixed with SILENT auto-retry**: the repository returns null on any non-200 and the
+   controller stores it silently — one failed request previously spun forever (reproduced by the product owner
+   on a healthy network; endpoint probes healthy but up to ~3.2s). `_loadVehicleDetails` now retries in the
+   background (1s/2s/3s then every 5s while the page is open) — the loader simply resolves; **no error screen
+   is ever shown** (product-owner requirement: professional silent recovery).
+
+**Runtime (product owner, ~4 full passes of the whole Car Rental flow + this session's log):** flow works
+end-to-end; log clean — 0 subtype / 0 RenderFlex / 0 overflow / 0 RenderBox / 0 null-check / 0 unhandled
+exceptions; cart updates persisted (6 calls observed); price verified correct (₦10,000 × 2.0 hr − ₦500 = ₦19,500).
+
+### Final pre-freeze audit (approved by product owner)
+All `car_rental_details.png` sections present with real data; `_trip_type` variant confirmed in-page. One
+inconsistency fixed with proven root cause: the cart location-edit success path runs `initialSetup()`, which
+cleared the seeded estimate controllers — the page now re-seeds them from the refreshed cart on return, so the
+estimate input always matches the bottom-bar value. No backend/controller/API/pricing/cart logic touched.
+
+**Status: 🔒 FROZEN — Production Ready (Frontend).** Approved by the product owner after visual verification.
+Do not redesign, refactor or restyle. May change only for verified bug fixes, backend integration, or docs.
+
+---
+
+## 🔒 Vehicle Details — journey stabilisation (verified bug fix on the frozen screen) — CONFIRMED & RE-FROZEN
+
+**Symptom (product owner):** intermittent "two designs / mixed-up pages / no price calculation". Root causes
+proven, not assumed:
+1. **Stale builds** — several interrupted/partial builds left old binaries on the simulator (the "old design"
+   seen no longer exists in the codebase). Resolved by clean uninterrupted rebuilds.
+2. **Pre-cart mode was a different journey.** With an EMPTY cart (the state after every successful booking),
+   the page correctly shows "Where to go?", but its journey still ran the legacy
+   `TaxiLocationResultScreen` + add-to-cart sheet, whose triple-pop landed on wrong pages, and the bottom bar
+   only showed the start-from price. All earlier testing had been in-cart, so this path first surfaced after
+   the first completed booking — appearing as "sometimes unstable".
+
+**Fix — ONE deterministic journey for both modes** (`Details → Location → Map → Confirm → Details`):
+- Details-entry (vehicle passed, no live map): the Location page is REPLACED by the map (`Get.off`), pre-cart
+  and cart-edit alike (`rider_address_input_field.dart`, `map_recent_saved_address.dart`).
+- `TaxiLocationController.setFromToMarker` normal-flow branch: when `vehicle != null` (only reachable from the
+  Vehicle Details journey) the map confirm returns straight to Details — the legacy result screen + add-to-cart
+  sheet are no longer part of this journey. The home-search journey (`vehicle == null`) is untouched.
+- Pre-cart bottom bar now computes the REAL total once context exists (rate × km/hrs/days − discount — the
+  same maths as the in-cart branch and cart backend), falling back to the design's start-from price before.
+
+**Verified by the product owner on device in BOTH modes** (in-cart and empty-cart, including booking →
+empty-cart → rebook). **Status: 🔒 FROZEN (re-affirmed).**
+
+---
+
+## Phase — Rental Checkout (`car_rental_checkout.png`) — payment section added, verified on device
+
+**Audit result:** the existing production `TaxiCheckoutScreen` already implements the approved design
+section-for-section — Selected Vehicle (+edit), guest info (guest mode), Promo Code + "Add Voucher +"
+(+ coupon sheet), Additional Note, Bill Details (`BillDetailsWidget`: Trip Cost / Trip Discount / Subtotal /
+Service Charge / tax / Total), Terms & Conditions, bottom estimate + Confirm Booking. All of it preserved
+untouched (calculations via `TaxiPriceHelper`, tax via `getTripTax`, booking via `tripBook`).
+
+**Added (product-owner requirement):** a **Payment** section between Additional Note and Bill Details —
+- Payer/timing selector in the Parcel "Charge Pay By" `RadioGroup` format: **Pay Now** · **Pay to Driver on
+  Trip** (default — the real production flow; `pay_to_apartment_provider` key ready for the Apt flow).
+- **Approved shared `PaymentSection`** (identical component/controller/bottom-sheet as
+  Food/Grocery/Pharmacy/Ecommerce/Parcel) revealed on Pay Now; zone+config gated (digital/wallet/offline);
+  cash excluded from Pay Now because cash IS the pay-on-trip option.
+- **Nothing faked:** `trip-book` accepts no payment fields (verified) — Confirm Booking always runs the real
+  flow; the Pay Now transmission is a marked integration point (queue item 16, full backend contract).
+
+**Verification:** `flutter analyze` rental module 0 issues · rental tests 10/10 · product-owner verified on
+device (payment section renders, Pay Now reveals the card, booking flow intact).
+
+### Payment-flow verification (pre-freeze, product owner)
+`_payTimingIndex` drives ONLY the UI (radio state + revealing `PaymentSection`); the Confirm handler is
+untouched — **both payer options call the identical production `trip-book` API**, no fake payment logic.
+"Pay to Driver on Trip" = the real cash/pay-later production flow; "Pay Now" = the same production online
+flow, transmitted at booking once backend/config enables it (queue item 16).
+
+### 📌 PERMANENT ARCHITECTURE DECISION — Rental Checkout payment is the MASTER implementation
+The **Car Rental Checkout payment experience** (payer selector + shared `PaymentSection` + production
+booking pattern) is the master. **Short Apartment Rental MUST reuse it exactly** — same UI/UX, component
+hierarchy, interaction, business flow, and shared components. Only wording changes:
+"Pay to Driver on Trip" → **"Pay to Apartment Provider"** (`pay_to_apartment_provider` key ready in 4
+languages). Never design a second payment style or duplicate a payment component for Apt.
+
+**Status: 🔒 FROZEN — Production Ready (Frontend).** Approved by the product owner after payment-flow
+verification. Booking Success / Trip Details (post-booking) are the NEXT migration targets.
+
+---
+
+## Car Rental — final pre-freeze fixes (product-owner list) — Checkout · Booking Success · Home spacing
+
+1. **Home spacing aligned to the approved modules** (product-owner-directed adjustment to frozen Screens 1&2):
+   rental category rows were `height 160 / vertical paddingSizeDefault` vs the approved storefront home's
+   `height 108 / vertical paddingSizeSmall` (AllStoreScreen); banner gap `paddingSizeSmall` vs
+   `paddingSizeExtraSmall`. Both rental screens now use the exact approved values — same layout rules, no
+   module-specific spacing. (Short Apt shares the same Rental Home, so it inherits this automatically.)
+2. **Checkout Pay-Now validation**: Confirm Booking is blocked with `please_select_payment_method_first` when
+   Pay Now is selected and no method chosen — the exact validation the Parcel request page performs on the
+   shared `CheckoutController.paymentMethodIndex`. Pay to Driver on Trip = unchanged cash/pay-later
+   production flow. No fake payment, no bypass.
+3. **Checkout "read error" — root cause proven & fixed at the model boundary**: the backend serialises the
+   cart `pickup_time` in TWO shapes — canonical `yyyy-MM-dd HH:mm:ss` on some responses but **ISO-8601 UTC**
+   on the add-to-cart echo. The strict `DateConverter.dateTimeStringToDate` parser threw
+   `FormatException … at 11` when Checkout was entered right after a fresh add-to-cart (captured live in the
+   simulator log). `UserData.fromJson` now normalises to canonical local time (`_normalizeDateTime` — same
+   boundary-normalisation pattern as `_asInt`). Regression test `test/rental/car_cart_model_test.dart`
+   (ISO→canonical, passthrough, null) — rental suite **13/13**.
+4. **Booking Success**: approved direction retained — no redesign.
+5. **Permanent architecture** re-affirmed: Car Rental Checkout payment is the MASTER; Short Apt reuses it
+   exactly (wording-only: "Pay to Apartment Provider").
+
+**Verified on device by the product owner (all four passes: spacing · Pay-Now validation · pay-on-trip
+booking · repeated back-to-back checkouts). `flutter analyze` rental module 0 issues · rental tests 13/13.**
+
+## 🔒 CAR RENTAL FLOW COMPLETE — Checkout & Booking Success FROZEN
+
+- **Rental — Checkout** (`TaxiCheckoutScreen`) — 🔒 FROZEN (re-affirmed with Pay-Now validation + the
+  pickup_time boundary fix). MASTER payment implementation for the Rental business module.
+- **Rental — Booking Success** (`ConfirmBookingRequestBottomSheet`) — 🔒 FROZEN — approved design over the
+  trip page; 100% real trip data (schedule, pickup/dropoff, vehicle + thumbnail, provider call).
+
+**The Car Rental flow is complete and frozen end-to-end:**
+Rental Home → All Car Rentals (+Provider List) → Provider Details → Vehicle Details → Checkout →
+Booking Success → (existing Trip Details/History). Next phase: **Short Apartment Rental**, reusing the
+approved Rental pages/components and the MASTER checkout payment architecture (wording-only changes).
+
+---
+
+## 🧭 Short Apartment Rental — GOVERNING RULE + design→implementation mapping (audit plan)
+
+**Product-owner directive (permanent):** do NOT rebuild Apartment screens whose approved design is
+effectively the frozen Car Rental implementation. Per screen: audit the design → compare to the frozen Car
+Rental screen → reuse (wording/icons/data/business-logic changes only) → build new UI ONLY when materially
+different. Never duplicate shared components or create parallel implementations.
+
+**Filename-level mapping (each requires its per-screen visual audit before code):**
+
+| Apartment design | Frozen Car Rental counterpart | Expectation |
+|---|---|---|
+| (Home) — no separate asset | `TaxiHomeScreen` (ONE shared Rental Home, both hero cards) | REUSE — apt hero card activates the Apt flow |
+| `apt_rental.PNG` | `AllVehicleScreen` (`car_rental.PNG`) | Likely reuse architecture (audit) |
+| `apt_rental_provider_item_list.PNG` | `VendorDetailScreen` (`car_rental_provider_item_list.PNG`) | Likely reuse (audit) — same template family |
+| `apartment_ search_list.PNG` | rental search (`car_rental_search_list.PNG`) | Likely reuse (audit) |
+| `apt_rental_details.PNG` | `VehicleDetailsScreen` (`car_rental_details.PNG`) | Audit — apt facts (beds/baths/guests) may differ materially |
+| `apt_rental_checkout.PNG` | `TaxiCheckoutScreen` (MASTER payment architecture) | REUSE — wording "Pay to Apartment Provider" (key shipped) |
+| `booking_successful.PNG` | `ConfirmBookingRequestBottomSheet` | REUSE — wording/data only (audit) |
+| `my_booking_history.PNG` / `view_my_booking.PNG` / `Example_cancel_my_booking_history.PNG` | existing trip history/details screens (not yet migrated for Car either) | Audit — likely ONE shared booking-history migration serving both flows |
+
+**Backend reality (recorded):** Apartment has NO backend yet (Rental Home hero is a UI placeholder —
+`_comingSoon`). Per the User-App-First rule: adapters over real data where possible, otherwise complete
+production frontend with documented Backend/Vendor/Admin contracts in BACKEND_INTEGRATION_QUEUE.md — never
+fake APIs. The apartment-vs-car category split is queue item 7/13 (Category Type).
+
+**Next step:** per-screen audits in the order Home-entry → Listing → Provider → Details → Checkout →
+Booking Success → Booking History, one screen per phase, QA→approval→freeze as always.

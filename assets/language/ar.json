@@ -1796,5 +1796,15 @@
   "with_driver": "مع سائق",
   "transmission": "ناقل الحركة",
   "most_relevant": "الأكثر صلة",
-  "vehicles_found": "المركبات الموجودة"
+  "vehicles_found": "المركبات الموجودة",
+  "photo_gallery": "معرض الصور",
+  "pay_to_driver_on_trip": "الدفع للسائق أثناء الرحلة",
+  "pay_to_apartment_provider": "الدفع لمزود الشقة",
+  "dropoff_location": "موقع النزول",
+  "need_help_contact_your_provider_anytime": "تحتاج مساعدة؟ تواصل مع مزود الخدمة في أي وقت",
+  "okay_got_it": "حسناً، فهمت!",
+  "great_choice_booking_confirmed": "اختيار رائع! تم تأكيد حجزك ونقوم بتجهيز كل شيء لك.",
+  "booking_request": "طلب الحجز",
+  "schedule_booking_request": "طلب الحجز المجدول",
+  "successful": "ناجح"
 }

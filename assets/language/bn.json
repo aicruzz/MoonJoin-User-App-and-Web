@@ -1796,5 +1796,15 @@
   "with_driver": "চালকসহ",
   "transmission": "ট্রান্সমিশন",
   "most_relevant": "সবচেয়ে প্রাসঙ্গিক",
-  "vehicles_found": "যানবাহন পাওয়া গেছে"
+  "vehicles_found": "যানবাহন পাওয়া গেছে",
+  "photo_gallery": "ফটো গ্যালারি",
+  "pay_to_driver_on_trip": "ট্রিপে ড্রাইভারকে পরিশোধ করুন",
+  "pay_to_apartment_provider": "অ্যাপার্টমেন্ট প্রদানকারীকে পরিশোধ করুন",
+  "dropoff_location": "নামার স্থান",
+  "need_help_contact_your_provider_anytime": "সাহায্য দরকার? যেকোনো সময় আপনার প্রদানকারীর সাথে যোগাযোগ করুন",
+  "okay_got_it": "ঠিক আছে, বুঝেছি!",
+  "great_choice_booking_confirmed": "দারুণ পছন্দ! আপনার বুকিং নিশ্চিত হয়েছে এবং আমরা আপনার জন্য সবকিছু প্রস্তুত করছি।",
+  "booking_request": "বুকিং অনুরোধ",
+  "schedule_booking_request": "নির্ধারিত বুকিং অনুরোধ",
+  "successful": "সফল"
 }

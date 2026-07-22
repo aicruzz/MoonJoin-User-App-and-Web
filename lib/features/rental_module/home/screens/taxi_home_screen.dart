@@ -67,15 +67,15 @@ class _TaxiHomeScreenState extends State<TaxiHomeScreen> {
           const SizedBox(height: Dimensions.paddingSizeDefault),
           _heroCards(context, green),
 
-          const SizedBox(height: Dimensions.paddingSizeLarge),
+          const SizedBox(height: Dimensions.paddingSizeSmall),
           _categoryChips(context, green),
 
-          const SizedBox(height: Dimensions.paddingSizeLarge),
+          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
             child: Text('exclusive_deals'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
           ),
-          const SizedBox(height: Dimensions.paddingSizeSmall),
+          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
           const BannerWidget(),
 
           const SizedBox(height: Dimensions.paddingSizeLarge),
@@ -257,12 +257,13 @@ class _TaxiHomeScreenState extends State<TaxiHomeScreen> {
 
       final bool allSelected = taxiController.selectedCategoryIds.isEmpty;
       return SizedBox(
-        // Same geometry as the approved Food category section.
-        height: 160,
+        // Same geometry as the approved storefront home category section (h108,
+        // vertical paddingSizeSmall) — aligned across all MoonJoin modules.
+        height: 108,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, top: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeDefault),
+          padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, top: Dimensions.paddingSizeSmall, bottom: Dimensions.paddingSizeSmall),
           itemCount: categories.length + 1, // +1 for the leading "All"
           separatorBuilder: (_, i) => const SizedBox(width: Dimensions.paddingSizeDefault),
           itemBuilder: (context, i) {

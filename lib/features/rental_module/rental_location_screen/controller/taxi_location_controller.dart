@@ -442,6 +442,17 @@ class TaxiLocationController extends GetxController implements GetxService {
     if(!canUpdateProfile && clickFromButton) {
 
       if(_distance != null && _distance! > 0) {
+        if(vehicle != null) {
+          // Vehicle-Details journey (pre-cart): the trip context (from/to +
+          // distance/duration) is now set on this controller — return straight to
+          // the Vehicle Details hub (the map REPLACED the Location page, so one pop
+          // lands there). The legacy TaxiLocationResultScreen + its add-to-cart
+          // sheet are NOT part of this journey; Vehicle Details owns trip type,
+          // pickup time, estimates and Proceed-to-Checkout (which performs the
+          // same validated add-to-cart). The home-search journey (vehicle == null)
+          // below is untouched.
+          Get.back();
+        } else {
         await Future.delayed(const Duration(milliseconds: 600)).then((value) async{
           Uint8List? mapImage = await mapController!.takeSnapshot();
           if(mapImage!= null) {
@@ -454,6 +465,7 @@ class TaxiLocationController extends GetxController implements GetxService {
             }
           }
         });
+        }
       } else {
         showCustomSnackBar('locations_can_not_be_same'.tr);
       }

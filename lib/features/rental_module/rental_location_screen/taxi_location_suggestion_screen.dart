@@ -57,6 +57,9 @@ class _TaxiLocationSuggestionScreenState extends State<TaxiLocationSuggestionScr
           return;
         }
       },
+      // MoonJoin premium restyle (presentation only — same widgets, same controller
+      // calls, same navigation): elevated pickup/destination card with the green
+      // route glyphs, on the standard app bar. All behaviour unchanged.
       child: Scaffold(
         appBar: CustomAppBar(
           title: 'location'.tr,
@@ -70,10 +73,11 @@ class _TaxiLocationSuggestionScreenState extends State<TaxiLocationSuggestionScr
           Container(
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-              boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.3), spreadRadius: 2, blurRadius: 4, offset: const Offset(0, 2))],
+              borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, 4))],
             ),
-            margin: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+            margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+            padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall),
             child: Row(children: [
               GetBuilder<TaxiLocationController>(
                 builder: (taxiLocationController) {
@@ -97,7 +101,7 @@ class _TaxiLocationSuggestionScreenState extends State<TaxiLocationSuggestionScr
                   vehicle: widget.vehicle, userData: widget.userData,
                 ),
 
-                const Divider(endIndent: 10),
+                Divider(endIndent: 10, color: Theme.of(context).disabledColor.withValues(alpha: 0.25)),
                 RiderAddressInputField(
                   isFormAddress: false, showInMapView: false, mapController: _mapController,
                   vehicle: widget.vehicle, userData: widget.userData,

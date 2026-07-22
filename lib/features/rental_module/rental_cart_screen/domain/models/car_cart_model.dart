@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
 
 class CarCartModel {
@@ -366,7 +367,14 @@ class UserData {
     destinationLocation = json['destination_location'] != null
         ? PickupLocation.fromJson(json['destination_location'])
         : null;
-    pickupTime = json['pickup_time'];
+    // BUGFIX: the backend serialises `pickup_time` in TWO shapes — the app's own
+    // `yyyy-MM-dd HH:mm:ss` on some responses, but ISO-8601 UTC
+    // (`2026-07-22T21:48:55.000000Z`) on the add-to-cart echo. The strict
+    // `DateConverter.dateTimeStringToDate` parser then threw a FormatException on
+    // Checkout ("read error" after a fresh add-to-cart). Normalise at the model
+    // boundary to ONE canonical local-time shape so every consumer (checkout,
+    // pickup cards, date sheet) parses reliably.
+    pickupTime = _normalizeDateTime(json['pickup_time']);
     rentalType = json['rental_type'];
     estimatedHours = json['estimated_hours']?.toDouble();
     distance = json['distance']?.toDouble();
@@ -375,6 +383,22 @@ class UserData {
     isGuest = json['is_guest'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
+  }
+
+  /// Backend sends `pickup_time` either as `yyyy-MM-dd HH:mm:ss` or as ISO-8601
+  /// UTC. Convert the ISO/UTC form to the canonical local `yyyy-MM-dd HH:mm:ss`;
+  /// pass everything else through untouched. Never fabricates a value.
+  static String? _normalizeDateTime(dynamic value) {
+    if (value == null) return null;
+    final String v = value.toString();
+    if (v.contains('T')) {
+      try {
+        return DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(v).toLocal());
+      } catch (_) {
+        return v;
+      }
+    }
+    return v;
   }
 
   Map<String, dynamic> toJson() {

@@ -132,6 +132,8 @@ owner approval.** Every storefront business module must reuse them.
 | 8 | **Shared Product Details** (`ItemDetailsScreen`) | `features/item/screens/item_details_screen.dart` |
 | 9 | **Parcel Screen 1** (Parcel Home/Category) | `features/parcel/screens/parcel_category_screen.dart` |
 | 10 | **Parcel Screen 2** (Parcel Location) | `features/parcel/screens/parcel_location_screen.dart` |
+| 11 | **Rental Provider Details** (`VendorDetailScreen`) | `features/rental_module/vendor/screens/vendor_detail_screen.dart` |
+| 12 | **`RentalProviderHeroHeader`** (Store-hero clone for rental) | `features/rental_module/vendor/widgets/rental_provider_hero_header.dart` |
 
 Together these form the **official MoonJoin reusable storefront foundation**. No future redesign should
 recreate them; reuse them unchanged.
@@ -454,6 +456,27 @@ The three deltas are cosmetic alignment that can be scheduled deliberately rathe
 `TaxiAddFavouriteView.iconColor` — default `null` → theme primary, i.e. **every existing call site renders
 exactly as before**. The provider hero passes white so the heart stays legible on the green.
 
+**Status: 🔒 FROZEN** (with Rental Screen 4). Never redesign. `RentalProviderHeroHeader` exists solely because
+`StoreHeroHeader` is frozen and `Store`-typed; it must not be forked further.
+
+---
+
+## `RentalProviderAdapter` — provider-card feature-badge formatting (Screen 2)
+
+**File:** `lib/features/rental_module/provider_adapter/rental_provider_adapter.dart`
+
+The backend `tag` field is a **stringified JSON array** (`["Lexus"]`). `_badgesFor` now runs it through a
+private `_parseTags` helper that JSON-decodes the array into clean tokens (`Lexus`; `["Luxury","Premium"]` →
+`Luxury`, `Premium`), with a defensive bracket/quote-strip + comma-split fallback, then title-cases each. The
+card renders **"Lexus" / "Luxury" / "SUV"** instead of the raw `["lexus"]`.
+
+- **Presentation-only.** The backend model (`VehicleModel.tag`) and the adapter architecture (group real
+  vehicles by `provider.id`) are unchanged; nothing is invented — only the real value is reformatted.
+- **Scope-safe.** `RentalProviderAdapter` is referenced only inside the rental module, so
+  Food/Grocery/Pharmacy/Fashion/Parcel are unaffected.
+- **Tested.** `test/rental/rental_provider_adapter_test.dart` (4 cases). Screen 2 stays 🔒 FROZEN apart from this
+  isolated formatting fix.
+
 ---
 
 ## 🔒 Rental Screen 2 component status — FROZEN
@@ -472,3 +495,25 @@ exactly as before**. The provider hero passes white so the heart stays legible o
   Category UI is **frozen** — do not change geometry, colours or layout, and do not create another category
   component. `MoonjoinCategoryTile` is **no longer used** by any screen (retained on disk, not deleted, pending
   the post-Rental dead-code audit).
+
+---
+
+## Rental Vehicle Details — component reuse record
+
+**Screen:** `lib/features/rental_module/vehicle_details_screen/vehicle_details_screen.dart`
+(design `ui-designs/Car_Rental/car_rental_details.png`; the `_trip_type` variant is the same page with
+Per Day selected).
+
+**Zero new shared components.** Reused: `TripTypeCard` (both of its existing modes) · `DateTimePickerSheet` ·
+`TaxiLocationSuggestionScreen` · `CustomTextField` (same estimate controllers/validation as the production
+location bottom sheet) · frozen `QuantityButton`→`setQuantity` quantity system · `CustomButton` ·
+`CustomImage` · production `TaxiCheckoutScreen`. The only addition is `_DashedBorderPainter`, a private
+CustomPainter for the design's dashed "Add More Vehicle +" container — screen-local presentation, not a
+shared component (do not promote it without approval).
+
+**Location line:** the user's selected address via `AddressHelper.getUserAddressFromSharedPref()` — the same
+source as every approved MoonJoin header (queue item 15 resolved; no backend gap).
+
+**Vehicle Details status: 🔒 FROZEN** (product-owner approved). The screen and its journey pages
+(`TaxiLocationSuggestionScreen` restyle, `MapRecentSavedAddress` restyle) are locked; only verified bug
+fixes, backend integration, or docs may touch them.

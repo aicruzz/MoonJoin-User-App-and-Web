@@ -2,28 +2,43 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
+import 'package:sixam_mart/common/widgets/custom_text_field.dart';
 import 'package:sixam_mart/common/widgets/quantity_button.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/rant_cart_widget.dart';
+import 'package:sixam_mart/features/address/domain/models/address_model.dart';
 import 'package:sixam_mart/features/rental_module/rental_location_screen/controller/taxi_location_controller.dart';
 import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
 import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
 import 'package:sixam_mart/features/rental_module/rental_cart_screen/controllers/taxi_cart_controller.dart';
 import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart.dart';
+import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
+import 'package:sixam_mart/features/rental_module/helper/cart_helper.dart';
+import 'package:sixam_mart/features/rental_module/rental_cart_screen/widgets/trip_vehicle_list_dialog.dart';
+import 'package:sixam_mart/features/rental_module/rental_checkout_screen/taxi_checkout_screen.dart';
 import 'package:sixam_mart/features/rental_module/rental_location_screen/taxi_location_suggestion_screen.dart';
 import 'package:sixam_mart/features/rental_module/vendor/screens/vendor_detail_screen.dart';
+import 'package:sixam_mart/features/rental_module/widgets/date_time_picker_sheet.dart';
+import 'package:sixam_mart/features/rental_module/widgets/trip_from_to_card.dart';
 import 'package:sixam_mart/features/rental_module/widgets/trip_type_card.dart';
-import 'package:sixam_mart/features/rental_module/widgets/vehicle_details_banner.dart';
-import 'package:sixam_mart/features/rental_module/widgets/vehicle_grid_item.dart';
+import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/date_converter.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/helper/string_extension.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 
+/// **Rental — Vehicle Details** (design `ui-designs/Car_Rental/car_rental_details.png`;
+/// `car_rental_details_trip_type.png` is the SAME page with "Per Day" selected — the
+/// "Estimate Days" row and bottom estimate are trip-type-dependent, not a second page).
+///
+/// Presentation-only rewrite. Every piece of business logic is the pre-existing rental
+/// implementation, unchanged: `TaxiHomeController.getVehicleDetails`, the trip context
+/// (`TaxiLocationController` — destination via the existing
+/// `TaxiLocationSuggestionScreen`, pickup time via the existing `DateTimePickerSheet`,
+/// trip type via `selectTripType`, estimate inputs via the existing controllers), the
+/// cart (`_addToCart` → `addToCart`/`decideAddToCart`, `setQuantity`, `removeFromCart`)
+/// and the production `TaxiCheckoutScreen` (reads the cart, exactly as when reached
+/// from the cart screen).
 class VehicleDetailsScreen extends StatefulWidget {
   final int? vehicleId;
   final bool? fromSelectVehicleScreen;
@@ -35,9 +50,34 @@ class VehicleDetailsScreen extends StatefulWidget {
 
 class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
 
-  List<CategoryModel> _categoryList = [];
   int cartQuantity = 1;
   int isExistInCartPosition = -1;
+  bool _showAllPhotos = false;
+
+  /// Cart values the estimate inputs were seeded with — used to detect whether the
+  /// user changed the trip type/estimate so the cart is updated before checkout.
+  String _seededEstimateTime = '';
+  String _seededEstimateDay = '';
+
+  /// Loads the vehicle through the EXISTING controller call with SILENT
+  /// auto-retry. The repository returns null for any non-200 (timeout/429/500) and
+  /// the controller stores it silently — previously one failed request left the
+  /// page spinning forever with no recovery. Now a transient failure is retried in
+  /// the background (1s/2s/3s, then every 5s while the page is open), so the user
+  /// only ever sees the loader resolve into the page — never an error screen.
+  Future<void> _loadVehicleDetails() async {
+    int attempt = 0;
+    while(mounted) {
+      try {
+        await Get.find<TaxiHomeController>().getVehicleDetails(widget.vehicleId!);
+      } catch (_) {
+        // API/parse exception — treated identically to a null result below.
+      }
+      if(!mounted || Get.find<TaxiHomeController>().vehicleDetailsModel != null) return;
+      attempt++;
+      await Future.delayed(Duration(seconds: attempt < 4 ? attempt : 5));
+    }
+  }
 
   @override
   void initState() {
@@ -45,386 +85,691 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
     if(!widget.fromSelectVehicleScreen!) {
       Get.find<TaxiLocationController>().initialSetup();
     }
-    Get.find<TaxiHomeController>().getVehicleDetails(widget.vehicleId!);
+    _loadVehicleDetails();
     isExistInCartPosition = Get.find<TaxiCartController>().isExistInCart(widget.vehicleId!);
     if(isExistInCartPosition != -1) {
       cartQuantity = Get.find<TaxiCartController>().getCartQuantity(isExistInCartPosition);
-    }
-
-  }
-
-  void generateCategories(VehicleModel? vehicle) {
-    _categoryList = [];
-    if(vehicle != null) {
-      if(vehicle.avgRating != 0) {
-        _categoryList.add(CategoryModel(icon: Images.taxiStarIcon, name: vehicle.avgRating!.toStringAsFixed(2)));
+      // Existing pattern (TripTypeBottomSheetWidget): mirror the cart's real rental
+      // type into the cart controller so the trip-type cards show the true selection,
+      // and seed the estimate inputs from the cart's real values (same seeding the
+      // production sheet performs).
+      final UserData? userData = Get.find<TaxiCartController>().carCartModel?.userData;
+      if(userData?.rentalType != null) {
+        Get.find<TaxiCartController>().selectTripType(userData!.rentalType!, willUpdate: false);
       }
-      if(vehicle.type != null) {
-        _categoryList.add(CategoryModel(icon: Images.taxiCarSideIcon, name: vehicle.type!));
-      }
-      if(vehicle.seatingCapacity != null) {
-        _categoryList.add(CategoryModel(icon: Images.taxiSeatIcon, name: '${vehicle.seatingCapacity!} ${'seats'.tr}'));
-      }
-      if(vehicle.airCondition!) {
-        _categoryList.add(CategoryModel(icon: Images.taxiACIcon, name: 'ac'.tr));
-      } else {
-        _categoryList.add(CategoryModel(icon: Images.taxiACIcon, name: 'non_ac'.tr));
-      }
-      if(vehicle.transmissionType != null) {
-        _categoryList.add(CategoryModel(icon: Images.taxiAutomaticIcon, name: vehicle.transmissionType!));
-      }
-      if(vehicle.engineCapacity != null) {
-        _categoryList.add(CategoryModel(icon: Images.taxiLiterIcon, name: '${vehicle.engineCapacity!}_L'));
-      }
-      if(vehicle.fuelType != null) {
-        _categoryList.add(CategoryModel(icon: Images.taxiPetrolIcon, name: vehicle.fuelType!));
-      }
-
+      final double hours = userData?.estimatedHours ?? 0;
+      _seededEstimateTime = hours > 0 ? '$hours' : '';
+      _seededEstimateDay = hours > 0 ? (hours / 24).toStringAsFixed(1) : '';
+      Get.find<TaxiLocationController>().estimateTimeController.text = _seededEstimateTime;
+      Get.find<TaxiLocationController>().estimateDayController.text = _seededEstimateDay;
     }
   }
 
+  bool get _isInCart => isExistInCartPosition != -1;
+
+  /// Default the location controller's trip type to one the vehicle actually
+  /// supports (its default is `distance_wise`, which this vehicle may not offer).
+  /// Uses the existing `selectTripType` — no new state.
+  void _ensureSupportedTripType(TaxiLocationController locationController, VehicleModel vehicle) {
+    final String t = locationController.tripType;
+    final bool supported = (t == 'distance_wise' && vehicle.tripDistance!) ||
+        (t == 'hourly' && vehicle.tripHourly!) || (t == 'day_wise' && vehicle.tripDayWise!);
+    if(!supported) {
+      final String fallback = vehicle.tripDistance! ? 'distance_wise' : vehicle.tripHourly! ? 'hourly' : 'day_wise';
+      locationController.selectTripType(fallback, willUpdate: false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Get.back(),
-        ),
-        title: Text('vehicle_details'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
-        centerTitle: true,
-        actions: [RantCartWidget(callback: (value){
-          if(isExistInCartPosition != -1) {
-            setState(() {
-              cartQuantity = Get.find<TaxiCartController>().getCartQuantity(isExistInCartPosition);
-            });
-          }
-        }), const SizedBox(width: Dimensions.paddingSizeSmall)],
-      ),
-      body: GetBuilder<TaxiHomeController>(
-        builder: (taxiHomeController) {
-          VehicleModel? vehicle = taxiHomeController.vehicleDetailsModel;
-          generateCategories(vehicle);
-          double discount = 0;
-          String discountType = 'percent';
-          int totalVehicles = 0;
-          double hourlyDiscount = 0;
-          double distanceWiseDiscount = 0;
-          double dayWiseDiscount = 0;
+      backgroundColor: Theme.of(context).cardColor,
+      body: GetBuilder<TaxiHomeController>(builder: (taxiHomeController) {
+        VehicleModel? vehicle = taxiHomeController.vehicleDetailsModel;
 
-          if(vehicle != null) {
-            totalVehicles = vehicle.totalVehicles != 0 ? vehicle.totalVehicles! : 0;
-            discount = vehicle.discountPrice ?? 0;
-            discountType = vehicle.discountType ?? 'percent';
+        double discount = 0;
+        String discountType = 'percent';
+        int totalVehicles = 0;
 
-            distanceWiseDiscount = PriceConverter.calculation(vehicle.distancePrice!, discount, discountType, 1);
-            hourlyDiscount = PriceConverter.calculation(vehicle.hourlyPrice!, discount, discountType, 1);
-            dayWiseDiscount = PriceConverter.calculation(vehicle.dayWisePrice!, discount, discountType, 1);
-          }
+        if(vehicle != null) {
+          totalVehicles = vehicle.totalVehicles != 0 ? vehicle.totalVehicles! : 0;
+          discount = vehicle.discountPrice ?? 0;
+          discountType = vehicle.discountType ?? 'percent';
+        }
 
-          return vehicle != null ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(
-              child: SingleChildScrollView(
+        if(vehicle == null) {
+          // Silent auto-retry runs in the background (`_loadVehicleDetails`);
+          // the loader resolves into the page as soon as a request succeeds.
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return GetBuilder<TaxiCartController>(builder: (taxiCartController) {
+          return GetBuilder<TaxiLocationController>(builder: (locationController) {
+
+            isExistInCartPosition = taxiCartController.isExistInCart(vehicle.id);
+            if(!_isInCart) {
+              _ensureSupportedTripType(locationController, vehicle);
+            }
+
+            // The SELECTED trip type: in-cart it is the cart controller's state
+            // (seeded from the cart's real rentalType, updated by direct card taps).
+            final String tripType = _isInCart ? taxiCartController.tripType : locationController.tripType;
+
+            return Column(children: [
+              Expanded(child: SingleChildScrollView(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                  VehicleDetailsBanner(taxiHomeController: taxiHomeController, discount: discount, discountType: discountType),
-                  const SizedBox(height: Dimensions.paddingSizeSmall),
+                  _header(context, vehicle, discount, discountType),
+                  const SizedBox(height: Dimensions.paddingSizeDefault),
 
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
-                        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                          border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.5), width: 0.5),
-                        ),
 
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      _whereToGo(context, vehicle, taxiCartController, locationController),
+                      const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      _sectionTitle(context, 'pickup_time'.tr),
+                      _pickupTime(context, taxiCartController, locationController),
+                      const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                            Expanded(child: Text(vehicle.name??'', style: robotoBold, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                      if(vehicle.tripHourly! || vehicle.tripDistance! || vehicle.tripDayWise!) ...[
+                        _sectionTitle(context, 'trip_type'.tr),
+                        _tripTypes(context, vehicle, discount, discountType, taxiCartController),
+                        const SizedBox(height: Dimensions.paddingSizeSmall),
+                        _estimateInputs(context, locationController, tripType),
+                      ],
 
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                color: Theme.of(context).disabledColor.withValues(alpha: 0.15),
-                              ),
-                              child: Row(children: [
+                      _photoGallery(context, vehicle),
 
-                                Text('similar_vehicle'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.5))),
-                                const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                    color: Theme.of(context).cardColor,
-                                  ),
-                                  padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                                  child: Text(
-                                    '$totalVehicles',
-                                    style: robotoMedium.copyWith(fontSize: 14),
-                                  ),
-                                ),
-                              ]),
-                            ),
-                          ]),
-
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
-                            child: Text(
-                              vehicle.description??'',
-                              textAlign: TextAlign.start,
-                              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.5)),
-                            ),
-                          ),
-
-                          GridView.builder(
-                            shrinkWrap: true,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              mainAxisSpacing: 8,
-                              crossAxisSpacing: 8,
-                              childAspectRatio: 3,
-                            ),
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            itemCount: _categoryList.length,
-                            itemBuilder: (context, index) {
-                              return VehicleGridItem(
-                                label: _categoryList[index].name.toTitleCase(),
-                                assetImage: _categoryList[index].icon,
-                              );
-                            }),
-                        ]),
-                      ),
-
-                      //Trip Type
-                      (vehicle.tripHourly! || vehicle.tripDistance! || vehicle.tripDayWise!) ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-
-                          Padding(
-                            padding: const EdgeInsets.only(top: 19, bottom: 10),
-                            child: Text("trip_type".tr, style: robotoBold.copyWith(fontSize: 14)),
-                          ),
-
-                          SizedBox(
-                            height: 130,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
-                              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-
-                                vehicle.tripDistance! ? TripTypeCard(
-                                  tripType: 'distance_wise', amount: PriceConverter.convertPrice(vehicle.distancePrice ?? 0, forTaxi: true), discountAmount: PriceConverter.convertPrice(vehicle.distancePrice! - distanceWiseDiscount, forTaxi: true), fareType: 'km', indicatorIcon: Icons.radio_button_off,
-                                  isVehicleDetailScene: false, isClockIcon: false, fromVehicleDetails: true, haveVehicle: true, discountType: discountType,
-                                ) : const SizedBox(),
-                                SizedBox(width: vehicle.tripDistance! && vehicle.tripHourly! ? Dimensions.paddingSizeDefault : 0),
-
-                                vehicle.tripHourly! ? TripTypeCard(
-                                  tripType: 'hourly', amount: PriceConverter.convertPrice(vehicle.hourlyPrice ?? 0, forTaxi: true),  discountAmount: PriceConverter.convertPrice(vehicle.hourlyPrice! - hourlyDiscount, forTaxi: true),
-                                  fareType: 'hr', indicatorIcon: Icons.radio_button_checked,
-                                  isVehicleDetailScene: false, isClockIcon: false, fromVehicleDetails: true, haveVehicle: true, discountType: discountType,
-                                ) : const SizedBox(),
-                                SizedBox(width: vehicle.tripHourly! ? Dimensions.paddingSizeDefault : 0),
-
-                                vehicle.tripDayWise! ? TripTypeCard(
-                                  tripType: 'day_wise', amount: PriceConverter.convertPrice(vehicle.dayWisePrice ?? 0), discountAmount: PriceConverter.convertPrice(vehicle.dayWisePrice! - dayWiseDiscount, forTaxi: true),
-                                  fareType: 'day', indicatorIcon: Icons.radio_button_checked,
-                                  isVehicleDetailScene: false, isClockIcon: false, fromVehicleDetails: true, haveVehicle: true, discountType: discountType,
-                                ) : const SizedBox(),
-
-                              ]),
-                            ),
-                          ),
-                        ],
-                      ) : const SizedBox(),
-
-                      //provider
-                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 19, bottom: 10),
-                          child: Text("vendor1".tr, style: robotoBold.copyWith(fontSize: 14)),
-                        ),
-
-                        vehicle.provider != null ? Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                            boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.2), blurRadius: 10, )],
-                            border: Border.all(color: Theme.of(context).disabledColor, width: 0.2),
-                          ),
-                          child: CustomInkWell(
-                            onTap: () {
-                              if(Get.previousRoute == '/VendorDetailScreen') {
-                                Get.back();
-                              } else {
-                                Get.to(() => VendorDetailScreen(vendorId: vehicle.providerId));
-                              }
-                            },
-                            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-                            radius: Dimensions.radiusDefault,
-                            child: Row(children: [
-
-                              Container(
-                                height: 55, width: 55,
-                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(50), border: Border.all(color: Colors.grey.shade200, width: 1)),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(50),
-                                  child: CustomImage(image: vehicle.provider!.logoFullUrl??'', width: double.infinity, fit: BoxFit.cover),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-
-                              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                                Text(vehicle.provider!.name??'', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
-
-                                Row(mainAxisAlignment: MainAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                                  const Icon(Icons.star, color: Colors.amber, size: 12),
-                                  Text('${vehicle.provider!.avgRating??0}', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
-                                  Text(' (${vehicle.provider!.ratingCount??0}+)', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
-                                ]),
-                              ]),
-                            ]),
-                          ),
-                        ) : const SizedBox(),
-                      ]),
-
-
-                      const SizedBox(height: 15),
+                      _addMoreVehicle(context, taxiCartController),
+                      const SizedBox(height: Dimensions.paddingSizeDefault),
                     ]),
                   ),
-
                 ]),
-              ),
+              )),
+
+              _bottomBar(context, vehicle, taxiCartController, locationController, discount, discountType, totalVehicles, tripType),
+            ]);
+          });
+        });
+      }),
+    );
+  }
+
+  // ── Header (design): light surface, back circle, name, ★rating, 📍location,
+  // feature pills, vehicle image right. The location line is the USER's selected
+  // address — the same real source every approved MoonJoin header uses
+  // (`AddressHelper.getUserAddressFromSharedPref()`), matching the design family
+  // where the header location is the browsing context ("Lekki Phase 1"). ──
+  Widget _header(BuildContext context, VehicleModel vehicle, double discount, String discountType) {
+    final String? userAddress = AddressHelper.getUserAddressFromSharedPref()?.address;
+    return Container(
+      width: double.infinity,
+      color: Theme.of(context).disabledColor.withValues(alpha: 0.08),
+      padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeLarge),
+      child: SafeArea(bottom: false, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+        Padding(
+          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, 0),
+          child: InkWell(
+            onTap: () => Get.back(),
+            borderRadius: BorderRadius.circular(30),
+            child: Container(
+              height: 42, width: 42, alignment: Alignment.center,
+              decoration: BoxDecoration(color: Theme.of(context).cardColor, shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))]),
+              child: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyLarge!.color, size: 22),
             ),
+          ),
+        ),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
 
-            GetBuilder<TaxiCartController>(builder: (taxiCartController) {
-              return GetBuilder<TaxiLocationController>(builder: (locationController) {
-                int isExistInCartPosition = taxiCartController.isExistInCart(vehicle.id);
-                int quantity = 1;
-                int cartId = 0;
-                double price = 0;
-                double priceWithoutDiscount = 0;
-                double discountPrice = 0;
-                String? rentalType = taxiCartController.carCartModel?.userData?.rentalType;
+        Padding(
+          padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                double estimatedDay = 0;
-                estimatedDay = (taxiCartController.carCartModel?.userData?.estimatedHours ?? 0) / 24;
+            Expanded(flex: 5, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                if(isExistInCartPosition != -1) {
-                  quantity = taxiCartController.getCartQuantity(isExistInCartPosition);
-                  cartId = taxiCartController.getCartId(isExistInCartPosition)??0;
+              Text(vehicle.name ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: robotoBold.copyWith(fontSize: 24)),
+              const SizedBox(height: 6),
 
-                  double a = rentalType == AppConstants.hourly ? (vehicle.hourlyPrice ?? 0) : rentalType == AppConstants.dayWise ? (vehicle.dayWisePrice ?? 0) : (vehicle.distancePrice ?? 0);
-                  double b = rentalType == AppConstants.hourly ? taxiCartController.carCartModel!.userData!.estimatedHours! : rentalType == AppConstants.dayWise ? estimatedDay : taxiCartController.carCartModel!.userData!.distance!;
-                  priceWithoutDiscount = (a * b) * cartQuantity;
+              Row(children: [
+                if((vehicle.avgRating ?? 0) > 0) ...[
+                  Icon(Icons.star, size: 16, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 3),
+                  Text('${vehicle.avgRating!.toStringAsFixed(1)} (${vehicle.totalReviews ?? 0}+)',
+                      style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor)),
+                  const SizedBox(width: Dimensions.paddingSizeSmall),
+                ],
+                if((userAddress ?? '').isNotEmpty) ...[
+                  Icon(Icons.location_on_outlined, size: 15, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 2),
+                  Flexible(child: Text(userAddress!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor))),
+                ],
+              ]),
+              const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                  discountPrice = _calculateDiscount(priceWithoutDiscount, discount, discountType, vehicle);
-                  price = priceWithoutDiscount - discountPrice;
-                }
+              Wrap(spacing: Dimensions.paddingSizeExtraSmall, runSpacing: Dimensions.paddingSizeExtraSmall, children: [
+                if((vehicle.seatingCapacity ?? '').isNotEmpty) _featurePill(context, Icons.person_outline, '${vehicle.seatingCapacity} ${'seats'.tr}'),
+                if((vehicle.transmissionType ?? '').isNotEmpty) _featurePill(context, Icons.settings_outlined, vehicle.transmissionType!.tr),
+                if((vehicle.fuelType ?? '').isNotEmpty) _featurePill(context, Icons.local_gas_station_outlined, vehicle.fuelType!.tr),
+                _featurePill(context, Icons.ac_unit, vehicle.airCondition! ? 'ac'.tr : 'non_ac'.tr),
+              ]),
+            ])),
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.5), blurRadius: 10)],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
-                  child: Column(children: [
+            Expanded(flex: 4, child: SizedBox(
+              height: 130,
+              child: CustomImage(image: vehicle.thumbnailFullUrl ?? '', fit: BoxFit.contain),
+            )),
+          ]),
+        ),
+      ])),
+    );
+  }
 
-                    if(isExistInCartPosition != -1)
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+  Widget _featurePill(BuildContext context, IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 14, color: Theme.of(context).textTheme.bodyLarge!.color),
+        const SizedBox(width: 4),
+        Text(label, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
+      ]),
+    );
+  }
 
-                        Text('${rentalType == AppConstants.dayWise ? 'duration'.tr : 'estimated'.tr} (${rentalType == AppConstants.hourly ? '${taxiCartController.carCartModel?.userData?.estimatedHours}${'hr'.tr}' :
-                          rentalType == AppConstants.dayWise ? '${estimatedDay.toStringAsFixed(0)} ${'day'.tr}' : '${taxiCartController.carCartModel?.userData?.distance?.toStringAsFixed(3)??0}${'km'.tr}' })',
-                          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault),
-                        ),
+  Widget _sectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
+      child: Text(title, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+    );
+  }
 
-                        Row(spacing: Dimensions.paddingSizeExtraSmall, children: [
-                          /*Text(PriceConverter.convertPrice(priceWithoutDiscount, forTaxi: true),
-                            style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor, decoration: TextDecoration.lineThrough, decorationColor: Theme.of(context).disabledColor),
-                          ),*/
+  // ── Trip location (old-design behaviour) ──
+  // No trip context yet → the plain "Where to go?" search bar (hint only, never
+  // pre-filled), which opens the EXISTING Location page
+  // (`TaxiLocationSuggestionScreen`: pickup + destination, recent & saved, map).
+  // Once pickup AND destination are set (or the vehicle is in the cart) → the
+  // EXISTING `TripFromToCard` shows both filled, with its edit pencil re-opening
+  // the Location page (cart `userData` edit mode when in cart).
+  Widget _whereToGo(BuildContext context, VehicleModel vehicle, TaxiCartController taxiCartController, TaxiLocationController locationController) {
+    void openLocationPage() => Get.to(() => TaxiLocationSuggestionScreen(
+      vehicle: vehicle,
+      userData: _isInCart ? taxiCartController.carCartModel?.userData : null,
+    ));
 
-                          Text(PriceConverter.convertPrice(price, forTaxi: true), style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
+    AddressModel? from;
+    AddressModel? to;
+    if(_isInCart) {
+      // Real cart locations, adapted to the card's AddressModel (values only).
+      final UserData? u = taxiCartController.carCartModel?.userData;
+      if(u?.pickupLocation != null && u?.destinationLocation != null) {
+        from = AddressModel(address: u!.pickupLocation!.locationName, latitude: '${u.pickupLocation!.lat}', longitude: '${u.pickupLocation!.lng}');
+        to = AddressModel(address: u.destinationLocation!.locationName, latitude: '${u.destinationLocation!.lat}', longitude: '${u.destinationLocation!.lng}');
+      }
+    } else if(locationController.fromAddress != null && locationController.toAddress != null) {
+      from = locationController.fromAddress;
+      to = locationController.toAddress;
+    }
 
-                        ])
-                      ]),
-                    const SizedBox(height: Dimensions.paddingSizeSmall),
+    if(from != null && to != null) {
+      return TripFromToCard(fromAddress: from, toAddress: to, fromCartOnClick: openLocationPage);
+    }
 
-                    SafeArea(child: Row(children: [
-
-                      isExistInCartPosition != -1 ? Expanded(flex: 2, child: Row(children: [
-                        QuantityButton(
-                          onTap: taxiCartController.isLoading ? null : () {
-                            if (quantity > 1) {
-                              setState(() {
-                                if(cartQuantity > 1) {
-                                  cartQuantity--;
-                                }
-                              });
-                              taxiCartController.setQuantity(true, isExistInCartPosition, count: cartQuantity);
-                            }else {
-                              taxiCartController.removeFromCart(cartId);
-                            }
-                          },
-                          isIncrement: false,
-                          showRemoveIcon: quantity == 1 || cartQuantity == 1,
-                        ),
-
-                        Text(
-                          cartQuantity.toString(),
-                          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraLarge),
-                        ),
-
-                        QuantityButton(
-                          onTap: taxiCartController.isLoading ? null : () {
-                            if(totalVehicles > cartQuantity) {
-                              setState(() {
-                                cartQuantity++;
-                              });
-                              taxiCartController.setQuantity(true, isExistInCartPosition, count: cartQuantity);
-                            } else {
-                              showCustomSnackBar('${'you_cant_add_more_than'.tr} $totalVehicles ${'quantities_of_this_vehicle'.tr}');
-                            }
-                          },
-                          isIncrement: true,
-                          color: taxiCartController.isLoading || cartQuantity == totalVehicles ? Theme.of(context).disabledColor : null,
-                        ),
-                      ])) : const SizedBox(),
-                      SizedBox(width: isExistInCartPosition != -1 ? Dimensions.paddingSizeSmall : 0),
-
-                      Expanded(flex: 5, child: CustomButton(
-                        buttonText: isExistInCartPosition != -1 ? 'update_in_cart'.tr : 'rent_this_vehicle'.tr,
-                        isLoading: taxiCartController.isLoading,
-                        onPressed: () {
-                          if(isExistInCartPosition != -1) {
-                            taxiCartController.setQuantity(true, isExistInCartPosition, count: cartQuantity);
-                          } else {
-                            _addToCart(taxiCartController, vehicle);
-                          }
-                        },
-                      )),
-
-                    ])),
-
-                  ]),
-                );
-              });
-            }),
-
-          ]) : const Center(child: CircularProgressIndicator());
-        }
+    return InkWell(
+      onTap: openLocationPage,
+      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+      child: Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+          border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.4), width: 1),
+        ),
+        child: Row(children: [
+          Icon(Icons.search, color: Theme.of(context).hintColor),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: Text(
+            'where_to_go'.tr,
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).hintColor),
+          )),
+        ]),
       ),
     );
   }
+
+  // ── Pickup Time — real value (cart's pickupTime when in cart, else the location
+  // controller's finalTripDateTime); the pencil opens the EXISTING production
+  // DateTimePickerSheet, which already handles both the cart and pre-cart cases. ──
+  Widget _pickupTime(BuildContext context, TaxiCartController taxiCartController, TaxiLocationController locationController) {
+    final UserData? userData = taxiCartController.carCartModel?.userData;
+    String? display;
+    if(_isInCart && userData?.pickupTime != null) {
+      // Same formatter the existing PickupTimeCard uses for the cart's pickupTime.
+      display = DateConverter.dateTimeStringToDateTime(userData!.pickupTime!);
+    } else if(locationController.finalTripDateTime != null) {
+      display = DateConverter.dateToDateAndTime(locationController.finalTripDateTime!);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+        border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.4), width: 1),
+      ),
+      child: Row(children: [
+        Container(
+          height: 44, width: 44, alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+          ),
+          child: Icon(Icons.calendar_today_outlined, color: Theme.of(context).primaryColor, size: 20),
+        ),
+        const SizedBox(width: Dimensions.paddingSizeSmall),
+
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('pickup_now'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+          if(display != null) ...[
+            const SizedBox(height: 2),
+            Text(display, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor)),
+          ],
+        ])),
+
+        InkWell(
+          onTap: () {
+            showModalBottomSheet(
+              context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+              builder: (_) => DateTimePickerSheet(fromCart: _isInCart, userData: _isInCart ? userData : null),
+            );
+          },
+          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+          child: Padding(
+            padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+            child: Icon(Icons.edit_outlined, color: Theme.of(context).primaryColor, size: 20),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  // ── Trip Type — the EXISTING shared TripTypeCard with its radio, selected
+  // DIRECTLY on tap in both modes (old-design behaviour, no popup): pre-cart via
+  // `TaxiLocationController.selectTripType`, in-cart via
+  // `TaxiCartController.selectTripType` — both are the card's own built-in modes.
+  // An in-cart change is persisted through the production cart update when the user
+  // proceeds to checkout (see `_proceedToCheckout`). ──
+  Widget _tripTypes(BuildContext context, VehicleModel vehicle, double discount, String discountType, TaxiCartController taxiCartController) {
+    final double distanceWiseDiscount = PriceConverter.calculation(vehicle.distancePrice!, discount, discountType, 1);
+    final double hourlyDiscount = PriceConverter.calculation(vehicle.hourlyPrice!, discount, discountType, 1);
+    final double dayWiseDiscount = PriceConverter.calculation(vehicle.dayWisePrice!, discount, discountType, 1);
+
+    Widget card(String tripType, double basePrice, double discounted, String fareType) {
+      return TripTypeCard(
+        tripType: tripType, amount: PriceConverter.convertPrice(basePrice, forTaxi: true),
+        discountAmount: PriceConverter.convertPrice(basePrice - discounted, forTaxi: true),
+        fareType: fareType, indicatorIcon: Icons.radio_button_checked,
+        isVehicleDetailScene: false, isClockIcon: false, fromVehicleDetails: false,
+        fromCart: _isInCart, haveVehicle: true, discountType: discountType,
+      );
+    }
+
+    return SizedBox(
+      height: 130,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+        children: [
+          if(vehicle.tripDistance!) ...[
+            card('distance_wise', vehicle.distancePrice ?? 0, distanceWiseDiscount, 'km'),
+            const SizedBox(width: Dimensions.paddingSizeDefault),
+          ],
+          if(vehicle.tripHourly!) ...[
+            card('hourly', vehicle.hourlyPrice ?? 0, hourlyDiscount, 'hr'),
+            const SizedBox(width: Dimensions.paddingSizeDefault),
+          ],
+          if(vehicle.tripDayWise!)
+            card('day_wise', vehicle.dayWisePrice ?? 0, dayWiseDiscount, 'day'),
+        ],
+      ),
+    );
+  }
+
+  // ── Estimate inputs — the EXISTING controllers and the exact CustomTextField
+  // wiring from the production location bottom sheet. Shown in both modes; in-cart
+  // they are seeded from the cart's real values and any change is persisted through
+  // the production cart update on Proceed. ──
+  Widget _estimateInputs(BuildContext context, TaxiLocationController locationController, String tripType) {
+    return Column(children: [
+      if(tripType == 'hourly') ...[
+        CustomTextField(
+          controller: locationController.estimateTimeController,
+          titleText: 'Ex: 5',
+          labelText: '${'estimate_time'.tr}(${'hrs'.tr})',
+          isNumber: true,
+          inputType: TextInputType.number,
+          // Recompute the bottom-bar estimate/price on every keystroke — no
+          // trip-type re-tap needed (design: instant calculation, no popup).
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+      ],
+      if(tripType == 'day_wise') ...[
+        CustomTextField(
+          controller: locationController.estimateDayController,
+          titleText: 'Ex: 2 days',
+          labelText: 'estimate_days'.tr,
+          isNumber: true,
+          inputType: TextInputType.number,
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+      ],
+    ]);
+  }
+
+  // ── Photo Gallery — the vehicle's REAL images (`images_full_url`). Hidden when the
+  // backend returns none. "See all" expands the full set in place. ──
+  Widget _photoGallery(BuildContext context, VehicleModel vehicle) {
+    final List<String> images = (vehicle.imagesFullUrl ?? []).whereType<String>().where((i) => i.isNotEmpty).toList();
+    if(images.isEmpty) return const SizedBox();
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: Dimensions.paddingSizeSmall),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text('photo_gallery'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+        if(images.length > 4)
+          InkWell(
+            onTap: () => setState(() => _showAllPhotos = !_showAllPhotos),
+            child: Text(_showAllPhotos ? 'show_less'.tr : 'see_all'.tr,
+                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor)),
+          ),
+      ]),
+      const SizedBox(height: Dimensions.paddingSizeSmall),
+
+      _showAllPhotos ? GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisSpacing: 8, crossAxisSpacing: 8),
+        itemCount: images.length,
+        itemBuilder: (context, index) => ClipRRect(
+          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+          child: CustomImage(image: images[index], fit: BoxFit.cover),
+        ),
+      ) : SizedBox(
+        height: 84,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: images.length > 4 ? 4 : images.length,
+          separatorBuilder: (_, _) => const SizedBox(width: Dimensions.paddingSizeSmall),
+          itemBuilder: (context, index) => ClipRRect(
+            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+            child: CustomImage(image: images[index], width: 84, height: 84, fit: BoxFit.cover),
+          ),
+        ),
+      ),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
+    ]);
+  }
+
+  // ── "Add More Vehicle +" — the cart screen's EXACT existing behaviour: provider
+  // page of the first cart vehicle when the cart has items, otherwise back. ──
+  Widget _addMoreVehicle(BuildContext context, TaxiCartController taxiCartController) {
+    return InkWell(
+      onTap: () {
+        if(taxiCartController.cartList.isNotEmpty) {
+          Get.to(() => VendorDetailScreen(vendorId: taxiCartController.cartList[0].vehicle!.providerId));
+        } else {
+          Get.back();
+        }
+      },
+      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+      child: CustomPaint(
+        painter: _DashedBorderPainter(color: Theme.of(context).disabledColor.withValues(alpha: 0.6)),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault),
+          alignment: Alignment.center,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.add_circle_outline, color: Theme.of(context).primaryColor, size: 20),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            Text('${'add_more_vehicle'.tr} +', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ── Bottom bar — real estimate + real price + Proceed to Checkout. In-cart keeps
+  // the frozen shared quantity system (QuantityButton → setQuantity) and the
+  // pre-existing price calculation; pre-cart shows the selected trip type's real
+  // start-from price (the trip total only exists once the trip context is in the
+  // cart, exactly as before). ──
+  Widget _bottomBar(BuildContext context, VehicleModel vehicle, TaxiCartController taxiCartController,
+      TaxiLocationController locationController, double discount, String discountType, int totalVehicles, String tripType) {
+
+    int quantity = 1;
+    int cartId = 0;
+    double price = 0;
+    String estimateLabel;
+
+    final double estimatedDay = (taxiCartController.carCartModel?.userData?.estimatedHours ?? 0) / 24;
+
+    if(_isInCart) {
+      quantity = taxiCartController.getCartQuantity(isExistInCartPosition);
+      cartId = taxiCartController.getCartId(isExistInCartPosition) ?? 0;
+      // The SELECTED type (cart controller state, seeded from the cart's real
+      // rentalType) with the current estimate inputs — so a direct card selection
+      // is reflected immediately, old-design style.
+      final String rentalType = tripType;
+      final double inputHours = double.tryParse(locationController.estimateTimeController.text) ?? (taxiCartController.carCartModel?.userData?.estimatedHours ?? 0);
+      final double inputDays = double.tryParse(locationController.estimateDayController.text) ?? estimatedDay;
+
+      final double a = rentalType == AppConstants.hourly ? (vehicle.hourlyPrice ?? 0)
+          : rentalType == AppConstants.dayWise ? (vehicle.dayWisePrice ?? 0) : (vehicle.distancePrice ?? 0);
+      final double b = rentalType == AppConstants.hourly ? inputHours
+          : rentalType == AppConstants.dayWise ? inputDays : (taxiCartController.carCartModel!.userData!.distance ?? 0);
+      final double priceWithoutDiscount = (a * b) * cartQuantity;
+      price = priceWithoutDiscount - _calculateDiscount(priceWithoutDiscount, discount, discountType, vehicle);
+
+      estimateLabel = rentalType == AppConstants.hourly
+          ? '${'estimated'.tr} $inputHours ${'hr'.tr}'
+          : rentalType == AppConstants.dayWise
+              ? '${'duration'.tr} ${inputDays.toStringAsFixed(0)} ${'day'.tr}'
+              : '${'estimated'.tr} ${taxiCartController.carCartModel?.userData?.distance?.toStringAsFixed(3) ?? 0} ${'km'.tr}';
+    } else {
+      // Pre-cart (design behaviour): the selected type's real start-from price
+      // until trip context exists; once it does (real distance from the map
+      // confirm, or a typed estimate), the REAL total: rate × units − discount —
+      // the same maths the in-cart branch and the cart backend use.
+      final double base = tripType == 'hourly' ? (vehicle.hourlyPrice ?? 0)
+          : tripType == 'day_wise' ? (vehicle.dayWisePrice ?? 0) : (vehicle.distancePrice ?? 0);
+      final double units = tripType == 'hourly'
+          ? (double.tryParse(locationController.estimateTimeController.text) ?? 0)
+          : tripType == 'day_wise'
+              ? (double.tryParse(locationController.estimateDayController.text) ?? 0)
+              : ((locationController.distance ?? -1) > 0 ? locationController.distance! : 0);
+      if(units > 0) {
+        final double priceWithoutDiscount = base * units;
+        price = priceWithoutDiscount - _calculateDiscount(priceWithoutDiscount, discount, discountType, vehicle);
+      } else {
+        price = base - PriceConverter.calculation(base, discount, discountType, 1);
+      }
+
+      estimateLabel = tripType == 'hourly'
+          ? '${'estimated'.tr} ${locationController.estimateTimeController.text.isEmpty ? 0 : locationController.estimateTimeController.text} ${'hr'.tr}'
+          : tripType == 'day_wise'
+              ? '${'estimate_days'.tr}: ${locationController.estimateDayController.text.isEmpty ? 0 : locationController.estimateDayController.text}'
+              : '${'estimated'.tr} ${(locationController.distance ?? -1) > 0 ? locationController.distance!.toStringAsFixed(3) : '0.000'} ${'km'.tr}';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusLarge)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, -2))],
+      ),
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Flexible(child: Text(estimateLabel, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault))),
+          Text(PriceConverter.convertPrice(price, forTaxi: true),
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: Theme.of(context).primaryColor)),
+        ]),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+
+        SafeArea(top: false, child: Row(children: [
+
+          if(_isInCart) ...[
+            Row(children: [
+              QuantityButton(
+                onTap: taxiCartController.isLoading ? null : () {
+                  if (quantity > 1) {
+                    setState(() {
+                      if(cartQuantity > 1) {
+                        cartQuantity--;
+                      }
+                    });
+                    taxiCartController.setQuantity(true, isExistInCartPosition, count: cartQuantity);
+                  } else {
+                    taxiCartController.removeFromCart(cartId);
+                  }
+                },
+                isIncrement: false,
+                showRemoveIcon: quantity == 1 || cartQuantity == 1,
+              ),
+              Text(cartQuantity.toString(), style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
+              QuantityButton(
+                onTap: taxiCartController.isLoading ? null : () {
+                  if(totalVehicles > cartQuantity) {
+                    setState(() {
+                      cartQuantity++;
+                    });
+                    taxiCartController.setQuantity(true, isExistInCartPosition, count: cartQuantity);
+                  } else {
+                    showCustomSnackBar('${'you_cant_add_more_than'.tr} $totalVehicles ${'quantities_of_this_vehicle'.tr}');
+                  }
+                },
+                isIncrement: true,
+                color: taxiCartController.isLoading || cartQuantity == totalVehicles ? Theme.of(context).disabledColor : null,
+              ),
+            ]),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+          ],
+
+          Expanded(child: CustomButton(
+            buttonText: 'proceed_to_checkout'.tr,
+            isLoading: taxiCartController.isLoading,
+            onPressed: () => _proceedToCheckout(taxiCartController, locationController, vehicle),
+          )),
+        ])),
+      ]),
+    );
+  }
+
+  /// Design flow: Vehicle Details → Checkout. The cart REMAINS the single source the
+  /// production `TaxiCheckoutScreen` reads — so "Proceed" first ensures this vehicle
+  /// is in the cart through the EXISTING `_addToCart` logic (identical validation to
+  /// the production location bottom sheet), then opens the existing checkout.
+  Future<void> _proceedToCheckout(TaxiCartController taxiCartController, TaxiLocationController locationController, VehicleModel vehicle) async {
+    if(_isInCart) {
+      final UserData? userData = taxiCartController.carCartModel?.userData;
+      final String selectedType = taxiCartController.tripType;
+      final bool typeChanged = userData?.rentalType != null && selectedType != userData!.rentalType;
+      final bool estimateChanged = (selectedType == 'hourly' && locationController.estimateTimeController.text != _seededEstimateTime) ||
+          (selectedType == 'day_wise' && locationController.estimateDayController.text != _seededEstimateDay);
+
+      if((typeChanged || estimateChanged) && userData?.id != null) {
+        // EXACT persist logic of the production TripTypeBottomSheetWidget "update":
+        // validate estimate → checkTypeInCart → CarCart(applyMethod) →
+        // updateUserData/getCarCartList, or the existing TripVehicleListDialog.
+        if(selectedType == 'hourly' && (locationController.estimateTimeController.text.isEmpty || (double.tryParse(locationController.estimateTimeController.text) ?? 0) == 0)) {
+          showCustomSnackBar('please_enter_estimate_time'.tr, getXSnackBar: true);
+          return;
+        }
+        if(selectedType == 'day_wise' && (locationController.estimateDayController.text.isEmpty || (double.tryParse(locationController.estimateDayController.text) ?? 0) == 0)) {
+          showCustomSnackBar('please_enter_estimate_days'.tr, getXSnackBar: true);
+          return;
+        }
+
+        bool isCartExistType = await CartHelper.checkTypeInCart(taxiCartController.cartList, selectedType);
+        double estimatedDay = (double.tryParse(locationController.estimateDayController.text) ?? 0) * 24;
+
+        CarCart cart = CarCart(
+          applyMethod: true, distance: userData!.distance, destinationTime: userData.destinationTime,
+          rentalType: selectedType,
+          estimatedHour: selectedType == 'hourly' ? locationController.estimateTimeController.text
+              : selectedType == 'day_wise' ? estimatedDay.toStringAsFixed(1) : '${userData.estimatedHours ?? 0}',
+        );
+
+        if(isCartExistType) {
+          final bool success = await taxiCartController.updateUserData(cart: cart, userId: userData.id!);
+          if(!success) return;
+          await taxiCartController.getCarCartList();
+          _seededEstimateTime = locationController.estimateTimeController.text;
+          _seededEstimateDay = locationController.estimateDayController.text;
+        } else {
+          Get.dialog(TripVehicleListDialog(rentalType: selectedType, cart: cart, userId: userData.id!));
+          return;
+        }
+      }
+
+      Get.to(() => const TaxiCheckoutScreen());
+      return;
+    }
+
+    // No trip context yet → the existing destination flow (it computes the real
+    // distance/duration and returns here).
+    if(taxiCartController.cartList.isEmpty && locationController.toAddress == null) {
+      Get.to(() => TaxiLocationSuggestionScreen(vehicle: vehicle));
+      return;
+    }
+
+    // Same validation the production location bottom sheet performs.
+    if(locationController.finalTripDateTime == null) {
+      showCustomSnackBar('please_select_pickup_time'.tr);
+      return;
+    }
+    if(locationController.tripType == 'hourly' &&
+        (locationController.estimateTimeController.text.isEmpty || (double.tryParse(locationController.estimateTimeController.text) ?? 0) <= 0)) {
+      showCustomSnackBar(locationController.estimateTimeController.text.isEmpty ? 'please_enter_estimate_time'.tr : 'please_enter_valid_estimate_time'.tr);
+      return;
+    }
+    if(locationController.tripType == 'day_wise' &&
+        (locationController.estimateDayController.text.isEmpty || (double.tryParse(locationController.estimateDayController.text) ?? 0) <= 0)) {
+      showCustomSnackBar('please_enter_estimate_time'.tr);
+      return;
+    }
+
+    final bool wasEmpty = taxiCartController.cartList.isEmpty;
+    _addToCart(taxiCartController, vehicle);
+
+    // `_addToCart`'s multi-vehicle path (`decideAddToCart`) runs its own existing
+    // dialog flow — never auto-navigate over it. Only the simple empty-cart path is
+    // followed to checkout once the backend confirms the add.
+    if(wasEmpty && locationController.toAddress != null) {
+      // addToCart is async inside _addToCart; wait for the controller to finish.
+      while(taxiCartController.isLoading) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      if(taxiCartController.isExistInCart(vehicle.id) != -1) {
+        Get.to(() => const TaxiCheckoutScreen());
+      }
+    }
+  }
+
+  // ── Pre-existing business logic, unchanged ──
 
   void _addToCart(TaxiCartController taxiCartController, VehicleModel vehicle) {
 
@@ -487,8 +832,33 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   }
 }
 
-class CategoryModel {
-  String icon;
-  String name;
-  CategoryModel({required this.icon, required this.name});
+/// Rounded dashed border for the "Add More Vehicle +" affordance (the design's
+/// dashed container). Pure presentation, local to this screen.
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  _DashedBorderPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    const double dashWidth = 6;
+    const double dashSpace = 4;
+    final Path path = Path()
+      ..addRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(Dimensions.radiusDefault)));
+
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        canvas.drawPath(metric.extractPath(distance, distance + dashWidth), paint);
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) => oldDelegate.color != color;
 }

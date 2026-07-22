@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
 
 /// **Rental Provider Adapter (Temporary Production Adapter)**
@@ -110,8 +112,13 @@ class RentalProviderAdapter {
     for (final v in vehicles) {
       if (v.airCondition == true) badges.add('AC');
 
-      final String? tag = v.tag?.trim();
-      if (tag != null && tag.isNotEmpty) badges.add(_titleCase(tag));
+      // `tag` arrives as a stringified JSON array (e.g. `["Lexus"]`, `["Luxury","Premium"]`).
+      // Presentation-only: parse it into clean, individually title-cased badge tokens
+      // ("Lexus", "Luxury") instead of rendering the raw `["lexus"]` string. No backend
+      // model change, no adapter-architecture change — still derived from the real field.
+      for (final String token in _parseTags(v.tag)) {
+        badges.add(_titleCase(token));
+      }
 
       final String? fuel = v.fuelType?.trim();
       if (fuel != null && fuel.isNotEmpty) badges.add(_titleCase(fuel));
@@ -127,6 +134,33 @@ class RentalProviderAdapter {
     }
 
     return badges.toList();
+  }
+
+  /// Turns the backend `tag` value into clean tokens. The field is a stringified JSON
+  /// array (`["Lexus"]`), so decode it; if it is a plain string or the JSON is
+  /// malformed, fall back to stripping brackets/quotes and splitting on commas. Never
+  /// invents data — only reformats what the backend returned.
+  static List<String> _parseTags(String? raw) {
+    final String value = raw?.trim() ?? '';
+    if (value.isEmpty) return const [];
+
+    if (value.startsWith('[')) {
+      try {
+        final decoded = jsonDecode(value);
+        if (decoded is List) {
+          return decoded.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+        }
+      } catch (_) {
+        // Malformed JSON — fall through to the defensive split below.
+      }
+    }
+
+    return value
+        .replaceAll(RegExp(r'[\[\]"]'), '')
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
   /// Keeps well-known vehicle types in their conventional casing (SUV, MPV) and

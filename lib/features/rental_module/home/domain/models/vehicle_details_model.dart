@@ -124,8 +124,14 @@ class VehicleModel {
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
     zoneId = json['zone_id'];
-    vehicleIdentitiesCount = json['total_vehicle_count'];
-    totalVehicles = json['total_vehicles'];
+    // BUGFIX: `get-vehicle-details` serialises `total_vehicles` as a **string**
+    // (`"total_vehicles": "1"`) while the list endpoints send integers. The raw
+    // assignment threw `type 'String' is not a subtype of type 'int?'`, aborting
+    // `fromJson` — so `vehicleDetailsModel` stayed null and the Vehicle Details page
+    // hung on its loading state forever. Parsed defensively (same resolution as
+    // `TaxiVendorModel`): number or numeric string both work, absent stays null.
+    vehicleIdentitiesCount = _asInt(json['total_vehicle_count']);
+    totalVehicles = _asInt(json['total_vehicles']);
     thumbnailFullUrl = json['thumbnail_full_url'];
     imagesFullUrl = json['images_full_url'].cast<String>();
     if (json['documents_full_url'] != null) {
@@ -140,6 +146,15 @@ class VehicleModel {
     provider = json['provider'] != null
         ? Provider.fromJson(json['provider'])
         : null;
+  }
+
+  /// Tolerates the backend sending an integer counter as a numeric string.
+  /// Returns null for null/unparseable input — never a fabricated default.
+  static int? _asInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
   }
 
   Map<String, dynamic> toJson() {

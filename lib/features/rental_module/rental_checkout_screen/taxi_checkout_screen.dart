@@ -6,8 +6,12 @@ import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
+import 'package:sixam_mart/features/checkout/controllers/checkout_controller.dart';
+import 'package:sixam_mart/features/checkout/widgets/payment_section.dart';
 import 'package:sixam_mart/features/home/controllers/home_controller.dart';
 import 'package:sixam_mart/features/language/controllers/language_controller.dart';
+import 'package:sixam_mart/features/location/domain/models/zone_response_model.dart';
+import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/rental_module/common/widgets/extra_discount_view_widget.dart';
 import 'package:sixam_mart/features/rental_module/rental_location_screen/controller/taxi_location_controller.dart';
@@ -46,6 +50,35 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
   FocusNode guestEmailNode = FocusNode();
   String? countryDialCode = CountryCode.fromCountryCode(Get.find<SplashController>().configModel!.country!).dialCode ?? Get.find<LocalizationController>().locale.countryCode;
   double? _payableAmount = 0;
+
+  /// Payer/timing selector (product-owner requirement, Parcel "Charge Pay By"
+  /// format): 0 = Pay Now (shows the approved shared Choose Payment Method card),
+  /// 1 = Pay to Driver on Trip - the DEFAULT, because it is the existing production
+  /// flow (`trip-book` takes no payment; payment happens on the trip via the
+  /// existing `makePayment`). Pay Now's method selection is a prepared integration
+  /// point - see docs/BACKEND_INTEGRATION_QUEUE.md item 16.
+  int _payTimingIndex = 1;
+  bool _isDigitalPaymentActive = false;
+  bool _isOfflinePaymentActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Same shared-payment setup the Parcel request page performs - the approved
+    // PaymentSection drives selection via the shared CheckoutController.
+    Get.find<CheckoutController>().setPaymentMethod(-1, isUpdate: false);
+    Get.find<CheckoutController>().getOfflineMethodList();
+    final zones = AddressHelper.getUserAddressFromSharedPref()?.zoneData;
+    if(zones != null) {
+      for(ZoneData zData in zones) {
+        if(zData.id == AddressHelper.getUserAddressFromSharedPref()!.zoneId) {
+          _isDigitalPaymentActive = (zData.digitalPayment ?? false) && (Get.find<SplashController>().configModel!.digitalPayment ?? false);
+          _isOfflinePaymentActive = (zData.offlinePayment ?? false) && (Get.find<SplashController>().configModel!.offlinePaymentStatus ?? false);
+          break;
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -298,6 +331,67 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
                     color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
                   ),
 
+                  // Payment - payer/timing selector (Parcel "Charge Pay By" format)
+                  // above the approved shared Choose Payment Method card.
+                  // "Pay to Driver on Trip" = the existing production flow (default).
+                  // "Pay Now" reveals the shared PaymentSection; transmitting the
+                  // selection at booking is a backend gap (queue item 16) - nothing
+                  // is faked: booking always runs the real trip-book flow.
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+                    child: GetBuilder<CheckoutController>(builder: (checkoutController) {
+                      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                        Text('payment'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                        const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+
+                        Row(children: [
+                          Expanded(child: InkWell(
+                            onTap: () => setState(() => _payTimingIndex = 0),
+                            child: Row(children: [
+                              RadioGroup<int>(
+                                groupValue: _payTimingIndex,
+                                onChanged: (int? v) => setState(() => _payTimingIndex = 0),
+                                child: Radio<int>(value: 0, activeColor: Theme.of(context).primaryColor),
+                              ),
+                              Flexible(child: Text('pay_now'.tr, style: robotoRegular)),
+                            ]),
+                          )),
+                          Expanded(child: InkWell(
+                            onTap: () => setState(() => _payTimingIndex = 1),
+                            child: Row(children: [
+                              RadioGroup<int>(
+                                groupValue: _payTimingIndex,
+                                onChanged: (int? v) => setState(() => _payTimingIndex = 1),
+                                child: Radio<int>(value: 1, activeColor: Theme.of(context).primaryColor),
+                              ),
+                              Flexible(child: Text('pay_to_driver_on_trip'.tr, style: robotoRegular)),
+                            ]),
+                          )),
+                        ]),
+                        const SizedBox(height: Dimensions.paddingSizeSmall),
+
+                        if(_payTimingIndex == 0)
+                          PaymentSection(
+                            checkoutController: checkoutController,
+                            total: total,
+                            // Cash IS the "pay to driver on trip" option - not a
+                            // pay-now method.
+                            isCashOnDeliveryActive: false,
+                            isDigitalPaymentActive: _isDigitalPaymentActive,
+                            isWalletActive: Get.find<SplashController>().configModel!.customerWalletStatus == 1 && AuthHelper.isLoggedIn(),
+                            isOfflinePaymentActive: _isOfflinePaymentActive,
+                          ),
+                      ]);
+                    }),
+                  ),
+
+                  Container(
+                    height: Dimensions.paddingSizeExtraSmall,
+                    margin: const EdgeInsets.only(top: Dimensions.paddingSizeSmall, bottom: Dimensions.paddingSizeSmall),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+                  ),
+
                   //Bill Details
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeLarge),
@@ -394,6 +488,11 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
                       } else if (AuthHelper.isGuestLoggedIn() && guestEmailController.text.isEmpty) {
                         guestEmailNode.requestFocus();
                         showCustomSnackBar('please_enter_contact_person_email'.tr);
+                      } else if (_payTimingIndex == 0 && Get.find<CheckoutController>().paymentMethodIndex == -1) {
+                        // Pay Now requires a chosen method — same validation the
+                        // Parcel request page performs on the shared selection.
+                        // Pay to Driver on Trip needs none (cash/pay-later flow).
+                        showCustomSnackBar('please_select_payment_method_first'.tr);
                       } else {
                         DateTime selectedTime = DateConverter.dateTimeStringToDate(schedule);
                         String scheduleTime = DateConverter.formatDate(selectedTime);
