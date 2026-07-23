@@ -319,7 +319,10 @@ class TaxiLocationController extends GetxController implements GetxService {
     _fromAddress = addressModel;
     LatLng from = LatLng(double.parse(_fromAddress!.latitude!), double.parse(_fromAddress!.longitude!));
 
-    mapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: from, zoom: 17)));
+    // BUGFIX: best-effort pan — the passed controller can belong to an already
+    // disposed map (Location page reopened from the map via Get.off); a cosmetic
+    // camera animation must never throw ("Bad state: ... used after ... disposed").
+    try { mapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: from, zoom: 17))); } catch (_) {}
 
     update();
   }
@@ -327,7 +330,7 @@ class TaxiLocationController extends GetxController implements GetxService {
   Future<void> setToAddress(AddressModel addressModel, GoogleMapController? mapController) async {
     _toAddress = addressModel;
     LatLng to = LatLng(double.parse(_toAddress!.latitude!), double.parse(_toAddress!.longitude!));
-    mapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: to, zoom: 17)));
+    try { mapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: to, zoom: 17))); } catch (_) {}
 
     update();
   }

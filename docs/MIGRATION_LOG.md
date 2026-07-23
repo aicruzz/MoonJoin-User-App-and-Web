@@ -49,6 +49,31 @@ incompatibility, or explicit user approval to reopen. No cosmetic changes. Add e
   layer lives inside `AllVehicleScreen` (`RentalProviderAdapter` → `RentalProviderCard`), mirroring how the Food
   restaurant list lives inside All Restaurants. No standalone provider-list design exists.
 
+- ✅ **Apt Screen 1 — Short Apartments listing** — **FROZEN** (unified `AllVehicleScreen` apartment mode +
+  `RentalApartmentAdapter`; honest empty state; real Short-Apt category).
+
+- ✅ **Apt Checkout** — **FROZEN** — the frozen master `TaxiCheckoutScreen` reused exactly (page/flow/
+  booking API/validation/payer selector/`PaymentSection` all shared); auto-activating apartment wording
+  ("Selected Apartment", "Pay to Apartment Provider", nights) + the design's Check-in/Check-out/Nights strip
+  from real cart values. Car checkout byte-identical. **PERMANENT: one checkout, one payment system for both.**
+
+- ✅ **Apt Screen 3 — Apartment Details** — **FROZEN** — auto-activating apartment mode on the frozen
+  `VehicleDetailsScreen` (real `category_id`): Check-in/Nights on the existing trip machinery (day-wise =
+  per-night, trip-type row hidden), AC + real-tag pills, real-tag Amenities; missing backend fields omitted +
+  queued (17). Car presentation byte-identical (default path).
+
+- ✅ **Apt Screen 2 — Apartment Provider Details** — **FROZEN** — the frozen `VendorDetailScreen` with
+  auto-activating apartment presentation (real-inventory-driven `isApartmentProvider`; additive
+  `countLabel`; Guests/Bedrooms inert chips pending queue 17).
+
+- ✅ **Rental section scoping (banners & categories)** — **FROZEN architecture** — Home `all` · Car listing
+  car-only · Apt listing apt-only, via `RentalSection` + adapter classification from real signals
+  (`sectionCategories`, `filterBanners`, additive `BannerWidget.section`); backend contract queue item 18.
+
+- ✅ **Rental Home Popular sections** — **FROZEN architecture** — Car: real backend top-rated ranking,
+  apartment-excluded; Apt: same real ranking, approved `MoonjoinEmptyState` while empty, self-populating;
+  placeholder data removed; See All → the correct scoped listings.
+
 - ✅ **Rental — Booking Success** — **Production Ready (Frontend) · FROZEN**
   (`ConfirmBookingRequestBottomSheet`) — design `booking_request_successful.png`; real trip data + provider
   call; auto-opens over Trip Details after a real booking.
@@ -1969,3 +1994,219 @@ fake APIs. The apartment-vs-car category split is queue item 7/13 (Category Type
 
 **Next step:** per-screen audits in the order Home-entry → Listing → Provider → Details → Checkout →
 Booking Success → Booking History, one screen per phase, QA→approval→freeze as always.
+
+---
+
+## Apt Screen 1 audit — `apt_rental.PNG` ("Short Apartments" listing) — REUSE VERDICT
+
+Flow entry confirmed: the shared Rental Home's **Short Apt hero card** opens this listing (mirror of the Car
+hero → All Car Rentals). Section-by-section vs the frozen `AllVehicleScreen`:
+app bar (back+title+search) ✅ · search bar ✅ · category row (circular, green arc: City Center / Beachside /
+Budget / Luxury / Family) ✅ same component family · filter chips (Filters · Sort · Instant Book · Free
+Cancellation · Top Rated) ✅ same `StoreFilterChip` row, apartment wording · rotating promo banner ✅ ·
+Top Brands ✅ `TopBrandCard` · listing cards — apartment data (name, 📍location, bedrooms, guests, ★rating,
+₦/night, discount + feature badges, ♥) on the same card architecture.
+
+**Verdict: effectively the SAME architecture → REUSE the frozen `AllVehicleScreen` architecture** with
+apartment wording/categories/chips/data. Discovery layer follows the SAME approved provider-first flow as
+frozen Car (provider banners → provider page), keeping one Rental product. Differences are data-level only:
+apartment facts, "/night" pricing, chip labels (Instant Book / Free Cancellation — rendered-but-inert pending
+backend, exactly like Self Drive / With Driver were on Car).
+
+**Backend:** NO apartment backend exists. Per CLAUDE.md's explicit Short-Apartment exception, this screen is
+built as a complete production-ready frontend over a **mock repository behind clean interfaces** (repository →
+service → controller, mirroring the taxi_home stack) so ONLY the repository swaps when the backend ships;
+full Backend/Vendor/Admin contract to be added to BACKEND_INTEGRATION_QUEUE.md with the implementation.
+
+**Next: implement Apt Screen 1 on this verdict (one screen, then QA → approval → freeze).**
+
+**CORRECTION (product owner, approved approach):** no mock repositories without explicit approval. Apt
+Screen 1 uses the SAME real backend through the established adapter pattern instead: the live rental backend
+already exposes a **"Short Apt Rental" category** (`category-list`), and every vehicle carries `category_id` —
+apartments are rental inventory under that category. Data source = the existing real browse
+(`getTopRatedCarList`) filtered against the real Short-Apt category id (client-side, the approved Screen-2
+chip pattern), plus the existing provider adapter for the provider-first discovery layer. When providers have
+listed no apartments the screen shows the REAL empty state. Proper backend filters (category-type / browse
+category params) remain queue items 5/7/8/13 — when they ship, only the data call changes. Zero mocks, zero
+fake data, one unified Rental architecture.
+
+---
+
+## Phase — Apt Screen 1: Short Apartments listing — IMPLEMENTED (pending verification + approval)
+
+**ONE unified listing page** — additive `fromApartment` flag on the frozen `AllVehicleScreen` (default
+`false` → Car Rental behaviour byte-identical; the sanctioned `TopBrandCard.showCount` additive pattern).
+No second listing screen, no duplicated components.
+
+| Concern | Apartment mode behaviour |
+|---|---|
+| Entry | Rental Home Short-Apt hero card → `AllVehicleScreen(fromApartment: true)` (replaces `_comingSoon`) |
+| Title | `short_apartments` |
+| Inert provider chips | `instant_book` / `free_cancellation` wording (still inert — queue item 9, same as Car's Self Drive/With Driver) |
+| Top Brands | HIDDEN — the brand API returns vehicle brands only; no real apartment brand data (never faked) |
+| Data | **`RentalApartmentAdapter`** (new, temporary production adapter — RentalProviderAdapter philosophy): resolves the REAL "Short Apt Rental" category id from the live `category-list`, filters the real browse feed (`getTopRatedCarList`) by `category_id`. Car data never converted. |
+| Empty | `NoDataScreen('no_apartment_available')` — the honest state (live check: backend currently has ZERO apartment inventory) |
+| Everything else | identical frozen architecture: search, categories, filter chips, banner, provider-first discovery (`RentalProviderAdapter` → `RentalProviderCard` → `VendorDetailScreen`), pagination, skeletons |
+
+**Backend verified live before coding:** `category-list` → "Short Apt Rental" (id 2) EXISTS; browse inventory
+→ 1 item, `category_id: 1` (car) → apartment inventory is genuinely empty today.
+
+**i18n:** `short_apartments` / `instant_book` / `free_cancellation` / `no_apartment_available` ×4 languages.
+
+**Adapter migration plan:** when queue items 5/7/8/13 ship (category `type`, browse category filters), ONLY
+`rental_apartment_adapter.dart` changes — no UI/architecture change permitted.
+
+### 🔒 Apt Screen 1 — Short Apartments listing — FROZEN (final audit passed, product-owner approved)
+Final audit: every `apt_rental.PNG` section considered — live (app bar/search/categories/chips/banner/
+empty state), inert-pending-backend (Instant Book · Free Cancellation → queue 9; design's apartment
+categories → Admin, queue 17), or hidden strictly for missing real data (Top Brands — vehicle-brands-only
+API; reactivation marker `TODO(BACKEND, queue item 17)` in code, section unchanged, reappears with NO
+redesign). Apartment facts on cards arrive with queue-17 fields through the same real-field rendering.
+Unified architecture preserved; frozen Car flow untouched (verified on device + clean log).
+**Status: 🔒 FROZEN — Production Ready (Frontend).** `fromApartment` mode and `RentalApartmentAdapter` are
+frozen with it; only the adapter changes when backend ships.
+
+---
+
+## Phase — Apt Screen 2: Apartment Provider Details (`apt_rental_provider_item_list.PNG`) — REUSE, auto-activating
+
+**Audit verdict:** identical template family to the frozen Car Provider Details (`VendorDetailScreen` +
+`RentalProviderHeroHeader`) — differences are wording/data only. **No new page, no duplicated components.**
+
+**Implementation — additive, data-driven (no manual flag):**
+`RentalApartmentAdapter.isApartmentProvider` inspects the provider's REAL loaded inventory against the real
+Short-Apt category (vendor list overload `apartmentCategoryIdFromVendorList`); when the inventory is
+predominantly apartments the SAME frozen page presents: hero count "apartments available" (additive
+`countLabel` on `RentalProviderHeroHeader`, default null → prior behaviour), chips **Guests/Bedrooms**
+(inert pending queue-17 fields; car keeps Seats→real filter sheet / Transmission→queue 14), result header
+"Apartments Found", empty state `no_apartment_available`. **Activates by itself the moment real apartment
+inventory exists; never activates for car providers** (proven by unit tests). Everything else — search,
+filter sheet, categories, banners, reviews, pagination — is the frozen implementation untouched.
+
+**Verification:** analyze 0 issues · rental tests **16/16** (adapter: category resolution, filtering,
+provider detection) · runtime: apartment presentation is unreachable with real data today (zero apartment
+inventory — honest), so the on-device check is that the CAR provider page renders byte-identically (default
+path) and the apt listing's empty state stands. **Pending product-owner approval before freeze.**
+
+### Rental section scoping — banners & categories (product-owner architecture, adapter-based)
+Main Rental Home → both sections (unchanged, default `RentalSection.all`). Car listing → Car-only; Apartment
+listing → Apartment-only. No backend classification exists (queue item 18), so `RentalApartmentAdapter` derives
+sections from REAL signals only: category name resolution (`sectionCategories`) and banner `provider_id` →
+provider's real inventory (`filterBanners`; unclassified banners never shown as apartment content). Additive
+`BannerWidget.section` (default `all`). Presentation/data-filter only — no controller/repository/business
+change. Tests: rental suite 18/18.
+
+### Rental Home "Popular" sections — audit (product-owner request) + corrections
+**Popular Car Rentals — verified real:** backend `top-rated` endpoint = the existing production popularity
+ranking (no invented algorithm) + real `status == 1` rule; cards → real Vehicle Details; See All → the Car
+listing (full ranked, paginated). Preview = the backend's first ranked page. Correction applied: now excludes
+apartment-category items (adapter), so future apartments never leak into the CAR popular section.
+**Popular Short Apt Rentals — violation found & fixed:** it rendered the hardcoded
+`kPlaceholderPopularApartments` list (pre-dated the no-fake rules; frozen then as a marked placeholder). Now:
+REAL data — the same backend top-rated ranking filtered to the real Short-Apt category
+(`RentalApartmentAdapter`); section HIDES while apartment inventory is empty (graceful collapse, auto-appears
+with real data — no redesign); See All → the real Apartment listing; cards → real Vehicle Details. The
+placeholder constants remain on disk only for the hero images (queue item 3) pending the post-Rental
+dead-code audit. `_comingSoon` removed — both apartment entries are real navigation now.
+**Popularity signal note:** the backend's only popularity signal is the top-rated ranking; if a distinct
+"most booked" signal is wanted it is backend work (extends queue item 17) — never faked in the app.
+
+**Adjustment (product owner):** the Popular Short Apt Rentals section stays IN the Rental Home architecture
+permanently — while inventory is empty it renders the approved `MoonjoinEmptyState` (reserved foundation
+component, now live) with honest copy ("no apartments listed yet"), and self-populates from the same real
+top-rated ranking the moment providers list apartments — no future redesign. Loading state mirrors the Car
+section's shimmer. Popularity source remains the backend's real top-rated ranking until a dedicated metric
+ships (queue item 17).
+
+---
+
+## 🔒 FREEZE — Apt Screen 2 · Section scoping · Popular sections (product-owner approved)
+All three verified on device and frozen. The logged `getZone` HTML-response exception is a SEPARATE app-wide
+backend transient (core location feature, `/api/v1/config` returning HTML) — explicitly out of Rental-migration
+scope by product-owner decision; no unrelated code touched.
+
+---
+
+## Apt Screen 3 audit — Apartment Details (`apt_rental_details.PNG`) — verdict before code
+
+Vs the frozen `VehicleDetailsScreen`: same page skeleton (header identity, date context, quantity, price,
+Proceed→cart→Checkout). Materially different content audited field-by-field against the REAL inventory model:
+beds/baths/guests pills, guests steppers and house rules have NO backend fields → omitted + queued (17), never
+converted from car fields, never rendered as misleading inert booking controls. Feature tags + Amenities grid
+DO have a real source (the provider-entered `tag` array) → rendered from real tags, auto-populating.
+Check-in/out/nights ↔ the existing day-wise trip context (day-wise IS per-night) with apartment wording;
+"/night" units. **Verdict: reuse `VehicleDetailsScreen` with auto-activating apartment mode** (real
+`category_id` vs the real Short-Apt category — the approved Provider-page pattern); day-wise auto-selected,
+trip-type row hidden in apartment mode (apartments are per-night only — the design has no trip-type selector).
+Booking still requires the production cart's pickup/destination (API reality) — the trip card stays, delta
+documented pending an apartment-specific booking contract (queue 17).
+
+## Phase — Apt Screen 3: Apartment Details — IMPLEMENTED (pending verification + approval)
+Auto-activating apartment mode on the frozen `VehicleDetailsScreen` (additive; real `category_id` vs the real
+Short-Apt category, category list loaded via the existing controller call on deep entry):
+- **Check-in** section title (same existing pickup-time machinery/date sheet).
+- **Nights** input replaces the trip-type row — day-wise auto-selected (apartments are per-night; the design
+  has no trip-type selector); same existing estimate controller and validations; car items keep the frozen
+  presentation untouched.
+- **Header pills**: real fields only — AC + up to 3 real provider `tag`s; beds/baths/guests fields don't
+  exist (queue 17) — never converted, never faked.
+- **Amenities** section: the provider's real `tag` array via `RentalApartmentAdapter.amenityTags` (same
+  parsing as the provider-card badges); hidden when none; auto-populates.
+- Booking continues through the UNCHANGED production cart→checkout flow (trip card retained — the real
+  booking API requires pickup/destination; apartment-specific booking contract documented in queue 17).
+- Omitted per real-data rules + queued (17): beds/baths/guests pills, guest steppers, unit variants beyond
+  the existing quantity, house rules.
+**Runtime note:** apartment presentation is unreachable with real data today (zero apartment inventory) —
+on-device verification = the CAR details page renders byte-identically (default path); apartment mode is
+covered by the adapter unit tests and activates automatically with real inventory.
+
+### 🐞 Two production bugs found in the Apt-Screen-3 verification log (root-caused & fixed)
+1. **DateTimePickerSheet null-assert (45×)** — pre-cart, the controller's selected date/time are null until
+   first picked; "Okay" without touching the pickers crashed on `selectedTripTime!`. Fix: Okay-with-no-change
+   confirms the DISPLAYED time (`finalTripDateTime`) — nothing fabricated beyond keeping the shown value.
+2. **GoogleMapController "used after disposed" (21×)** — pre-existing: the Location page reopened FROM the map
+   (`Get.off` disposes it) still passes the dead controller; address taps then threw on the cosmetic
+   `animateCamera`. Fix: the two camera pans are best-effort (`try/catch`) — a pan must never throw.
+Both verified-bug fixes on production rental code; no business logic changed.
+
+### Post-verification corrections (product owner)
+1. **Map re-edit loop fixed (root-caused):** re-editing pickup/destination FROM the map reopens the Location
+   page (replacing the map) and then PUSHED a new map — leaving the Location page under it, so the confirm's
+   single pop landed back on it. The details journey (vehicle set, no cart edit) now ALWAYS replaces the
+   Location page with the map, in all three entry handlers — stack is deterministically
+   Details → Location → Map in every path, including re-edits.
+2. **Pickup card title:** "Pickup Now" only while the shown time is now (±5 min); a user-selected future time
+   reads **"Schedule"** (existing key). Title only — date/time line and behaviour unchanged.
+
+## 🔒 Apt Screen 3 — Apartment Details — FROZEN (product-owner approved)
+Approved after full QA: analyze 0 · rental tests 18/18 · clean runtime log · four root-caused bug fixes
+verified on device (date-sheet null-assert, disposed-map pan, map re-edit stack, Pickup Now/Schedule title).
+
+---
+
+## Phase — Apt Checkout — MASTER architecture reused, auto-activating (pending verification + approval)
+Audit of `apt_rental_checkout.PNG` vs the frozen master: Selected-item card, Price Details, Confirm+terms
+identical → untouched. Payment: MASTER rule overrides the design's simplified wallet card — same payer
+selector + same shared `PaymentSection`, wording-only "Pay to Apartment Provider". Materially-in-design
+addition: the **Check-in / Check-out / Nights strip** (apartment mode only) — real cart values (pickup time +
+estimated nights; check-out is arithmetic on them). Named-guest list omitted (no backend fields — queue 17);
+"payment secure" pill = cosmetic delta. All additive on the frozen `TaxiCheckoutScreen`, auto-activating from
+the cart's REAL inventory (`isApartmentProvider`) — never activates for car bookings; car checkout renders
+byte-identically. Wording: `selected_apartment`, night units. No second checkout, no duplicate payment logic.
+
+## 🔒 Apt Checkout — FROZEN (product-owner approved) — PERMANENT master-architecture confirmations
+- Car Rental Checkout = the master checkout architecture.
+- Short Apt Rental reuses the SAME checkout implementation — never a separate apartment payment system.
+- Future apartment backend additions plug INTO this architecture (queue 16/17), never replace it.
+Verified: analyze 0 · rental tests 18/18 · clean log · Car checkout byte-identical on device.
+
+## Phase — Apt Booking Success (`booking_successful.png`) — ONE shared sheet, auto-activating (pending approval)
+Audit vs the frozen Car `ConfirmBookingRequestBottomSheet`: same skeleton (check badge, title, real info
+rows, provider-call, button) → reused. Apartment design adds real-data blocks → added additively in
+apartment mode only: Booking ID (trip id) + Booking Date, Total Paid + payment method, Check-in/Check-out/
+Nights info rows (car keeps pickup/dropoff/vehicle). Wording: "Booking Successful!" +
+"Your apartment has been booked…". Detection = booked item's real `category_id` vs the real Short-Apt
+category (trip `VehicleDetails.categoryId`); never activates for car → car success byte-identical. Guests
+list / View-Booking-Back-to-Home split omitted (no backend guest fields; the sheet's Okay closes to the trip
+page which already offers navigation) — queue 17. No second success page, no fake data, real booking response
+flow preserved.

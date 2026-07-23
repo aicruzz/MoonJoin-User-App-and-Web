@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/empty_state_widget.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/loading_skeleton.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/features/store/widgets/all_restaurants_widgets.dart';
@@ -10,6 +11,7 @@ import 'package:sixam_mart/features/rental_module/rental_favourite/screens/vehic
 import 'package:sixam_mart/features/address/controllers/address_controller.dart';
 import 'package:sixam_mart/features/notification/controllers/notification_controller.dart';
 import 'package:sixam_mart/features/rental_module/apartment_placeholder/apartment_placeholder.dart';
+import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
 import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
 import 'package:sixam_mart/features/rental_module/home/screens/all_vehicle_screen.dart';
 import 'package:sixam_mart/features/rental_module/home/widgets/banner_widget.dart';
@@ -25,7 +27,6 @@ import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 
 class TaxiHomeScreen extends StatefulWidget {
   const TaxiHomeScreen({super.key});
@@ -52,7 +53,6 @@ class _TaxiHomeScreenState extends State<TaxiHomeScreen> {
   }
 
   // TODO(BACKEND): Short Apartment Rental has no backend — see docs/BACKEND_INTEGRATION_QUEUE.md.
-  void _comingSoon() => showCustomSnackBar('short_apartment_rental_coming_soon'.tr, isError: false);
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +184,10 @@ class _TaxiHomeScreenState extends State<TaxiHomeScreen> {
           context, green,
           title: 'short_apt_rental'.tr, desc: 'comfortable_stays_for_any_duration'.tr,
           buttonText: 'explore_apts'.tr, image: kPlaceholderAptHeroImage,
-          onExplore: _comingSoon, // TODO(BACKEND): apartment listing screen (no backend yet)
+          // Short Apt flow entry — the SAME unified listing page in apartment mode
+          // (real Short-Apt category data via RentalApartmentAdapter; honest empty
+          // state until providers list apartments).
+          onExplore: () => Get.to(() => const AllVehicleScreen(fromApartment: true)),
         )),
       ])),
     );
@@ -290,7 +293,12 @@ class _TaxiHomeScreenState extends State<TaxiHomeScreen> {
   // ── 7. Popular Car Rentals (real backend via TaxiHomeController) ──
   Widget _popularCars(BuildContext context) {
     return GetBuilder<TaxiHomeController>(builder: (taxiController) {
-      final vehicles = taxiController.topRatedCarsModel?.vehicles?.where((v) => v.status == 1).toList();
+      // Section-scoped: the backend's REAL top-rated ranking, active items only,
+      // minus apartment-category inventory (this is the CAR popular section —
+      // adapter classification, consistent with the listing scoping).
+      final int? aptId = RentalApartmentAdapter.apartmentCategoryId(taxiController.vehicleCategoryModel);
+      final vehicles = taxiController.topRatedCarsModel?.vehicles
+          ?.where((v) => v.status == 1 && (aptId == null || v.categoryId != aptId)).toList();
       return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _sectionHeader(context, 'popular_car_rentals'.tr, () => Get.to(() => const AllVehicleScreen())),
         const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -324,33 +332,65 @@ class _TaxiHomeScreenState extends State<TaxiHomeScreen> {
     });
   }
 
-  // ── 8. Popular Short Apt Rentals (UI-layer placeholder — TODO(BACKEND)) ──
+  // ── 8. Popular Short Apt Rentals — REAL data (the same backend top-rated
+  // ranking, filtered to the real Short-Apt category via RentalApartmentAdapter).
+  // The section HIDES while the backend has no apartment inventory (honest,
+  // graceful-collapse pattern) and auto-appears with real data — no redesign.
+  // The previous hardcoded placeholder list was removed per the permanent
+  // no-fake-data rule. See All → the real Apartment listing. ──
   Widget _popularApartments(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _sectionHeader(context, 'popular_short_apt_rentals'.tr, _comingSoon),
-      const SizedBox(height: Dimensions.paddingSizeSmall),
-      SizedBox(
-        height: 210,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-          itemCount: kPlaceholderPopularApartments.length,
-          separatorBuilder: (_, i) => const SizedBox(width: Dimensions.paddingSizeSmall),
-          itemBuilder: (context, i) {
-            final a = kPlaceholderPopularApartments[i];
-            return RentalPopularCard(
-              image: a.image,
-              title: a.name,
-              subtitle: a.location,
-              price: PriceConverter.convertPrice(a.pricePerNight),
-              unit: ' /${'night'.tr}',
-              rating: a.rating,
-              onTap: _comingSoon, // TODO(BACKEND): apartment details screen
-            );
-          },
+    return GetBuilder<TaxiHomeController>(builder: (taxiController) {
+      final int? aptId = RentalApartmentAdapter.apartmentCategoryId(taxiController.vehicleCategoryModel);
+      final loading = taxiController.topRatedCarsModel?.vehicles == null;
+      final apartments = RentalApartmentAdapter.filterApartments(
+        taxiController.topRatedCarsModel?.vehicles?.where((v) => v.status == 1).toList(),
+        aptId,
+      );
+      // The section is PART OF THE APPROVED ARCHITECTURE and always renders
+      // (product-owner rule). No inventory → the approved MoonjoinEmptyState with
+      // honest copy; it self-populates the moment providers list real apartments —
+      // no future redesign. Popularity source = the backend's real top-rated
+      // ranking until a dedicated metric ships (queue item 17).
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionHeader(context, 'popular_short_apt_rentals'.tr,
+            () => Get.to(() => const AllVehicleScreen(fromApartment: true))),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+        loading
+            ? const _RentalCardShimmer()
+            : apartments.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+                child: MoonjoinEmptyState(
+                  title: 'no_apartment_available'.tr,
+                  message: 'no_apartments_listed_yet_check_back'.tr,
+                  icon: Icons.apartment_outlined,
+                ),
+              )
+            : SizedBox(
+          height: 210,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+            itemCount: apartments.length,
+            separatorBuilder: (_, i) => const SizedBox(width: Dimensions.paddingSizeSmall),
+            itemBuilder: (context, i) {
+              final a = apartments[i];
+              return RentalPopularCard(
+                image: a.thumbnailFullUrl ?? '',
+                title: a.name ?? '',
+                subtitle: a.provider?.name ?? '',
+                price: PriceConverter.convertPrice(a.dayWisePrice ?? 0),
+                unit: ' /${'night'.tr}',
+                rating: a.avgRating ?? 0,
+                showBookNow: true,
+                onTap: () => Get.to(() => VehicleDetailsScreen(vehicleId: a.id)),
+                onBook: () => Get.to(() => VehicleDetailsScreen(vehicleId: a.id)),
+              );
+            },
+          ),
         ),
-      ),
-    ]);
+      ]);
+    });
   }
 
   Widget _sectionHeader(BuildContext context, String title, VoidCallback onSeeAll) {

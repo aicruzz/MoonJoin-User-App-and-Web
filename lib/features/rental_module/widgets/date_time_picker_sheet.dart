@@ -168,8 +168,14 @@ class _DateTimePickerSheetState extends State<DateTimePickerSheet> {
                     buttonText: 'okay'.tr,
                     height: 35, width: 80,
                     onPressed: canUpdate ? (){
-                      Get.find<TaxiLocationController>().setTripDate(selectTripDate);
-                      Get.find<TaxiLocationController>().setTripTime(selectTripTime);
+                      // BUGFIX: pre-cart the controller's selected date/time are null
+                      // until first picked — "Okay" without touching the pickers then
+                      // null-asserted. Okay-with-no-change keeps the time already
+                      // DISPLAYED (finalTripDateTime, i.e. "Pickup Now"); nothing is
+                      // fabricated beyond confirming the shown value.
+                      final DateTime shown = Get.find<TaxiLocationController>().finalTripDateTime ?? DateTime.now();
+                      Get.find<TaxiLocationController>().setTripDate(selectTripDate ?? shown);
+                      Get.find<TaxiLocationController>().setTripTime(selectTripTime ?? shown);
                       DateTime date = DateConverter.formattingTripDateTime(Get.find<TaxiLocationController>().selectedTripTime!, Get.find<TaxiLocationController>().selectedTripDate!);
 
                       if(DateConverter.isAfterCurrentDateTime(date)) {

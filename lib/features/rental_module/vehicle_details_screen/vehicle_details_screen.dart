@@ -6,6 +6,7 @@ import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
 import 'package:sixam_mart/common/widgets/quantity_button.dart';
 import 'package:sixam_mart/features/address/domain/models/address_model.dart';
+import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
 import 'package:sixam_mart/features/rental_module/rental_location_screen/controller/taxi_location_controller.dart';
 import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
 import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
@@ -86,6 +87,11 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
       Get.find<TaxiLocationController>().initialSetup();
     }
     _loadVehicleDetails();
+    // Apartment detection needs the REAL category list (may not be loaded on a
+    // deep entry) — existing controller call, no new API.
+    if(Get.find<TaxiHomeController>().vehicleCategoryModel == null) {
+      Get.find<TaxiHomeController>().getVehicleCategoryList();
+    }
     isExistInCartPosition = Get.find<TaxiCartController>().isExistInCart(widget.vehicleId!);
     if(isExistInCartPosition != -1) {
       cartQuantity = Get.find<TaxiCartController>().getCartQuantity(isExistInCartPosition);
@@ -147,8 +153,22 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
           return GetBuilder<TaxiLocationController>(builder: (locationController) {
 
             isExistInCartPosition = taxiCartController.isExistInCart(vehicle.id);
+
+            // Auto-activating APARTMENT presentation (approved Provider-page
+            // pattern): the item's REAL category vs the real Short-Apt category.
+            // Apartments are per-night → day-wise auto-selected, trip-type row
+            // hidden (the design has no trip-type selector). Falls back to the
+            // standard car presentation whenever the item is not an apartment.
+            final bool isApartmentItem = vehicle.categoryId != null &&
+                vehicle.categoryId == RentalApartmentAdapter.apartmentCategoryId(taxiHomeController.vehicleCategoryModel);
             if(!_isInCart) {
-              _ensureSupportedTripType(locationController, vehicle);
+              if(isApartmentItem && vehicle.tripDayWise!) {
+                if(locationController.tripType != 'day_wise') {
+                  locationController.selectTripType('day_wise', willUpdate: false);
+                }
+              } else {
+                _ensureSupportedTripType(locationController, vehicle);
+              }
             }
 
             // The SELECTED trip type: in-cart it is the cart controller's state
@@ -159,7 +179,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
               Expanded(child: SingleChildScrollView(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                  _header(context, vehicle, discount, discountType),
+                  _header(context, vehicle, discount, discountType, isApartmentItem),
                   const SizedBox(height: Dimensions.paddingSizeDefault),
 
                   Padding(
@@ -169,16 +189,24 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                       _whereToGo(context, vehicle, taxiCartController, locationController),
                       const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                      _sectionTitle(context, 'pickup_time'.tr),
+                      _sectionTitle(context, (isApartmentItem ? 'check_in' : 'pickup_time').tr),
                       _pickupTime(context, taxiCartController, locationController),
                       const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                      if(vehicle.tripHourly! || vehicle.tripDistance! || vehicle.tripDayWise!) ...[
+                      if(isApartmentItem && vehicle.tripDayWise!) ...[
+                        // Apartments are per-night: day-wise is the ONLY real unit —
+                        // no trip-type selector (design), just the Nights input on
+                        // the same existing estimate controller.
+                        _sectionTitle(context, 'nights'.tr),
+                        _estimateInputs(context, locationController, tripType, nightsWording: true),
+                      ] else if(vehicle.tripHourly! || vehicle.tripDistance! || vehicle.tripDayWise!) ...[
                         _sectionTitle(context, 'trip_type'.tr),
                         _tripTypes(context, vehicle, discount, discountType, taxiCartController),
                         const SizedBox(height: Dimensions.paddingSizeSmall),
                         _estimateInputs(context, locationController, tripType),
                       ],
+
+                      _amenities(context, vehicle, isApartmentItem),
 
                       _photoGallery(context, vehicle),
 
@@ -202,7 +230,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   // address — the same real source every approved MoonJoin header uses
   // (`AddressHelper.getUserAddressFromSharedPref()`), matching the design family
   // where the header location is the browsing context ("Lekki Phase 1"). ──
-  Widget _header(BuildContext context, VehicleModel vehicle, double discount, String discountType) {
+  Widget _header(BuildContext context, VehicleModel vehicle, double discount, String discountType, bool isApartmentItem) {
     final String? userAddress = AddressHelper.getUserAddressFromSharedPref()?.address;
     return Container(
       width: double.infinity,
@@ -252,7 +280,17 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
               ]),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
-              Wrap(spacing: Dimensions.paddingSizeExtraSmall, runSpacing: Dimensions.paddingSizeExtraSmall, children: [
+              Wrap(spacing: Dimensions.paddingSizeExtraSmall, runSpacing: Dimensions.paddingSizeExtraSmall, children: isApartmentItem
+                  // Apartment mode: ONLY real fields — AC + the provider's real tags
+                  // (Instant Book / Wi-Fi / Pool …). Beds/baths/guests fields do not
+                  // exist on the backend yet (queue item 17) — never converted from
+                  // car fields, never faked.
+                  ? [
+                      _featurePill(context, Icons.ac_unit, vehicle.airCondition! ? 'ac'.tr : 'non_ac'.tr),
+                      ...RentalApartmentAdapter.amenityTags(vehicle.tag).take(3)
+                          .map((t) => _featurePill(context, Icons.check_circle_outline, t)),
+                    ]
+                  : [
                 if((vehicle.seatingCapacity ?? '').isNotEmpty) _featurePill(context, Icons.person_outline, '${vehicle.seatingCapacity} ${'seats'.tr}'),
                 if((vehicle.transmissionType ?? '').isNotEmpty) _featurePill(context, Icons.settings_outlined, vehicle.transmissionType!.tr),
                 if((vehicle.fuelType ?? '').isNotEmpty) _featurePill(context, Icons.local_gas_station_outlined, vehicle.fuelType!.tr),
@@ -352,12 +390,19 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   Widget _pickupTime(BuildContext context, TaxiCartController taxiCartController, TaxiLocationController locationController) {
     final UserData? userData = taxiCartController.carCartModel?.userData;
     String? display;
+    DateTime? shownTime;
     if(_isInCart && userData?.pickupTime != null) {
       // Same formatter the existing PickupTimeCard uses for the cart's pickupTime.
       display = DateConverter.dateTimeStringToDateTime(userData!.pickupTime!);
+      try { shownTime = DateConverter.dateTimeStringToDate(userData.pickupTime!); } catch (_) {}
     } else if(locationController.finalTripDateTime != null) {
       display = DateConverter.dateToDateAndTime(locationController.finalTripDateTime!);
+      shownTime = locationController.finalTripDateTime;
     }
+    // Card title (product-owner rule): "Pickup Now" only while the shown time IS
+    // now; a user-selected future time reads "Schedule". Title only — the
+    // date/time line and all behaviour are unchanged.
+    final bool isNow = shownTime == null || shownTime.difference(DateTime.now()).inMinutes.abs() <= 5;
 
     return Container(
       padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
@@ -377,7 +422,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
         const SizedBox(width: Dimensions.paddingSizeSmall),
 
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('pickup_now'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+          Text((isNow ? 'pickup_now' : 'schedule').tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
           if(display != null) ...[
             const SizedBox(height: 2),
             Text(display, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor)),
@@ -447,7 +492,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   // wiring from the production location bottom sheet. Shown in both modes; in-cart
   // they are seeded from the cart's real values and any change is persisted through
   // the production cart update on Proceed. ──
-  Widget _estimateInputs(BuildContext context, TaxiLocationController locationController, String tripType) {
+  Widget _estimateInputs(BuildContext context, TaxiLocationController locationController, String tripType, {bool nightsWording = false}) {
     return Column(children: [
       if(tripType == 'hourly') ...[
         CustomTextField(
@@ -465,14 +510,39 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
       if(tripType == 'day_wise') ...[
         CustomTextField(
           controller: locationController.estimateDayController,
-          titleText: 'Ex: 2 days',
-          labelText: 'estimate_days'.tr,
+          titleText: nightsWording ? 'Ex: 2' : 'Ex: 2 days',
+          labelText: (nightsWording ? 'nights' : 'estimate_days').tr,
           isNumber: true,
           inputType: TextInputType.number,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: Dimensions.paddingSizeSmall),
       ],
+    ]);
+  }
+
+  // ── Amenities — the provider's REAL `tag` values (design's Amenities grid).
+  // Hidden when the backend sent none; auto-populates as providers tag their
+  // apartments. Proper structured amenities = queue item 17. ──
+  Widget _amenities(BuildContext context, VehicleModel vehicle, bool isApartmentItem) {
+    if(!isApartmentItem) return const SizedBox();
+    final List<String> tags = RentalApartmentAdapter.amenityTags(vehicle.tag);
+    if(tags.isEmpty) return const SizedBox();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _sectionTitle(context, 'amenities'.tr),
+      Wrap(spacing: Dimensions.paddingSizeSmall, runSpacing: Dimensions.paddingSizeSmall, children: tags.map((t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+          border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.4), width: 1),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.check_circle_outline, size: 16, color: Theme.of(context).primaryColor),
+          const SizedBox(width: 6),
+          Text(t, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
+        ]),
+      )).toList()),
+      const SizedBox(height: Dimensions.paddingSizeLarge),
     ]);
   }
 

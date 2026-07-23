@@ -43,6 +43,11 @@ class RentalProviderHeroHeader extends StatelessWidget {
   /// Opens the existing rental `VehicleFilterWidget` bottom sheet (real backend filters).
   final VoidCallback? onFilterTap;
 
+  /// Additive: label after the count (default null → 'vehicles_available', i.e.
+  /// every existing call site renders exactly as before). The Provider page passes
+  /// 'apartments_available' when the provider's REAL inventory is apartments.
+  final String? countLabel;
+
   /// Opens the existing `ReviewDetailsScreen`. The approved design has no standalone
   /// rating block, so the hero's ★rating carries the reviews entry — the feature is
   /// preserved without adding UI the design does not have.
@@ -55,6 +60,7 @@ class RentalProviderHeroHeader extends StatelessWidget {
     this.onSearchTap,
     this.onFilterTap,
     this.onRatingTap,
+    this.countLabel,
   });
 
   @override
@@ -126,7 +132,7 @@ class RentalProviderHeroHeader extends StatelessWidget {
                     ]),
                   const SizedBox(height: 6),
 
-                  Text('$vehicleCount ${'vehicles_available'.tr}',
+                  Text('$vehicleCount ${countLabel ?? 'vehicles_available'.tr}',
                       style: robotoBold.copyWith(color: const Color(0xFFFFC107), fontSize: Dimensions.fontSizeSmall)),
                 ])),
 

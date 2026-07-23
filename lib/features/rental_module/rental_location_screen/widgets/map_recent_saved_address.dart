@@ -54,7 +54,7 @@ class MapRecentSavedAddress extends StatelessWidget {
 
                         if(taxiLocationController.fromAddress != null && taxiLocationController.toAddress != null) {
                           taxiLocationController.updateCameraMovingStatus(false);
-                          if((userData != null || vehicle != null) && mapController == null) {
+                          if((userData == null && vehicle != null) || (userData != null && mapController == null)) {
                             // Cart-edit entered from Vehicle Details: REPLACE this page
                             // so the map confirm's single Get.back() lands on Vehicle Details.
                             Get.off(()=> TaxiLocationScreen(
@@ -116,7 +116,7 @@ class MapRecentSavedAddress extends StatelessWidget {
                             if(taxiLocationController.fromAddress != null && taxiLocationController.toAddress != null) {
                               taxiLocationController.updateCameraMovingStatus(false);
 
-                              if((userData != null || vehicle != null) && mapController == null) {
+                              if((userData == null && vehicle != null) || (userData != null && mapController == null)) {
                                 Get.off(()=> TaxiLocationScreen(
                                   fromAddress: taxiLocationController.fromAddress, toAddress: taxiLocationController.toAddress,
                                   fromSuggestionScreen: false, userData: userData, vehicle: vehicle,

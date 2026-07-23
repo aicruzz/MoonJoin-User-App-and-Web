@@ -21,7 +21,9 @@ frontend when backend starts.**
   - Delivery Man App frontend.
   - Rental frontend redesign: ✅ **Screen 1 Rental Home (FROZEN)** ✅ **Screen 2 All Car Rentals (FROZEN)**
     ✅ **Screen 3 Provider List (ABSORBED INTO SCREEN 2, FROZEN)** ✅ **Screen 4 Provider Details (FROZEN)** ✅ **Vehicle Details (FROZEN)** ✅ **Checkout (FROZEN, MASTER payment implementation)** ✅ **Booking Success (FROZEN)** — **CAR RENTAL FLOW COMPLETE**;
-    next → Rental Checkout / Booking Success / Booking History, then the Short Apartment Rental flow.
+    next → **Short Apartment Rental flow**: ✅ **Apt Screen 1 listing FROZEN** ✅ **Apt Screen 2 Provider
+    Details FROZEN (auto-activating)** ✅ **Section scoping FROZEN (item 18)** ✅ **Popular sections FROZEN** ✅ **Apt Details FROZEN** ✅ **Apt Checkout FROZEN (master reuse)**;
+    next → Apartment Details, then Booking History for both flows.
 
 ---
 
@@ -569,6 +571,59 @@ existing `makeTripPayment` contract) so the app can launch the EXISTING payment 
 **Frontend Integration Point** — the marked block in `TaxiCheckoutScreen` (search `PAY-NOW — BACKEND
 INTEGRATION POINT`); selector state `_payTimingIndex`, method via the shared `CheckoutController`.
 **No UI redesign required.**
+
+---
+
+### 17. Short Apartment Rental — apartment inventory, fields & platform work
+
+- **Module:** Rental (Short Apt) · **App:** User App + **Vendor App** + **Admin** · **Status:** **Frontend In Progress — Waiting for Backend/Vendor/Admin**
+
+**What the User App already does (real data only):** the Short Apartments listing is the SAME unified
+`AllVehicleScreen` in `fromApartment` mode; `RentalApartmentAdapter` resolves the REAL "Short Apt Rental"
+category (id 2, live) and filters the real browse feed by `category_id`. With zero apartment inventory today
+it shows the honest empty state. Top Brands is hidden (brand API has vehicle brands only).
+
+**Required VENDOR APP work** — let providers list APARTMENTS as rental inventory under the Short Apt
+category: apartment fields (bedrooms, bathrooms, max guests, amenities, per-night pricing) on top of the
+rental item model; photo galleries.
+**Required BACKEND work** — apartment fields on the inventory payload (`bedrooms`, `bathrooms`, `guests`,
+`amenities[]`, night-rate mapping — today only hourly/distance/day-wise prices exist); category `type`
+(items 7/13) and browse/category filter params (items 5/8); apartment brand/platform data if Top Brands is
+wanted.
+**Required ADMIN work** — create the real apartment categories shown in the approved design (City Center,
+Beachside, Budget Stay, Luxury Stay, Family Friendly) under the Short Apt category type; approval flow.
+
+**Frontend Integration Point** — ONLY `rental_apartment_adapter.dart` changes when the endpoints ship; the
+listing UI/architecture must not change. The Rental Home "Popular Short Apt Rentals" section is permanent
+architecture: it shows the approved empty state while inventory is empty and self-populates from the real
+top-rated ranking; if a dedicated popularity metric ("most booked") is wanted, add it backend-side — the
+section then only swaps its data source, never its UI. Apartment-specific fields will be consumed by the (upcoming)
+Apartment Details phase — its contract will be extended here after its audit.
+
+---
+
+### 18. Rental — banner & category **section classification** (Main / Car / Short Apt)
+
+- **Module:** Rental · **App:** User App + Admin · **Status:** **Frontend Complete — Waiting for Backend/Admin**
+
+**Product-owner architecture:** Main Rental Home shows BOTH sections' banners/categories; the Car listing
+shows Car content only; the Short Apartment listing shows Short Apt content only.
+
+**Backend reality:** neither `rental/banners` nor `category-list` carries a section/type field.
+
+**Frontend (adapter, real data only — `RentalApartmentAdapter`):**
+- `sectionCategories` — splits the REAL category list by the real apartment-name resolution (apartment-matched
+  → Apt section; every other real rental category → Car section). Home passes `all`.
+- `filterBanners` — the only real banner signal is `provider_id` → classified through that provider's REAL
+  loaded inventory (`isApartmentProvider`). External-link banners / providers absent from the feed =
+  UNCLASSIFIED → kept on the Car listing (module content today is car-oriented), NEVER shown as apartment
+  content without a real signal. `BannerWidget` gained an additive `section` param (default `all` → Home
+  unchanged).
+
+**Required BACKEND work** — `section` (`car` | `apartment` | `all`) on rental banners; category `type`
+(consolidates items 7/13). **Required ADMIN work** — section selector when creating rental banners/categories.
+**Frontend Integration Point** — ONLY `RentalApartmentAdapter.filterBanners` / `sectionCategories` change;
+no UI/widget/architecture change.
 
 ---
 

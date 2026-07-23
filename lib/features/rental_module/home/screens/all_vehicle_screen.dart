@@ -7,6 +7,8 @@ import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_con
 import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
 import 'package:sixam_mart/features/rental_module/home/widgets/banner_widget.dart';
 import 'package:sixam_mart/features/rental_module/select_vehicle_screen/search_vehicle_screen.dart';
+import 'package:sixam_mart/common/widgets/no_data_screen.dart';
+import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
 import 'package:sixam_mart/features/rental_module/provider_adapter/rental_provider_adapter.dart';
 import 'package:sixam_mart/features/rental_module/provider_adapter/rental_provider_card.dart';
 import 'package:sixam_mart/features/rental_module/vendor/screens/vendor_detail_screen.dart';
@@ -31,7 +33,12 @@ import 'package:sixam_mart/util/styles.dart';
 ///     INERT pending backend; never routed to an unrelated screen, never faked.
 /// See docs/BACKEND_INTEGRATION_QUEUE.md items 11-13.
 class AllVehicleScreen extends StatefulWidget {
-  const AllVehicleScreen({super.key});
+  /// Additive apartment mode (default false — Car Rental behaviour unchanged).
+  /// ONE unified Rental listing page: apartment mode changes only wording, the
+  /// inert chip labels, and the data filter (real Short-Apt category via
+  /// `RentalApartmentAdapter`). Same architecture, components and discovery flow.
+  final bool fromApartment;
+  const AllVehicleScreen({super.key, this.fromApartment = false});
 
   @override
   State<AllVehicleScreen> createState() => _AllVehicleScreenState();
@@ -92,10 +99,18 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
               _filterChips(context),
 
               const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-              const BannerWidget(),
+              // Section-scoped banners: Car listing shows Car content only, the
+              // Apartment listing Apartment content only (Main Rental Home keeps
+              // both via the default `all`). Adapter-classified — queue item 18.
+              BannerWidget(section: widget.fromApartment ? RentalSection.apartment : RentalSection.car),
 
               const SizedBox(height: Dimensions.paddingSizeSmall),
-              _topBrands(context, taxiHomeController),
+              // Apartment mode: the brand API returns VEHICLE brands only — no real
+              // apartment brand data exists, so the section is hidden (never faked).
+              // TODO(BACKEND, queue item 17): when the brand API can return apartment
+              // brands/platforms, remove this gate (or filter by brand type) — the
+              // section itself is UNCHANGED and reactivates without any redesign.
+              if (!widget.fromApartment) _topBrands(context, taxiHomeController),
 
               const SizedBox(height: Dimensions.paddingSizeSmall),
               _providerList(context, taxiHomeController, vehicles),
@@ -113,7 +128,7 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
       child: Row(children: [
         _circleButton(context, Icons.arrow_back, () => Get.back()),
         const SizedBox(width: Dimensions.paddingSizeDefault),
-        Expanded(child: Text('all_car_rentals'.tr, maxLines: 1, overflow: TextOverflow.ellipsis,
+        Expanded(child: Text((widget.fromApartment ? 'short_apartments' : 'all_car_rentals').tr, maxLines: 1, overflow: TextOverflow.ellipsis,
             style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge))),
         const RantCartWidget(),
         const SizedBox(width: Dimensions.paddingSizeSmall),
@@ -165,8 +180,13 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
   // ── Category row — THE shared MoonJoin Category Component, REAL Rental categories ──
   // Backend has no browse-mode category filtering, so a tap enters the trip flow.
   Widget _categoryChips(TaxiHomeController taxiHomeController) {
-    final categories = taxiHomeController.vehicleCategoryModel?.vehicles;
-    if (categories == null || categories.isEmpty) return const SizedBox();
+    // Section-scoped categories (adapter split of the REAL list — queue item 18):
+    // Car listing → non-apartment categories; Apartment listing → apartment ones.
+    final categories = RentalApartmentAdapter.sectionCategories(
+      taxiHomeController.vehicleCategoryModel,
+      widget.fromApartment ? RentalSection.apartment : RentalSection.car,
+    );
+    if (categories.isEmpty) return const SizedBox();
     // THE approved MoonJoin category component (`RestaurantCategoryChip`) — the same
     // one used by Food/All Restaurants and every approved module. Rental shares it;
     // only the backend data differs. Never substitute another category widget here.
@@ -223,9 +243,11 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
         const SizedBox(width: Dimensions.paddingSizeSmall),
 
         // Provider filtering — awaiting backend/vendor. Rendered, not wired. TODO(BACKEND)
-        StoreFilterChip(label: 'self_drive'.tr, icon: Icons.drive_eta_outlined, iconColor: primary),
+        StoreFilterChip(label: (widget.fromApartment ? 'instant_book' : 'self_drive').tr,
+            icon: widget.fromApartment ? Icons.bolt_outlined : Icons.drive_eta_outlined, iconColor: primary),
         const SizedBox(width: Dimensions.paddingSizeSmall),
-        StoreFilterChip(label: 'with_driver'.tr, icon: Icons.person_outline, iconColor: primary),
+        StoreFilterChip(label: (widget.fromApartment ? 'free_cancellation' : 'with_driver').tr,
+            icon: widget.fromApartment ? Icons.verified_outlined : Icons.person_outline, iconColor: primary),
         const SizedBox(width: Dimensions.paddingSizeSmall),
         StoreFilterChip(label: 'top_rated'.tr, icon: Icons.star, iconColor: Colors.amber.shade700, selected: _activeSort == 0, onTap: () => _toggleSort(0)),
       ]),
@@ -272,10 +294,20 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
   // ships, only the adapter changes — this UI stays identical. ──
   Widget _providerList(BuildContext context, TaxiHomeController taxiHomeController, List<VehicleModel>? vehicles) {
     if (vehicles == null) return const _ProviderListShimmer();
-    if (vehicles.isEmpty) return const SizedBox();
+
+    // Apartment mode: keep only REAL inventory in the real Short-Apt category
+    // (RentalApartmentAdapter). Zero apartments listed → honest empty state; Car
+    // data is NEVER converted into apartment data.
+    List<VehicleModel> inventory = vehicles;
+    if (widget.fromApartment) {
+      final int? aptCategoryId = RentalApartmentAdapter.apartmentCategoryId(taxiHomeController.vehicleCategoryModel);
+      inventory = RentalApartmentAdapter.filterApartments(vehicles, aptCategoryId);
+      if (inventory.isEmpty) return NoDataScreen(text: 'no_apartment_available'.tr);
+    }
+    if (inventory.isEmpty) return const SizedBox();
 
     // Sort the vehicles first so the derived provider order follows the active chip.
-    final List<RentalProvider> providers = RentalProviderAdapter.fromVehicles(_applySort(vehicles));
+    final List<RentalProvider> providers = RentalProviderAdapter.fromVehicles(_applySort(inventory));
     if (providers.isEmpty) return const SizedBox();
 
     return PaginatedListView(

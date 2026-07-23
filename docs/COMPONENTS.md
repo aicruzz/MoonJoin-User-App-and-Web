@@ -517,3 +517,32 @@ source as every approved MoonJoin header (queue item 15 resolved; no backend gap
 **Vehicle Details status: 🔒 FROZEN** (product-owner approved). The screen and its journey pages
 (`TaxiLocationSuggestionScreen` restyle, `MapRecentSavedAddress` restyle) are locked; only verified bug
 fixes, backend integration, or docs may touch them.
+
+---
+
+## `RentalApartmentAdapter` — apartment view over REAL rental data (temporary production adapter)
+
+**File:** `lib/features/rental_module/provider_adapter/rental_apartment_adapter.dart`
+
+Same philosophy as `RentalProviderAdapter`: resolves the REAL "Short Apt Rental" category from the live
+`category-list` (name-matched because the backend has no category `type` yet) and filters the real browse
+feed by `category_id`. Nothing fabricated; empty result → honest `NoDataScreen`. Consumed only by
+`AllVehicleScreen`'s additive `fromApartment` mode (ONE unified Rental listing page — no second screen).
+When the proper backend filters ship (queue items 5/7/8/13), ONLY this adapter changes.
+
+**`RentalApartmentAdapter` — section scoping (added):** `RentalSection {all, car, apartment}` ·
+`sectionCategories` (real-name split of the live category list) · `filterBanners` (real `provider_id` →
+provider-inventory classification; unclassified → Car only, never Apartment). Additive `BannerWidget.section`
+param (default `all` — Home byte-identical). Only the adapter changes when queue item 18 ships.
+
+**Frozen (Apt phase 1-2):** `RentalApartmentAdapter` (category resolution · apartment filter ·
+`isApartmentProvider` · `RentalSection` scoping `sectionCategories`/`filterBanners`) · additive
+`BannerWidget.section` · additive `RentalProviderHeroHeader.countLabel` · `MoonjoinEmptyState` now LIVE
+(Rental Home Popular Short Apt empty state). Only the adapter changes when queue items 17/18 ship.
+
+**Apt Screen 3 FROZEN:** `VehicleDetailsScreen` apartment mode + `RentalApartmentAdapter.amenityTags`.
+
+**Apt Checkout FROZEN:** the master `TaxiCheckoutScreen` reused (no second checkout). Apartment mode is
+additive/auto-activating (wording + Check-in/out/Nights strip). PERMANENT: one checkout + one payment system
+(payer selector + shared `PaymentSection`) serves Car and Apartment; future apartment backend plugs in, never
+replaces.

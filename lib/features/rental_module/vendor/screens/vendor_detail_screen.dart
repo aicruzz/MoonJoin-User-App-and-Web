@@ -5,6 +5,7 @@ import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
 import 'package:sixam_mart/features/rental_module/common/widgets/vehicle_filter_widget.dart';
 import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
 import 'package:sixam_mart/features/rental_module/select_vehicle_screen/search_vehicle_screen.dart';
 import 'package:sixam_mart/features/rental_module/vendor/controllers/taxi_vendor_controller.dart';
 import 'package:sixam_mart/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
@@ -121,6 +122,15 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
 
         final int totalSize = vendorController.taxiVendorVehicleList?.totalSize ?? 0;
 
+        // Auto-activating apartment presentation (product-owner rule: ONE unified
+        // Provider page). Driven purely by REAL data — the provider's loaded
+        // inventory vs the real Short-Apt category — so it switches by itself the
+        // moment apartment data exists and never activates for car providers.
+        final bool isApartmentProvider = RentalApartmentAdapter.isApartmentProvider(
+          vendorController.taxiVendorVehicleList?.vehicles,
+          RentalApartmentAdapter.apartmentCategoryIdFromVendorList(vendorController.categories),
+        );
+
         // Hero shows the provider's REAL total (`total_vehicle_count` from
         // get-provider-details) so it does not shrink when a category or search
         // narrows the list; the result header below shows the narrowed count.
@@ -131,12 +141,13 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
           SliverToBoxAdapter(child: RentalProviderHeroHeader(
             vendor: vendor,
             vehicleCount: providerTotal,
+            countLabel: isApartmentProvider ? 'apartments_available'.tr : null,
             onSearchTap: () => _openSearch(vendorController),
             onFilterTap: () => _openFilter(vendorController),
             onRatingTap: () => Get.to(() => ReviewDetailsScreen(providerID: vendor.id, providerName: vendor.name)),
           )),
 
-          SliverToBoxAdapter(child: _filterChips(context, vendorController)),
+          SliverToBoxAdapter(child: _filterChips(context, vendorController, isApartmentProvider)),
 
           SliverToBoxAdapter(child: Column(children: [
             _announcement(context, vendor),
@@ -144,10 +155,10 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
             ProviderBannerWidget(taxiVendorController: vendorController),
             _categories(context, vendorController),
             _activeSearchChip(context, vendorController),
-            _resultHeader(context, totalSize),
+            _resultHeader(context, totalSize, isApartmentProvider),
           ])),
 
-          SliverToBoxAdapter(child: _vehicleList(context, vendorController)),
+          SliverToBoxAdapter(child: _vehicleList(context, vendorController, isApartmentProvider)),
         ]);
       }),
     );
@@ -163,7 +174,7 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
   // and the existing filter sheet has no transmission section. It is not wired to an
   // unrelated screen and it does not fake filtering — it activates unchanged once the
   // backend supports it. See docs/BACKEND_INTEGRATION_QUEUE.md item 14.
-  Widget _filterChips(BuildContext context, TaxiVendorController vendorController) {
+  Widget _filterChips(BuildContext context, TaxiVendorController vendorController, bool isApartmentProvider) {
     final Color primary = Theme.of(context).primaryColor;
     return Container(
       color: Theme.of(context).cardColor,
@@ -178,10 +189,16 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
           const SizedBox(width: Dimensions.paddingSizeSmall),
           StoreFilterChip(label: 'price'.tr, icon: Icons.sell_outlined, onTap: () => _openFilter(vendorController)),
           const SizedBox(width: Dimensions.paddingSizeSmall),
-          StoreFilterChip(label: 'seats'.tr, icon: Icons.person_outline, onTap: () => _openFilter(vendorController)),
+          // Apartment mode (auto): Guests/Bedrooms replace Seats/Transmission —
+          // rendered but INERT pending the apartment filter fields (queue item 17);
+          // the car chips keep their existing real/inert wiring (queue item 14).
+          isApartmentProvider
+              ? StoreFilterChip(label: 'guests'.tr, icon: Icons.people_outline)
+              : StoreFilterChip(label: 'seats'.tr, icon: Icons.person_outline, onTap: () => _openFilter(vendorController)),
           const SizedBox(width: Dimensions.paddingSizeSmall),
-          // TODO(BACKEND): no transmission filter parameter exists — queue item 14.
-          StoreFilterChip(label: 'transmission'.tr, icon: Icons.call_split_rounded),
+          isApartmentProvider
+              ? StoreFilterChip(label: 'bedrooms'.tr, icon: Icons.bed_outlined)
+              : StoreFilterChip(label: 'transmission'.tr, icon: Icons.call_split_rounded),
           const SizedBox(width: Dimensions.paddingSizeSmall),
           StoreFilterChip(label: 'more'.tr, icon: Icons.more_horiz, onTap: () => _openFilter(vendorController)),
         ]),
@@ -306,12 +323,12 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
   }
 
   // ── "N vehicles found" + active sort label (approved Store-page result header) ──
-  Widget _resultHeader(BuildContext context, int totalSize) {
+  Widget _resultHeader(BuildContext context, int totalSize, bool isApartmentProvider) {
     final String sortLabel = _activeSort == 0 ? 'top_rated'.tr : _activeSort == 1 ? 'price'.tr : 'most_relevant'.tr;
     return Padding(
       padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, 0),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Flexible(child: Text('$totalSize ${'vehicles_found'.tr}', maxLines: 1, overflow: TextOverflow.ellipsis,
+        Flexible(child: Text('$totalSize ${(isApartmentProvider ? 'apartments_found' : 'vehicles_found').tr}', maxLines: 1, overflow: TextOverflow.ellipsis,
             style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge))),
         Text(sortLabel, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor)),
       ]),
@@ -320,7 +337,7 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
 
   // ── Vehicle list — existing rental `VendorVehicleCard` + approved
   // `PaginatedListView` + approved `NoDataScreen`. Business logic untouched. ──
-  Widget _vehicleList(BuildContext context, TaxiVendorController vendorController) {
+  Widget _vehicleList(BuildContext context, TaxiVendorController vendorController, bool isApartmentProvider) {
     if (vendorController.taxiVendorVehicleList == null) {
       return const Padding(
         padding: EdgeInsets.only(top: Dimensions.paddingSizeDefault),
@@ -330,7 +347,7 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
 
     final List<VehicleModel> vehicles = vendorController.taxiVendorVehicleList!.vehicles ?? [];
     if (vehicles.isEmpty) {
-      return NoDataScreen(text: 'no_vehicle_available'.tr);
+      return NoDataScreen(text: (isApartmentProvider ? 'no_apartment_available' : 'no_vehicle_available').tr);
     }
 
     final List<VehicleModel> sorted = _applySort(vehicles);

@@ -124,7 +124,7 @@ class RiderAddressInputField extends StatelessWidget {
 
                     if (taxiLocationController.fromAddress != null && taxiLocationController.toAddress != null) {
                       taxiLocationController.updateCameraMovingStatus(false);
-                      if((userData != null || vehicle != null) && mapController == null) {
+                      if((userData == null && vehicle != null) || (userData != null && mapController == null)) {
                         // Cart-edit entered from Vehicle Details: REPLACE the Location
                         // page with the map, so the confirm's existing single
                         // `Get.back()` (after updateUserData) lands on Vehicle Details.

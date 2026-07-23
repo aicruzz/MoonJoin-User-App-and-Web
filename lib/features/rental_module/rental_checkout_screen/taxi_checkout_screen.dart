@@ -16,6 +16,9 @@ import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/rental_module/common/widgets/extra_discount_view_widget.dart';
 import 'package:sixam_mart/features/rental_module/rental_location_screen/controller/taxi_location_controller.dart';
 import 'package:sixam_mart/features/rental_module/helper/taxi_price_helper.dart';
+import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
+import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
 import 'package:sixam_mart/features/rental_module/rental_cart_screen/controllers/taxi_cart_controller.dart';
 import 'package:sixam_mart/features/rental_module/rental_checkout_screen/widgets/checkout_vehicle_card.dart';
 import 'package:sixam_mart/features/rental_module/rental_checkout_screen/widgets/taxi_coupon_bottom_sheet.dart';
@@ -66,6 +69,10 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
     super.initState();
     // Same shared-payment setup the Parcel request page performs - the approved
     // PaymentSection drives selection via the shared CheckoutController.
+    // Apartment detection needs the REAL category list (existing controller call).
+    if(Get.find<TaxiHomeController>().vehicleCategoryModel == null) {
+      Get.find<TaxiHomeController>().getVehicleCategoryList();
+    }
     Get.find<CheckoutController>().setPaymentMethod(-1, isUpdate: false);
     Get.find<CheckoutController>().getOfflineMethodList();
     final zones = AddressHelper.getUserAddressFromSharedPref()?.zoneData;
@@ -88,6 +95,15 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
         return GetBuilder<TaxiLocationController>(builder: (taxiLocationController) {
 
           String rentalType = taxiCartController.carCartModel!.userData!.rentalType!;
+
+          // Auto-activating APARTMENT checkout presentation (MASTER architecture
+          // rule): SAME page, SAME flow, SAME payment — wording + the design's
+          // check-in strip only. Driven by the cart's REAL inventory vs the real
+          // Short-Apt category; never activates for car bookings.
+          final bool isApartmentBooking = RentalApartmentAdapter.isApartmentProvider(
+            taxiCartController.cartList.map((c) => c.vehicle).whereType<VehicleModel>().toList(),
+            RentalApartmentAdapter.apartmentCategoryId(Get.find<TaxiHomeController>().vehicleCategoryModel),
+          );
 
           double estimatedDay = 0;
           estimatedDay = (taxiCartController.carCartModel?.userData?.estimatedHours ?? 0) / 24;
@@ -139,7 +155,7 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
 
                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
 
-                        Text('selected_vehicle'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                        Text((isApartmentBooking ? 'selected_apartment' : 'selected_vehicle').tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
 
                         CustomInkWell(
                           onTap: ()=> Get.back(),
@@ -159,6 +175,12 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
                       ),
                     ]),
                   ),
+
+                  // Apartment design's Check-in / Check-out / Nights strip — REAL
+                  // cart values only (pickup time + estimated nights; check-out is
+                  // pure arithmetic on them). Car checkout renders nothing here.
+                  if(isApartmentBooking)
+                    _checkInStrip(context, taxiCartController),
 
                   Container(height: Dimensions.paddingSizeExtraSmall,
                     margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
@@ -365,7 +387,7 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
                                 onChanged: (int? v) => setState(() => _payTimingIndex = 1),
                                 child: Radio<int>(value: 1, activeColor: Theme.of(context).primaryColor),
                               ),
-                              Flexible(child: Text('pay_to_driver_on_trip'.tr, style: robotoRegular)),
+                              Flexible(child: Text((isApartmentBooking ? 'pay_to_apartment_provider' : 'pay_to_driver_on_trip').tr, style: robotoRegular)),
                             ]),
                           )),
                         ]),
@@ -460,7 +482,7 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
                       ? taxiCartController.carCartModel?.userData?.distance?.toStringAsFixed(3) ?? 0
                       : rentalType == AppConstants.dayWise ? estimatedDay.toStringAsFixed(0)
                       : taxiCartController.carCartModel?.userData?.estimatedHours??0}'
-                      ' ${rentalType == AppConstants.distanceWise ? 'km'.tr : rentalType == AppConstants.dayWise ? 'day' : 'hrs'.tr}',
+                      ' ${rentalType == AppConstants.distanceWise ? 'km'.tr : rentalType == AppConstants.dayWise ? (isApartmentBooking ? 'nights'.tr : 'day') : 'hrs'.tr}',
                     style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault),
                   ),
 
@@ -519,6 +541,43 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
           ]);
         });
       }),
+    );
+  }
+
+  /// Apartment checkout's Check-in / Check-out / Nights strip — real cart values
+  /// (pickup time, estimated nights); check-out = check-in + nights (arithmetic).
+  Widget _checkInStrip(BuildContext context, TaxiCartController taxiCartController) {
+    final userData = taxiCartController.carCartModel?.userData;
+    if(userData?.pickupTime == null) return const SizedBox();
+    DateTime checkIn;
+    try { checkIn = DateConverter.dateTimeStringToDate(userData!.pickupTime!); } catch (_) { return const SizedBox(); }
+    final double hours = userData.estimatedHours ?? 0;
+    final double nights = hours / 24;
+    final DateTime checkOut = checkIn.add(Duration(hours: hours.round()));
+
+    Widget cell(IconData icon, String label, String value) => Expanded(child: Row(children: [
+      Container(height: 36, width: 36, alignment: Alignment.center,
+        decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+        child: Icon(icon, color: Theme.of(context).primaryColor, size: 18)),
+      const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor)),
+        Text(value, maxLines: 2, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall)),
+      ])),
+    ]));
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(Dimensions.paddingSizeLarge, 0, Dimensions.paddingSizeLarge, Dimensions.paddingSizeDefault),
+      padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+        border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.3), width: 1),
+      ),
+      child: Row(children: [
+        cell(Icons.calendar_today_outlined, 'check_in'.tr, DateConverter.dateToDateAndTime(checkIn)),
+        cell(Icons.calendar_month_outlined, 'check_out'.tr, DateConverter.dateToDateAndTime(checkOut)),
+        cell(Icons.nightlight_outlined, 'nights'.tr, nights.toStringAsFixed(0)),
+      ]),
     );
   }
 

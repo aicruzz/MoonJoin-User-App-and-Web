@@ -6,13 +6,20 @@ import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
+import 'package:sixam_mart/features/rental_module/home/domain/models/taxi_banner_model.dart';
+import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
 import 'package:sixam_mart/features/rental_module/vendor/screens/vendor_detail_screen.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class BannerWidget extends StatefulWidget {
-  const BannerWidget({super.key});
+  /// Additive section scope (default `all` → prior behaviour everywhere).
+  /// The Main Rental Home keeps `all`; each dedicated listing passes its own
+  /// section so only that section's REAL banners render (adapter-classified —
+  /// see RentalApartmentAdapter.filterBanners; queue item 18).
+  final RentalSection section;
+  const BannerWidget({super.key, this.section = RentalSection.all});
 
   @override
   State<BannerWidget> createState() => _BannerWidgetState();
@@ -26,7 +33,13 @@ class _BannerWidgetState extends State<BannerWidget> {
 
     return GetBuilder<TaxiHomeController>(
       builder: (taxiHomeController) {
-        return taxiHomeController.taxiBannerModel != null ? taxiHomeController.taxiBannerModel!.banners!.isNotEmpty ? Padding(
+        final List<Banners> banners = RentalApartmentAdapter.filterBanners(
+          taxiHomeController.taxiBannerModel?.banners,
+          section: widget.section,
+          loadedInventory: taxiHomeController.topRatedCarsModel?.vehicles,
+          aptCategoryId: RentalApartmentAdapter.apartmentCategoryId(taxiHomeController.vehicleCategoryModel),
+        );
+        return taxiHomeController.taxiBannerModel != null ? banners.isNotEmpty ? Padding(
           padding: const EdgeInsets.only(top: Dimensions.paddingSizeLarge),
           child: Column(children: [
             CarouselSlider.builder(
@@ -43,28 +56,28 @@ class _BannerWidgetState extends State<BannerWidget> {
                   });
                 },
               ),
-              itemCount: taxiHomeController.taxiBannerModel!.banners!.length,
+              itemCount: banners.length,
               itemBuilder: (context, index, _) {
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 8.0),
                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusLarge)),
                   child: CustomInkWell(
                     onTap: () async {
-                      if(taxiHomeController.taxiBannerModel!.banners![index].type == 'default') {
-                        String url = taxiHomeController.taxiBannerModel!.banners![index].link ?? '';
+                      if(banners[index].type == 'default') {
+                        String url = banners[index].link ?? '';
                         if (await canLaunchUrlString(url)) {
                           await launchUrlString(url, mode: LaunchMode.externalApplication);
                         } else {
                           showCustomSnackBar('unable_to_found_url'.tr);
                         }
                       } else {
-                        Get.to(()=> VendorDetailScreen(vendorId: taxiHomeController.taxiBannerModel!.banners![index].providerId));
+                        Get.to(()=> VendorDetailScreen(vendorId: banners[index].providerId));
                       }
                     },
                     radius: Dimensions.radiusLarge,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-                      child: CustomImage(image: taxiHomeController.taxiBannerModel!.banners![index].imageFullUrl??'', fit: BoxFit.cover, width: double.infinity),
+                      child: CustomImage(image: banners[index].imageFullUrl??'', fit: BoxFit.cover, width: double.infinity),
                     ),
                   ),
                 );
@@ -75,7 +88,7 @@ class _BannerWidgetState extends State<BannerWidget> {
             Center(
               child: AnimatedSmoothIndicator(
                 activeIndex: _currentCarouselIndex,
-                count: taxiHomeController.taxiBannerModel!.banners!.length,
+                count: banners.length,
                 effect: ExpandingDotsEffect(
                   dotHeight: 6, dotWidth: 6, activeDotColor: Theme.of(context).primaryColor,
                   dotColor: Theme.of(context).disabledColor, spacing: 5,

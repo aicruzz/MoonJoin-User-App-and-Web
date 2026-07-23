@@ -4,7 +4,10 @@ import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/features/rental_module/common/models/trip_details_model.dart';
+import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
+import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
 import 'package:sixam_mart/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
+import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/date_converter.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
@@ -42,6 +45,30 @@ class ConfirmBookingRequestBottomSheet extends StatelessWidget {
       final String vehicleNames = details.map((d) => d.vehicleDetails?.name ?? '').where((n) => n.isNotEmpty).join(', ');
       final String? vehicleThumb = details.isNotEmpty ? details.first.vehicleDetails?.thumbnailFullUrl : null;
       final String? providerPhone = trip?.provider?.phone;
+
+      // Auto-activating APARTMENT success (ONE shared sheet — product-owner rule):
+      // real category of the booked item vs the real Short-Apt category. Never
+      // activates for car bookings; car success is byte-identical.
+      final int? aptCatId = RentalApartmentAdapter.apartmentCategoryId(Get.find<TaxiHomeController>().vehicleCategoryModel);
+      final bool isApartment = aptCatId != null && details.isNotEmpty &&
+          details.where((d) => d.vehicleDetails?.categoryId == aptCatId).length * 2 > details.length;
+
+      // Apartment-only REAL fields (design's extra blocks): booking id = trip id,
+      // total paid = trip amount, payment method, check-in/out/nights arithmetic.
+      final String bookingId = trip?.id != null ? 'BK${trip!.id}' : '';
+      final String bookingDate = trip?.scheduleAt != null ? DateConverter.dateTimeStringToDateTime(trip!.scheduleAt!) : '';
+      final String totalPaid = trip?.tripAmount != null ? PriceConverter.convertPrice(trip!.tripAmount) : '';
+      final String paymentMethod = (trip?.paymentMethod ?? '').isNotEmpty ? trip!.paymentMethod!.tr : '';
+      final double aptHours = trip?.estimatedHours ?? 0;
+      String checkIn = '', checkOut = '', nights = '';
+      if(isApartment && trip?.scheduleAt != null) {
+        try {
+          final DateTime ci = DateConverter.dateTimeStringToDate(trip!.scheduleAt!);
+          checkIn = DateConverter.dateToDateAndTime(ci);
+          checkOut = DateConverter.dateToDateAndTime(ci.add(Duration(hours: aptHours.round())));
+          nights = (aptHours / 24).toStringAsFixed(0);
+        } catch (_) {}
+      }
 
       return Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
@@ -87,7 +114,7 @@ class ConfirmBookingRequestBottomSheet extends StatelessWidget {
             const SizedBox(height: Dimensions.paddingSizeDefault),
 
             Text.rich(TextSpan(children: [
-              TextSpan(text: '${isBooking ? 'booking_request'.tr : 'schedule_booking_request'.tr} ', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
+              TextSpan(text: '${isApartment ? 'booking'.tr : isBooking ? 'booking_request'.tr : 'schedule_booking_request'.tr} ', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
               TextSpan(text: '${'successful'.tr}!', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: green)),
             ])),
             const SizedBox(height: 6),
@@ -95,18 +122,44 @@ class ConfirmBookingRequestBottomSheet extends StatelessWidget {
 
             Padding(
               padding: const EdgeInsets.fromLTRB(40, Dimensions.paddingSizeDefault, 40, Dimensions.paddingSizeDefault),
-              child: Text('great_choice_booking_confirmed'.tr, textAlign: TextAlign.center,
+              child: Text((isApartment ? 'your_apartment_has_been_booked' : 'great_choice_booking_confirmed').tr, textAlign: TextAlign.center,
                   style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor)),
             ),
 
-            // Real trip facts (render as the trip details load).
+            // Apartment-only: Booking ID + Booking Date, then Total Paid + payment
+            // method (design's extra cards). Real trip fields only.
+            if(isApartment) ...[
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                  border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.3), width: 1),
+                ),
+                child: Row(children: [
+                  if(bookingId.isNotEmpty) Expanded(child: _miniFact(context, Icons.confirmation_number_outlined, 'booking_id'.tr, bookingId)),
+                  if(bookingDate.isNotEmpty) Expanded(child: _miniFact(context, Icons.calendar_today_outlined, 'booking_date'.tr, bookingDate)),
+                ]),
+              ),
+              const SizedBox(height: Dimensions.paddingSizeSmall),
+            ],
+
+            // Real trip facts (render as the trip details load). Apartment mode shows
+            // check-in / check-out / nights; car mode shows pickup/dropoff/vehicle.
             Container(
               margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
                 border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.3), width: 1),
               ),
-              child: Column(children: [
+              child: isApartment
+                  ? Column(children: [
+                      if(checkIn.isNotEmpty) _infoRow(context, Icons.login_outlined, 'check_in'.tr, checkIn),
+                      if(checkOut.isNotEmpty) _infoRow(context, Icons.logout_outlined, 'check_out'.tr, checkOut),
+                      if(nights.isNotEmpty) _infoRow(context, Icons.nightlight_outlined, 'nights'.tr, nights),
+                      if(vehicleNames.isNotEmpty) _infoRow(context, Icons.apartment_outlined, 'selected_apartment'.tr, vehicleNames, isLast: true),
+                    ])
+                  : Column(children: [
                 if(pickupTime != null) _infoRow(context, Icons.calendar_today_outlined, 'pickup_time'.tr, pickupTime),
                 if((pickupName ?? '').isNotEmpty) _infoRow(context, Icons.location_on_outlined, 'pickup_location'.tr, pickupName!),
                 if((dropoffName ?? '').isNotEmpty) _infoRow(context, Icons.near_me_outlined, 'dropoff_location'.tr, dropoffName!),
@@ -114,6 +167,26 @@ class ConfirmBookingRequestBottomSheet extends StatelessWidget {
               ]),
             ),
             const SizedBox(height: Dimensions.paddingSizeDefault),
+
+            // Apartment-only: Total Paid + payment method (real trip fields).
+            if(isApartment && totalPaid.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+                padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                  border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.3), width: 1),
+                ),
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('total_paid'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                    if(paymentMethod.isNotEmpty) Text(paymentMethod, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor)),
+                  ]),
+                  Text(totalPaid, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: green)),
+                ]),
+              ),
+              const SizedBox(height: Dimensions.paddingSizeDefault),
+            ],
 
             // Contact provider — reuses the existing production tel: pattern.
             if((providerPhone ?? '').isNotEmpty) Container(
@@ -160,6 +233,19 @@ class ConfirmBookingRequestBottomSheet extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _miniFact(BuildContext context, IconData icon, String label, String value) {
+    return Row(children: [
+      Container(height: 36, width: 36, alignment: Alignment.center,
+        decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+        child: Icon(icon, color: Theme.of(context).primaryColor, size: 18)),
+      const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor)),
+        Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall)),
+      ])),
+    ]);
   }
 
   Widget _infoRow(BuildContext context, IconData icon, String label, String value, {bool isLast = false}) {
