@@ -22,7 +22,7 @@ frontend when backend starts.**
   - Rental frontend redesign: ✅ **Screen 1 Rental Home (FROZEN)** ✅ **Screen 2 All Car Rentals (FROZEN)**
     ✅ **Screen 3 Provider List (ABSORBED INTO SCREEN 2, FROZEN)** ✅ **Screen 4 Provider Details (FROZEN)** ✅ **Vehicle Details (FROZEN)** ✅ **Checkout (FROZEN, MASTER payment implementation)** ✅ **Booking Success (FROZEN)** — **CAR RENTAL FLOW COMPLETE**;
     next → **Short Apartment Rental flow**: ✅ **Apt Screen 1 listing FROZEN** ✅ **Apt Screen 2 Provider
-    Details FROZEN (auto-activating)** ✅ **Section scoping FROZEN (item 18)** ✅ **Popular sections FROZEN** ✅ **Apt Details FROZEN** ✅ **Apt Checkout FROZEN (master reuse)**;
+    Details FROZEN (auto-activating)** ✅ **Section scoping FROZEN (item 18)** ✅ **Popular sections FROZEN** ✅ **Apt Details FROZEN** ✅ **Apt Checkout FROZEN (master reuse)** ✅ **Apt Booking Success FROZEN (shared sheet)**;
     next → Apartment Details, then Booking History for both flows.
 
 ---

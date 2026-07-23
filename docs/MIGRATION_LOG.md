@@ -52,6 +52,15 @@ incompatibility, or explicit user approval to reopen. No cosmetic changes. Add e
 - ✅ **Apt Screen 1 — Short Apartments listing** — **FROZEN** (unified `AllVehicleScreen` apartment mode +
   `RentalApartmentAdapter`; honest empty state; real Short-Apt category).
 
+- ✅ **Rental Trip / Booking Details** — **FROZEN** (`TaxiOrderDetailsScreen`) — full redesign to
+  `trip_details.png` + `_scroll_down.png` (one page); 100% production logic preserved (getTripDetails,
+  success popup, cancel/pay/review, provider WhatsApp/Call/Chat). Apartment mode auto-activates. THE single
+  shared trip-details page (after booking success AND Trips→Running). Opaque background (bleed-through fixed).
+
+- ✅ **Apt Booking Success** — **FROZEN** — ONE shared `ConfirmBookingRequestBottomSheet`; auto-activating
+  apartment mode (real `category_id`): Booking ID/Date, Check-in/out/Nights, Total Paid + payment method,
+  apartment wording. Car success byte-identical. No second success page.
+
 - ✅ **Apt Checkout** — **FROZEN** — the frozen master `TaxiCheckoutScreen` reused exactly (page/flow/
   booking API/validation/payer selector/`PaymentSection` all shared); auto-activating apartment wording
   ("Selected Apartment", "Pay to Apartment Provider", nights) + the design's Check-in/Check-out/Nights strip
@@ -2210,3 +2219,47 @@ category (trip `VehicleDetails.categoryId`); never activates for car → car suc
 list / View-Booking-Back-to-Home split omitted (no backend guest fields; the sheet's Okay closes to the trip
 page which already offers navigation) — queue 17. No second success page, no fake data, real booking response
 flow preserved.
+
+## 🔒 Apt Booking Success — FROZEN (product-owner approved)
+One shared sheet for Car + Apartment; verified: analyze 0 · rental tests 18/18 · clean log · real completed
+Car booking byte-identical on device.
+
+---
+
+## Phase — Rental Trip Details redesign (`trip_details.png` + `_scroll_down.png`, ONE page) — IMPLEMENTED
+Full presentation redesign of `TaxiOrderDetailsScreen` (was legacy). **100% production logic preserved**:
+`getTripDetails`, the fromCheckout PopScope + appbar-back → `getInitialRoute`, the booking-success popup
+(unchanged trigger/close), cancel (`BookingCancelBottomSheet`), pay-now (`TaxiPaymentBottomSheet` + refresh),
+give-review (`ReviewBottomSheet` + `_canReview`), provider WhatsApp/Call/Chat + View Company Profile, refresh.
+New styled cards from REAL trip data only: status hero (status→colour/icon/message, item image, est-arrival
+chip on pending, booking date/from), provider card, Vehicle Summary (image, tags, quantity, booking id,
+booked-on), Trip Details rows (pickup/dropoff connector, pick time, rent type, est distance/duration), Bill
+Details, Payment Method, secure pill, Need Help. Legacy sub-widgets (`TripStatusView`, `SelectedVehiclesView`,
+`ProviderView`, `TripDetailsWidget`, `TripCalculationView`) are superseded by this screen — left on disk for
+the post-Rental dead-code audit, not deleted.
+**Apartment mode auto-activates** (real `category_id`): Trip→Booking #, Vehicle Summary→Apartment Summary,
+Pickup→Check-in, Dropoff→Check-out, Provider→Apartment Provider, rent-type row→Nights; car byte-identical.
+Verified: `flutter analyze` rental_order 0 issues. Runtime pending.
+
+## 🔒 Rental Trip Details — FROZEN (product-owner approved) — additive changes only
+
+---
+
+## Phase — Rental Trips list (Running + History) redesign — `my_trip.png` / apt `my_booking_history.png`
+**Verified path (traced, not assumed):** the bottom-nav **Trips** tab is served by the SHARED
+`features/order/screens/order_screen.dart` (the "My Orders" container with the Orders/Trips/Stay toggle,
+shared with Food/Grocery Orders) which embeds `TripOrderViewWidget` for trips. So the LIVE redesign is the
+**trip card** (`trip_order_view_widget.dart`) — same `TaxiOrderController` + `getTripList` pagination + guest
+fallback; each card opens the FROZEN `TaxiOrderDetailsScreen` (same page as after booking success — no
+duplicate). The premium **header + segmented Running/History control + module wording (Orders/Trips/Stay)**
+belongs to the shared `order_screen.dart` and is delivered in **items 4 (module-aware nav) + 5 (Orders
+redesign)** — the NEXT phase. `taxi_order_screen.dart` was also restyled (header + segmented) as the
+standalone rental variant; it is retained but NOT the wired path (the shared `order_screen.dart` is).
+Card from REAL trip data only: status pill (Completed/Cancelled/other), Trip/Booking ID, Completed-on /
+Cancelled-on date, From/To connector, item image + name, Total + Paid/Cancelled badge, distance/travel-time/
+rent-type strip, provider + View Details. **Cancelled state** (red pill + red total + "Cancelled" badge)
+handled inline per `Example_cancel_my_booking_history.png` — NO separate cancelled page.
+**Apartment auto-activates per card** (real `category_id`): Booking ID, Check-in/Check-out, Nights. The page
+`fromApartment` flag (additive, default false → Car "My Trips / Running Trips / Trip History") swaps to
+"My Bookings / Upcoming Stays / Booking History"; the module-aware bottom nav (item 4, next) passes it. Car
+path byte-verified. `flutter analyze` rental_order 0 issues. Runtime pending.

@@ -546,3 +546,10 @@ param (default `all` — Home byte-identical). Only the adapter changes when que
 additive/auto-activating (wording + Check-in/out/Nights strip). PERMANENT: one checkout + one payment system
 (payer selector + shared `PaymentSection`) serves Car and Apartment; future apartment backend plugs in, never
 replaces.
+
+**Apt Booking Success FROZEN:** shared `ConfirmBookingRequestBottomSheet` (no second success page); apartment
+mode additive/auto-activating (Booking ID/Date, Check-in/out/Nights, Total Paid, wording).
+
+**Rental Trip Details FROZEN:** `TaxiOrderDetailsScreen` is THE single shared trip-details page (booking
+success + Trips→Running). Additive changes only. Legacy sub-widgets (TripStatusView/SelectedVehiclesView/
+ProviderView/TripDetailsWidget/TripCalculationView) superseded, retained for the post-Rental dead-code audit.
