@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sixam_mart/features/checkout/widgets/virtual_account_details_widget.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart/features/auth/widgets/auth_dialog_widget.dart';
 import 'package:sixam_mart/features/profile/widgets/notification_status_change_bottom_sheet.dart';
-import 'package:sixam_mart/features/profile/widgets/virtual_account_bottom_sheet.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/common/controllers/theme_controller.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
@@ -20,7 +20,6 @@ import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/features/profile/widgets/profile_button_widget.dart';
 import 'package:sixam_mart/features/profile/widgets/profile_card_widget.dart';
-import 'package:sixam_mart/features/profile/widgets/virtual_account_card_widget.dart';
 
 class WebProfileWidget extends StatelessWidget {
   const WebProfileWidget({super.key});
@@ -236,7 +235,7 @@ class WebProfileWidget extends StatelessWidget {
                 Get.dialog(const NewPassScreen(fromPasswordChange: true, fromDialog: true, resetToken: '', number: ''));
               }) : const SizedBox(),
 
-              isLoggedIn ? VirtualAccountCardWidget(profileController: profileController, isDesktop: true) : const SizedBox(),
+              isLoggedIn ? const VirtualAccountDetailsWidget(showInstructions: false) : const SizedBox(),
 
               isLoggedIn ? ProfileButtonWidget(icon: Icons.edit, title: 'edit_profile'.tr, onTap: () {
                 Get.toNamed(RouteHelper.getUpdateProfileRoute());

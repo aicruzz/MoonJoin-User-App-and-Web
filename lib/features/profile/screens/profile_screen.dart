@@ -1,7 +1,4 @@
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:flutter/services.dart';
 import 'package:sixam_mart/features/profile/widgets/notification_status_change_bottom_sheet.dart';
-import 'package:sixam_mart/features/profile/widgets/virtual_account_bottom_sheet.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/common/controllers/theme_controller.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
@@ -22,8 +19,8 @@ import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/features/profile/widgets/profile_button_widget.dart';
 import 'package:sixam_mart/features/profile/widgets/profile_card_widget.dart';
-import 'package:sixam_mart/features/profile/widgets/virtual_account_card_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:sixam_mart/features/checkout/widgets/virtual_account_details_widget.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/profile/widgets/web_profile_widget.dart';
 
@@ -199,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: Dimensions.paddingSizeDefault),
 
                 // Virtual Account Section
-                isLoggedIn ? VirtualAccountCardWidget(profileController: profileController) : const SizedBox(),
+                isLoggedIn ? const VirtualAccountDetailsWidget(showInstructions: false) : const SizedBox(),
                 SizedBox(height: isLoggedIn ? Dimensions.paddingSizeDefault : 0),
 
                 ProfileButtonWidget(icon: Icons.tonality_outlined, title: 'dark_mode'.tr, isButtonActive: Get.isDarkMode, onTap: () {

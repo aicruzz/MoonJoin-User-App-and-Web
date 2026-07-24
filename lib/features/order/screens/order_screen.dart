@@ -29,7 +29,10 @@ import 'package:get/get.dart';
 /// duplicate controller.
 class OrderScreen extends StatefulWidget {
   final int? index;
-  const OrderScreen({super.key, this.index = 0});
+  /// True when the screen is pushed as its own route (e.g. from Profile → My
+  /// Orders) rather than shown as the bottom-nav tab — enables a back button.
+  final bool fromNavigation;
+  const OrderScreen({super.key, this.index = 0, this.fromNavigation = false});
 
   @override
   OrderScreenState createState() => OrderScreenState();
@@ -101,7 +104,7 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8F0),
-      appBar: haveTaxiModule ? null : CustomAppBar(title: 'my_orders'.tr, backButton: false),
+      appBar: haveTaxiModule ? null : CustomAppBar(title: 'my_orders'.tr, backButton: widget.fromNavigation),
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: SafeArea(child: GetBuilder<OrderController>(builder: (orderController) {
         return Column(children: [
@@ -111,6 +114,16 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
           if(haveTaxiModule) Padding(
             padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
             child: Row(children: [
+              if(widget.fromNavigation) ...[
+                InkWell(
+                  onTap: () => Get.back(),
+                  borderRadius: BorderRadius.circular(30),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
+                    child: Icon(Icons.arrow_back_ios_new, size: 20, color: Theme.of(context).textTheme.bodyLarge!.color),
+                  ),
+                ),
+              ],
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(pageTitle, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge)),
                 const SizedBox(height: 2),

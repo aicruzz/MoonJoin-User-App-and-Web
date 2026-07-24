@@ -2350,3 +2350,146 @@ overflow/null-check). **Business logic, APIs, controllers, repositories, navigat
 ### Reuse / discipline
 No duplicate widget/controller/repository, no extra API calls, no hardcoded schedule, no fake data, no redesign
 of frozen components, no business-logic change. `flutter analyze` 0 issues on all changed files. Runtime pending.
+
+---
+
+## Phase — Rental Service Completion Code (Part 1) + Profile Modernization audit (Part 2)
+
+### Architecture audit (before code)
+**Part 1 — completion/settlement:** `TripDetailsModel` ALREADY carries **`otp`** (`json['otp']`) — the same
+completion-code field Delivery uses (`order.otp`, shown in `order_info_widget.dart`). So the customer code is
+REAL backend data, reused — no new field, no duplicate logic. Trip statuses:
+pending→confirmed→ongoing→completed→canceled. Settlement is backend/admin-side (no frontend settlement logic
+exists or should); the provider entering the code flips status to completed via the existing vendor/backend
+flow. **No Vendor Rental completion screen exists in this User-App repo** (Vendor App is separate) → documented.
+**Part 2 — Virtual Account:** a shared `VirtualAccountDetailsWidget` exists in `features/checkout/widgets/`
+(the "Your Virtual Account Details" from Choose Payment Method). Profile currently uses its OWN
+`virtual_account_card_widget.dart` — a duplication to consolidate onto the shared component (Profile + Wallet).
+Profile MAIN page is already MoonJoin-modernized (stat tiles, VA card, sectioned lists); the LEGACY 6amMart
+pages are the child screens (Personal Info, Address, Notifications, Wallet, Transactions, Coupons, Loyalty,
+Language, Settings, Refer&Earn, Help, About, Terms, Privacy, Delete, Logout).
+
+### Part 1 — 🔒 FROZEN (customer completion code) — product-owner approved
+Additive section on the frozen `TaxiOrderDetailsScreen`: a very visible **Service Completion Code** card
+(green gradient, large spaced digits) shown while the trip is **confirmed/ongoing** and `trip.otp` is present,
+with the Delivery-style instruction. Real `trip.otp` only — hidden when no code. Car & Apartment share it
+(wording neutral: "service"). No business/settlement logic, no new controller/API. Verified on device.
+
+**Status → display mapping (documented, from `TripStatusEnum`):**
+pending → hidden · confirmed → **visible** · ongoing → **visible** · completed → hidden · canceled → hidden.
+(There is no distinct "accepted" status in `TripStatusEnum`; "confirmed" is the accepted state.) Rule:
+`(status == confirmed || status == ongoing) && trip.otp != null/empty`.
+
+**Completion FLOW audit (User App → Provider → Backend → Admin → Settlement):** the User App holds NONE of
+the completion/settlement machinery — verified: no OTP-generation, no validate-code endpoint, no
+status-transition call, no settlement call exists in this repo (rental services expose only booking/payment).
+The app only DISPLAYS `trip.otp`. Every question below is therefore a Backend/Vendor/Admin contract, queued
+(item 21), never invented in the frontend:
+- OTP generated where/when → backend, at trip creation/confirmation (today surfaced as `trip.otp`).
+- Expiry / validation / confirming API / status change / payment-eligibility / reuse-prevention / double-submit
+  / wrong-code / cancel-before-completion → all backend + Vendor App; documented as the Rental Completion
+  Contract (queue 21).
+- Car AND Apartment: the SAME code path (`_showCompletionCode` + `trip.otp`) serves both — no duplicate.
+
+**Status: 🔒 FROZEN — additive changes only.**
+
+### Part 2 — plan (pending approval, NEXT unit)
+1. Replace Profile's `VirtualAccountCardWidget` with the shared `VirtualAccountDetailsWidget`; reuse the SAME
+   component on the Wallet "+" flow. One component, no duplication.
+2. Modernize each legacy Profile child page into the MoonJoin design language (spacing/typography/cards/
+   buttons/shadows/colors) — presentation only, controllers/APIs/navigation untouched — one page at a time.
+
+---
+
+## Phase 2A — Virtual Account consolidation (ONE shared component) — pending approval
+Audit: **three** virtual-account implementations existed — the shared `VirtualAccountDetailsWidget`
+(Checkout), the profile `VirtualAccountCardWidget` (3 call sites: profile_screen, web_profile, menu), and an
+INLINE 9PSB block in the wallet `AddFundDialogueWidget`. The profile copy also owned **loading** +
+**generate-account** states the shared one lacked.
+
+Consolidation: `VirtualAccountDetailsWidget` **extended into the single superset** (self-contained
+`GetBuilder<ProfileController>`; states: loading spinner · no-account → reuse existing
+`generateVirtualAccount()` · account details + copy + info note; MoonJoin-styled; additive `detailsOnly`/
+`margin`). Reused at ALL call sites: Profile (×3) and the Wallet "+" 9PSB block. **No new business logic** —
+only the existing `generateVirtualAccount()` is reused; no controller/API/repository change.
+
+Duplicates now unused (retained on disk per no-auto-delete, for the post-migration dead-code audit):
+`virtual_account_card_widget.dart`, the wallet inline `_virtualInfoRow`. Dead imports removed.
+`flutter analyze` 0 new issues. Runtime pending. Zero duplication achieved.
+
+### Phase 2A — CORRECTION (master = the approved Checkout card)
+The first 2A attempt reused the DATA but rendered a different, Profile-styled card — visual drift.
+Corrected: the approved "Your Virtual Account Details" card from the Choose Payment Method sheet
+(`payment_method_bottom_sheet.dart → _virtualAccountFundSection`) is the MASTER. It was extracted
+**verbatim** (title `your_virtual_account_details`, 46px logo chip, `_infoRow`, `_copyButton`, numbered
+`_instructions`) into `VirtualAccountDetailsWidget`, extended with loading + generate states that reuse the
+same premium shell. Checkout now CONSUMES the extracted widget (its inline copy + 4 helpers deleted).
+Reused pixel-identically at: Checkout, Profile (×3), Wallet "+". `virtual_account_card_widget.dart` marked
+OBSOLETE (zero call sites, retained for final cleanup). analyze: 0 new issues.
+
+### Phase 2A — FROZEN (2026-07-24)
+`VirtualAccountDetailsWidget` approved and frozen as a **FOUNDATION COMPONENT**. It is the single,
+canonical "Your Virtual Account Details" UI for the entire User App — see docs/FROZEN_REGISTRY.md. Any
+future virtual-account surface (Checkout, Wallet, Deposit, Fund Wallet, Bank Account, Profile, Payment /
+Financial pages) MUST reuse it; no new Virtual Account UI without explicit architectural approval.
+
+---
+
+## Stage 1 — Profile Modernization: Foundation rows + Account shell — FROZEN (2026-07-24)
+**Design authority:** `ui-designs/Profile_Loction_.../profile.png` + `profile_scroll down.png` (not in Active Figma).
+
+**Shared components redesigned (frozen FOUNDATION):**
+- `PortionWidget` — MoonJoin navigation row (chip · bold title · subtitle · chevron · inset divider · isDanger). API preserved + `subtitle`, `isDanger`.
+- `ProfileButtonWidget` — MoonJoin setting/toggle/action row. API preserved + `subtitle`, `isDanger`.
+
+**Account shell (`menu_screen.dart`) matched to profile.png:** waved green header (top spacing from
+`MediaQuery.padding.top`; avatar edit-badge → Edit Profile; notification bell → Notifications; dark-mode
+moon), 3 tappable stat cards with action pills (View Rewards/My Orders/My Wallet → existing
+Loyalty/Orders/Wallet routes), bold section headers, subtitles on every row, `radiusLarge` cards.
+
+**Navigation:** `order_screen.dart` gained additive `fromNavigation` flag → back button when pushed from
+Profile (bottom-nav tab/drawer unchanged); `getOrderRoute({fromNavigation})` + order GetPage reads
+`from_nav`. All other routes/onTap unchanged. Frozen VA widget untouched.
+
+**Verification:** flutter analyze 0 issues (changed files); runtime run50 0 errors; on-device match to
+profile.png confirmed by product owner → approved & frozen.
+
+**Pending / cleanup (documented, not actioned):**
+- Localization: 19 new keys added to en/ar/bn/es — non-English are ENGLISH PLACEHOLDERS pending real
+  translation (see BACKEND_INTEGRATION_QUEUE.md).
+- Icon: `My Address` uses `address_icon.png` (folded map); profile.png shows a pin — no pin-style menu-icon
+  asset exists → future asset addition.
+- Dead code for final cleanup: `menu_button_widget.dart` (0 usages), `virtual_account_card_widget.dart`.
+
+---
+
+## Phase 2 — Personal Information (Edit Profile) — FROZEN (2026-07-24)
+**Design authority:** none dedicated → reproduces the frozen Stage-1 MoonJoin Profile language (presentation only).
+
+**Implementation:** `update_profile_screen.dart` rebuilt — mobile `_mobileView` (green `ProfilePageHeader` +
+back + delete menu; premium avatar w/ camera badge straddling header/body; "Basic Information" card of the 3
+shared `CustomTextField`s; frozen `ProfileButtonWidget` Change Password; `CustomButton` Update) and restyled
+`webView()` to the same language (green header, card radius, shared `_avatar`). All logic methods verbatim.
+
+**New shared component:** `ProfilePageHeader` (FOUNDATION, frozen) — the official header for every remaining
+Profile page. No duplicate headers permitted.
+
+**Reuse:** CustomTextField ×3, CustomButton, ProfileButtonWidget (frozen), image picker, delete-account
+menu/dialog/deleteUser — nothing recreated.
+
+**Preserved:** ProfileController · ProfileRepository · ProfileService · API `POST /api/v1/customer/update-profile`
+· UpdateUserModel/UserInfoModel contract · all validation (name/email/phone) · image-upload multipart ·
+phone/email verification flows · navigation (`getUpdateProfileRoute`) · loading/error/success-refresh.
+
+**QA bugs found & fixed:** (1) "Edit Profile" title hidden behind the centred avatar → header `bottomExtra`
+increased so the avatar drops below the title. (2) camera badge not tappable — avatar was `Positioned` in the
+header Stack's `Clip.none` overflow (painted but not hit-tested) → restructured to sit INSIDE the Stack bounds
+(reserved via bottom padding); whole avatar + badge now tappable.
+
+**Verification:** flutter analyze 0 issues; runtime run53 0 RenderFlex/overflow/subtype/null-check; on-device
+navigation + data load + verified badge + image picker confirmed; owner-approved. Note: "slow" upload = native
+image_picker/simulator latency, flow unchanged. Desktop `webView()` visual verification PENDING (non-blocking;
+future tweaks are refinements, not a reopen).
+
+**Obsolete (retained, DO NOT delete — final cleanup only):** `profile_bg_widget.dart` (→ ProfilePageHeader),
+plus previously logged `virtual_account_card_widget.dart`, `menu_button_widget.dart`.

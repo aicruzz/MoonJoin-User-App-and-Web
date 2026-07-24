@@ -111,6 +111,18 @@ class _TaxiOrderDetailsScreenState extends State<TaxiOrderDetailsScreen> {
                   _statusHero(context, trip, details, isApartment),
                   const SizedBox(height: Dimensions.paddingSizeDefault),
 
+                  // Service Completion Code — the customer's REAL verification code
+                  // (`trip.otp`, same field Delivery uses). Shown prominently while
+                  // the service is in progress (confirmed/ongoing) so the customer
+                  // gives it to the provider ONLY after a satisfactory service; the
+                  // provider entering it flips the trip to Completed → settlement
+                  // eligible (existing production settlement flow). Never faked —
+                  // hidden when the backend has not issued a code.
+                  if(_showCompletionCode(trip)) ...[
+                    _completionCode(context, trip, isApartment),
+                    const SizedBox(height: Dimensions.paddingSizeDefault),
+                  ],
+
                   if(!halfCompleted && trip.provider != null) ...[
                     _providerCard(context, trip, isApartment),
                     const SizedBox(height: Dimensions.paddingSizeDefault),
@@ -158,6 +170,49 @@ class _TaxiOrderDetailsScreenState extends State<TaxiOrderDetailsScreen> {
         ),
       );
     });
+  }
+
+  /// The completion code is relevant while the service is running (confirmed or
+  /// ongoing) and the backend has issued a real code.
+  bool _showCompletionCode(TripDetailsModel trip) {
+    final bool running = trip.tripStatus == TripStatusEnum.confirmed.name || trip.tripStatus == TripStatusEnum.ongoing.name;
+    return running && (trip.otp ?? '').isNotEmpty;
+  }
+
+  // ── Service Completion Code — very visible, Delivery-style. Real `trip.otp`. ──
+  Widget _completionCode(BuildContext context, TripDetailsModel trip, bool isApartment) {
+    final Color green = Theme.of(context).primaryColor;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [green, green.withValues(alpha: 0.82)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        boxShadow: [BoxShadow(color: green.withValues(alpha: 0.25), blurRadius: 14, offset: const Offset(0, 6))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.verified_user, color: Colors.white, size: 20),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Text('service_completion_code'.tr, style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeLarge)),
+        ]),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+
+        Container(
+          width: double.infinity, alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+          child: Text(
+            trip.otp!,
+            style: robotoBold.copyWith(color: green, fontSize: 34, letterSpacing: 8),
+          ),
+        ),
+        const SizedBox(height: Dimensions.paddingSizeSmall),
+
+        Text('give_this_code_after_service'.tr,
+            style: robotoRegular.copyWith(color: Colors.white.withValues(alpha: 0.95), fontSize: Dimensions.fontSizeSmall, height: 1.4)),
+      ]),
+    );
   }
 
   // ── App bar: back (fromCheckout → home), Trip #id, status pill, menu ──

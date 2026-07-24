@@ -258,7 +258,7 @@ class RouteHelper {
     return '$parcelRequest?category=$category0&picked=$pickedUpAddress&destination=$destinationAddress0';
   }
   static String getSearchStoreItemRoute(int? storeID) => '$searchStoreItem?id=$storeID';
-  static String getOrderRoute() => order;
+  static String getOrderRoute({bool fromNavigation = false}) => fromNavigation ? '$order?from_nav=true' : order;
   static String getItemDetailsRoute(int? itemID, bool isRestaurant) => '$itemDetails?id=$itemID&page=${isRestaurant ? 'restaurant' : 'item'}';
   static String getWalletRoute({String? fundStatus, String? token,  bool fromNotification = false}) => '$wallet?payment_status=$fundStatus&token=$token&from_notification=$fromNotification';
   static String getLoyaltyRoute({bool fromNotification = false}) => '$loyalty?from_notification=$fromNotification';
@@ -499,7 +499,7 @@ class RouteHelper {
       destinationAddress: AddressModel.fromJson(jsonDecode(utf8.decode(base64Url.decode(Get.parameters['destination']!.replaceAll(' ', '+'))))),
     ))),
     GetPage(name: searchStoreItem, page: () => getRoute(StoreItemSearchScreen(storeID: Get.parameters['id']))),
-    GetPage(name: order, page: () => getRoute(const OrderScreen())),
+    GetPage(name: order, page: () => getRoute(OrderScreen(fromNavigation: Get.parameters['from_nav'] == 'true'))),
     GetPage(name: itemDetails, page: () => getRoute(Get.arguments ?? ItemDetailsScreen(itemId: int.parse(Get.parameters['id']!), inStorePage: Get.parameters['page'] == 'restaurant'))),
     GetPage(name: wallet, page: () {
       return getRoute(WalletScreen(

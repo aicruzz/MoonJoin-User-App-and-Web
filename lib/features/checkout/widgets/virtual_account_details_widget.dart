@@ -1,145 +1,288 @@
 // virtual_account_details_widget.dart
+//
+// THE single, master "Your Virtual Account Details" component.
+//
+// This is the EXACT approved card from the Choose Payment Method sheet
+// (`payment_method_bottom_sheet.dart` → `_virtualAccountFundSection`), extracted
+// verbatim so there is ONE visual implementation reused everywhere: Checkout,
+// Profile, Wallet "+", and any future Deposit/Funding screen. Zero visual drift.
+//
+// It is self-contained (reads `ProfileController.virtualAccountData` /
+// `isGeneratingAccount`, reuses the existing `generateVirtualAccount()`), and
+// supports every state — details · loading · generate/no-account — WITHOUT
+// changing the approved details layout.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
+import 'package:sixam_mart/util/dimensions.dart';
+import 'package:sixam_mart/util/styles.dart';
 
 class VirtualAccountDetailsWidget extends StatelessWidget {
-  const VirtualAccountDetailsWidget({super.key});
+  /// When true, the null-account state shows the approved placeholder text
+  /// (Checkout / Wallet "+" — funding-only surfaces, no generate affordance).
+  /// When false (default → Profile) the null state offers "Generate".
+  final bool detailsOnly;
 
-  @override
-  Widget build(BuildContext context) {
-    final virtualAccountData = Get.find<ProfileController>().virtualAccountData;
+  /// When false the "Your Virtual Account Details" title is hidden (host screen
+  /// already provides a header). Default true — as the approved card renders it.
+  final bool showTitle;
 
-    if (virtualAccountData == null) return const SizedBox();
+  /// When false the "Important Instructions" box is hidden (e.g. Profile, where the
+  /// general details below should be immediately visible). Default true — Checkout
+  /// and Wallet keep the approved instructions.
+  final bool showInstructions;
 
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).primaryColor.withOpacity(0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.account_balance, 
-                color: Theme.of(context).primaryColor, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'virtual_account_details'.tr,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 20),
+  final EdgeInsetsGeometry? margin;
 
-          _AccountRow(
-            label: 'bank_name'.tr,
-            value: virtualAccountData['bank_name'] ?? '9PSB',
-          ),
-          const SizedBox(height: 10),
-
-          _AccountRow(
-            label: 'account_name'.tr,
-            value: virtualAccountData['account_name'] ?? '',
-          ),
-          const SizedBox(height: 10),
-
-          _AccountRow(
-            label: 'account_number'.tr,
-            value: virtualAccountData['account_number'] ?? '',
-            canCopy: true,
-          ),
-
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.info_outline, color: Colors.orange, size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'transfer_to_account_and_confirm'.tr,
-                    style: const TextStyle(fontSize: 12, color: Colors.orange),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccountRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool canCopy;
-
-  const _AccountRow({
-    required this.label,
-    required this.value,
-    this.canCopy = false,
+  const VirtualAccountDetailsWidget({
+    super.key,
+    this.detailsOnly = false,
+    this.showTitle = true,
+    this.showInstructions = true,
+    this.margin,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: Theme.of(context).hintColor,
-          ),
-        ),
-        Row(
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (canCopy) ...[
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: value));
-                  showCustomSnackBar(
-                    'account_number_copied'.tr,
-                    isError: false,
-                  );
-                },
-                child: Icon(
-                  Icons.copy_rounded,
-                  size: 16,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-            ],
+    return GetBuilder<ProfileController>(builder: (profileController) {
+      final Map<String, dynamic>? data = profileController.virtualAccountData;
+      final bool isLoading = profileController.isGeneratingAccount;
+
+      return Container(
+        margin: margin,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+          if(showTitle) ...[
+            Text('your_virtual_account_details'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            const SizedBox(height: Dimensions.paddingSizeDefault),
           ],
+
+          if(data != null) ...[
+            _detailsCard(context, data),
+            if(showInstructions) ...[
+              const SizedBox(height: Dimensions.paddingSizeDefault),
+              _instructions(context),
+            ],
+          ] else if(isLoading) ...[
+            _loadingShell(context),
+          ] else if(detailsOnly) ...[
+            Text(
+              'transfer_to_virtual_account_to_top_up_wallet'.tr,
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+            ),
+          ] else ...[
+            _generateButton(context, profileController),
+          ],
+        ]),
+      );
+    });
+  }
+
+  // ── Approved premium details card (verbatim from the Choose Payment sheet) ──
+  Widget _detailsCard(BuildContext context, Map<String, dynamic> data) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
+        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
+      ),
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+        // Bank Name (with logo chip)  |  Account Number (with copy)
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            Container(
+              height: 46, width: 46, alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+              ),
+              child: Icon(Icons.account_balance_rounded, size: 24, color: Theme.of(context).primaryColor),
+            ),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            Expanded(child: _infoRow(context, label: 'bank_name'.tr, value: data['bank_name']?.toString() ?? 'N/A')),
+          ])),
+          const SizedBox(width: Dimensions.paddingSizeDefault),
+
+          Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: _infoRow(
+              context,
+              label: 'account_number'.tr,
+              value: data['account_number']?.toString() ?? 'N/A',
+            )),
+            if(data['account_number'] != null) ...[
+              const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+              _copyButton(context, data['account_number'].toString()),
+            ],
+          ])),
+        ]),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault),
+          child: Divider(height: 1, color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
         ),
-      ],
+
+        _infoRow(context, label: 'account_name'.tr, value: data['account_name']?.toString() ?? 'N/A'),
+      ]),
+    );
+  }
+
+  // Generate affordance — same premium shell as the details card, tappable.
+  Widget _generateButton(BuildContext context, ProfileController profileController) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => profileController.generateVirtualAccount(),
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.30)),
+            boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
+          ),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.account_balance_wallet_outlined, color: Theme.of(context).primaryColor, size: 20),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            Text('generate_virtual_account'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // Loading — same premium shell, centered spinner.
+  Widget _loadingShell(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
+        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
+      ),
+      padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  // ── Verbatim helpers from the approved card ──
+  Widget _copyButton(BuildContext context, String accountNumber) {
+    return Material(
+      color: Theme.of(context).primaryColor.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () async {
+          await Clipboard.setData(ClipboardData(text: accountNumber));
+          if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
+          Get.rawSnackbar(
+            message: 'account_number_copied'.tr,
+            duration: const Duration(seconds: 2),
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.black87,
+            messageText: Text(
+              'account_number_copied'.tr,
+              style: robotoMedium.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),
+            ),
+            borderRadius: Dimensions.radiusSmall.toDouble(),
+            margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+            isDismissible: true,
+          );
+        },
+        splashColor: Theme.of(context).primaryColor.withValues(alpha: 0.20),
+        highlightColor: Theme.of(context).primaryColor.withValues(alpha: 0.10),
+        child: SizedBox(
+          width: 44, height: 44,
+          child: Icon(Icons.copy_rounded, size: 20, color: Theme.of(context).primaryColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(BuildContext context, {required String label, required String value}) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
+      const SizedBox(height: 6),
+      Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, letterSpacing: 0.3, color: Theme.of(context).textTheme.bodyLarge?.color)),
+    ]);
+  }
+
+  Widget _instructions(BuildContext context) {
+    final steps = [
+      'Copy the account number above.',
+      'Open your bank app or USSD and transfer any amount to the account.',
+      'Your wallet will be topped up automatically once the transfer is confirmed.',
+      'Return here and tap "Apply" to use your wallet balance at checkout.',
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              height: 22, width: 22, alignment: Alignment.center,
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor, shape: BoxShape.circle),
+              child: Icon(Icons.info_outline_rounded, size: 13, color: Theme.of(context).cardColor),
+            ),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+            Text(
+              'important_instructions'.tr,
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+            ),
+          ]),
+          const SizedBox(height: Dimensions.paddingSizeSmall),
+          ...List.generate(steps.length, (i) => Column(children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 20, width: 20,
+                  margin: const EdgeInsets.only(top: 1, right: Dimensions.paddingSizeSmall),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${i + 1}',
+                    style: robotoBold.copyWith(fontSize: 10, color: Theme.of(context).primaryColor),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text(
+                      steps[i],
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyMedium!.color),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if(i != steps.length - 1) Padding(
+              padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+              child: Divider(height: 1, color: Theme.of(context).primaryColor.withValues(alpha: 0.10)),
+            ),
+          ])),
+        ],
+      ),
     );
   }
 }

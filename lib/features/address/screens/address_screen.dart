@@ -1,19 +1,21 @@
+import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/features/address/controllers/address_controller.dart';
 import 'package:sixam_mart/features/address/widgets/address_confirmation_dialogue.dart';
 import 'package:sixam_mart/common/widgets/address_widget.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
+import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/common/widgets/web_page_title_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -45,124 +47,147 @@ class _AddressScreenState extends State<AddressScreen> {
   @override
   Widget build(BuildContext context) {
     bool isLoggedIn = AuthHelper.isLoggedIn();
+    final bool isDesktop = ResponsiveHelper.isDesktop(context);
     return GetBuilder<AddressController>(
       builder: (addressController) {
         return Scaffold(
-          appBar: CustomAppBar(title: 'my_address'.tr, backButton: widget.fromDashboard ? false : true),
+          appBar: isDesktop ? const WebMenuBar() : null,
           endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
-          floatingActionButton: ResponsiveHelper.isDesktop(context) || !isLoggedIn ? null : (addressController.addressList != null
-          && addressController.addressList!.isEmpty) ? null : FloatingActionButton(
-            backgroundColor: Theme.of(context).primaryColor,
-            onPressed: () => Get.toNamed(RouteHelper.getAddAddressRoute(false, false, 0, isNavbar: true)),
-            child: Icon(Icons.add, color: Theme.of(context).cardColor),
-          ),
-          floatingActionButtonLocation: ResponsiveHelper.isDesktop(context) ? FloatingActionButtonLocation.centerFloat : null,
-          body: Container(
-            height: context.height,
-            decoration: BoxDecoration(image: DecorationImage(
-                image: AssetImage(ResponsiveHelper.isDesktop(context) ? Images.addressCity : Images.city),
-                alignment: ResponsiveHelper.isDesktop(context) ? Alignment.center : Alignment.bottomCenter,
-              fit: BoxFit.fitWidth,
-            ),
-
-            ),
-            child: isLoggedIn ? RefreshIndicator(
-              onRefresh: () async {
-                await addressController.getAddressList();
-              },
-              child: SingleChildScrollView(
-                controller: scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    WebScreenTitleWidget(title: 'address'.tr),
-                    Center(child: FooterView(
-                      minHeight: 0.45,
-                      child: SizedBox(
-                        width: Dimensions.webMaxWidth,
-                        child: Column(
-                          children: [
-                            ResponsiveHelper.isDesktop(context) ? const SizedBox( height: Dimensions.paddingSizeSmall) : const SizedBox(),
-
-                            addressController.addressList != null ? addressController.addressList!.isNotEmpty ?
-                            Padding(
-                              padding: ResponsiveHelper.isMobile(context) ? const EdgeInsets.all(Dimensions.paddingSizeSmall) : EdgeInsets.zero,
-                              child: GridView.builder(
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisSpacing: Dimensions.paddingSizeLarge,
-                                  mainAxisSpacing: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeLarge : 0.01,
-                                  childAspectRatio: ResponsiveHelper.isDesktop(context) ? 4 : 4.8,
-                                  crossAxisCount: ResponsiveHelper.isMobile(context) ? 1 : 3,
-                                ),
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: ResponsiveHelper.isDesktop(context) ? (addressController.addressList!.length + 1) : addressController.addressList!.length ,
-                                itemBuilder: (context, index) {
-                                  return (ResponsiveHelper.isDesktop(context) && (index == addressController.addressList!.length)) ?
-                                  Container(
-                                      margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-                                      decoration:  BoxDecoration(
-                                        color: Theme.of(context).cardColor,
-                                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                                        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.1), blurRadius: 5, spreadRadius: 1)],
-                                      ),
-                                      child: CustomInkWell(
-                                        onTap: () => Get.toNamed(RouteHelper.getAddAddressRoute(false, false, 0)),
-                                        padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                                        radius: Dimensions.radiusDefault,
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Icon(Icons.add_circle_outline, color: Theme.of(context).primaryColor),
-                                            const SizedBox(height: Dimensions.paddingSizeSmall),
-                                            Text('add_new_address'.tr, style: robotoRegular.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall)),
-                                          ],
-                                        ),
-                                      )
-                                  ) :
-                                  AddressWidget(
-                                    address: addressController.addressList![index], fromAddress: true,
-                                    onTap: () {
-                                      Get.toNamed(RouteHelper.getMapRoute(addressController.addressList![index], 'address', false));
-                                    },
-                                    onEditPressed: () {
-                                      Get.toNamed(RouteHelper.getEditAddressRoute(addressController.addressList![index]));
-                                    },
-                                    onRemovePressed: () {
-                                      if(Get.isSnackbarOpen) {
-                                        Get.back();
-                                      }
-                                      Get.dialog(AddressConfirmDialogue(
-                                          icon: Images.locationConfirm,
-                                          title: 'are_you_sure'.tr,
-                                          description: 'you_want_to_delete_this_location'.tr,
-                                          onYesPressed: () {
-                                            addressController.deleteUserAddressByID(addressController.addressList![index].id, index).then((response) {
-                                              Get.back();
-                                              showCustomSnackBar(response.message, isError: !response.isSuccess);
-                                            });
-                                          }),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ) : NoDataScreen(text: 'no_saved_address_found'.tr, fromAddress: true) : const Center(child: CircularProgressIndicator()),
-                          ],
-                        ),
-                      ),
-                    ))
-                  ],
-                ),
-              ),
-            ) :  NotLoggedInScreen(callBack: (value) {
-              initCall();
-              setState(() {});
-            }),
-          ),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          body: isLoggedIn
+              ? (isDesktop ? _desktopBody(context, addressController) : _mobileBody(context, addressController))
+              : Column(children: [
+                  if(!isDesktop) ProfilePageHeader(title: 'my_address'.tr, showBack: !widget.fromDashboard),
+                  Expanded(child: NotLoggedInScreen(callBack: (value) { initCall(); setState(() {}); })),
+                ]),
           bottomNavigationBar: widget.fromDashboard ? Container(height: GetPlatform.isIOS ? 80 : 65) : const SizedBox(),
         );
       }
+    );
+  }
+
+  // ── Mobile (MoonJoin) — reuses ProfilePageHeader, the shared AddressWidget list
+  // card, NoDataScreen, and CustomButton. Navigation / delete logic unchanged. ──
+  Widget _mobileBody(BuildContext context, AddressController addressController) {
+    return Column(children: [
+
+      ProfilePageHeader(title: 'my_address'.tr, showBack: !widget.fromDashboard),
+
+      Expanded(child: RefreshIndicator(
+        onRefresh: () async => addressController.getAddressList(),
+        child: addressController.addressList == null
+            ? ListView(children: const [SizedBox(height: 280), Center(child: CircularProgressIndicator())])
+            : addressController.addressList!.isEmpty
+                ? ListView(physics: const AlwaysScrollableScrollPhysics(), children: [
+                    const SizedBox(height: Dimensions.paddingSizeExtremeLarge),
+                    NoDataScreen(text: 'no_saved_address_found'.tr, fromAddress: true),
+                  ])
+                : ListView.builder(
+                    controller: scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
+                    itemCount: addressController.addressList!.length,
+                    itemBuilder: (context, index) => AddressWidget(
+                      address: addressController.addressList![index], fromAddress: true,
+                      onTap: () => Get.toNamed(RouteHelper.getMapRoute(addressController.addressList![index], 'address', false)),
+                      onEditPressed: () => Get.toNamed(RouteHelper.getEditAddressRoute(addressController.addressList![index])),
+                      onRemovePressed: () => _confirmDelete(addressController, index),
+                    ),
+                  ),
+      )),
+
+      SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+          child: CustomButton(
+            buttonText: 'add_new_address'.tr,
+            icon: Icons.add,
+            onPressed: () => Get.toNamed(RouteHelper.getAddAddressRoute(false, false, 0, isNavbar: true)),
+          ),
+        ),
+      ),
+
+    ]);
+  }
+
+  void _confirmDelete(AddressController addressController, int index) {
+    if(Get.isSnackbarOpen) {
+      Get.back();
+    }
+    Get.dialog(AddressConfirmDialogue(
+      icon: Images.locationConfirm,
+      title: 'are_you_sure'.tr,
+      description: 'you_want_to_delete_this_location'.tr,
+      onYesPressed: () {
+        addressController.deleteUserAddressByID(addressController.addressList![index].id, index).then((response) {
+          Get.back();
+          showCustomSnackBar(response.message, isError: !response.isSuccess);
+        });
+      }),
+    );
+  }
+
+  // ── Desktop — existing grid preserved (city background removed; WebMenuBar app bar). ──
+  Widget _desktopBody(BuildContext context, AddressController addressController) {
+    return SingleChildScrollView(
+      controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Column(children: [
+        WebScreenTitleWidget(title: 'address'.tr),
+        Center(child: FooterView(
+          minHeight: 0.45,
+          child: SizedBox(
+            width: Dimensions.webMaxWidth,
+            child: Column(children: [
+              const SizedBox(height: Dimensions.paddingSizeSmall),
+
+              addressController.addressList != null ? addressController.addressList!.isNotEmpty ?
+              GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisSpacing: Dimensions.paddingSizeLarge,
+                  mainAxisSpacing: Dimensions.paddingSizeLarge,
+                  childAspectRatio: 4,
+                  crossAxisCount: 3,
+                ),
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: addressController.addressList!.length + 1,
+                itemBuilder: (context, index) {
+                  return (index == addressController.addressList!.length) ?
+                  Container(
+                      margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
+                      decoration:  BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.1), blurRadius: 5, spreadRadius: 1)],
+                      ),
+                      child: CustomInkWell(
+                        onTap: () => Get.toNamed(RouteHelper.getAddAddressRoute(false, false, 0)),
+                        padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                        radius: Dimensions.radiusDefault,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.add_circle_outline, color: Theme.of(context).primaryColor),
+                            const SizedBox(height: Dimensions.paddingSizeSmall),
+                            Text('add_new_address'.tr, style: robotoRegular.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall)),
+                          ],
+                        ),
+                      )
+                  ) :
+                  AddressWidget(
+                    address: addressController.addressList![index], fromAddress: true,
+                    onTap: () => Get.toNamed(RouteHelper.getMapRoute(addressController.addressList![index], 'address', false)),
+                    onEditPressed: () => Get.toNamed(RouteHelper.getEditAddressRoute(addressController.addressList![index])),
+                    onRemovePressed: () => _confirmDelete(addressController, index),
+                  );
+                },
+              ) : NoDataScreen(text: 'no_saved_address_found'.tr, fromAddress: true) : const Center(child: CircularProgressIndicator()),
+            ]),
+          ),
+        )),
+      ]),
     );
   }
 }

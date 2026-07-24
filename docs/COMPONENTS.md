@@ -568,3 +568,47 @@ temporary_close/holiday_today, null today) + `resolveModuleAvailability` (real-s
 FROZEN `CategoryTile`/`ModuleAvailability` fade+disable — no card redesign. **Search:**
 `SearchController.resultStoreCount` (immediate real count, no extra calls) + `hideItemStoreName:false` on
 search results (frozen `item_widget` shows real `store_name`).
+
+**`VirtualAccountDetailsWidget` (THE shared Virtual Account component):** one self-contained widget
+(loading / generate / details) reused by Checkout, Profile (×3), and Wallet "+". Superset of the removed
+per-screen copies; reuses the existing `ProfileController.generateVirtualAccount()`. Duplicate
+`VirtualAccountCardWidget` + wallet inline block are now unused (retained for the dead-code audit).
+
+### 🧊 FOUNDATION COMPONENT — `VirtualAccountDetailsWidget` (FROZEN 2026-07-24)
+`lib/features/checkout/widgets/virtual_account_details_widget.dart` — the ONLY approved Virtual Account UI
+in MoonJoin (states: details / loading / generate; flags: `detailsOnly`, `showTitle`, `showInstructions`,
+`margin`). Reused by Checkout, Profile (×3), Wallet "+". **Mandatory reuse** on every current/future
+virtual-account surface (Checkout, Wallet, Deposit, Fund Wallet, Bank Account, Profile, Payment/Financial
+pages). No alternate Virtual Account UI without explicit architectural approval. See docs/FROZEN_REGISTRY.md.
+`virtual_account_card_widget.dart` = OBSOLETE (dead, retained for final cleanup).
+
+### 🧊 FOUNDATION — `PortionWidget` (Account navigation row) (FROZEN 2026-07-24)
+`lib/features/menu/widgets/portion_widget.dart` — the single MoonJoin list-navigation row (46px soft-green
+icon chip · bold title · optional subtitle · trailing chevron / count `suffix` · inset divider · `isDanger`).
+Used by `menu_screen.dart` for all Account/Menu rows. No alternate menu-row widget permitted.
+`menu_button_widget.dart` = OBSOLETE (zero usages; retained for cleanup).
+
+### 🧊 FOUNDATION — `ProfileButtonWidget` (setting / toggle / action row) (FROZEN 2026-07-24)
+`lib/features/profile/widgets/profile_button_widget.dart` — the single MoonJoin standalone-card row (icon
+chip · title · optional subtitle · adaptive trailing: Cupertino toggle / language selector / chevron; red
+danger variant). Used by profile_screen, setting_page, update_profile, web_profile. Every Profile
+toggle/action/setting row must reuse it.
+
+### 🧊 Account (Profile) shell — `menu_screen.dart` (FROZEN 2026-07-24)
+Redesigned to `profile.png`: waved green header (`_HeaderWaveClipper`), avatar edit-badge, notification
+bell, dark-mode toggle, three tappable stat cards (Loyalty/Orders/Wallet action pills), grouped
+`PortionWidget` sections, frozen `VirtualAccountDetailsWidget`. Presentation only; navigation/logic unchanged.
+
+### 🧊 FOUNDATION — `ProfilePageHeader` (shared Profile header) (FROZEN 2026-07-24)
+`lib/features/profile/widgets/profile_page_header.dart` — THE official green waved header for every Profile
+child page (title + back + optional trailing + `bottomExtra` avatar overlap; status-bar-aware top spacing;
+concave wave mirroring the Stage-1 Account header). MANDATORY reuse on all remaining Profile screens; no
+duplicate headers. First consumer: Personal Information.
+
+### 🧊 Personal Information (Edit Profile) — `update_profile_screen.dart` (FROZEN 2026-07-24)
+Presentation-only redesign to the MoonJoin language. Mobile `_mobileView` + desktop `webView()`. Reuses
+`ProfilePageHeader`, `CustomTextField` ×3, `CustomButton`, frozen `ProfileButtonWidget` (Change Password),
+`CustomPopupMenuButton`+`ConfirmationDialog`+`deleteUser`, existing `pickImage()`. Controllers / repository /
+service / API `/customer/update-profile` / validation / image-upload / verification flows / navigation all
+preserved. QA fixes: title-behind-avatar (header height), un-tappable camera badge (avatar moved inside Stack
+bounds). Web desktop verification pending (non-blocking). Obsolete `ProfileBgWidget` retained for cleanup.

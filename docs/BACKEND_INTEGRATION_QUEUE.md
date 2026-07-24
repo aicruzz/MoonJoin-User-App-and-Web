@@ -657,6 +657,40 @@ owner shows without extra calls. The frontend hides the line gracefully when abs
 
 ---
 
+### 21. Rental Service Completion — verification code + settlement
+
+- **Module:** Rental (Car + Short Apt) · **App:** User App (done) + **Vendor App** + **Backend/Admin** · **Status:** **Frontend Complete — Waiting for Vendor/Backend**
+
+**Frontend (done, real data):** the customer sees a prominent **Service Completion Code** on the running Trip
+Details, sourced from the existing `trip.otp`. Car & Apartment share it.
+
+**Required BACKEND/ADMIN contract (Rental Completion):** `completion_code` (issue per trip; today reuses
+`otp`), `code_expiry`, `completion_time`, `completed_by`, `settlement_ready`, `verification_status`. The
+provider entering the customer's code must flip the trip to **completed** and mark it **settlement_ready**,
+feeding the EXISTING admin settlement flow — never a new settlement system.
+**Required VENDOR APP work:** a provider "Complete Service / Enter Completion Code" screen (separate Vendor
+repo). Not present in the User App — documented here so Vendor implements against this contract.
+**Frontend Integration Point:** only the code source changes (`trip.otp` → `completion_code`) via the trip
+model adapter; the User-App UI stays identical.
+
+**Full completion-flow contract (audited — none of this exists in the User App; all Backend/Vendor/Admin):**
+| Question | Contract |
+|---|---|
+| OTP generated where/when | Backend, at trip creation/confirmation; exposed as `trip.otp` today, `completion_code` later. |
+| Expiry | `code_expiry` — backend-enforced; expired code rejected on validation. |
+| Validation / confirming API | Vendor "enter completion code" → `POST rental/provider/trip/complete` (or equivalent): body `{trip_id, code}`; backend validates. |
+| Status change | On valid code: trip → **completed**, `completion_time` + `completed_by` set. |
+| Payment eligibility | Backend sets `settlement_ready = true` → feeds the EXISTING admin settlement flow (no new system). |
+| Reuse prevention / double submit | Backend marks the code consumed; a second submit returns already-completed / invalid. |
+| Wrong code | Backend returns validation error; Vendor shows retry (see Vendor reqs); no status change. |
+| Cancelled before completion | Trip → canceled; code voided; never settlement-eligible. |
+
+**Required VENDOR APP screen (separate repo — do NOT build here):** enter completion code · validate against
+the API · retry handling · wrong-code error · expired-code error · completion confirmation · settlement-ready
+trigger. Implement against `verification_status` ∈ {pending, verified, expired, failed}.
+
+---
+
 ## MoonJoin Development Rule (permanent)
 
 **Before implementing backend, complete all frontend applications first:**
@@ -709,3 +743,27 @@ Brands, Popular/Reviewed/Discounted product sections, Flash sale, Promotional ca
   (`apartment_placeholder.dart`, `TODO(BACKEND)`) — **no mock repository**. Backend-pending Rental items now in
   this queue: **Hero Images** (item 3), **Category Images** (item 4), and **Short Apartment Rental** listing/
   details/booking (to be added as those screens are built).
+
+---
+
+## Localization — PENDING TRANSLATION (Stage 1, added 2026-07-24)
+Stage 1 (Profile Modernization) added subtitle/label keys to all 4 language files. The **English values are
+correct; ar/bn/es currently hold ENGLISH PLACEHOLDERS** and must be professionally localized. Keys are live
+in `assets/language/{en,ar,bn,es}.json`:
+
+`update_your_personal_information`, `manage_your_saved_addresses`, `app_preferences_and_security`,
+`view_and_manage_your_coupons`, `check_points_and_rewards`, `manage_your_wallet_balance`,
+`invite_friends_and_earn_rewards`, `earn_by_delivering_orders`, `list_your_restaurant_or_shop`,
+`chat_with_our_support_team`, `find_answers_to_common_questions`, `learn_more_about_moonjoin`,
+`read_our_terms_and_conditions`, `how_we_protect_your_data`, `view_our_refund_policy`,
+`review_our_cancellation_policy`, `review_our_shipping_policy`, `sign_out_from_your_account`, `view_rewards`.
+
+Action: replace ar/bn/es placeholder values with real translations (loc team). Do not remove keys.
+
+## UI cleanup — dead widgets (retained per no-auto-delete)
+- `lib/features/menu/widgets/menu_button_widget.dart` — 0 usages (superseded by `PortionWidget`).
+- `lib/features/profile/widgets/virtual_account_card_widget.dart` — 0 usages (superseded by `VirtualAccountDetailsWidget`).
+
+## UI asset gap — Account icons
+- `My Address` menu row wants a pin-style outline icon to match `profile.png`; only `address_icon.png`
+  (folded map) exists in the menu-icon set. Add a pin-style menu icon asset in a future pass.

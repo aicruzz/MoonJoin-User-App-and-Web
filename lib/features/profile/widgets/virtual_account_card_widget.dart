@@ -1,3 +1,8 @@
+// ⚠️ OBSOLETE — DO NOT USE. Superseded by the single master component
+// `VirtualAccountDetailsWidget` (lib/features/checkout/widgets/virtual_account_details_widget.dart),
+// which is the exact approved "Your Virtual Account Details" card reused across
+// Checkout, Profile and Wallet. This file has zero call sites and is retained only
+// for the final dead-code cleanup pass (no-auto-delete policy).
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';

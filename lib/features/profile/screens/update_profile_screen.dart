@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:just_the_tooltip/just_the_tooltip.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
+import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
 import 'package:sixam_mart/common/widgets/custom_loader.dart';
+import 'package:sixam_mart/common/widgets/custom_popup_menu_button.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
@@ -11,8 +12,8 @@ import 'package:sixam_mart/features/language/controllers/language_controller.dar
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart/features/profile/domain/models/update_user_model.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
-import 'package:sixam_mart/features/profile/widgets/profile_bg_widget.dart';
 import 'package:sixam_mart/features/profile/widgets/profile_button_widget.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/custom_validator.dart';
@@ -114,161 +115,217 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           _emailController.text = profileController.userInfoModel?.email ?? '';
         }
 
-        return isLoggedIn ? profileController.userInfoModel != null ? ResponsiveHelper.isDesktop(context) ? webView(profileController, isLoggedIn) : ProfileBgWidget(
-          backButton: true,
-          circularImage: Center(child: Stack(children: [
-
-            ClipOval(child: profileController.pickedFile != null ? GetPlatform.isWeb ? Image.network(
-              profileController.pickedFile!.path, width: 100, height: 100, fit: BoxFit.cover) : Image.file(
-              File(profileController.pickedFile!.path), width: 100, height: 100, fit: BoxFit.cover) : FadeInImage.assetNetwork(
-                placeholder: Images.placeholder,
-                image: '${profileController.userInfoModel!.imageFullUrl}',
-                height: 100, width: 100, fit: BoxFit.cover,
-                imageErrorBuilder: (c, o, s) => Image.asset(Images.placeholder, height: 100, width: 100, fit: BoxFit.cover),
-            )),
-
-            Positioned(
-              bottom: 0, right: 0, top: 0, left: 0,
-              child: InkWell(
-                onTap: () => profileController.pickImage(),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.3), shape: BoxShape.circle,
-                    border: Border.all(width: 1, color: Theme.of(context).primaryColor),
-                  ),
-                  child: Container(
-                    margin: const EdgeInsets.all(25),
-                    decoration: BoxDecoration(
-                      border: Border.all(width: 2, color: Colors.white),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.camera_alt, color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-
-          ])),
-          mainWidget: Column(children: [
-
-            Expanded(child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-              child: Center(child: SizedBox(width: 1170, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                SizedBox(height: 20, width: context.width),
-
-                Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeDefault),
-                  // margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                    Text('basic_information'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                    const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                    CustomTextField(
-                      titleText: 'enter_name'.tr,
-                      controller: _nameController,
-                      capitalization: TextCapitalization.words,
-                      inputType: TextInputType.name,
-                      focusNode: _nameFocus,
-                      nextFocus: _emailFocus,
-                      prefixIcon: CupertinoIcons.person_alt_circle_fill,
-                      labelText: 'name'.tr,
-                      required: true,
-                      validator: (value) => ValidateCheck.validateEmptyText(value, "please_enter_first_name".tr),
-                    ),
-                    const SizedBox(height: Dimensions.paddingSizeExtraOverLarge),
-
-                    CustomTextField(
-                      titleText: 'enter_email'.tr,
-                      controller: _emailController,
-                      focusNode: _emailFocus,
-                      inputType: TextInputType.emailAddress,
-                      prefixIcon: CupertinoIcons.mail_solid,
-                      labelText: 'email'.tr,
-                      required: true,
-                      validator: (value) => ValidateCheck.validateEmail(value),
-                      suffixImage: profileController.userInfoModel!.isEmailVerified! && profileController.userInfoModel!.email == _emailController.text
-                          ? Images.verifiedIcon : Get.find<SplashController>().configModel!.centralizeLoginSetup!.emailVerificationStatus! ? Images.unverifiedIcon : null,
-                      suffixOnPressed: () async {
-                        if(!profileController.userInfoModel!.isEmailVerified! || profileController.userInfoModel!.email != _emailController.text) {
-                          Get.dialog(const CustomLoaderWidget());
-                          await _updateProfile(profileController: profileController, fromButton: false, fromPhone: false);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: Dimensions.paddingSizeExtraOverLarge),
-
-                    Stack(children: [
-
-                      CustomTextField(
-                        titleText: 'write_phone_number'.tr,
-                        controller: _phoneController,
-                        focusNode: _phoneFocus,
-                        inputType: TextInputType.phone,
-                        prefixIcon: CupertinoIcons.lock_fill,
-                        isEnabled: !profileController.userInfoModel!.isPhoneVerified! || profileController.userInfoModel!.phone == null,
-                        fromUpdateProfile: true,
-                        labelText: 'phone'.tr,
-                        required: true,
-                        isPhone: true,
-                        onCountryChanged: (CountryCode countryCode) => _countryDialCode = countryCode.dialCode,
-                        countryDialCode: _countryDialCode ?? Get.find<LocalizationController>().locale.countryCode,
-                        suffixImage: profileController.userInfoModel!.isPhoneVerified! ? Images.verifiedIcon : null,
-                      ),
-
-                      Positioned(
-                        right: 15, top: 15,
-                        child: !profileController.userInfoModel!.isPhoneVerified! && Get.find<SplashController>().configModel!.centralizeLoginSetup!.phoneVerificationStatus! ? InkWell(
-                          onTap: () async {
-                            if(!profileController.userInfoModel!.isPhoneVerified! && Get.find<SplashController>().configModel!.centralizeLoginSetup!.phoneVerificationStatus!) {
-                              Get.dialog(const CustomLoaderWidget());
-                              await _updateProfile(profileController: profileController, fromButton: false, fromPhone: true);
-                            }
-                          },
-                          child: Image.asset(Images.unverifiedIcon, height: 20, width: 20, fit: BoxFit.cover),
-                        ) : const SizedBox(),
-                      ),
-
-                    ]),
-
-                  ]),
-                ),
-
-                isLoggedIn && Get.find<SplashController>().configModel!.centralizeLoginSetup!.manualLoginStatus! ? Padding(
-                  padding: const EdgeInsets.only(top: Dimensions.paddingSizeLarge),
-                  child: ProfileButtonWidget(icon: Icons.lock, title: 'change_password'.tr, onTap: () {
-                    Get.toNamed(RouteHelper.getResetPasswordRoute(phone: '', email: '', token: '', page: 'password-change'));
-                  }),
-                ) : const SizedBox(),
-
-              ]))),
-            )),
-
-            SafeArea(
-              top: false,
-              child: CustomButton(
-                isLoading: profileController.isLoading,
-                onPressed: () => _updateProfile(profileController: profileController, fromButton: true, fromPhone: false),
-                margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                buttonText: 'update'.tr,
-              ),
-            ),
-
-          ]),
-        ) : const Center(child: CircularProgressIndicator()) : Center(
+        return isLoggedIn ? profileController.userInfoModel != null
+            ? ResponsiveHelper.isDesktop(context) ? webView(profileController, isLoggedIn) : _mobileView(context, profileController, isLoggedIn)
+            : const Center(child: CircularProgressIndicator()) : Center(
           child: NotLoggedInScreen(callBack: (value){
             _initCall();
             setState(() {});
           }),
         );
       }),
+    );
+  }
+
+  // ── Mobile (MoonJoin design language — reuses the frozen Profile header,
+  // shared CustomTextField / CustomButton, and the frozen ProfileButtonWidget) ──
+  Widget _mobileView(BuildContext context, ProfileController profileController, bool isLoggedIn) {
+    return Column(children: [
+
+      // The avatar is placed at the bottom-centre of a Stack whose height reserves
+      // room via bottom padding — so the avatar straddles the header/body boundary
+      // while staying INSIDE the Stack bounds (a Positioned overflow would make the
+      // camera badge un-tappable). `bottomExtra` keeps the title clear of the avatar.
+      Stack(alignment: Alignment.bottomCenter, children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 50),
+          child: ProfilePageHeader(
+            title: 'edit_profile'.tr,
+            showBack: true,
+            bottomExtra: Dimensions.paddingSizeExtraOverLarge + Dimensions.paddingSizeExtraLarge + Dimensions.paddingSizeSmall,
+            trailing: AuthHelper.isLoggedIn() ? _deleteMenu(context) : null,
+          ),
+        ),
+        _avatar(context, profileController),
+      ]),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
+
+      Expanded(child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+          _fieldsCard(context, profileController),
+
+          isLoggedIn && Get.find<SplashController>().configModel!.centralizeLoginSetup!.manualLoginStatus! ? Padding(
+            padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+            child: ProfileButtonWidget(
+              icon: Icons.lock, title: 'change_password'.tr,
+              onTap: () {
+                Get.toNamed(RouteHelper.getResetPasswordRoute(phone: '', email: '', token: '', page: 'password-change'));
+              },
+            ),
+          ) : const SizedBox(),
+
+          const SizedBox(height: Dimensions.paddingSizeDefault),
+        ]),
+      )),
+
+      SafeArea(
+        top: false,
+        child: CustomButton(
+          isLoading: profileController.isLoading,
+          onPressed: () => _updateProfile(profileController: profileController, fromButton: true, fromPhone: false),
+          margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+          buttonText: 'update'.tr,
+        ),
+      ),
+
+    ]);
+  }
+
+  // Delete-account overflow menu (reuses existing CustomPopupMenuButton +
+  // ConfirmationDialog + ProfileController.deleteUser — logic unchanged).
+  Widget _deleteMenu(BuildContext context) {
+    final List<MenuItem> items = [
+      MenuItem('delete_account'.tr, Icons.delete_forever_rounded, 1, Colors.red),
+    ];
+    return CustomPopupMenuButton(
+      items: items,
+      onSelected: (int value) {
+        if(value == 1) {
+          Get.dialog(ConfirmationDialog(icon: Images.support,
+            title: 'are_you_sure_to_delete_account'.tr,
+            description: 'it_will_remove_your_all_information'.tr, isLogOut: true,
+            onYesPressed: () => Get.find<ProfileController>().deleteUser(),
+          ), useSafeArea: false);
+        }
+      },
+      child: Icon(Icons.more_vert, color: Theme.of(context).cardColor),
+    );
+  }
+
+  // Premium MoonJoin avatar with camera badge (reuses the existing image picker).
+  Widget _avatar(BuildContext context, ProfileController profileController) {
+    return GestureDetector(
+      onTap: () => profileController.pickImage(),
+      child: Stack(clipBehavior: Clip.none, children: [
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10)],
+          ),
+          child: ClipOval(child: profileController.pickedFile != null
+              ? (GetPlatform.isWeb
+                  ? Image.network(profileController.pickedFile!.path, width: 100, height: 100, fit: BoxFit.cover)
+                  : Image.file(File(profileController.pickedFile!.path), width: 100, height: 100, fit: BoxFit.cover))
+              : FadeInImage.assetNetwork(
+                  placeholder: Images.placeholder,
+                  image: '${profileController.userInfoModel!.imageFullUrl}',
+                  height: 100, width: 100, fit: BoxFit.cover,
+                  imageErrorBuilder: (c, o, s) => Image.asset(Images.placeholder, height: 100, width: 100, fit: BoxFit.cover),
+                )),
+        ),
+        Positioned(
+          bottom: 2, right: 2,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: Theme.of(context).cardColor, width: 2),
+            ),
+            child: Icon(Icons.camera_alt, size: 13, color: Theme.of(context).cardColor),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  // MoonJoin card grouping the three shared CustomTextFields (verbatim configs).
+  Widget _fieldsCard(BuildContext context, ProfileController profileController) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeLarge),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+        Text('basic_information'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+        const SizedBox(height: Dimensions.paddingSizeLarge),
+
+        CustomTextField(
+          titleText: 'enter_name'.tr,
+          controller: _nameController,
+          capitalization: TextCapitalization.words,
+          inputType: TextInputType.name,
+          focusNode: _nameFocus,
+          nextFocus: _emailFocus,
+          prefixIcon: CupertinoIcons.person_alt_circle_fill,
+          labelText: 'name'.tr,
+          required: true,
+          validator: (value) => ValidateCheck.validateEmptyText(value, "please_enter_first_name".tr),
+        ),
+        const SizedBox(height: Dimensions.paddingSizeExtraOverLarge),
+
+        CustomTextField(
+          titleText: 'enter_email'.tr,
+          controller: _emailController,
+          focusNode: _emailFocus,
+          inputType: TextInputType.emailAddress,
+          prefixIcon: CupertinoIcons.mail_solid,
+          labelText: 'email'.tr,
+          required: true,
+          validator: (value) => ValidateCheck.validateEmail(value),
+          suffixImage: profileController.userInfoModel!.isEmailVerified! && profileController.userInfoModel!.email == _emailController.text
+              ? Images.verifiedIcon : Get.find<SplashController>().configModel!.centralizeLoginSetup!.emailVerificationStatus! ? Images.unverifiedIcon : null,
+          suffixOnPressed: () async {
+            if(!profileController.userInfoModel!.isEmailVerified! || profileController.userInfoModel!.email != _emailController.text) {
+              Get.dialog(const CustomLoaderWidget());
+              await _updateProfile(profileController: profileController, fromButton: false, fromPhone: false);
+            }
+          },
+        ),
+        const SizedBox(height: Dimensions.paddingSizeExtraOverLarge),
+
+        Stack(children: [
+
+          CustomTextField(
+            titleText: 'write_phone_number'.tr,
+            controller: _phoneController,
+            focusNode: _phoneFocus,
+            inputType: TextInputType.phone,
+            prefixIcon: CupertinoIcons.lock_fill,
+            isEnabled: !profileController.userInfoModel!.isPhoneVerified! || profileController.userInfoModel!.phone == null,
+            fromUpdateProfile: true,
+            labelText: 'phone'.tr,
+            required: true,
+            isPhone: true,
+            onCountryChanged: (CountryCode countryCode) => _countryDialCode = countryCode.dialCode,
+            countryDialCode: _countryDialCode ?? Get.find<LocalizationController>().locale.countryCode,
+            suffixImage: profileController.userInfoModel!.isPhoneVerified! ? Images.verifiedIcon : null,
+          ),
+
+          Positioned(
+            right: 15, top: 15,
+            child: !profileController.userInfoModel!.isPhoneVerified! && Get.find<SplashController>().configModel!.centralizeLoginSetup!.phoneVerificationStatus! ? InkWell(
+              onTap: () async {
+                if(!profileController.userInfoModel!.isPhoneVerified! && Get.find<SplashController>().configModel!.centralizeLoginSetup!.phoneVerificationStatus!) {
+                  Get.dialog(const CustomLoaderWidget());
+                  await _updateProfile(profileController: profileController, fromButton: false, fromPhone: true);
+                }
+              },
+              child: Image.asset(Images.unverifiedIcon, height: 20, width: 20, fit: BoxFit.cover),
+            ) : const SizedBox(),
+          ),
+
+        ]),
+
+      ]),
     );
   }
 
@@ -283,15 +340,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           Center(
             child: Container(
               height: 300, width: Dimensions.webMaxWidth,
-              decoration: BoxDecoration(
-               color: Theme.of(context).primaryColor,
-                image: const DecorationImage(image: AssetImage(Images.profileBg), fit: BoxFit.fill),
-              ),
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor),
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Padding(
                   padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
-                  child: Text('profile'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).cardColor)),
+                  child: Text('edit_profile'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).cardColor)),
                 ),
               ),
             ),
@@ -307,7 +361,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   height: 400, width: Dimensions.webMaxWidth,
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusExtraLarge), bottom: Radius.circular(Dimensions.radiusDefault)),
+                    borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
                     boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.1), spreadRadius: 1, blurRadius: 10, offset: const Offset(0, 1))],
                   ),
                 ),
@@ -316,36 +370,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   top: -50, left: 0, right: 0,
                   child: Align(
                     alignment: Alignment.topCenter,
-                    child: Stack(children: [
-
-                      ClipOval(child: profileController.pickedFile != null ? GetPlatform.isWeb ? Image.network(
-                          profileController.pickedFile!.path, width: 100, height: 100, fit: BoxFit.cover) : Image.file(
-                          File(profileController.pickedFile!.path), width: 100, height: 100, fit: BoxFit.cover) : CustomImage(
-                        image: '${profileController.userInfoModel!.imageFullUrl}',
-                        height: 100, width: 100, fit: BoxFit.cover,
-                      )),
-
-                      Positioned(
-                        bottom: 0, right: 0, top: 0, left: 0,
-                        child: InkWell(
-                          onTap: () => profileController.pickImage(),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.3), shape: BoxShape.circle,
-                            ),
-                            child: Container(
-                              margin: const EdgeInsets.all(25),
-                              decoration: BoxDecoration(
-                                border: Border.all(width: 2, color: Colors.white),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.camera_alt, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    ]),
+                    child: _avatar(context, profileController),
                   ),
                 ),
 

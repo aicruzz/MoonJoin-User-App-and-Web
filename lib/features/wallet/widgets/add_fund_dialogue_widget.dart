@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sixam_mart/features/checkout/widgets/virtual_account_details_widget.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/wallet/controllers/wallet_controller.dart';
@@ -8,8 +9,6 @@ import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
-import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
-import 'package:flutter/services.dart';
 
 class AddFundDialogueWidget extends StatefulWidget {
   final ScrollController cardScrollController;
@@ -183,43 +182,12 @@ class _AddFundDialogueWidgetState extends State<AddFundDialogueWidget> {
                               ),
                             ),
 
-                            // Show virtual account details inline when 9PSB is selected
+                            // Wallet "+" 9PSB → the SHARED Your Virtual Account
+                            // Details component (same as Profile & Checkout). One
+                            // widget, zero duplication.
                             if(is9PSB && isSelected) ...[
                               const SizedBox(height: Dimensions.paddingSizeSmall),
-                              GetBuilder<ProfileController>(builder: (profileController) {
-                                final data = profileController.virtualAccountData;
-                                if(data == null) return const SizedBox();
-
-                                return Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                                  margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
-                                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                                    border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
-                                  ),
-                                  child: Column(children: [
-                                    _virtualInfoRow(context, 'bank_name'.tr, data['bank_name']?.toString() ?? 'N/A'),
-                                    const Divider(height: 10),
-                                    _virtualInfoRow(context, 'account_name'.tr, data['account_name']?.toString() ?? 'N/A'),
-                                    const Divider(height: 10),
-                                    Row(children: [
-                                      Expanded(child: _virtualInfoRow(context, 'account_number'.tr, data['account_number']?.toString() ?? 'N/A')),
-                                      if(data['account_number'] != null) IconButton(
-                                        onPressed: () {
-                                          Clipboard.setData(ClipboardData(text: data['account_number'].toString()));
-                                          showCustomSnackBar('account_number_copied'.tr, isError: false);
-                                        },
-                                        icon: Icon(Icons.copy_rounded, size: 18, color: Theme.of(context).primaryColor),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                    ]),
-                                  ]),
-                                );
-                              }),
-                              const SizedBox(height: Dimensions.paddingSizeSmall),
+                              const VirtualAccountDetailsWidget(detailsOnly: true, margin: EdgeInsets.only(bottom: Dimensions.paddingSizeSmall)),
                             ],
 
                           ],
@@ -279,10 +247,4 @@ class _AddFundDialogueWidgetState extends State<AddFundDialogueWidget> {
     }
   }
 
-  Widget _virtualInfoRow(BuildContext context, String title, String value) {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(title, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
-      Text(value, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall)),
-    ]);
-  }
 }

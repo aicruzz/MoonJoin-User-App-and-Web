@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
 import 'package:sixam_mart/features/checkout/domain/models/payment_model.dart';
+import 'package:sixam_mart/features/checkout/widgets/virtual_account_details_widget.dart';
 import 'package:sixam_mart/features/order/controllers/order_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
@@ -532,200 +532,17 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
           const SizedBox(height: Dimensions.paddingSizeSmall),
         ]),
 
-      // ── Virtual Account details section (9PSB wallet funding) — separate premium card ──
+      // ── Virtual Account details section (9PSB wallet funding) ──
+      // Reuses the single master component (extracted from this card). detailsOnly
+      // preserves the approved null-state placeholder behavior on this surface.
       if(_is9PSBActive) ...[
         const SizedBox(height: Dimensions.paddingSizeDefault),
-        _virtualAccountFundSection(),
+        const VirtualAccountDetailsWidget(detailsOnly: true),
       ],
 
       const SizedBox(height: Dimensions.paddingSizeDefault),
 
     ]) : const SizedBox();
-  }
-
-  /// "Your Virtual Account Details" — reproduces the Figma Virtual Account Payment card
-  /// (permanent 9PSB wallet funding, so NO expiry/timer). Data/copy/logic unchanged.
-  Widget _virtualAccountFundSection() {
-    return GetBuilder<ProfileController>(builder: (profileController) {
-      final data = profileController.virtualAccountData;
-
-      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('your_virtual_account_details'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-        const SizedBox(height: Dimensions.paddingSizeDefault),
-
-        if(data != null) ...[
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-              border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
-              boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.05), blurRadius: 10)],
-            ),
-            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-              // Bank Name (with logo chip)  |  Account Number (with copy)
-              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                  Container(
-                    height: 46, width: 46, alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                    ),
-                    child: Icon(Icons.account_balance_rounded, size: 24, color: Theme.of(context).primaryColor),
-                  ),
-                  const SizedBox(width: Dimensions.paddingSizeSmall),
-                  Expanded(child: _virtualAccountInfoRow(label: 'bank_name'.tr, value: data['bank_name']?.toString() ?? 'N/A')),
-                ])),
-                const SizedBox(width: Dimensions.paddingSizeDefault),
-
-                Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Expanded(child: _virtualAccountInfoRow(
-                    label: 'account_number'.tr,
-                    value: data['account_number']?.toString() ?? 'N/A',
-                  )),
-                  if(data['account_number'] != null) ...[
-                    const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-                    _copyAccountNumberButton(data['account_number'].toString()),
-                  ],
-                ])),
-              ]),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault),
-                child: Divider(height: 1, color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
-              ),
-
-              _virtualAccountInfoRow(label: 'account_name'.tr, value: data['account_name']?.toString() ?? 'N/A'),
-            ]),
-          ),
-          const SizedBox(height: Dimensions.paddingSizeDefault),
-          _virtualAccountInstructions(),
-        ] else ...[
-          Text(
-            'transfer_to_virtual_account_to_top_up_wallet'.tr,
-            style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-          ),
-        ],
-      ]);
-    });
-  }
-
-  // Copy-account-number button — 44x44 tap target, soft-green MoonJoin treatment, ripple.
-  // Clipboard + snackbar behavior unchanged.
-  Widget _copyAccountNumberButton(String accountNumber) {
-    return Material(
-      color: Theme.of(context).primaryColor.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () async {
-          await Clipboard.setData(ClipboardData(text: accountNumber));
-          if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
-          Get.rawSnackbar(
-            message: 'account_number_copied'.tr,
-            duration: const Duration(seconds: 2),
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.black87,
-            messageText: Text(
-              'account_number_copied'.tr,
-              style: robotoMedium.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),
-            ),
-            borderRadius: Dimensions.radiusSmall.toDouble(),
-            margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-            isDismissible: true,
-          );
-        },
-        splashColor: Theme.of(context).primaryColor.withValues(alpha: 0.20),
-        highlightColor: Theme.of(context).primaryColor.withValues(alpha: 0.10),
-        child: SizedBox(
-          width: 44, height: 44,
-          child: Icon(Icons.copy_rounded, size: 20, color: Theme.of(context).primaryColor),
-        ),
-      ),
-    );
-  }
-
-  Widget _virtualAccountInfoRow({required String label, required String value}) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-          style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
-      const SizedBox(height: 6),
-      Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
-          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, letterSpacing: 0.3, color: Theme.of(context).textTheme.bodyLarge?.color)),
-    ]);
-  }
-
-  Widget _virtualAccountInstructions() {
-    final steps = [
-      'Copy the account number above.',
-      'Open your bank app or USSD and transfer any amount to the account.',
-      'Your wallet will be topped up automatically once the transfer is confirmed.',
-      'Return here and tap "Apply" to use your wallet balance at checkout.',
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-      decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.12)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Container(
-              height: 22, width: 22, alignment: Alignment.center,
-              decoration: BoxDecoration(color: Theme.of(context).primaryColor, shape: BoxShape.circle),
-              child: Icon(Icons.info_outline_rounded, size: 13, color: Theme.of(context).cardColor),
-            ),
-            const SizedBox(width: Dimensions.paddingSizeSmall),
-            Text(
-              'important_instructions'.tr,
-              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
-            ),
-          ]),
-          const SizedBox(height: Dimensions.paddingSizeSmall),
-          ...List.generate(steps.length, (i) => Column(children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 20, width: 20,
-                  margin: const EdgeInsets.only(top: 1, right: Dimensions.paddingSizeSmall),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '${i + 1}',
-                    style: robotoBold.copyWith(fontSize: 10, color: Theme.of(context).primaryColor),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 1),
-                    child: Text(
-                      steps[i],
-                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).textTheme.bodyMedium!.color),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if(i != steps.length - 1) Padding(
-              padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
-              child: Divider(height: 1, color: Theme.of(context).primaryColor.withValues(alpha: 0.10)),
-            ),
-          ])),
-        ],
-      ),
-    );
   }
 
 }
