@@ -1,12 +1,13 @@
 import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:sixam_mart/features/coupon/controllers/coupon_controller.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
+import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -50,11 +51,14 @@ class _CouponScreenState extends State<CouponScreen> {
   @override
   Widget build(BuildContext context) {
     bool isLoggedIn = AuthHelper.isLoggedIn();
+    final bool isDesktop = ResponsiveHelper.isDesktop(context);
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: CustomAppBar(title: 'coupon'.tr),
+      appBar: isDesktop ? const WebMenuBar() : null,
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
-      body: isLoggedIn ? GetBuilder<CouponController>(builder: (couponController) {
+      body: Column(children: [
+        if(!isDesktop) ProfilePageHeader(title: 'coupon'.tr, showBack: true),
+        Expanded(child: isLoggedIn ? GetBuilder<CouponController>(builder: (couponController) {
         return couponController.couponList != null && _availableToolTipControllerList != null ? couponController.couponList!.isNotEmpty && _availableToolTipControllerList!.isNotEmpty ? RefreshIndicator(
           onRefresh: () async {
             await couponController.getCouponList();
@@ -99,7 +103,7 @@ class _CouponScreenState extends State<CouponScreen> {
                             //   showCustomSnackBar('coupon_code_copied'.tr, isError: false);
                             // }
                           },
-                          child: CouponCardWidget(coupon: couponController.couponList![index], index: index, toolTipController: _availableToolTipControllerList),
+                          child: CouponCardWidget(coupon: couponController.couponList![index], index: index, toolTipController: _availableToolTipControllerList, fromCouponScreen: true),
                         ),
                       );
                     },
@@ -112,7 +116,8 @@ class _CouponScreenState extends State<CouponScreen> {
       }) :  NotLoggedInScreen(callBack: (bool value)  {
         initCall();
         setState(() {});
-      }),
+      })),
+      ]),
     );
   }
 }

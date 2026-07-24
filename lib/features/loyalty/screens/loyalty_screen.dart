@@ -7,15 +7,16 @@ import 'package:sixam_mart/features/loyalty/widgets/loyalty_bottom_sheet_widget.
 import 'package:sixam_mart/features/loyalty/widgets/loyalty_card_widget.dart';
 import 'package:sixam_mart/features/loyalty/widgets/loyalty_history_widget.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
+import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
+import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/common/widgets/web_page_title_widget.dart';
 
 class LoyaltyScreen extends StatefulWidget {
@@ -71,9 +72,29 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
     scrollController.dispose();
   }
 
+  void _handleBack() {
+    if(widget.fromNotification) {
+      Get.offAllNamed(RouteHelper.getInitialRoute());
+    } else {
+      Get.back();
+    }
+  }
+
+  void _showConvertDialog() {
+    Get.dialog(Dialog(backgroundColor: Colors.transparent, child: LoyaltyBottomSheetWidget(
+      amount: Get.find<ProfileController>().userInfoModel!.loyaltyPoint == null ? '0' : Get.find<ProfileController>().userInfoModel!.loyaltyPoint.toString(),
+    )));
+  }
+
+  Future<void> _refresh() async {
+    Get.find<LoyaltyController>().getLoyaltyTransactionList('1', true);
+    Get.find<ProfileController>().getUserInfo();
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isLoggedIn = AuthHelper.isLoggedIn();
+    final bool isDesktop = ResponsiveHelper.isDesktop(context);
 
     return PopScope(
       canPop:  Navigator.canPop(context),
@@ -85,102 +106,92 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
-        appBar: CustomAppBar(title: 'loyalty_points'.tr, backButton: true, onBackPressed: () {
-          if(widget.fromNotification) {
-            Get.offAllNamed(RouteHelper.getInitialRoute());
-          }else {
-            Get.back();
-          }
-        }),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton: isLoggedIn && !ResponsiveHelper.isDesktop(context) ? FloatingActionButton.extended(
-          backgroundColor: Theme.of(context).primaryColor,
-          label: Text( 'convert_to_wallet_money'.tr, style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeDefault)),
-          onPressed: (){
-            Get.dialog(
-              Dialog(backgroundColor: Colors.transparent, child: LoyaltyBottomSheetWidget(
-                  amount: Get.find<ProfileController>().userInfoModel!.loyaltyPoint == null ? '0' : Get.find<ProfileController>().userInfoModel!.loyaltyPoint.toString(),
-              )),
-            );
-          },
-        ) : null,
+        appBar: isDesktop ? const WebMenuBar() : null,
         body: GetBuilder<ProfileController>(
             builder: (profileController) {
-              return isLoggedIn ? profileController.userInfoModel != null ? SafeArea(
-                child: RefreshIndicator(
-                  onRefresh: () async{
-                    Get.find<LoyaltyController>().getLoyaltyTransactionList('1', true);
-                    Get.find<ProfileController>().getUserInfo();
-                  },
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    child: Column(
-                      children: [
-                        WebScreenTitleWidget(title: 'loyalty_points'.tr),
-                        FooterView(
-                          child: SizedBox(width: Dimensions.webMaxWidth,
-                            child: GetBuilder<LoyaltyController>(
-                                builder: (loyaltyController) {
-                                  return ResponsiveHelper.isDesktop(context) ? Padding(
-                                    padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
-                                      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                        Expanded (flex: 4 , child: Column(children: [
-                                            Container(
-                                              decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
-                                                color: Theme.of(context).cardColor,
-                                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-                                              ) : null,
-                                              padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
-                                              child: LoyaltyCardWidget(tooltipController: tooltipController),
-                                            ),
-                                          ],
-                                        )),
-                                        const SizedBox(width: Dimensions.paddingSizeDefault),
-
-                                        Expanded(flex: 6, child: Column(children: [
-                                          Container(
-                                            decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
-                                              color: Theme.of(context).cardColor,
-                                              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-                                            ) : null,
-                                            padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
-                                            child: const LoyaltyHistoryWidget(),
-                                          ),
-                                        ])),
-                                      ]),
-                                  )
-                               : Column(children: [
-
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault, left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault),
-                                    child: LoyaltyCardWidget(tooltipController: tooltipController),
-                                  ),
-
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
-                                    child: LoyaltyHistoryWidget(),
-                                  )
-
-                                ]);
-                              }
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ) : const Center(child: CircularProgressIndicator()) : NotLoggedInScreen(callBack: (value){
-                initCall();
-                setState(() {});
-              });
+              if(!isLoggedIn) {
+                return NotLoggedInScreen(callBack: (value){ initCall(); setState(() {}); });
+              }
+              if(profileController.userInfoModel == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return isDesktop ? _desktopBody(context) : _mobileBody(context, profileController);
             }
         ),
       ),
     );
+  }
+
+  // ── Mobile (MoonJoin) — ProfilePageHeader + points card + history + bottom
+  // convert button. Pagination/refresh/back behavior preserved. ──
+  Widget _mobileBody(BuildContext context, ProfileController profileController) {
+    return Column(children: [
+      ProfilePageHeader(title: 'loyalty_points'.tr, onBack: _handleBack),
+      Expanded(child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: SingleChildScrollView(
+          controller: scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+          child: Column(children: [
+            const SizedBox(height: Dimensions.paddingSizeDefault),
+            LoyaltyCardWidget(tooltipController: tooltipController),
+            const LoyaltyHistoryWidget(),
+          ]),
+        ),
+      )),
+      SafeArea(top: false, child: Padding(
+        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+        child: CustomButton(
+          buttonText: 'convert_to_wallet_money'.tr,
+          icon: Icons.account_balance_wallet_outlined,
+          onPressed: _showConvertDialog,
+        ),
+      )),
+    ]);
+  }
+
+  // ── Desktop — 2-column (card + stepper | history) preserved; cards aligned to
+  // MoonJoin radius. WebMenuBar app bar. ──
+  Widget _desktopBody(BuildContext context) {
+    return SafeArea(child: RefreshIndicator(
+      onRefresh: _refresh,
+      child: SingleChildScrollView(
+        controller: scrollController,
+        child: Column(children: [
+          WebScreenTitleWidget(title: 'loyalty_points'.tr),
+          FooterView(child: SizedBox(width: Dimensions.webMaxWidth,
+            child: GetBuilder<LoyaltyController>(builder: (loyaltyController) {
+              return Padding(
+                padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(flex: 4, child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    ),
+                    padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+                    child: LoyaltyCardWidget(tooltipController: tooltipController),
+                  )),
+                  const SizedBox(width: Dimensions.paddingSizeDefault),
+                  Expanded(flex: 6, child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                    ),
+                    padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+                    child: const LoyaltyHistoryWidget(),
+                  )),
+                ]),
+              );
+            }),
+          )),
+        ]),
+      ),
+    ));
   }
 }

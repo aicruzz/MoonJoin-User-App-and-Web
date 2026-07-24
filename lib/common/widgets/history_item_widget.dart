@@ -11,10 +11,17 @@ class HistoryItemWidget extends StatelessWidget {
   final int index;
   final bool fromWallet;
   final List<Transaction>? data;
-  const HistoryItemWidget({super.key, required this.index, required this.fromWallet, required this.data});
+  /// Presentation-only MoonJoin variant for the Loyalty history (Phase 5). When
+  /// true the row renders in the MoonJoin language. Default false keeps the
+  /// existing row used by Wallet history (`fromWallet:true`) — Wallet UNCHANGED.
+  final bool moonjoinLoyalty;
+  const HistoryItemWidget({super.key, required this.index, required this.fromWallet, required this.data, this.moonjoinLoyalty = false});
 
   @override
   Widget build(BuildContext context) {
+    if(moonjoinLoyalty) {
+      return _moonjoinLoyaltyRow(context);
+    }
     return Column(children: [
       Row(
         children: [
@@ -83,6 +90,68 @@ class HistoryItemWidget extends StatelessWidget {
         child: Divider(color: Theme.of(context).disabledColor),
       ),
 
+    ]);
+  }
+
+  // ── MoonJoin Loyalty history row (isolated variant) — same data/logic,
+  // green icon chip · points amount · description · date · credit/debit pill. ──
+  Widget _moonjoinLoyaltyRow(BuildContext context) {
+    final bool isDebit = data![index].transactionType == 'point_to_wallet';
+    final Color amountColor = isDebit ? Theme.of(context).colorScheme.error : Theme.of(context).primaryColor;
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+        child: Row(children: [
+
+          Container(
+            height: 42, width: 42, alignment: Alignment.center,
+            decoration: BoxDecoration(color: amountColor.withValues(alpha: 0.10), shape: BoxShape.circle),
+            child: Icon(isDebit ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, color: amountColor, size: 20),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeDefault),
+
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text(
+                isDebit ? '-${data![index].debit!.toStringAsFixed(0)}' : '+${data![index].credit!.toStringAsFixed(0)}',
+                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: amountColor),
+              ),
+              const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+              Text('points'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor)),
+            ]),
+            const SizedBox(height: 2),
+            Text(
+              data![index].transactionType == 'loyalty_point' ? 'converted_from_loyalty_point'.tr
+                  : data![index].transactionType == 'referrer' ? 'earned_by_referral'.tr
+                  : data![index].transactionType == 'order_place' ? '${'order_place'.tr} # ${data![index].reference}'
+                  : data![index].transactionType!.tr,
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor),
+              maxLines: 2, overflow: TextOverflow.ellipsis,
+            ),
+          ])),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text(
+              DateConverter.dateToDateAndTimeAm(data![index].createdAt!),
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor),
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 2),
+              decoration: BoxDecoration(color: amountColor.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+              child: Text(
+                isDebit ? 'debit'.tr : 'credit'.tr,
+                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: amountColor),
+              ),
+            ),
+          ]),
+
+        ]),
+      ),
+
+      index == data!.length-1 ? const SizedBox() : Divider(height: 1, color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
     ]);
   }
 }

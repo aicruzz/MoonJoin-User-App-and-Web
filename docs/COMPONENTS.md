@@ -612,3 +612,48 @@ Presentation-only redesign to the MoonJoin language. Mobile `_mobileView` + desk
 service / API `/customer/update-profile` / validation / image-upload / verification flows / navigation all
 preserved. QA fixes: title-behind-avatar (header height), un-tappable camera badge (avatar moved inside Stack
 bounds). Web desktop verification pending (non-blocking). Obsolete `ProfileBgWidget` retained for cleanup.
+
+### 🧊 My Address (list) — `address_screen.dart` (FROZEN 2026-07-24, Phase 3)
+Presentation-only redesign of the My Address **list screen** to the MoonJoin language. Mobile: green
+`ProfilePageHeader` + `RefreshIndicator` list of `AddressWidget` cards + bottom `CustomButton` "Add New
+Address". Desktop: grid preserved (city bg removed; `WebMenuBar`). Reuses `ProfilePageHeader`, shared
+`AddressWidget`, `CustomButton`, `AddressConfirmDialogue`, `NoDataScreen`, `AddressController`. All business
+logic (controller/repo/service/APIs/models/validation/Google Maps/geocoding/zone) preserved. Add/Edit/Map =
+separate future phase, untouched.
+
+### `AddressWidget` — the single shared Address card (list variant modernized, FROZEN 2026-07-24)
+`lib/common/widgets/address_widget.dart` — ONE shared address card with three context branches:
+`fromAddress` (My Address list — **modernized to MoonJoin, frozen**), `fromCheckout` (Checkout, MoonJoin,
+unchanged), `fromDashBoard` (Dashboard selection, unchanged). No duplicate address card exists. Only the
+`fromAddress` branch was touched this phase; Checkout/Dashboard render identically. Reused by Address list,
+Checkout, Dashboard, Home, Parcel, Location screens (all `fromAddress:false` except the list).
+
+### 🧊 Coupon (list) — `coupon_screen.dart` (FROZEN 2026-07-24, Phase 4)
+Presentation-only redesign of the Coupon **list** to MoonJoin. Mobile: green `ProfilePageHeader` +
+`RefreshIndicator` grid of MoonJoin coupon cards. Desktop: grid kept, `WebMenuBar`. Reuses `ProfilePageHeader`,
+shared `CouponCardWidget` (list variant), `NoDataScreen`, existing copy/tooltip. All logic
+(controller/repo/service/API `/coupon/list`/model/clipboard/tooltip/refresh) preserved.
+
+### `CouponCardWidget` — single shared coupon card (list variant modernized, FROZEN 2026-07-24)
+`lib/features/coupon/widgets/coupon_card_widget.dart` — ONE shared coupon card with a presentation-only
+`fromCouponScreen` flag. `true` = MoonJoin `_moonjoinCard` (My Coupons list, frozen); `false` (default) =
+legacy card used by the **Checkout coupon bottom sheet** (unchanged). No duplicate/fork. Only the list variant
+was touched this phase; Checkout renders identically (owner-verified).
+
+### 🧊 Loyalty Points — `loyalty_screen.dart` (FROZEN 2026-07-25, Phase 5)
+Presentation-only redesign to MoonJoin. Mobile: `ProfilePageHeader` (onBack keeps fromNotification) + green
+points card + MoonJoin history + bottom `CustomButton` convert. Desktop: 2-column + `WebMenuBar`. Reuses
+`ProfilePageHeader`, `CustomButton`, `CustomTextField`, `NoDataScreen`, `WalletShimmer`, shared
+`HistoryItemWidget` (loyalty variant). `LoyaltyCardWidget`/`LoyaltyStepper`/`LoyaltyBottomSheetWidget`
+redesigned (loyalty-only). All logic (controller pagination + pointToWallet / repo / service / APIs / model /
+validation / exchange / refresh / navigation) preserved.
+
+### `HistoryItemWidget` — single shared transaction row (loyalty variant modernized, FROZEN 2026-07-25)
+`lib/common/widgets/history_item_widget.dart` — ONE shared row with a presentation-only `moonjoinLoyalty`
+flag. `true` = MoonJoin loyalty row (Loyalty history, frozen); `false` (default) = legacy row used by **Wallet
+history** (`fromWallet:true`, unchanged). No duplicate/fork. Only the loyalty variant touched this phase;
+Wallet renders identically (owner-verified).
+
+### `ProfilePageHeader` — additive `onBack` (Phase 5)
+Added optional `onBack` (defaults to `Get.back()`); enables pages with custom back logic (e.g. notification
+deep-links) to reuse the shared header without forking. All prior callers unchanged.

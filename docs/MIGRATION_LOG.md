@@ -2493,3 +2493,87 @@ future tweaks are refinements, not a reopen).
 
 **Obsolete (retained, DO NOT delete — final cleanup only):** `profile_bg_widget.dart` (→ ProfilePageHeader),
 plus previously logged `virtual_account_card_widget.dart`, `menu_button_widget.dart`.
+
+---
+
+## Phase 3 — My Address (list) — FROZEN (2026-07-24)
+**Scope:** My Address LIST screen only. Add/Edit/Map (GoogleMap + LocationController) = separate future phase, untouched.
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `address_screen.dart` rebuilt — mobile `_mobileBody` (green `ProfilePageHeader`,
+`RefreshIndicator` list of shared `AddressWidget` cards, bottom `CustomButton` "Add New Address", MoonJoin
+empty state via `NoDataScreen`) + desktop `_desktopBody` (existing grid preserved; city background removed;
+`CustomAppBar` → `WebMenuBar`). Shared `AddressWidget` `fromAddress` branch modernized to a MoonJoin card
+(soft-green type chip + type label + address + soft-tinted edit/delete). `fromCheckout` and `fromDashBoard`
+branches untouched.
+
+**Architecture preserved:** AddressController · AddressRepository · AddressService · APIs
+(`/customer/address/list|add|update/{id}|delete`) · `AddressModel` · validation · Google Maps · geocoding /
+reverse-geocoding / forward search · zone + delivery validation · navigation (getAddressRoute, add/edit/map)
+· active-address logic. **No business logic changes.** No leakage into Add/Edit/Map.
+
+**Shared component reuse:** ProfilePageHeader (frozen), AddressWidget (the one shared card), CustomButton,
+AddressConfirmDialogue, NoDataScreen, AddressController — nothing recreated. No duplicate address card.
+
+**Runtime verification:** `flutter analyze` 0 issues; on-device the list rendered with real data, 0
+address-parse errors, 0 RenderFlex/overflow/subtype/null-check from the screen. (Startup config-HTML failures
+were a backend **Imunify360 bot-protection** block — see below — resolved via VPN; `apns-token-not-set` is
+benign iOS-simulator push noise.) Owner manually verified the UI + approved.
+
+**Future backend capabilities (noted only — NOT implemented):** server-side **Default / Favorite Address**
+(no `is_default` field/API today), **Address history**, **Smart/AI suggestions**. Documented in
+BACKEND_INTEGRATION_QUEUE.md as future enhancements.
+
+**Legacy / obsolete:** none newly obsolete this phase (redesign was inline). No deletions.
+
+---
+
+## Phase 4 — Coupon (list) — FROZEN (2026-07-24)
+**Scope:** Coupon LIST screen only. Checkout coupon bottom sheet NOT touched.
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `coupon_screen.dart` — `CustomAppBar` → `ProfilePageHeader` (mobile) / `WebMenuBar`
+(desktop); grid/refresh/tooltip/clipboard logic unchanged; passes `fromCouponScreen: true`.
+`coupon_card_widget.dart` — added presentation-only `fromCouponScreen` flag + `_moonjoinCard` variant (green
+ticket: discount stub · perforation · dashed green code chip + copy · validity · min purchase). Default flag =
+legacy card → Checkout coupon bottom sheet UNCHANGED.
+
+**Architecture preserved:** CouponController · CouponRepository · CouponService · API `/coupon/list` ·
+`CouponModel` · copy-to-clipboard · tooltip · refresh · loading · empty state · navigation. No logic changes.
+No duplicate/forked widget — single shared `CouponCardWidget`.
+
+**Runtime verification:** flutter analyze 0 issues; card rendered with real data, 0
+RenderFlex/overflow/subtype/null-check. Owner verified copy + "code copied" tooltip, pull-to-refresh, back
+nav, and the **Checkout coupon selector unchanged (regression pass)**. Approved.
+
+**Future coupon capabilities (noted only — NOT implemented):** category / product / referral / loyalty /
+wallet-funded / automatic (auto-apply) / scheduled coupons → future backend (new couponType values / endpoints).
+See BACKEND_INTEGRATION_QUEUE.md.
+
+**Legacy / obsolete:** none newly obsolete (redesign was an isolated variant). No deletions.
+
+---
+
+## Phase 5 — Loyalty Points — FROZEN (2026-07-25)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `loyalty_screen.dart` — `CustomAppBar` → `ProfilePageHeader` (mobile, `onBack` preserves
+`fromNotification`) / `WebMenuBar` (desktop); FAB → bottom `CustomButton` "Convert to Wallet Money"; desktop
+2-column kept; pagination scroll-controller + `RefreshIndicator` + `PopScope` preserved. `loyalty_card_widget.dart`
+→ MoonJoin green points card (stepper/dialog trigger kept). `loyalty_bottom_sheet_widget.dart` → reuses
+CustomTextField/CustomButton; validation + exchange + `pointToWallet` untouched. `history_item_widget.dart` →
+added isolated `moonjoinLoyalty` variant (Wallet `fromWallet:true` UNCHANGED). `profile_page_header.dart` →
+additive optional `onBack` (defaults to Get.back()).
+
+**Architecture preserved:** LoyaltyController (pagination + pointToWallet) · ProfileController · SplashController
+· LoyaltyRepository · LoyaltyService · APIs (`/loyalty-point/transactions`, `/point-transfer`) · TransactionModel
+· convert validation + exchange rate · pagination · refresh · navigation (+ fromNotification). No logic changes.
+
+**Runtime verification:** flutter analyze 0 issues; card + rows rendered with real data, 0
+RenderFlex/overflow/subtype/null-check. Owner verified: convert flow + validation, pagination, pull-to-refresh,
+back + fromNotification, and **Wallet history unchanged (regression pass)**. Approved.
+
+**Future (noted only — NOT implemented):** loyalty tiers/levels, earn-rate breakdown, loyalty-funded coupons,
+redemption options beyond wallet, points expiry, advanced history filters. See BACKEND_INTEGRATION_QUEUE.md.
+
+**Legacy / obsolete:** none newly obsolete (redesign in place / isolated variant). No deletions.

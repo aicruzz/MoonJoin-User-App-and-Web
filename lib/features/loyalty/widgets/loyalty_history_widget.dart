@@ -23,7 +23,7 @@ class LoyaltyHistoryWidget extends StatelessWidget {
 
               Text(
                 'point_history'.tr,
-                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
+                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge),
               ),
 
               const SizedBox(),
@@ -43,7 +43,7 @@ class LoyaltyHistoryWidget extends StatelessWidget {
             itemCount: loyaltyController.transactionList!.length ,
             padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 25),
             itemBuilder: (context, index) {
-              return HistoryItemWidget(index: index, fromWallet: false, data: loyaltyController.transactionList);
+              return HistoryItemWidget(index: index, fromWallet: false, data: loyaltyController.transactionList, moonjoinLoyalty: true);
             },
           ) : NoDataScreen(text: 'no_data_found'.tr) : WalletShimmer(loyaltyController: loyaltyController),
 

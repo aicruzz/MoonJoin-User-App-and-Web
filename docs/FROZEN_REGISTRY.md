@@ -9,6 +9,52 @@ redesign request.
 
 ## FROZEN SCREENS / SHELLS
 
+### 🧊 Loyalty Points — `loyalty_screen.dart`
+- **File:** `lib/features/loyalty/screens/loyalty_screen.dart` (+ `loyalty_card_widget.dart`, `loyalty_history_widget.dart`, `loyalty_bottom_sheet_widget.dart`)
+- **Status:** FROZEN — Phase 5 (Profile Modernization) · **Frozen on:** 2026-07-25
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **What it is:** Mobile — `ProfilePageHeader` (`onBack` preserves `fromNotification`) + MoonJoin green points card + MoonJoin history + bottom `CustomButton` "Convert to Wallet Money". Desktop — 2-column (card+stepper | history) + `WebMenuBar`. Convert dialog = `LoyaltyBottomSheetWidget` (redesigned; validation/exchange/API preserved).
+- **Reuses:** `ProfilePageHeader`, `CustomButton`, `CustomTextField`, `NoDataScreen`, `WalletShimmer`, shared `HistoryItemWidget` (loyalty variant).
+- **Preserved:** LoyaltyController (pagination + `pointToWallet`) · ProfileController · SplashController · LoyaltyRepository · LoyaltyService · APIs (`/loyalty-point/transactions`, `/point-transfer`) · `TransactionModel` · validation + exchange rate · pagination · refresh · navigation (`getLoyaltyRoute`, `fromNotification`). No business logic changes.
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
+### 🧊 Transaction row — `HistoryItemWidget` (loyalty variant modernized)
+- **File:** `lib/common/widgets/history_item_widget.dart`
+- **Status:** FROZEN (loyalty variant) — Phase 5 · **Frozen on:** 2026-07-25
+- **What is frozen:** the **`moonjoinLoyalty: true`** MoonJoin row (green icon chip · points · description · date · credit/debit pill), used by Loyalty history.
+- **Untouched:** default (`moonjoinLoyalty:false`) row used by **Wallet history** (`fromWallet:true`) renders exactly as before — Wallet is a separate future phase. Do not modify without its own approval.
+
+### 🧊 Coupon (list) — `coupon_screen.dart`
+- **File:** `lib/features/coupon/screens/coupon_screen.dart`
+- **Status:** FROZEN — Phase 4 (Profile Modernization) · **Frozen on:** 2026-07-24
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **What it is:** Mobile — green `ProfilePageHeader` + `RefreshIndicator` grid of MoonJoin coupon cards; desktop — grid kept, `WebMenuBar` app bar. Tap = copy code + "code copied" tooltip (unchanged).
+- **Reuses:** `ProfilePageHeader`, shared `CouponCardWidget` (list variant), `NoDataScreen`, existing tooltip/clipboard interaction.
+- **Preserved:** CouponController · CouponRepository · CouponService · API `/coupon/list` · `CouponModel` · copy-to-clipboard · tooltip · refresh · loading · empty state · navigation (`getCouponRoute`). No business logic changes.
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
+### 🧊 Coupon card — `CouponCardWidget` (list variant modernized)
+- **File:** `lib/features/coupon/widgets/coupon_card_widget.dart`
+- **Status:** FROZEN (list variant) — Phase 4 · **Frozen on:** 2026-07-24
+- **What is frozen:** the **`fromCouponScreen: true`** MoonJoin variant (`_moonjoinCard`) — green ticket card (discount stub + perforation + dashed green code chip + copy + validity + min purchase). This is the ONE shared coupon card — no duplicate/fork.
+- **Untouched:** the default (`fromCouponScreen: false`) legacy card used by the **Checkout coupon bottom sheet** (`checkout/widgets/coupon_bottom_sheet.dart`) renders exactly as before. Do not modify without its own approval.
+
+### 🧊 My Address (list) — `address_screen.dart`
+- **File:** `lib/features/address/screens/address_screen.dart`
+- **Status:** FROZEN — Phase 3 (Profile Modernization) · **Frozen on:** 2026-07-24
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **Scope:** the **My Address LIST screen only**. Add / Edit / Map (GoogleMap + `LocationController`) are a SEPARATE future phase — untouched here.
+- **What it is:** Mobile `_mobileBody` (green `ProfilePageHeader` + `RefreshIndicator` list of `AddressWidget` cards + bottom `CustomButton` "Add New Address") and desktop `_desktopBody` (grid preserved; city background removed; `WebMenuBar` app bar).
+- **Reuses:** `ProfilePageHeader`, shared `AddressWidget` (list variant), `CustomButton`, `AddressConfirmDialogue`, `NoDataScreen`, `AddressController`.
+- **Preserved:** AddressController · AddressRepository · AddressService · APIs (`address/list|add|update|delete`) · `AddressModel` · validation · Google Maps · geocoding/reverse-geocoding · zone/delivery validation · navigation (`getAddressRoute`, add/edit/map routes) · active-address logic. Presentation only.
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
+### 🧊 Address card — `AddressWidget` (list variant modernized)
+- **File:** `lib/common/widgets/address_widget.dart`
+- **Status:** FROZEN (list variant) — Phase 3 · **Frozen on:** 2026-07-24
+- **What is frozen:** the **`fromAddress` (My Address list)** branch — MoonJoin card: soft-green type icon chip (home/office/other) + bold type label + address subtitle + soft-tinted edit/delete circular buttons. This is the ONE shared address card — no duplicate card widget exists.
+- **Untouched (still owned by their own contexts):** `fromCheckout` branch (Checkout, already MoonJoin) and `fromDashBoard` branch (Dashboard address selection). Do not modify those without their own approval.
+
 ### 🧊 Personal Information (Edit Profile) — `update_profile_screen.dart`
 - **File:** `lib/features/profile/screens/update_profile_screen.dart`
 - **Status:** FROZEN — Phase 2 (Profile Modernization) · **Frozen on:** 2026-07-24
@@ -47,7 +93,7 @@ version may be created without explicit architectural approval.
 - **File:** `lib/features/profile/widgets/profile_page_header.dart`
 - **Status:** FROZEN — FOUNDATION COMPONENT · **Frozen on:** 2026-07-24
 - **What it is:** THE official shared MoonJoin green waved header for ALL Profile child pages: primary-green fill, concave wave bottom (mirrors the Stage-1 Account header), status-bar-aware top spacing (`MediaQuery.padding.top`), centred white title, optional back button, optional trailing action, `bottomExtra` for avatar overlap.
-- **API:** `title` (required) + `showBack, trailing?, bottomExtra`.
+- **API:** `title` (required) + `showBack, trailing?, bottomExtra, onBack?`. (`onBack` added Phase 5 — additive optional; defaults to `Get.back()`, so all prior callers are unchanged; lets pages with special back logic, e.g. notification deep-links, override it.)
 - **MANDATE:** every remaining Profile screen (My Address, Wallet, Notifications, Coupons, Loyalty, Refer & Earn, Language, Settings, Help, Live Chat, HTML, Delete/Logout) MUST reuse this header. No duplicate header implementations allowed.
 - **Note:** wave geometry currently duplicates the frozen `_HeaderWaveClipper` in `menu_screen.dart` (not imported, to avoid touching the frozen Account shell) — unify into one clipper when Stage 1 is next intentionally reopened.
 

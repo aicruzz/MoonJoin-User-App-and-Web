@@ -19,12 +19,17 @@ class ProfilePageHeader extends StatelessWidget {
   /// Extra green space below the title row — room for an avatar that overlaps the
   /// header/body boundary via a parent Stack.
   final double bottomExtra;
+  /// Optional custom back handler (additive). Defaults to `Get.back()` so every
+  /// existing caller is unchanged; pages with special back logic (e.g. a
+  /// notification deep-link) can override it.
+  final VoidCallback? onBack;
   const ProfilePageHeader({
     super.key,
     required this.title,
     this.showBack = true,
     this.trailing,
     this.bottomExtra = Dimensions.paddingSizeLarge,
+    this.onBack,
   });
 
   static const double _slot = 40;
@@ -48,7 +53,7 @@ class ProfilePageHeader extends StatelessWidget {
             width: _slot,
             child: showBack
                 ? InkWell(
-                    onTap: () => Get.back(),
+                    onTap: onBack ?? () => Get.back(),
                     borderRadius: BorderRadius.circular(30),
                     child: Icon(Icons.arrow_back_ios_new, size: 20, color: onGreen),
                   )

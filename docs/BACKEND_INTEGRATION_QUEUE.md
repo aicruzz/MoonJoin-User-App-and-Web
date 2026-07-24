@@ -767,3 +767,44 @@ Action: replace ar/bn/es placeholder values with real translations (loc team). D
 ## UI asset gap — Account icons
 - `My Address` menu row wants a pin-style outline icon to match `profile.png`; only `address_icon.png`
   (folded map) exists in the menu-icon set. Add a pin-style menu icon asset in a future pass.
+
+---
+
+## Address system — future backend gaps (Phase 3 audit; documentation only, DO NOT implement)
+Discovered during the My Address audit. `AddressModel` today has no default/favorite concept; the "active"
+address is only whatever is stored in shared-prefs (set at map/checkout). Future enhancements needing backend:
+1. **Default / Favorite Address** — a server-side `is_default` (or favorite) flag on the address + a
+   set-default endpoint. Enables a real default across devices.
+2. **Address history** — recently used / frequent delivery addresses.
+3. **Smart / AI address suggestions** — location recommendations.
+These are future enhancements; the current architecture (`zoneId`/`zoneIds`/`areaIds`, `addressType`
+home/office/other, house/floor/street) already supports multiple saved addresses, labels, and all modules
+(Food/Grocery/Pharmacy/Fashion/Parcel/Car Rental/Short Apt/Fuel) without redesign.
+
+## Environment note — backend bot-protection (Imunify360)
+`admin.moonjoin.com/api/v1/*` intermittently returns an **Imunify360 bot-protection** denial (HTML challenge
+/ `"Access denied by Imunify360 bot-protection"` JSON) instead of API JSON, which freezes the apps on splash
+("Config response was not valid JSON … retrying"). Affects the production app too (not this redesign).
+Backend/hosting action: whitelist the mobile API paths/IPs or exclude `/api/*` from the WAF JS-challenge.
+Workaround observed: a different network / VPN (unflagged IP) loads normally.
+
+---
+
+## Coupon system — future capabilities (Phase 4 audit; documentation only, DO NOT implement)
+Current model supports: couponType (default / store_wise / free_delivery / first_order), discountType
+(percent/amount), min/max, limit, dates, storeId/store. Future enhancements needing backend (new couponType
+values / eligibility logic / endpoints):
+1. **Category coupons** and **Product coupons** (need new couponType + `data` mapping).
+2. **Referral / Loyalty / Wallet-funded coupons** (tie coupons to those subsystems).
+3. **Automatic (auto-apply)** and **Scheduled** coupons (server-side eligibility + scheduling).
+The frontend list/card can render new types once the model/API expose them.
+
+---
+
+## Loyalty system — future capabilities (Phase 5 audit; documentation only, DO NOT implement)
+Current: point balance, paginated history, convert-to-wallet at config exchange rate. Future enhancements
+needing backend (new fields/endpoints/eligibility):
+1. **Loyalty tiers / levels** and **earn-rate breakdown** per order.
+2. **Loyalty-funded coupons** (ties to the Coupon future-capabilities item).
+3. **Redemption options beyond wallet** (discounts / gifts).
+4. **Points expiry rules** and **advanced history filters** (by type/date).
