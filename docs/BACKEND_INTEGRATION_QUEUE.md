@@ -23,7 +23,9 @@ frontend when backend starts.**
     ✅ **Screen 3 Provider List (ABSORBED INTO SCREEN 2, FROZEN)** ✅ **Screen 4 Provider Details (FROZEN)** ✅ **Vehicle Details (FROZEN)** ✅ **Checkout (FROZEN, MASTER payment implementation)** ✅ **Booking Success (FROZEN)** — **CAR RENTAL FLOW COMPLETE**;
     next → **Short Apartment Rental flow**: ✅ **Apt Screen 1 listing FROZEN** ✅ **Apt Screen 2 Provider
     Details FROZEN (auto-activating)** ✅ **Section scoping FROZEN (item 18)** ✅ **Popular sections FROZEN** ✅ **Apt Details FROZEN** ✅ **Apt Checkout FROZEN (master reuse)** ✅ **Apt Booking Success FROZEN (shared sheet)**;
-    next → Apartment Details, then Booking History for both flows.
+    next → (Rental flow complete through Booking History). ✅ **Apt Details/Checkout/Booking Success FROZEN**
+    ✅ **Trip Details FROZEN** ✅ **Trip card FROZEN** ✅ **Shared Orders/Trips/Stay wrapper FROZEN** (premium
+    Orders card + module-aware Orders/Trips/Stay; Reviews.fromJson int-as-string bug fixed).
 
 ---
 
@@ -624,6 +626,34 @@ shows Car content only; the Short Apartment listing shows Short Apt content only
 (consolidates items 7/13). **Required ADMIN work** — section selector when creating rental banners/categories.
 **Frontend Integration Point** — ONLY `RentalApartmentAdapter.filterBanners` / `sectionCategories` change;
 no UI/widget/architecture change.
+
+---
+
+### 19. Scheduled Module Availability (Glovo-style fade + disable)
+
+- **Module:** All · **App:** User App + **Admin** · **Status:** **Frontend Complete — Waiting for Backend/Admin**
+
+**Frontend ready (adapter only):** `ModuleModel` parses nullable `open_time`, `close_time`, `timezone`,
+`temporary_close`, `holiday_today`; `resolveModuleAvailability` fades + disables a module outside its window
+(the frozen `CategoryTile`/`ModuleAvailability` render it — visible, faded, non-tappable, no popup). All null
+today ⇒ every module stays available. Never hardcoded, never faked.
+
+**Required BACKEND work** — add to each module in the module-list payload:
+`open_time` ('HH:mm'), `close_time` ('HH:mm'), `timezone` (IANA, e.g. 'Africa/Lagos'),
+`temporary_close` (bool), `holiday_today` (bool). Overnight windows (open > close) supported.
+**Required ADMIN work** — Module Setup → Schedule: set open/close/timezone, a temporary-closure toggle, and a
+holiday override.
+**Frontend Integration Point** — ONLY `resolveModuleAvailability` consumes them; no UI/architecture change.
+
+---
+
+### 20. Search item results — owning store/restaurant name
+
+- **Module:** Food/Grocery/Pharmacy/Ecommerce · **App:** User App · **Status:** **Frontend Complete — depends on search payload**
+
+Search item cards now display `item.store_name` (frozen `item_widget`, real field). If
+`GET /api/v1/items/search` does not already include `store_name` (and `store_id`) per item, add them so the
+owner shows without extra calls. The frontend hides the line gracefully when absent — never fabricated.
 
 ---
 

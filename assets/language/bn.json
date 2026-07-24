@@ -1861,5 +1861,7 @@
   "all_trips_insured": "আপনার নিরাপত্তার জন্য সব ট্রিপ বীমাকৃত ও সুরক্ষিত।",
   "all_bookings_secured": "সব বুকিং সুরক্ষিত ও নিরাপদ।",
   "stayed_on": "থেকেছেন",
-  "cancelled": "বাতিল"
+  "cancelled": "বাতিল",
+  "stay": "থাকা",
+  "view_and_manage_your_orders": "আপনার অর্ডার দেখুন ও পরিচালনা করুন"
 }

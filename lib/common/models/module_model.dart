@@ -12,6 +12,18 @@ class ModuleModel {
   String? updatedAt;
   List<ModuleZoneData>? zones;
 
+  /// Scheduled availability (Glovo-style). These are **adapter fields** for the
+  /// future Admin → Module Schedule backend — all NULL today, so every module
+  /// stays [ModuleAvailability.enabled]. When the backend sends them,
+  /// `resolveModuleAvailability` fades + disables a module outside its window
+  /// with NO frontend architecture change. Never hardcoded, never invented.
+  /// See docs/BACKEND_INTEGRATION_QUEUE.md item 19.
+  String? openTime;      // 'HH:mm' or 'HH:mm:ss'
+  String? closeTime;     // 'HH:mm' or 'HH:mm:ss'
+  String? timezone;      // IANA name, e.g. 'Africa/Lagos' (display/contract only)
+  bool? temporaryClose;  // manual "closed now" override
+  bool? holidayToday;    // holiday-override flag for today
+
   ModuleModel({
     this.id,
     this.moduleName,
@@ -24,6 +36,11 @@ class ModuleModel {
     this.createdAt,
     this.updatedAt,
     this.zones,
+    this.openTime,
+    this.closeTime,
+    this.timezone,
+    this.temporaryClose,
+    this.holidayToday,
   });
 
   ModuleModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +58,16 @@ class ModuleModel {
       zones = <ModuleZoneData>[];
       json['zones'].forEach((v) => zones!.add(ModuleZoneData.fromJson(v)));
     }
+    // Adapter fields — absent today (null), populated when the backend ships them.
+    openTime = json['open_time'];
+    closeTime = json['close_time'];
+    timezone = json['timezone'];
+    temporaryClose = json['temporary_close'] is bool
+        ? json['temporary_close']
+        : (json['temporary_close'] == 1 || json['temporary_close'] == '1');
+    holidayToday = json['holiday_today'] is bool
+        ? json['holiday_today']
+        : (json['holiday_today'] == 1 || json['holiday_today'] == '1');
   }
 
   Map<String, dynamic> toJson() {

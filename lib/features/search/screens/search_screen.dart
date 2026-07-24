@@ -443,7 +443,7 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
     final String query = (searchController.searchText?.isNotEmpty ?? false)
         ? searchController.searchText! : (widget.queryText ?? '');
     final String address = AddressHelper.getUserAddressFromSharedPref()?.address ?? '';
-    final int storeCount = searchController.searchStoreList?.length ?? 0;
+    final int storeCount = searchController.resultStoreCount;
     final String? heroImage = (searchController.searchItemList != null && searchController.searchItemList!.isNotEmpty)
         ? searchController.searchItemList!.first.imageFullUrl : null;
 

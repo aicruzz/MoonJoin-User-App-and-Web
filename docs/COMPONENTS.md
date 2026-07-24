@@ -553,3 +553,18 @@ mode additive/auto-activating (Booking ID/Date, Check-in/out/Nights, Total Paid,
 **Rental Trip Details FROZEN:** `TaxiOrderDetailsScreen` is THE single shared trip-details page (booking
 success + Trips→Running). Additive changes only. Legacy sub-widgets (TripStatusView/SelectedVehiclesView/
 ProviderView/TripDetailsWidget/TripCalculationView) superseded, retained for the post-Rental dead-code audit.
+
+**Rental Trip card FROZEN:** `TripOrderViewWidget` (Running/History card; real data, inline Cancelled state,
+apartment auto-activation, opens frozen `TaxiOrderDetailsScreen`). NOTE: the shared `order_screen.dart`
+wrapper (header + Orders/Trips/Stay switch + segmented tabs + wording) is NOT yet frozen — next phase.
+
+**Shared Orders/Trips/Stay FROZEN:** `order_screen.dart` (one premium wrapper, module-aware wording via
+`haveTaxiModule` + real-content apartment detection), `OrderViewWidget` (premium storefront order card),
+`TripOrderViewWidget` (frozen trip card). One page, one set of controllers — no duplication. Additive changes
+only. `Reviews._reviewInt` defensive parse added to the shared `order_model.dart` (backward compatible).
+
+**Scheduled Module Availability (additive):** `ModuleModel` adapter fields (open/close/timezone/
+temporary_close/holiday_today, null today) + `resolveModuleAvailability` (real-schedule resolver) drive the
+FROZEN `CategoryTile`/`ModuleAvailability` fade+disable — no card redesign. **Search:**
+`SearchController.resultStoreCount` (immediate real count, no extra calls) + `hideItemStoreName:false` on
+search results (frozen `item_widget` shows real `store_name`).

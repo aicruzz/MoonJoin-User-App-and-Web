@@ -52,6 +52,14 @@ incompatibility, or explicit user approval to reopen. No cosmetic changes. Add e
 - ✅ **Apt Screen 1 — Short Apartments listing** — **FROZEN** (unified `AllVehicleScreen` apartment mode +
   `RentalApartmentAdapter`; honest empty state; real Short-Apt category).
 
+- ✅ **Shared Orders / Trips / Stay** (`order_screen.dart` + `OrderViewWidget` premium redesign) — **FROZEN**
+  — one wrapper, module-aware (Orders/Trips/Stay), all logic preserved; Reviews.fromJson int-as-string bug
+  fixed. Verified on device, log clean.
+
+- ✅ **Rental Trip card** (`TripOrderViewWidget`) — **FROZEN** — Running/History list card (car `my_trip.png`
+  / apt `my_booking_history.png`); real data, inline Cancelled state, apartment auto-activation; opens the
+  frozen `TaxiOrderDetailsScreen`. Wrapper header/segmented = shared `order_screen.dart` (next phase).
+
 - ✅ **Rental Trip / Booking Details** — **FROZEN** (`TaxiOrderDetailsScreen`) — full redesign to
   `trip_details.png` + `_scroll_down.png` (one page); 100% production logic preserved (getTripDetails,
   success popup, cancel/pay/review, provider WhatsApp/Call/Chat). Apartment mode auto-activates. THE single
@@ -2263,3 +2271,82 @@ handled inline per `Example_cancel_my_booking_history.png` — NO separate cance
 `fromApartment` flag (additive, default false → Car "My Trips / Running Trips / Trip History") swaps to
 "My Bookings / Upcoming Stays / Booking History"; the module-aware bottom nav (item 4, next) passes it. Car
 path byte-verified. `flutter analyze` rental_order 0 issues. Runtime pending.
+
+## 🔒 Rental Trip card (Running/History) — FROZEN (product-owner approved). Trips MODULE not yet frozen — the
+shared wrapper `order_screen.dart` (premium header + Orders/Trips/Stay module switch + Running/History
+segmented + module wording) is the remaining work.
+
+---
+
+## Phase — Shared Orders / Trips / Stay wrapper (`features/order/screens/order_screen.dart`) — premium redesign
+ONE shared page for every module (no duplicate page, no duplicate controller). Premium MoonJoin header
+(module-aware title/subtitle + notification bell), module toggle (Orders / Trips|Stay) for the rental module,
+and the premium segmented **Running/History** control with live counts — reused for BOTH storefront
+(`OrderViewWidget` + `OrderController`) and rental (`TripOrderViewWidget` + `TaxiOrderController`).
+**Business logic 100% preserved**: `getRunningOrders`/`getHistoryOrders`, `getTripList`, pagination, refresh,
+empty states, guest fallback, navigation. Desktop layout kept unchanged.
+**Module-aware wording (auto-detect):** storefront → **Orders**; rental car content → **Trips** ("My Trips");
+rental apartment content → **Stay** ("My Bookings" / "Upcoming Stays" / "Booking History") — derived from the
+REAL loaded trips' category (Car & Apt share ONE rental module, so the sub-flow is content-derived, not a
+fabricated flag). `flutter analyze` order 0 issues (pre-existing guest_custom_stepper info untouched).
+Runtime pending: verify Orders (Food), Trips (Car), Stay (apartment content).
+
+### 🐞 Pre-existing storefront bug fixed (Orders phase) — Reviews.fromJson int-as-string
+`Reviews.fromJson` (`order_model.dart`) typed `id/item_id/user_id/rating/order_id/status/module_id` as `int?`
+but the backend serialises some (notably `status`) as **strings**, throwing
+`type 'String' is not a subtype of type 'int?'` inside `OrderController.timerTrackOrder` (running-orders
+poll) — 6× in the log. Smallest defensive fix: a private `Reviews._reviewInt` (number passes through —
+backward compatible — numeric string parses, else null) on those int fields ONLY; `reviewId` (String) left
+as-is. Only the shared `Reviews` class changed; **verified no behaviour change** for Food/Grocery/Pharmacy/
+Ecommerce/Rental (numbers unaffected) — the crash is simply prevented. Runtime: 6→0 occurrences.
+
+## Phase — Storefront Orders card redesign — premium MoonJoin (`order_view_widget.dart`)
+Redesigned to the premium card language (consistent with the Rental Trips card): status pill + Order/Delivery
+ID, store logo (+ parcel/prescription tag) + name + date + amount, divider, footer Track (running) / item
+count (history) + View Details. **100% logic preserved**: same `OrderController`, pagination, refresh, empty
+state, `getOrderDetailsRoute`/`getOrderTrackingRoute` navigation, parcel & prescription branches; desktop grid
+kept. `flutter analyze` 0 new issues.
+
+## 🔒 SHARED Orders / Trips / Stay ARCHITECTURE — FROZEN (product-owner approved)
+ONE premium wrapper `order_screen.dart` (header + module toggle + segmented Running/History + module wording)
+serving BOTH storefront (`OrderViewWidget`/`OrderController`) and rental (`TripOrderViewWidget`/
+`TaxiOrderController`). Orders → Trips → Stay auto-detected; Car & Apt share one rental module so Stay is
+content-derived. All verified on device: Orders (premium cards, Track, no crash), Trips (frozen cards),
+toggle, Running/History, pagination, refresh, empty states, guest, desktop. Log clean (0 subtype/RenderFlex/
+overflow/null-check). **Business logic, APIs, controllers, repositories, navigation 100% preserved.**
+
+---
+
+## Phase — Scheduled Module Availability + Search improvements (additive; audit-first)
+
+### Architecture audit (before any code)
+- **Module availability UI already exists & frozen:** `ModuleAvailability {enabled, unavailable, disabled}` +
+  `CategoryTile.availability` render **exactly the Glovo behaviour** (visible, faded+desaturated, `onTap:null`,
+  no ripple, no popup, no layout shift). `resolveModuleAvailability(module)` is the single wiring point (was a
+  placeholder returning `enabled`). **Reused — not recreated.**
+- **Schedule logic already exists:** store-hours `Schedules {day, opening_time, closing_time}` +
+  `StoreController.isStoreOpenNow/isStoreClosed` (mirrored in `TaxiVendorController`). Module-level schedule
+  did not exist → added as adapter fields only.
+- **Search:** header count read `searchStoreList.length` (0 until the Store tab / a store was derived). Item
+  model **already has `store_id` + `store_name`**; the frozen `item_widget` already renders `store_name` — it
+  was just suppressed via `hideItemStoreName: true`.
+
+### Part 1 — Scheduled Module Availability (adapter only)
+- `ModuleModel` gained nullable **adapter fields** `open_time`, `close_time`, `timezone`, `temporary_close`,
+  `holiday_today` — all null today (backend not sending), so behaviour is unchanged.
+- `resolveModuleAvailability` now computes `unavailable` from those REAL fields (temporary close / holiday /
+  outside the open–close window, normal + overnight) and `enabled` when absent. **No hardcoded times, no
+  invented schedule, no card redesign** — the frozen `CategoryTile` already fades + disables. When the backend
+  ships the fields, ONLY this resolver reads them; zero architecture change.
+
+### Part 2 — Search
+- **Issue 1 (count):** new `SearchController.resultStoreCount` — returns the loaded store count, else the
+  count of **distinct owning stores derived from `item.store_id`** (zero extra API calls). Header now shows the
+  real count immediately, no interaction needed.
+- **Issue 2 (owner name):** search item results now pass `hideItemStoreName: false`, so the frozen `item_widget`
+  shows the REAL `item.store_name` under the title. When the backend omits it, the widget hides it gracefully
+  (never faked) — documented as queue item 20.
+
+### Reuse / discipline
+No duplicate widget/controller/repository, no extra API calls, no hardcoded schedule, no fake data, no redesign
+of frozen components, no business-logic change. `flutter analyze` 0 issues on all changed files. Runtime pending.

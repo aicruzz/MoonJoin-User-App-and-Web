@@ -1861,5 +1861,7 @@
   "all_trips_insured": "Todos los viajes están asegurados para tu seguridad.",
   "all_bookings_secured": "Todas las reservas están seguras y protegidas.",
   "stayed_on": "Estancia el",
-  "cancelled": "Cancelado"
+  "cancelled": "Cancelado",
+  "stay": "Estancia",
+  "view_and_manage_your_orders": "Ver y gestionar tus pedidos"
 }

@@ -23,8 +23,11 @@ class ItemViewWidget extends StatelessWidget {
                   isStore: isItem, items: searchController.searchItemList, stores: searchController.searchStoreList,
                 ) : ItemsView(
                   isStore: isItem, items: searchController.searchItemList, stores: searchController.searchStoreList,
-                  // Item Search/List: hide the store name under item titles (approved MoonJoin design).
-                  hideItemStoreName: true,
+                  // Search results SHOW the owning store/restaurant under the item
+                  // title (product-owner request) — rendered by the frozen
+                  // `item_widget` from the REAL `item.store_name`; when the backend
+                  // omits it the widget hides it gracefully (never faked). Queue 20.
+                  hideItemStoreName: false,
                 ),
             ),
           ),

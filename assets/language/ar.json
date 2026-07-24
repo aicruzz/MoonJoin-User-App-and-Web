@@ -1861,5 +1861,7 @@
   "all_trips_insured": "جميع الرحلات مؤمّنة ومحمية لسلامتك.",
   "all_bookings_secured": "جميع الحجوزات آمنة ومحمية.",
   "stayed_on": "الإقامة في",
-  "cancelled": "ملغى"
+  "cancelled": "ملغى",
+  "stay": "الإقامة",
+  "view_and_manage_your_orders": "عرض وإدارة طلباتك"
 }

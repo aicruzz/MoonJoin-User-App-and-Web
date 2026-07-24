@@ -661,18 +661,32 @@ class Reviews {
   });
 
   Reviews.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    itemId = json['item_id'];
-    userId = json['user_id'];
+    id = _reviewInt(json['id']);
+    itemId = _reviewInt(json['item_id']);
+    userId = _reviewInt(json['user_id']);
     comment = json['comment'];
     attachment = json['attachment'];
-    rating = json['rating'];
-    orderId = json['order_id'];
+    rating = _reviewInt(json['rating']);
+    orderId = _reviewInt(json['order_id']);
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
-    status = json['status'];
-    moduleId = json['module_id'];
+    // BUGFIX: the backend serialises Reviews `status` (and occasionally the other
+    // counters) as a STRING on some order payloads, while the model types them
+    // `int?`. The raw assignment threw `type 'String' is not a subtype of type
+    // 'int?'` inside `OrderController.timerTrackOrder`. Parsed defensively —
+    // numbers pass through unchanged (backward compatible), numeric strings parse,
+    // anything else becomes null; no other model/module is touched.
+    status = _reviewInt(json['status']);
+    moduleId = _reviewInt(json['module_id']);
     reviewId = json['review_id'];
+  }
+
+  /// Smallest-footprint defensive int parse for the shared Reviews model.
+  static int? _reviewInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
   }
 
   Map<String, dynamic> toJson() {

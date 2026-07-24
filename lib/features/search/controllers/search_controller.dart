@@ -26,9 +26,22 @@ class SearchController extends GetxController implements GetxService {
   
   List<Store>? _searchStoreList;
   List<Store>? get searchStoreList => _searchStoreList;
-  
+
   List<Store>? _allStoreList;
   List<Store>? get allStoreList => _allStoreList;
+
+  /// Real store/restaurant count for the search header — reflects the result
+  /// IMMEDIATELY (no user interaction). Uses the loaded store list when present;
+  /// otherwise derives the count of DISTINCT owning stores from the item results
+  /// (each `Item` already carries `store_id`) — zero extra API calls, no fake
+  /// data. Falls back to 0 only when there are neither stores nor items.
+  int get resultStoreCount {
+    if (_searchStoreList != null && _searchStoreList!.isNotEmpty) return _searchStoreList!.length;
+    if (_searchItemList != null && _searchItemList!.isNotEmpty) {
+      return _searchItemList!.map((i) => i.storeId).whereType<int>().toSet().length;
+    }
+    return _searchStoreList?.length ?? 0;
+  }
   
   String? _searchText = '';
   String? get searchText => _searchText;

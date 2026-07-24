@@ -1877,5 +1877,7 @@
   "all_trips_insured": "All trips are insured and secured for your safety.",
   "all_bookings_secured": "All bookings are secured and protected.",
   "stayed_on": "Stayed on",
-  "cancelled": "Cancelled"
+  "cancelled": "Cancelled",
+  "stay": "Stay",
+  "view_and_manage_your_orders": "View and manage your orders"
 }
