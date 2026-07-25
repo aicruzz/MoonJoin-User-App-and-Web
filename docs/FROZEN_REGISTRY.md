@@ -9,6 +9,16 @@ redesign request.
 
 ## FROZEN SCREENS / SHELLS
 
+### 🧊 Refer & Earn — `refer_and_earn_screen.dart`
+- **File:** `lib/features/refer_and_earn/screens/refer_and_earn_screen.dart`
+- **Status:** FROZEN — Phase 6 (Profile Modernization) · **Frozen on:** 2026-07-25
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **What it is:** Mobile — `ProfilePageHeader` (info icon in `trailing` → `BottomSheetForMobile`) + illustration + MoonJoin reward card (green rate chip · "Invite friends & businesses" · green dashed code box + green Copy · Share button). Desktop — `WebMenuBar` + inline `BottomSheetViewWidget` "how it works" panel.
+- **Reuses:** `ProfilePageHeader`, `CustomButton`, `ProfileController.refCode`, `SharePlus`, `Clipboard`, `NotLoggedInScreen`, `FooterView`, `WebScreenTitleWidget`, `BottomSheetForMobile`/`BottomSheetViewWidget`.
+- **Preserved:** `ProfileController.refCode` (only referral data source) + `getUserInfo` · exact `SharePlus` share text (app name + code + download link) · `Clipboard` copy + snackbar · `SplashController.refEarningExchangeRate` display · auth handling · navigation · both info-sheet flows. No controller/API/model/validation/business-logic changes.
+- **Obsolete (retained):** the `ExpandableBottomSheet` wrapper is no longer used on this page → **OBSOLETE — Pending Final Legacy Cleanup** (the `expandable_bottom_sheet` package is still used by 3 other files; nothing deleted).
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
 ### 🧊 Loyalty Points — `loyalty_screen.dart`
 - **File:** `lib/features/loyalty/screens/loyalty_screen.dart` (+ `loyalty_card_widget.dart`, `loyalty_history_widget.dart`, `loyalty_bottom_sheet_widget.dart`)
 - **Status:** FROZEN — Phase 5 (Profile Modernization) · **Frozen on:** 2026-07-25

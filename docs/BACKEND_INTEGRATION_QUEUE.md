@@ -808,3 +808,13 @@ needing backend (new fields/endpoints/eligibility):
 2. **Loyalty-funded coupons** (ties to the Coupon future-capabilities item).
 3. **Redemption options beyond wallet** (discounts / gifts).
 4. **Points expiry rules** and **advanced history filters** (by type/date).
+
+---
+
+## Refer & Earn — future capabilities (Phase 6 audit; documentation only, DO NOT implement)
+Current: referral code from user-info (`refCode`), config exchange rate, share + copy; earnings arrive as a
+generic wallet `referrer` transaction. Future enhancements needing backend (new endpoints/fields):
+1. **Referral tiers** and **custom referral rewards**.
+2. **Referral analytics / leaderboard** and **campaigns**.
+3. **Dedicated referral reward history** (vs generic wallet txns).
+4. **Multi-level referrals**.

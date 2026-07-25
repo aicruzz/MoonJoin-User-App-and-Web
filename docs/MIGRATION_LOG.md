@@ -2577,3 +2577,32 @@ back + fromNotification, and **Wallet history unchanged (regression pass)**. App
 redemption options beyond wallet, points expiry, advanced history filters. See BACKEND_INTEGRATION_QUEUE.md.
 
 **Legacy / obsolete:** none newly obsolete (redesign in place / isolated variant). No deletions.
+
+---
+
+## Phase 6 — Refer & Earn — FROZEN (2026-07-25)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `refer_and_earn_screen.dart` rebuilt — `CustomAppBar` → `ProfilePageHeader` (mobile, info
+icon via `trailing` → `BottomSheetForMobile`) / `WebMenuBar` (desktop); MoonJoin reward card (green rate chip ·
+"Invite friends & businesses" · green dashed code box + green Copy · Share `CustomButton`); desktop keeps inline
+`BottomSheetViewWidget`. No dedicated controller/API — reuses `ProfileController.refCode` + `SplashController`
+config.
+
+**Architecture preserved:** `ProfileController.refCode` (only referral data source) + getUserInfo · exact
+`SharePlus` share text (app name + code + download link) · `Clipboard` copy + snackbar ·
+`SplashController.refEarningExchangeRate` display · auth handling · navigation · both info-sheet flows. No
+controller/repo/service/API/model/validation/business-logic changes.
+
+**Runtime verification:** flutter analyze 0 issues; screen rendered with real refCode, 0
+RenderFlex/overflow/subtype/null-check from the page. Owner verified: copy + snackbar, share sheet (exact
+text), info sheet opens, back navigation. Approved. (Startup config-HTML retries = backend Imunify360, resolved
+via VPN — unrelated.)
+
+**Future (noted only — NOT implemented):** referral tiers, analytics/leaderboard, dedicated reward history,
+multi-level referrals, campaigns, custom referral rewards. See BACKEND_INTEGRATION_QUEUE.md.
+
+**Legacy / obsolete:** `ExpandableBottomSheet` usage on this page → OBSOLETE — Pending Final Legacy Cleanup
+(package still used by 3 other files). No deletions.
+
+**Protected:** My Wallet + Wallet History untouched — reserved for Phase 7 (their own dedicated migration).

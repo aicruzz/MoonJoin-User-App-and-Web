@@ -657,3 +657,13 @@ Wallet renders identically (owner-verified).
 ### `ProfilePageHeader` — additive `onBack` (Phase 5)
 Added optional `onBack` (defaults to `Get.back()`); enables pages with custom back logic (e.g. notification
 deep-links) to reuse the shared header without forking. All prior callers unchanged.
+
+### 🧊 Refer & Earn — `refer_and_earn_screen.dart` (FROZEN 2026-07-25, Phase 6)
+Presentation-only redesign to MoonJoin. Mobile: `ProfilePageHeader` (info icon in `trailing` →
+`BottomSheetForMobile`) + illustration + MoonJoin reward card (green rate chip · green dashed code box + green
+Copy · Share `CustomButton`). Desktop: `WebMenuBar` + inline `BottomSheetViewWidget`. Reuses `ProfilePageHeader`,
+`CustomButton`, `ProfileController.refCode`, `SharePlus`, `Clipboard`, both info widgets — no new/duplicate
+components. Business logic preserved: refCode source, exact SharePlus text (app name + code + download link),
+Clipboard + snackbar, exchange-rate display, auth, navigation. No controller/API/model/validation changes.
+`ExpandableBottomSheet` usage on this page → OBSOLETE — Pending Final Legacy Cleanup (package still used
+elsewhere; nothing deleted).
