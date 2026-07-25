@@ -13,11 +13,18 @@ class ConfirmationDialog extends StatelessWidget {
   final Function onYesPressed;
   final bool isLogOut;
   final Function? onNoPressed;
+  /// Presentation-only MoonJoin variant (Phase 8D). When true the dialog renders in
+  /// the premium MoonJoin language. Default false keeps the existing dialog used by
+  /// all other 20 call sites unchanged. Callbacks/behaviour are identical.
+  final bool moonjoin;
   const ConfirmationDialog({super.key, required this.icon, this.title, required this.description, required this.onYesPressed,
-    this.isLogOut = false, this.onNoPressed});
+    this.isLogOut = false, this.onNoPressed, this.moonjoin = false});
 
   @override
   Widget build(BuildContext context) {
+    if(moonjoin) {
+      return _moonjoinDialog(context);
+    }
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
       insetPadding: const EdgeInsets.all(30),
@@ -67,6 +74,74 @@ class ConfirmationDialog extends StatelessWidget {
                   radius: Dimensions.radiusSmall, height: 50,
                 )),
               ]) : const Center(child: CircularProgressIndicator());
+            }),
+
+          ]),
+        )),
+      ),
+    );
+  }
+
+  // ── MoonJoin premium confirmation dialog (isolated variant) ──
+  // Same callbacks: primary green = onYesPressed (Logout); secondary = cancel
+  // (onNoPressed ?? Get.back()). Presentation only.
+  Widget _moonjoinDialog(BuildContext context) {
+    final Color accent = isLogOut ? Theme.of(context).colorScheme.error : Theme.of(context).primaryColor;
+    final Color green = Theme.of(context).primaryColor;
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge)),
+      insetPadding: const EdgeInsets.all(Dimensions.paddingSizeExtremeLarge),
+      backgroundColor: Theme.of(context).cardColor,
+      child: PointerInterceptor(
+        child: SizedBox(width: 400, child: Padding(
+          padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+
+            // Icon chip
+            Container(
+              height: 64, width: 64, alignment: Alignment.center,
+              decoration: BoxDecoration(color: accent.withValues(alpha: 0.10), shape: BoxShape.circle),
+              child: Icon(isLogOut ? Icons.logout_rounded : Icons.help_outline_rounded, color: accent, size: 30),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeDefault),
+
+            Text(
+              title ?? (isLogOut ? 'logout'.tr : 'confirm'.tr),
+              textAlign: TextAlign.center,
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: Theme.of(context).textTheme.bodyLarge?.color),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeSmall),
+
+            Text(
+              description, textAlign: TextAlign.center,
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).hintColor),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+            GetBuilder<OrderController>(builder: (orderController) {
+              return !orderController.isLoading ? Row(children: [
+
+                // Cancel (secondary)
+                Expanded(child: TextButton(
+                  onPressed: () => onNoPressed != null ? onNoPressed!() : Get.back(),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 52), padding: EdgeInsets.zero,
+                    side: BorderSide(color: Theme.of(context).disabledColor.withValues(alpha: 0.4)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+                  ),
+                  child: Text('cancel'.tr, style: robotoBold.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color)),
+                )),
+                const SizedBox(width: Dimensions.paddingSizeDefault),
+
+                // Confirm (primary green) — Logout / Yes
+                Expanded(child: CustomButton(
+                  buttonText: isLogOut ? 'logout'.tr : 'yes'.tr,
+                  color: green,
+                  onPressed: () => onYesPressed(),
+                  radius: Dimensions.radiusDefault, height: 52,
+                )),
+
+              ]) : const Center(child: Padding(padding: EdgeInsets.all(Dimensions.paddingSizeSmall), child: CircularProgressIndicator()));
             }),
 
           ]),

@@ -2703,3 +2703,28 @@ HTML renders in card, loading state, back nav) — owner-approved. Desktop struc
 WebScreenTitleWidget + FooterView); desktop visual verification pending/non-blocking.
 
 **Legacy / obsolete:** none newly obsolete. No deletions.
+
+---
+
+## Phase 8D — Logout UI — FROZEN (2026-07-25)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin language (presentation only).
+
+**Implementation:** isolated MoonJoin variant added to the shared `ConfirmationDialog` (`moonjoin` flag,
+default false → `_moonjoinDialog`: premium rounded card, red logout icon chip, "Logout" heading, description,
+Cancel secondary + green primary "Logout" #2C9C44). Logout call in the frozen `menu_screen.dart` gets a
+one-line additive `moonjoin: true` (approved presentation touch). Other 20 ConfirmationDialog call sites keep
+the legacy dialog.
+
+**Preserved:** AuthController.socialLogout · token/session · cart/favourite/profile/shared-data cleanup ·
+snackbar · navigation. Green Logout → same onYesPressed (cleanup + close); Cancel → Get.back. No auth/business
+-logic changes.
+
+**Verification:** flutter analyze clean (0 issues); runtime run69 0 RenderFlex/overflow/subtype/null-check;
+on-device — dialog appears, Cancel works, Logout executes cleanup + lands correctly, other confirmations
+unchanged (regression pass) — owner-approved.
+
+**New architectural finding (documented, NOT implemented):** `NotLoggedInScreen` is a single shared guest
+prompt reused ~15× → its own future **Guest User Experience** phase (coordinate with Sign In / Sign Up). See
+BACKEND_INTEGRATION_QUEUE.md / FROZEN_REGISTRY notes.
+
+**Legacy / obsolete:** none newly obsolete. No deletions.

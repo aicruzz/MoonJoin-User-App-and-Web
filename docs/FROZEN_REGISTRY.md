@@ -9,6 +9,15 @@ redesign request.
 
 ## FROZEN SCREENS / SHELLS
 
+### 🧊 Logout confirmation — `ConfirmationDialog` (MoonJoin variant, Phase 8D)
+- **File:** `lib/common/widgets/confirmation_dialog.dart` (isolated variant); triggered from `menu_screen.dart` logout.
+- **Status:** FROZEN — Phase 8D (Profile Modernization) · **Frozen on:** 2026-07-25
+- **What is frozen:** an isolated presentation-only **`moonjoin`** variant (`_moonjoinDialog`) of the shared `ConfirmationDialog` — premium rounded card, red logout icon chip, "Logout" heading, description, **Cancel** (clean outlined secondary) + **green primary "Logout"** (#2C9C44). Used ONLY by the logout call (`menu_screen.dart` → `ConfirmationDialog(... moonjoin: true)`).
+- **Isolation:** `moonjoin` defaults `false` → the **other 20 `ConfirmationDialog` call sites** (Delete Account, orders, registration, rental, items, subscription…) keep the legacy dialog, unchanged. No duplicate dialog created.
+- **Preserved:** `AuthController.socialLogout` · token/session · cart/favourite/profile/shared-data cleanup · snackbar · navigation. Green "Logout" → same `onYesPressed` (full cleanup + close); Cancel → `Get.back()`. **No auth/business-logic changes.**
+- **Note:** the inline "Logout" trigger row in the frozen `menu_screen` shell was NOT restyled (scope = confirmation dialog only).
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
 ### 🧊 HTML Container — `html_viewer_screen.dart`
 - **File:** `lib/features/html/screens/html_viewer_screen.dart`
 - **Status:** FROZEN — Phase 8C (Profile Modernization) · **Frozen on:** 2026-07-25

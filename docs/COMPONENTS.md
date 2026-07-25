@@ -713,3 +713,16 @@ empty state. **A single screen serves ALL HTML pages** — About Us, Terms & Con
 Policy, Shipping Policy, Cancellation Policy (+ any future HtmlType) — no per-page widget, no duplication.
 Reused foundations: `ProfilePageHeader`, `WebMenuBar`, `FooterView`, `MenuDrawer`, `WebScreenTitleWidget`,
 `NoDataScreen`. Preserved: HtmlController / HtmlService / HTML content API / renderer / navigation.
+
+### 🧊 Logout confirmation — `ConfirmationDialog` MoonJoin variant (FROZEN 2026-07-25, Phase 8D)
+`lib/common/widgets/confirmation_dialog.dart` — added an isolated presentation-only `moonjoin` flag (default
+false). `true` → `_moonjoinDialog` (premium card, red logout icon chip, "Logout" heading, Cancel + green
+primary "Logout"). Used ONLY by the logout call in `menu_screen.dart`. The other 20 call sites keep the legacy
+dialog. No duplicate dialog; callbacks/behaviour identical (green Logout → onYesPressed cleanup; Cancel →
+Get.back). Reuses `CustomButton`.
+
+### ⚠️ Shared foundation identified — `NotLoggedInScreen` (Guest User Experience; future phase)
+`lib/common/widgets/not_logged_in_screen.dart` — ONE shared guest/not-logged-in prompt reused in ~15 locations
+(Edit Profile, My Address, Coupon, Loyalty, Refer & Earn, Notifications, Chat, Checkout, Parcel, rental
+favourite, …). Modernizing this single component updates every guest login prompt app-wide. NOT redesigned in
+Phase 8D — reserved for its own future "Guest User Experience" phase, coordinated with Sign In / Sign Up.

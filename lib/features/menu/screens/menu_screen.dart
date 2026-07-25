@@ -380,7 +380,7 @@ class _MenuScreenState extends State<MenuScreen> {
               InkWell(
                 onTap: () async {
                   if(AuthHelper.isLoggedIn()) {
-                    Get.dialog(ConfirmationDialog(icon: Images.support, description: 'are_you_sure_to_logout'.tr, isLogOut: true, onYesPressed: () async {
+                    Get.dialog(ConfirmationDialog(icon: Images.support, description: 'are_you_sure_to_logout'.tr, isLogOut: true, moonjoin: true, onYesPressed: () async {
                       Get.find<AuthController>().resetOtpView();
                       Get.find<ProfileController>().clearUserInfo();
                       Get.find<AuthController>().socialLogout();
