@@ -9,6 +9,25 @@ redesign request.
 
 ## FROZEN SCREENS / SHELLS
 
+### 🧊 My Wallet + Wallet History — `wallet_screen.dart`
+- **Files:** `lib/features/wallet/screens/wallet_screen.dart` (+ `wallet_card_widget.dart`, `wallet_history_widget.dart`, `add_fund_dialogue_widget.dart`)
+- **Status:** FROZEN — Phase 7 (Profile Modernization) · **Frozen on:** 2026-07-25
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **What is frozen:** My Wallet screen (`ProfilePageHeader`, `onBack` preserves `fromNotification`; `WebMenuBar` desktop) · **premium balance card** (gradient fintech card + "Add Fund") · **Wallet History** (MoonJoin) · **Wallet filter** chip · **premium Add Fund dialog** (header icon, selectable bordered payment cards, **"9PSB Virtual Account"** label, amount hidden for VA / shown for online gateways) · **`HistoryItemWidget` isolated `moonjoinWallet` variant** · **`VirtualAccountDetailsWidget` improvements** (full account number via scaleDown; premium inline "Copied" fade) · **`ProfilePageHeader` reuse**.
+- **Reuses:** `ProfilePageHeader`, `CustomButton`, `CustomTextField`, `NoDataScreen`, `WalletShimmer`, shared `HistoryItemWidget` (wallet variant), frozen `VirtualAccountDetailsWidget`.
+- **Preserved:** WalletController · ProfileController · SplashController lifecycle · WalletRepository · WalletService · APIs (`/wallet/transactions|add-fund|bonuses|virtual-account`) · models · validation · **add-fund + payment/gateway flow** · **payment-return snackbar + `walletAccessToken` idempotency** · pagination · filters · refresh · navigation · currency/transaction calculations. No business-logic changes.
+- **Payment architecture (recorded):** Wallet & Checkout consume `SplashController.configModel.activePaymentMethodList` correctly — **no frontend hardcoding, no filtering**; rendering production-ready. Remaining inconsistency = documented **Legacy Backend / config-cache / hosting (Imunify360) limitation**, to be replaced by MoonJoin World.
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
+### 🧊 Transaction row — `HistoryItemWidget` (wallet variant modernized)
+- **File:** `lib/common/widgets/history_item_widget.dart`
+- **Status:** FROZEN (wallet variant) — Phase 7 · **Frozen on:** 2026-07-25
+- **What is frozen:** the **`moonjoinWallet: true`** MoonJoin row (green/red icon chip · debit/credit + adminBonus · description · date · credit/debit pill). Loyalty variant (`moonjoinLoyalty`) stays frozen; legacy default retained for Final Legacy Cleanup. One shared row — no duplicate/fork.
+
+### 🧊 `VirtualAccountDetailsWidget` — Phase 7 improvements (foundation component, still frozen)
+- **File:** `lib/features/checkout/widgets/virtual_account_details_widget.dart`
+- **Changes (2026-07-25):** value fields use `FittedBox(scaleDown)` so the **full account number** never truncates in narrow contexts (Add Fund); the copy button (`_CopyButton`) replaces the top snackbar with a **premium inline "Copied" fade** — clipboard content/behavior unchanged. Applies everywhere it's reused (Checkout, Profile ×3, Wallet). No other change; remains the single approved Virtual Account UI.
+
 ### 🧊 Refer & Earn — `refer_and_earn_screen.dart`
 - **File:** `lib/features/refer_and_earn/screens/refer_and_earn_screen.dart`
 - **Status:** FROZEN — Phase 6 (Profile Modernization) · **Frozen on:** 2026-07-25
@@ -143,3 +162,39 @@ references. May be removed ONLY in the final cleanup phase, after a dead-code au
 - `lib/features/profile/widgets/profile_bg_widget.dart` — superseded by `ProfilePageHeader` (Personal Information redesign).
 - `lib/features/profile/widgets/virtual_account_card_widget.dart` — superseded by `VirtualAccountDetailsWidget`.
 - `lib/features/menu/widgets/menu_button_widget.dart` — superseded by `PortionWidget`.
+
+---
+
+## PERMANENT ARCHITECTURE DECISIONS (recorded 2026-07-25)
+
+1. **Legacy Backend Principle.** The legacy 6amMart backend is a **temporary compatibility backend only**.
+   Do NOT redesign/modernize it or add new infrastructure to it (no ConfigSyncService, TTL cache, versioned
+   config, lifecycle redesign, push invalidation, config-architecture improvements). Only critical bug fixes
+   when absolutely necessary; keep the frontend compatible until MoonJoin World is complete. All future
+   backend architecture belongs to **MoonJoin World**; all future tenant architecture to **MoonJoin Cloud**.
+
+2. **MoonJoin Platform Naming (official).** Frontend: Flutter User App & Web · Flutter Vendor App · Flutter
+   Delivery App · Vendor Website. Backend: **MoonJoin World**. Tenant platform: **MoonJoin Cloud**. Never call
+   the backend "6amMart".
+
+3. **Shared Widget Protection.** Frozen foundations — never casually modify: `ProfilePageHeader`,
+   `HistoryItemWidget`, `VirtualAccountDetailsWidget`, `CustomButton`. Any future visual redesign using these
+   must be an **additive isolated variant** (like AddressWidget `fromAddress`, CouponCardWidget
+   `fromCouponScreen`, HistoryItemWidget `moonjoinLoyalty`/`moonjoinWallet`). Never break frozen pages.
+
+4. **Frozen Migration Workflow (no step skipped).** Architecture Audit → Reuse Audit → Design Audit → Owner
+   Approval → Implementation → flutter analyze → Runtime Verification → QA Report → Owner Approval →
+   Documentation Update → Freeze.
+
+5. **Legacy Cleanup Policy.** Never delete unused legacy widgets/packages immediately → mark
+   `OBSOLETE — Pending Final Legacy Cleanup`. Final cleanup happens only after the entire frontend redesign is
+   complete and frozen.
+
+6. **Payment Architecture Decision.** Wallet & Checkout correctly consume
+   `SplashController.configModel.activePaymentMethodList`; no frontend hardcoding, no filtering; rendering is
+   production-ready. Remaining inconsistency = documented legacy backend/config-cache/hosting limitation;
+   MoonJoin World will replace the legacy configuration architecture.
+
+7. **Frontend Ownership.** The MoonJoin frontend is the primary product. Future effort targets UX,
+   architecture quality, component reuse, scalability, maintainability — NOT redesigning legacy backend
+   architecture that MoonJoin World will replace.

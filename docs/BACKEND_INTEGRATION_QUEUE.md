@@ -818,3 +818,18 @@ generic wallet `referrer` transaction. Future enhancements needing backend (new 
 2. **Referral analytics / leaderboard** and **campaigns**.
 3. **Dedicated referral reward history** (vs generic wallet txns).
 4. **Multi-level referrals**.
+
+---
+
+## Payment config — Legacy Backend Limitation (Phase 7 conclusion; documentation only)
+Frontend verified production-ready: Wallet + Checkout consume `active_payment_method_list` faithfully — no
+hardcoding, no filtering (proof: `config_model.dart:283` adds every gateway; checkout `nonPSBMethods` at
+`payment_method_bottom_sheet.dart:107` separates 9PSB, doesn't remove). The "only 9PSB shows" behaviour is a
+**legacy backend/hosting + config-cache** limitation:
+- Config loads cache-first then network, once per cold launch; the `LocalClient` cache has **no TTL**.
+- The legacy host's **Imunify360 bot-protection** intermittently blocks `/api/v1/config` (returns HTML/deny)
+  → the app keeps the stale cached gateway list; Admin ON/OFF only reflects after a cold restart on a working
+  connection (e.g. VPN).
+Action: **do NOT patch the legacy backend.** The correct config lifecycle (TTL, version/ETag, segmented
+config, push invalidation, foreground refresh) belongs to **MoonJoin World** and its sync client. Interim: a
+network not challenged by Imunify (VPN) loads all gateways correctly.

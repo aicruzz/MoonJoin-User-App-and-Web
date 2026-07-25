@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:sixam_mart/features/wallet/controllers/wallet_controller.dart';
 import 'package:sixam_mart/features/wallet/widgets/bonus_banner_widget.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
+import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/common/widgets/web_page_title_widget.dart';
 import 'package:sixam_mart/features/wallet/widgets/wallet_card_widget.dart';
 import 'package:sixam_mart/features/wallet/widgets/wallet_history_widget.dart';
@@ -96,9 +97,18 @@ class _WalletScreenState extends State<WalletScreen> {
     scrollController.dispose();
   }
 
+  void _handleBack() {
+    if(widget.fromNotification) {
+      Get.offAllNamed(RouteHelper.getInitialRoute());
+    } else {
+      Get.back();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isLoggedIn = AuthHelper.isLoggedIn();
+    final bool isDesktop = ResponsiveHelper.isDesktop(context);
 
     return PopScope(
       canPop:  Navigator.canPop(context),
@@ -110,16 +120,12 @@ class _WalletScreenState extends State<WalletScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
-        appBar: CustomAppBar(title: 'wallet'.tr, backButton: true, onBackPressed: () {
-          if(widget.fromNotification) {
-            Get.offAllNamed(RouteHelper.getInitialRoute());
-          }else {
-            Get.back();
-          }
-        }),
-        body: GetBuilder<ProfileController>(
+        appBar: isDesktop ? const WebMenuBar() : null,
+        body: Column(children: [
+          if(!isDesktop) ProfilePageHeader(title: 'wallet'.tr, onBack: _handleBack),
+          Expanded(child: GetBuilder<ProfileController>(
             builder: (profileController) {
               return isLoggedIn ? profileController.userInfoModel != null ? SafeArea(
                 child: RefreshIndicator(
@@ -196,7 +202,8 @@ class _WalletScreenState extends State<WalletScreen> {
                 setState(() {});
               });
             }
-        ),
+          )),
+        ]),
       ),
     );
   }

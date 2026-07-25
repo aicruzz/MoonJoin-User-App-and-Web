@@ -11,16 +11,21 @@ class HistoryItemWidget extends StatelessWidget {
   final int index;
   final bool fromWallet;
   final List<Transaction>? data;
-  /// Presentation-only MoonJoin variant for the Loyalty history (Phase 5). When
-  /// true the row renders in the MoonJoin language. Default false keeps the
-  /// existing row used by Wallet history (`fromWallet:true`) — Wallet UNCHANGED.
+  /// Presentation-only MoonJoin variant for the Loyalty history (Phase 5, FROZEN).
   final bool moonjoinLoyalty;
-  const HistoryItemWidget({super.key, required this.index, required this.fromWallet, required this.data, this.moonjoinLoyalty = false});
+  /// Presentation-only MoonJoin variant for the Wallet history (Phase 7). When
+  /// true the wallet row renders in the MoonJoin language. Default false keeps the
+  /// legacy row (default / Final Legacy Cleanup). The Loyalty variant stays frozen.
+  final bool moonjoinWallet;
+  const HistoryItemWidget({super.key, required this.index, required this.fromWallet, required this.data, this.moonjoinLoyalty = false, this.moonjoinWallet = false});
 
   @override
   Widget build(BuildContext context) {
     if(moonjoinLoyalty) {
       return _moonjoinLoyaltyRow(context);
+    }
+    if(moonjoinWallet) {
+      return _moonjoinWalletRow(context);
     }
     return Column(children: [
       Row(
@@ -122,6 +127,69 @@ class HistoryItemWidget extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               data![index].transactionType == 'loyalty_point' ? 'converted_from_loyalty_point'.tr
+                  : data![index].transactionType == 'referrer' ? 'earned_by_referral'.tr
+                  : data![index].transactionType == 'order_place' ? '${'order_place'.tr} # ${data![index].reference}'
+                  : data![index].transactionType!.tr,
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor),
+              maxLines: 2, overflow: TextOverflow.ellipsis,
+            ),
+          ])),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text(
+              DateConverter.dateToDateAndTimeAm(data![index].createdAt!),
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor),
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 2),
+              decoration: BoxDecoration(color: amountColor.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+              child: Text(
+                isDebit ? 'debit'.tr : 'credit'.tr,
+                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: amountColor),
+              ),
+            ),
+          ]),
+
+        ]),
+      ),
+
+      index == data!.length-1 ? const SizedBox() : Divider(height: 1, color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
+    ]);
+  }
+
+  // ── MoonJoin Wallet history row (isolated variant, Phase 7) — same data/logic
+  // as the legacy wallet row (debit/credit + adminBonus, currency formatting). ──
+  Widget _moonjoinWalletRow(BuildContext context) {
+    final bool isDebit = data![index].transactionType == 'order_place' || data![index].transactionType == 'partial_payment';
+    final Color amountColor = isDebit ? Theme.of(context).colorScheme.error : Theme.of(context).primaryColor;
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+        child: Row(children: [
+
+          Container(
+            height: 42, width: 42, alignment: Alignment.center,
+            decoration: BoxDecoration(color: amountColor.withValues(alpha: 0.10), shape: BoxShape.circle),
+            child: Icon(isDebit ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, color: amountColor, size: 20),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeDefault),
+
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(
+              isDebit
+                  ? '- ${PriceConverter.convertPrice(data![index].debit! + data![index].adminBonus!)}'
+                  : '+ ${PriceConverter.convertPrice(data![index].credit! + data![index].adminBonus!)}',
+              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: amountColor),
+              maxLines: 1, overflow: TextOverflow.ellipsis, textDirection: TextDirection.ltr,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              data![index].transactionType == 'add_fund' ? '${'added_via'.tr} ${data![index].reference!.replaceAll('_', ' ')} ${data![index].adminBonus != 0 ? '(${'bonus'.tr} = ${data![index].adminBonus})' : '' }'
+                  : data![index].transactionType == 'partial_payment' ? '${'spend_on_order'.tr} # ${data![index].reference}'
+                  : data![index].transactionType == 'loyalty_point' ? 'converted_from_loyalty_point'.tr
                   : data![index].transactionType == 'referrer' ? 'earned_by_referral'.tr
                   : data![index].transactionType == 'order_place' ? '${'order_place'.tr} # ${data![index].reference}'
                   : data![index].transactionType!.tr,

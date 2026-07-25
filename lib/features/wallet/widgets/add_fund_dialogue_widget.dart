@@ -55,13 +55,15 @@ class _AddFundDialogueWidgetState extends State<AddFundDialogueWidget> {
         alignment: Alignment.topRight,
         child: InkWell(
           onTap: () => Get.back(),
+          borderRadius: BorderRadius.circular(30),
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Theme.of(context).cardColor.withValues(alpha: 0.5),
+              color: Theme.of(context).cardColor,
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 6)],
             ),
-            padding: const EdgeInsets.all(3),
-            child: const Icon(Icons.clear),
+            padding: const EdgeInsets.all(6),
+            child: Icon(Icons.clear, size: 18, color: Theme.of(context).textTheme.bodyLarge?.color),
           ),
         ),
       ),
@@ -80,12 +82,19 @@ class _AddFundDialogueWidgetState extends State<AddFundDialogueWidget> {
           padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
 
-            const SizedBox(height: Dimensions.paddingSizeLarge),
-
-            Text('add_fund_to_wallet'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
             const SizedBox(height: Dimensions.paddingSizeSmall),
 
-            Text('add_fund_form_secured_digital_payment_gateways'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall), textAlign: TextAlign.center),
+            Container(
+              height: 56, width: 56, alignment: Alignment.center,
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.10), shape: BoxShape.circle),
+              child: Icon(Icons.account_balance_wallet_rounded, color: Theme.of(context).primaryColor, size: 28),
+            ),
+            const SizedBox(height: Dimensions.paddingSizeDefault),
+
+            Text('add_fund_to_wallet'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+            const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+
+            Text('add_fund_form_secured_digital_payment_gateways'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor), textAlign: TextAlign.center),
             const SizedBox(height: Dimensions.paddingSizeLarge),
 
             // Hide amount field when 9PSB is selected
@@ -150,34 +159,43 @@ class _AddFundDialogueWidgetState extends State<AddFundDialogueWidget> {
                               onTap: () {
                                 walletController.changeDigitalPaymentName(paymentMethod.getWay!);
                               },
+                              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                               child: Container(
+                                margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? Theme.of(context).primaryColor.withValues(alpha: 0.05) : Colors.transparent,
+                                  color: isSelected ? Theme.of(context).primaryColor.withValues(alpha: 0.05) : Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                  border: Border.all(
+                                    color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withValues(alpha: 0.25),
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
                                 ),
-                                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeLarge),
+                                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeDefault),
                                 child: Row(children: [
                                   Container(
-                                    height: 20, width: 20,
+                                    height: 22, width: 22,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: isSelected ? Colors.green : Theme.of(context).cardColor,
-                                      border: Border.all(color: Theme.of(context).disabledColor),
+                                      color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                                      border: Border.all(color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).disabledColor, width: 1.5),
                                     ),
-                                    child: Icon(Icons.check, color: Theme.of(context).cardColor, size: 16),
+                                    child: isSelected ? Icon(Icons.check, color: Theme.of(context).cardColor, size: 15) : const SizedBox(),
                                   ),
                                   const SizedBox(width: Dimensions.paddingSizeDefault),
 
                                   CustomImage(
-                                    height: 20, fit: BoxFit.contain,
+                                    height: 22, fit: BoxFit.contain,
                                     image: '${paymentMethod.getWayImageFullUrl}',
                                   ),
                                   const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                                  Text(
-                                    paymentMethod.getWayTitle!,
+                                  Expanded(child: Text(
+                                    // Label 9PSB as "9PSB Virtual Account" so users
+                                    // understand funding is by bank transfer.
+                                    is9PSB ? '9PSB ${'virtual_account'.tr}' : paymentMethod.getWayTitle!,
                                     style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
-                                  ),
+                                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  )),
                                 ]),
                               ),
                             ),

@@ -11,6 +11,7 @@
 // `isGeneratingAccount`, reuses the existing `generateVirtualAccount()`), and
 // supports every state — details · loading · generate/no-account — WITHOUT
 // changing the approved details layout.
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -116,7 +117,7 @@ class VirtualAccountDetailsWidget extends StatelessWidget {
             )),
             if(data['account_number'] != null) ...[
               const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-              _copyButton(context, data['account_number'].toString()),
+              _CopyButton(accountNumber: data['account_number'].toString()),
             ],
           ])),
         ]),
@@ -172,47 +173,18 @@ class VirtualAccountDetailsWidget extends StatelessWidget {
     );
   }
 
-  // ── Verbatim helpers from the approved card ──
-  Widget _copyButton(BuildContext context, String accountNumber) {
-    return Material(
-      color: Theme.of(context).primaryColor.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () async {
-          await Clipboard.setData(ClipboardData(text: accountNumber));
-          if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
-          Get.rawSnackbar(
-            message: 'account_number_copied'.tr,
-            duration: const Duration(seconds: 2),
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.black87,
-            messageText: Text(
-              'account_number_copied'.tr,
-              style: robotoMedium.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),
-            ),
-            borderRadius: Dimensions.radiusSmall.toDouble(),
-            margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-            isDismissible: true,
-          );
-        },
-        splashColor: Theme.of(context).primaryColor.withValues(alpha: 0.20),
-        highlightColor: Theme.of(context).primaryColor.withValues(alpha: 0.10),
-        child: SizedBox(
-          width: 44, height: 44,
-          child: Icon(Icons.copy_rounded, size: 20, color: Theme.of(context).primaryColor),
-        ),
-      ),
-    );
-  }
 
   Widget _infoRow(BuildContext context, {required String label, required String value}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
           style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
       const SizedBox(height: 6),
-      Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+      // scaleDown so values (e.g. the full account number) never truncate in narrow
+      // contexts like the Add Fund dialog; full-width contexts render unchanged.
+      FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft,
+        child: Text(value, maxLines: 1,
           style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, letterSpacing: 0.3, color: Theme.of(context).textTheme.bodyLarge?.color)),
+      ),
     ]);
   }
 
@@ -282,6 +254,69 @@ class VirtualAccountDetailsWidget extends StatelessWidget {
             ),
           ])),
         ],
+      ),
+    );
+  }
+}
+
+/// Premium copy-to-clipboard button for the account number. Copies exactly as
+/// before (clipboard content unchanged); replaces the intrusive top snackbar with
+/// a subtle inline "Copied" indicator that fades in and out beside the icon.
+class _CopyButton extends StatefulWidget {
+  final String accountNumber;
+  const _CopyButton({required this.accountNumber});
+
+  @override
+  State<_CopyButton> createState() => _CopyButtonState();
+}
+
+class _CopyButtonState extends State<_CopyButton> {
+  bool _copied = false;
+  Timer? _timer;
+
+  void _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.accountNumber));
+    setState(() => _copied = true);
+    _timer?.cancel();
+    _timer = Timer(const Duration(milliseconds: 1600), () {
+      if(mounted) setState(() => _copied = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Color green = Theme.of(context).primaryColor;
+    return Material(
+      color: green.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _copy,
+        splashColor: green.withValues(alpha: 0.20),
+        highlightColor: green.withValues(alpha: 0.10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 0),
+          child: SizedBox(
+            height: 44,
+            child: Center(child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+              child: _copied
+                  ? Row(key: const ValueKey('copied'), mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.check_rounded, size: 16, color: green),
+                      const SizedBox(width: 4),
+                      Text('copied'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: green)),
+                    ])
+                  : Icon(Icons.copy_rounded, key: const ValueKey('copy'), size: 20, color: green),
+            )),
+          ),
+        ),
       ),
     );
   }

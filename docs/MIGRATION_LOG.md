@@ -2606,3 +2606,34 @@ multi-level referrals, campaigns, custom referral rewards. See BACKEND_INTEGRATI
 (package still used by 3 other files). No deletions.
 
 **Protected:** My Wallet + Wallet History untouched — reserved for Phase 7 (their own dedicated migration).
+
+---
+
+## Phase 7 — My Wallet + Wallet History — FROZEN (2026-07-25)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `wallet_screen.dart` (ProfilePageHeader + onBack/fromNotification; WebMenuBar desktop),
+premium fintech balance card (`wallet_card_widget.dart`), MoonJoin history + filter chip
+(`wallet_history_widget.dart`), premium Add Fund dialog (`add_fund_dialogue_widget.dart`) with "9PSB Virtual
+Account" label. Shared `history_item_widget.dart` gained isolated `moonjoinWallet` variant (Loyalty/default
+untouched). Shared `virtual_account_details_widget.dart`: scaleDown values (full account number) + premium
+inline "Copied" fade replacing the top snackbar (clipboard unchanged) — benefits all reuse sites.
+
+**Architecture preserved:** WalletController · ProfileController · SplashController lifecycle · repository ·
+service · APIs (`/wallet/transactions|add-fund|bonuses|virtual-account`) · models · validation · add-fund +
+payment/gateway flow · payment-return snackbar + `walletAccessToken` idempotency · pagination · filters ·
+refresh · navigation · currency/transaction calculations. No business-logic changes.
+
+**Payment investigation (recorded):** Wallet & Checkout consume `configModel.activePaymentMethodList`
+correctly — no frontend hardcoding (`config_model.dart:283` adds every gateway), no filtering (checkout's 9psb
+`where` is a separation, not removal). Live `/api/v1/config` returns all 3 gateways; runtime proved the model
+holds all 3. Remaining "only 9PSB" behaviour = stale local config cache when the network refresh is blocked by
+the legacy host's Imunify360 bot-protection and/or no cold restart after an Admin change → documented
+**Legacy Backend Limitation**. Config-lifecycle redesign deferred to MoonJoin World.
+
+**Runtime verification:** flutter analyze 0 issues; run64 full session (Wallet/Add Fund/Checkout) 0
+RenderFlex/overflow/subtype/null-check. Regression sweep: HistoryItemWidget variants isolated; Checkout VA
+card visually verified (full account number + instructions); ProfilePageHeader unchanged across all frozen
+pages. Temporary PAYDEBUG log added then removed (net-zero). Owner-approved.
+
+**Legacy / obsolete:** none newly obsolete. No deletions.

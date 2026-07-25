@@ -41,44 +41,43 @@ class WalletHistoryWidget extends StatelessWidget {
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(
                   'wallet_history'.tr,
-                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
+                  style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge),
                 ),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-                Text(
-                  filterName,
-                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
-                ),
-
+                if(filterName.isNotEmpty) ...[
+                  const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                  Text(
+                    filterName,
+                    style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+                  ),
+                ],
               ]),
 
               PopupMenuButton<dynamic>(
-                offset: const Offset(-20, 20),
+                offset: const Offset(-20, 40),
                 itemBuilder: (BuildContext context) => entryList,
                 onSelected: (dynamic value) {
                   walletController.setWalletFilerType(walletController.walletFilterList[value].value!);
                   walletController.getWalletTransactionList('1', false, walletController.type);
                 },
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-                    border: Border.all(color: Theme.of(context).disabledColor, width: 1),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall, right: Dimensions.paddingSizeExtraSmall, top: 2, bottom: 2),
-                    child: Row(children: [
-                      Text(
-                        'filter'.tr,
-                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault),
-                      ),
-
-                      const Icon(Icons.arrow_drop_down, size: 18),
-                    ]),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.tune_rounded, size: 16, color: Theme.of(context).primaryColor),
+                    const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                    Text(
+                      'filter'.tr,
+                      style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
+                    ),
+                    Icon(Icons.arrow_drop_down, size: 18, color: Theme.of(context).primaryColor),
+                  ]),
                 ),
               ),
 
@@ -97,7 +96,7 @@ class WalletHistoryWidget extends StatelessWidget {
             itemCount: walletController.transactionList!.length,
             padding: EdgeInsets.only(top: ResponsiveHelper.isDesktop(context) ? 28 : 25),
             itemBuilder: (context, index) {
-              return HistoryItemWidget(index: index, fromWallet: true, data: walletController.transactionList);
+              return HistoryItemWidget(index: index, fromWallet: true, data: walletController.transactionList, moonjoinWallet: true);
             },
           ) : NoDataScreen(text: 'no_data_found'.tr) : WalletShimmer(walletController: walletController),
 

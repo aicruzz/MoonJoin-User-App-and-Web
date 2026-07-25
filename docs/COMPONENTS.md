@@ -667,3 +667,19 @@ components. Business logic preserved: refCode source, exact SharePlus text (app 
 Clipboard + snackbar, exchange-rate display, auth, navigation. No controller/API/model/validation changes.
 `ExpandableBottomSheet` usage on this page → OBSOLETE — Pending Final Legacy Cleanup (package still used
 elsewhere; nothing deleted).
+
+### 🧊 My Wallet + Wallet History — `wallet_screen.dart` (FROZEN 2026-07-25, Phase 7)
+Presentation-only redesign to MoonJoin. `ProfilePageHeader` + premium fintech balance card + MoonJoin history
++ filter chip + premium Add Fund dialog ("9PSB Virtual Account" label; amount hidden for VA / shown for online
+gateways). Reuses `ProfilePageHeader`, `CustomButton`, `CustomTextField`, `NoDataScreen`, `WalletShimmer`,
+shared `HistoryItemWidget` (wallet variant), frozen `VirtualAccountDetailsWidget`. All wallet logic
+(controller/repo/service/APIs/models/validation/add-fund/payment/idempotency/pagination/filters) preserved.
+
+### `HistoryItemWidget` — variant map complete (FROZEN wallet variant 2026-07-25)
+ONE shared transaction row. Variants: `default` (legacy, retained for cleanup) · `moonjoinLoyalty:true`
+(Loyalty, frozen Phase 5) · `moonjoinWallet:true` (Wallet, frozen Phase 7). Isolated, no duplication.
+
+### `VirtualAccountDetailsWidget` — Phase 7 improvements (FOUNDATION, still frozen)
+scaleDown values (full account number, no truncation) + premium inline "Copied" fade (`_CopyButton`, no
+snackbar; clipboard unchanged). Applies to all reuse sites (Checkout, Profile ×3, Wallet). Single approved
+Virtual Account UI — unchanged elsewhere.
