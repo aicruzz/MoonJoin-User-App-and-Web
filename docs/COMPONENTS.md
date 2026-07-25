@@ -726,3 +726,13 @@ Get.back). Reuses `CustomButton`.
 (Edit Profile, My Address, Coupon, Loyalty, Refer & Earn, Notifications, Chat, Checkout, Parcel, rental
 favourite, …). Modernizing this single component updates every guest login prompt app-wide. NOT redesigned in
 Phase 8D — reserved for its own future "Guest User Experience" phase, coordinated with Sign In / Sign Up.
+
+### 🧊 Live Chat — Conversation List — `conversation_screen.dart` (FROZEN 2026-07-26, Phase 8E)
+Presentation-only redesign of the Conversation LIST to MoonJoin. `ProfilePageHeader` (mobile, showBack:
+!fromNavBar) / `WebMenuBar` (desktop) + premium conversation cards (avatar w/ soft green ring · bold name ·
+muted type · time · green unread badge, exact condition preserved) + `NoDataScreen` empty state. Reuses
+`ProfilePageHeader`, `WebMenuBar`, `NoDataScreen`, `PaginatedListView`, `ChatSearchFieldWidget`, `CustomImage`,
+`CustomInkWell`, `WebChatViewWidget`. All chat logic (ChatController/APIs/polling/pagination/search/unread/
+send-message/image-attachment/getChatRoute/refresh/FAB) preserved. **Chat Thread (message screen) intentionally
+untouched.** Card layout is generic (avatar·name·subtitle·time·unread) = official MoonJoin foundation for the
+future MoonJoin World messaging platform; websocket/live-sync can plug in without a redesign.

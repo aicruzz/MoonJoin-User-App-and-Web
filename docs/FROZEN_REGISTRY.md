@@ -9,6 +9,16 @@ redesign request.
 
 ## FROZEN SCREENS / SHELLS
 
+### 🧊 Live Chat — Conversation List — `conversation_screen.dart`
+- **File:** `lib/features/chat/screens/conversation_screen.dart`
+- **Status:** FROZEN — Phase 8E (Profile Modernization) · **Frozen on:** 2026-07-26
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin language. Presentation only.
+- **Scope:** the **Conversation List only**. The **Chat Thread (message screen, `ChatScreen` via `getChatRoute`)** remains intentionally **untouched** — its own future phase.
+- **What is frozen:** `CustomAppBar` → **`ProfilePageHeader`** (mobile, `showBack: !fromNavBar`) / `WebMenuBar` (desktop); **MoonJoin premium conversation card** (avatar with soft green ring · bold name · muted type subtitle · time · modernized green unread badge — exact unread condition preserved); empty state → **`NoDataScreen`**; desktop `WebChatViewWidget` untouched. Card layout is intentionally **generic** (avatar · name · subtitle · time · unread count) — the official MoonJoin visual foundation for the future MoonJoin World messaging platform; a future websocket/live-sync can plug in without a redesign.
+- **Reuses:** `ProfilePageHeader`, `WebMenuBar`, `NoDataScreen`, `PaginatedListView`, `RefreshIndicator`, `ChatSearchFieldWidget`, `CustomImage`, `CustomInkWell`, `WebChatViewWidget`.
+- **Preserved:** ChatController · repositories · services · APIs · polling · pagination · search · unread logic · message/conversation loading · send-message · image-attachment · `NotificationBodyModel` · `getChatRoute` · refresh · FAB · navigation. **No business-logic/backend changes.**
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
 ### 🧊 Logout confirmation — `ConfirmationDialog` (MoonJoin variant, Phase 8D)
 - **File:** `lib/common/widgets/confirmation_dialog.dart` (isolated variant); triggered from `menu_screen.dart` logout.
 - **Status:** FROZEN — Phase 8D (Profile Modernization) · **Frozen on:** 2026-07-25

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:sixam_mart/features/chat/controllers/chat_controller.dart';
 import 'package:sixam_mart/features/chat/enums/user_type_enum.dart';
 import 'package:sixam_mart/features/chat/widgets/chat_serach_field_widget.dart';
-import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart/features/notification/domain/models/notification_body_model.dart';
@@ -12,16 +11,18 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/date_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
+import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
 import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
+import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/features/chat/widgets/web_chat_view_widget.dart';
 
 class ConversationScreen extends StatefulWidget {
@@ -60,8 +61,10 @@ class _ConversationScreenState extends State<ConversationScreen> {
         conversation = chatController.conversationModel;
       }
 
+      final bool isDesktop = ResponsiveHelper.isDesktop(context);
       return Scaffold(
-        appBar: CustomAppBar(title: 'conversation_list'.tr, backButton: !widget.fromNavBar),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        appBar: isDesktop ? const WebMenuBar() : null,
         endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
         floatingActionButton: (chatController.conversationModel != null && !chatController.hasAdmin) && !ResponsiveHelper.isDesktop(context) ? FloatingActionButton.extended(
           label: SizedBox(
@@ -78,14 +81,18 @@ class _ConversationScreenState extends State<ConversationScreen> {
             notificationType: NotificationType.message, adminId: 0,
           ))),
         ) : null,
-        body: ResponsiveHelper.isDesktop(context) ? WebChatViewWidget(
+        body: isDesktop ? WebChatViewWidget(
           scrollController: _scrollController,
           conversation: conversation,
           chatController: chatController,
           searchController: _searchController,
           initCall: initCall,
-        ) : Padding(
-          padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+        ) : Column(children: [
+
+          ProfilePageHeader(title: 'conversation_list'.tr, showBack: !widget.fromNavBar),
+
+          Expanded(child: Padding(
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           child: Column(children: [
 
             (AuthHelper.isLoggedIn() && conversation != null && conversation.conversations != null
@@ -148,11 +155,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
                           type = conversation.conversations![index]!.senderType;
                         }
 
+                        // MoonJoin premium conversation card. Generic layout (avatar ·
+                        // name · subtitle · time · unread count) — no assumption about
+                        // the REST backend; a future websocket/live-sync can feed the
+                        // same shape without a UI redesign.
                         return Container(
-                          margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
-
+                          margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeDefault),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                            border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.12)),
                             boxShadow: const [BoxShadow(color: Colors.black12, spreadRadius: 1, blurRadius: 5)],
                           ),
                           child: CustomInkWell(
@@ -174,58 +186,67 @@ class _ConversationScreenState extends State<ConversationScreen> {
                               }
                             },
                             highlightColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
-                            radius: Dimensions.radiusSmall,
-                            child: Stack(children: [
-                              Padding(
-                                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                                child: Row(children: [
-                                  ClipOval(child: CustomImage(
+                            radius: Dimensions.radiusLarge,
+                            child: Padding(
+                              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                              child: Row(children: [
+
+                                // Premium avatar (soft green ring)
+                                Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.25), width: 1.5),
+                                  ),
+                                  child: ClipOval(child: CustomImage(
                                     height: 50, width: 50,
                                     image: '${user != null ? user.imageFullUrl : ''}',
                                   )),
-                                  const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                  Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                                    user != null ? Text(
-                                      '${user.fName} ${user.lName}', style: robotoMedium,
-                                    ) : Text('${type!.tr} ${'deleted'.tr}', style: robotoMedium),
-                                    const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-                                    user != null ? Text(
-                                      type!.tr,
-                                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-                                    ) : const SizedBox(),
-                                  ])),
-                                ]),
-                              ),
-
-                              Positioned(
-                                right: Get.find<LocalizationController>().isLtr ? 5 : null, bottom: 5, left: Get.find<LocalizationController>().isLtr ? null : 5,
-                                child: Text(
-                                  DateConverter.localDateToIsoStringAMPM(DateConverter.dateTimeStringToDate(
-                                      conversation.conversations![index]!.lastMessageTime!)),
-                                  style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeExtraSmall),
                                 ),
-                              ),
+                                const SizedBox(width: Dimensions.paddingSizeDefault),
 
-                              GetBuilder<ProfileController>(builder: (profileController) {
-                                return (profileController.userInfoModel != null && profileController.userInfoModel!.userInfo != null
-                                && conversation!.conversations![index]!.lastMessage!.senderId != profileController.userInfoModel!.userInfo!.id
-                                && conversation.conversations![index]!.unreadMessageCount! > 0) ? Positioned(
-                                  right: Get.find<LocalizationController>().isLtr ? 5 : null, top: 5, left: Get.find<LocalizationController>().isLtr ? null : 5,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                                    decoration: BoxDecoration(color: Theme.of(context).primaryColor, shape: BoxShape.circle),
-                                    child: Text(
-                                      conversation.conversations![index]!.unreadMessageCount.toString(),
-                                      style: robotoMedium.copyWith(color: Theme.of(context).cardColor, fontSize: Dimensions.fontSizeExtraSmall),
+                                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                                  Row(children: [
+                                    Expanded(child: user != null ? Text(
+                                      '${user.fName} ${user.lName}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
+                                    ) : Text('${type!.tr} ${'deleted'.tr}', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
+                                    const SizedBox(width: Dimensions.paddingSizeSmall),
+                                    Text(
+                                      DateConverter.localDateToIsoStringAMPM(DateConverter.dateTimeStringToDate(
+                                          conversation.conversations![index]!.lastMessageTime!)),
+                                      style: robotoRegular.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeExtraSmall),
                                     ),
-                                  ),
-                                ) : const SizedBox();
-                              }),
+                                  ]),
+                                  const SizedBox(height: 3),
 
-                            ]),
+                                  Row(children: [
+                                    Expanded(child: user != null ? Text(
+                                      type!.tr, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
+                                    ) : const SizedBox()),
+
+                                    // Unread badge — exact condition preserved.
+                                    GetBuilder<ProfileController>(builder: (profileController) {
+                                      return (profileController.userInfoModel != null && profileController.userInfoModel!.userInfo != null
+                                      && conversation!.conversations![index]!.lastMessage!.senderId != profileController.userInfoModel!.userInfo!.id
+                                      && conversation.conversations![index]!.unreadMessageCount! > 0) ? Container(
+                                        margin: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
+                                        constraints: const BoxConstraints(minWidth: 20),
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge)),
+                                        child: Text(
+                                          conversation.conversations![index]!.unreadMessageCount.toString(),
+                                          style: robotoBold.copyWith(color: Theme.of(context).cardColor, fontSize: Dimensions.fontSizeExtraSmall),
+                                        ),
+                                      ) : const SizedBox();
+                                    }),
+                                  ]),
+                                ])),
+                              ]),
+                            ),
                           ),
                         );
                       },
@@ -233,13 +254,14 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   )),
                 ),
               ),
-            ) : Center(child: Text('no_conversation_found'.tr)) : const Center(child: CircularProgressIndicator()) :  NotLoggedInScreen(callBack: (value){
+            ) : NoDataScreen(text: 'no_conversation_found'.tr) : const Center(child: CircularProgressIndicator()) :  NotLoggedInScreen(callBack: (value){
               initCall();
               setState(() {});
             })),
 
           ]),
-        ),
+        )),
+        ]),
       );
     });
   }

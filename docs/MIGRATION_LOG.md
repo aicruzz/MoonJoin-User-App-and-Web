@@ -2728,3 +2728,32 @@ prompt reused ~15× → its own future **Guest User Experience** phase (coordina
 BACKEND_INTEGRATION_QUEUE.md / FROZEN_REGISTRY notes.
 
 **Legacy / obsolete:** none newly obsolete. No deletions.
+
+---
+
+## Phase 8E — Live Chat (Conversation List) — FROZEN (2026-07-26)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin language (presentation only).
+**Scope:** Conversation LIST only. Chat Thread (message screen) intentionally UNTOUCHED — its own future phase.
+
+**Implementation:** `conversation_screen.dart` — `CustomAppBar` → `ProfilePageHeader` (mobile, showBack:
+!fromNavBar) / `WebMenuBar` (desktop); MoonJoin premium conversation cards (avatar w/ soft green ring · bold
+name · muted type · time · modernized green unread badge — exact unread condition preserved); empty →
+`NoDataScreen`; desktop `WebChatViewWidget` untouched.
+
+**Preserved (no changes):** ChatController · repositories · services · APIs · polling · pagination · search ·
+unread logic · message/conversation loading · send-message · image-attachment · NotificationBodyModel ·
+getChatRoute · refresh · FAB · navigation. No backend/business-logic changes.
+
+**Architecture note:** the new Conversation List card is the official MoonJoin visual foundation for the future
+MoonJoin World messaging platform — generic shape (avatar·name·subtitle·time·unread) so websocket/live-sync
+can replace the backend without another UI redesign.
+
+**Verification:** flutter analyze clean (0 issues; removed 1 unused import + 1 redundant `!`); runtime run70 0
+RenderFlex/overflow/subtype/null-check; on-device — loading, list, open conversation→thread+back, search
+(filter+clear), pagination, refresh, back nav, FAB — owner-approved. Desktop verification pending/non-blocking.
+
+**Future phase (documented, NOT implemented): MoonJoin Chat Thread Experience** — message thread UI, chat
+bubbles, attachments, typing indicators, read receipts, delivery status, voice/image/file presentation, future
+websocket integration + MoonJoin World messaging architecture.
+
+**Legacy / obsolete:** none newly obsolete. No deletions.
