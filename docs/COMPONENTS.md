@@ -683,3 +683,33 @@ ONE shared transaction row. Variants: `default` (legacy, retained for cleanup) �
 scaleDown values (full account number, no truncation) + premium inline "Copied" fade (`_CopyButton`, no
 snackbar; clipboard unchanged). Applies to all reuse sites (Checkout, Profile ×3, Wallet). Single approved
 Virtual Account UI — unchanged elsewhere.
+
+### 🧊 Notifications — `notification_screen.dart` (FROZEN 2026-07-25, Phase 8A)
+Presentation-only redesign to MoonJoin. `ProfilePageHeader` (mobile, onBack keeps fromNotification) /
+`WebMenuBar` (desktop) + MoonJoin notification cards. Reuses `ProfilePageHeader`, `NoDataScreen`,
+`CustomImage`, `CustomAssetImageWidget`, `FooterView`, `WebScreenTitleWidget`. All notification logic
+(NotificationController / NotificationService / `/customer/notifications` / NotificationModel / local unread
+tracking / sorting / refresh / detail sheet+dialog / navigation) preserved.
+
+**Notification card component (`_notificationCard`) — unread/read states:** one card style with a green
+type-icon chip · title · 2-line body · time · optional push image.
+- **Unread** (id NOT in local `notificationIdList`): green unread **dot** + bold title + soft green-tint
+  background + green border + soft shadow.
+- **Read** (id in list after tap → `addSeenNotificationId`): flat card, muted title/body, no dot.
+Unread state is derived ONLY from the existing local id-list — no backend unread field/logic added.
+
+### 🧊 Help & Support — `support_screen.dart` (FROZEN 2026-07-25, Phase 8B)
+Presentation-only redesign to MoonJoin. `ProfilePageHeader` (mobile) / `WebMenuBar` (desktop) + support hero +
+MoonJoin **contact cards** (`_contactCard`: brand-green icon chip · title · info · chevron) for Email/Call/
+Address. Reuses `ProfilePageHeader`, `FooterView`, `WebMenuBar`. Preserves SplashController config values +
+tel:/mailto: launches (email made robust: canLaunch + externalApplication + fallback). No API/controller/model
+changes; no FAQ/ticket/support-API added. `support_button_widget.dart` = OBSOLETE — Pending Final Legacy
+Cleanup (superseded; not deleted).
+
+### 🧊 HTML Container — `html_viewer_screen.dart` (FROZEN 2026-07-25, Phase 8C)
+ONE reusable MoonJoin HTML container. Presentation-only: `ProfilePageHeader` (mobile, title per HtmlType) /
+`WebMenuBar` (desktop) + server HTML (`HtmlWidget`) wrapped in a MoonJoin card; loading spinner + `NoDataScreen`
+empty state. **A single screen serves ALL HTML pages** — About Us, Terms & Conditions, Privacy Policy, Refund
+Policy, Shipping Policy, Cancellation Policy (+ any future HtmlType) — no per-page widget, no duplication.
+Reused foundations: `ProfilePageHeader`, `WebMenuBar`, `FooterView`, `MenuDrawer`, `WebScreenTitleWidget`,
+`NoDataScreen`. Preserved: HtmlController / HtmlService / HTML content API / renderer / navigation.

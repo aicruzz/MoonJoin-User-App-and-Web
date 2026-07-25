@@ -2637,3 +2637,69 @@ card visually verified (full account number + instructions); ProfilePageHeader u
 pages. Temporary PAYDEBUG log added then removed (net-zero). Owner-approved.
 
 **Legacy / obsolete:** none newly obsolete. No deletions.
+
+---
+
+## Phase 8A — Notifications — FROZEN (2026-07-25)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `notification_screen.dart` rewritten — legacy `CustomAppBar` replaced with
+`ProfilePageHeader` (mobile, onBack preserves fromNotification) / `WebMenuBar` (desktop); MoonJoin notification
+cards (`_notificationCard`) with a green type-icon chip, title, 2-line body, time, optional push image; unread
+visual (green dot + bold + soft green tint + border + shadow) vs read (flat/muted) — derived ONLY from the
+existing local `notificationIdList` (no backend unread system).
+
+**Existing business logic untouched:** NotificationController · NotificationService · `GET
+/customer/notifications` · NotificationModel · local unread tracking (getSeenNotificationIdList /
+addSeenNotificationId / saveSeenNotificationCount) · date sorting/grouping · refresh · empty state
+(NoDataScreen) · detail flows (NotificationBottomSheet / NotificationDialogWidget) · PopScope + fromNotification.
+
+**Verification:** flutter analyze clean (0 issues); runtime run65 0 RenderFlex/overflow/subtype/null-check;
+mobile QA completed (load, tap→bottom sheet + unread→read transition, pull-to-refresh, back + deep-link) —
+owner-approved. No regressions. Desktop verification pending/non-blocking.
+
+**Legacy / obsolete:** none newly obsolete. No deletions.
+
+---
+
+## Phase 8B — Help & Support — FROZEN (2026-07-25)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `support_screen.dart` rewritten — `CustomAppBar` → `ProfilePageHeader` (mobile) /
+`WebMenuBar` (desktop); support illustration hero + "We're here to help"; MoonJoin contact cards
+(Email/Call/Address) with brand-green icon chips. Email launch made robust (canLaunchUrlString +
+LaunchMode.externalApplication + graceful fallback; same intent as the Call action).
+
+**Preserved:** SplashController config (email/phone/address) · tel:/mailto: launches · desktop
+`WebSupportScreen` · navigation. No controller/repository/service/API/model changes. No FAQ/ticket/live-chat/
+support-API added.
+
+**Verification:** flutter analyze clean (0 issues); runtime run67 0 RenderFlex/overflow/subtype/null-check;
+mobile QA (page opens, header/back nav, contact data renders from real config, email/call actions) —
+owner-approved. No regressions. Desktop verification pending/non-blocking. Simulator note: `mailto:` has no
+handler on the simulator (no Mail app) → graceful fallback; opens the mail composer on real devices.
+
+**Legacy / obsolete:** `support_button_widget.dart` → OBSOLETE — Pending Final Legacy Cleanup (zero call
+sites; not deleted). No other deletions.
+
+---
+
+## Phase 8C — HTML Container — FROZEN (2026-07-25)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `html_viewer_screen.dart` rewritten as ONE reusable MoonJoin HTML container — legacy
+`CustomAppBar` replaced with `ProfilePageHeader` (mobile, title per HtmlType) / `WebMenuBar` (desktop); server
+HTML wrapped in a MoonJoin card (radiusLarge + border/shadow + readable typography); loading spinner +
+`NoDataScreen` empty state; title mapping consolidated into one `_title` getter. Applies to all HtmlType routes
+(About Us, Terms & Conditions, Privacy Policy, Refund Policy, Shipping Policy, Cancellation Policy).
+
+**Preserved:** HtmlController.getHtmlText · HtmlService · HTML content API/endpoints · HtmlType mapping ·
+`flutter_widget_from_html_core` renderer (textStyle/key/onTapUrl→launchUrlString) · navigation · loading.
+No controller/service/API/model changes. Server HTML rendering preserved.
+
+**Verification:** flutter analyze clean (removed one unreachable `default` in the exhaustive HtmlType switch);
+runtime run68 0 RenderFlex/overflow/subtype/null-check; all HTML routes verified on-device (MoonJoin header,
+HTML renders in card, loading state, back nav) — owner-approved. Desktop structure preserved (WebMenuBar +
+WebScreenTitleWidget + FooterView); desktop visual verification pending/non-blocking.
+
+**Legacy / obsolete:** none newly obsolete. No deletions.

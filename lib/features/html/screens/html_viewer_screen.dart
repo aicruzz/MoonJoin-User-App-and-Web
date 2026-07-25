@@ -1,12 +1,15 @@
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:sixam_mart/features/html/controllers/html_controller.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
+import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/html_type.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
+import 'package:sixam_mart/common/widgets/no_data_screen.dart';
+import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/common/widgets/web_page_title_widget.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -28,68 +31,68 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
     Get.find<HtmlController>().getHtmlText(widget.htmlType);
   }
 
+  // Single title mapping reused by header + web title (unchanged semantics).
+  String get _title {
+    switch(widget.htmlType) {
+      case HtmlType.termsAndCondition: return 'terms_conditions'.tr;
+      case HtmlType.aboutUs: return 'about_us'.tr;
+      case HtmlType.privacyPolicy: return 'privacy_policy'.tr;
+      case HtmlType.shippingPolicy: return 'shipping_policy'.tr;
+      case HtmlType.refund: return 'refund_policy'.tr;
+      case HtmlType.cancellation: return 'cancellation_policy'.tr;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = ResponsiveHelper.isDesktop(context);
     return Scaffold(
-      appBar: CustomAppBar(title: widget.htmlType == HtmlType.termsAndCondition ? 'terms_conditions'.tr
-          : widget.htmlType == HtmlType.aboutUs ? 'about_us'.tr : widget.htmlType == HtmlType.privacyPolicy
-          ? 'privacy_policy'.tr : widget.htmlType == HtmlType.shippingPolicy ? 'shipping_policy'.tr
-          : widget.htmlType == HtmlType.refund ? 'refund_policy'.tr :  widget.htmlType == HtmlType.cancellation
-          ? 'cancellation_policy'.tr : 'no_data_found'.tr),
-      endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
-      body: GetBuilder<HtmlController>(builder: (htmlController) {
-        return Center(
-          child: htmlController.htmlText != null ? SingleChildScrollView(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: isDesktop ? const WebMenuBar() : null,
+      endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
+      body: Column(children: [
+
+        if(!isDesktop) ProfilePageHeader(title: _title),
+
+        Expanded(child: GetBuilder<HtmlController>(builder: (htmlController) {
+          if(htmlController.htmlText == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if(htmlController.htmlText!.trim().isEmpty) {
+            return Center(child: NoDataScreen(text: 'no_data_found'.tr, showFooter: true));
+          }
+          return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                WebScreenTitleWidget( title: widget.htmlType == HtmlType.termsAndCondition ? 'terms_conditions'.tr
-                  : widget.htmlType == HtmlType.aboutUs ? 'about_us'.tr : widget.htmlType == HtmlType.privacyPolicy
-                  ? 'privacy_policy'.tr : widget.htmlType == HtmlType.shippingPolicy ? 'shipping_policy'.tr
-                  : widget.htmlType == HtmlType.refund ? 'refund_policy'.tr :  widget.htmlType == HtmlType.cancellation
-                  ? 'cancellation_policy'.tr : 'no_data_found'.tr),
+            child: Column(children: [
+              WebScreenTitleWidget(title: _title),
 
-                FooterView(child: Ink(
-                  width: Dimensions.webMaxWidth,
+              FooterView(child: Center(child: Container(
+                width: Dimensions.webMaxWidth,
+                margin: EdgeInsets.all(isDesktop ? 0 : Dimensions.paddingSizeDefault),
+                decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                  child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                  border: Border.all(color: Theme.of(context).disabledColor.withValues(alpha: 0.12)),
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                ),
+                padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+                child: HtmlWidget(
+                  htmlController.htmlText ?? '',
+                  key: Key(widget.htmlType.toString()),
+                  textStyle: robotoRegular.copyWith(
+                    color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.75),
+                    fontSize: Dimensions.fontSizeSmall,
+                  ),
+                  onTapUrl: (String url) {
+                    return launchUrlString(url);
+                  },
+                ),
+              ))),
+            ]),
+          );
+        })),
 
-                    // (htmlController.htmlText!.contains('<ol>') || htmlController.htmlText!.contains('<ul>')) ? HtmlWidget(
-                    //   htmlController.htmlText ?? '',
-                    //   key: Key(widget.htmlType.toString()),
-                    //   onTapUrl: (String url) {
-                    //     return launchUrlString(url, mode: LaunchMode.externalApplication);
-                    //   },
-                    // ) : SelectableHtml(
-                    //   data: htmlController.htmlText, shrinkWrap: true,
-                    //   onLinkTap: (String? url, RenderContext context, Map<String, String> attributes, element) {
-                    //     if(url!.startsWith('www.')) {
-                    //       url = 'https://$url';
-                    //     }
-                    //     if (kDebugMode) {
-                    //       print('Redirect to url: $url');
-                    //     }
-                    //     html.window.open(url, "_blank");
-                    //   },
-                    // ),
-
-                    HtmlWidget(
-                      htmlController.htmlText ?? '',
-                      key: Key(widget.htmlType.toString()),
-                      textStyle: robotoRegular.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.6)),
-                      onTapUrl: (String url){
-                        return launchUrlString(url);
-                      },
-                    ),
-
-                  ]),
-                ))
-              ],
-            ),
-          ) : const CircularProgressIndicator(),
-        );
-      }),
+      ]),
     );
   }
 }

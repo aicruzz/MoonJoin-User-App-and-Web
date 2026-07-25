@@ -9,6 +9,36 @@ redesign request.
 
 ## FROZEN SCREENS / SHELLS
 
+### 🧊 HTML Container — `html_viewer_screen.dart`
+- **File:** `lib/features/html/screens/html_viewer_screen.dart`
+- **Status:** FROZEN — Phase 8C (Profile Modernization) · **Frozen on:** 2026-07-25
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **What is frozen:** ONE reusable MoonJoin HTML container serving **all** `HtmlType` policy routes — **About Us · Terms & Conditions · Privacy Policy · Refund Policy · Shipping Policy · Cancellation Policy** (and any future `HtmlType` page on the same route). `CustomAppBar` → **`ProfilePageHeader`** (mobile, title per `HtmlType` via `_title`) / `WebMenuBar` (desktop). Server HTML (`HtmlWidget`) wrapped in a **MoonJoin card** (radiusLarge · soft border/shadow · readable typography). Loading = spinner; empty = `NoDataScreen`.
+- **Reuses:** `ProfilePageHeader`, `WebMenuBar`, `FooterView`, `MenuDrawer`, `WebScreenTitleWidget`, `NoDataScreen`. One screen — no per-page widget, no duplication.
+- **Preserved:** `HtmlController.getHtmlText` · `HtmlService` · HTML content API/endpoints · `HtmlType` mapping · `flutter_widget_from_html_core` renderer (`textStyle`/`key`/`onTapUrl`→`launchUrlString`) · navigation · loading logic. **No controller/repository/service/API/model changes.**
+- **Content note:** page content (and any legacy "6amMart" wording) is **backend HTML** → MoonJoin World / CMS concern; frontend controls chrome only.
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
+### 🧊 Help & Support — `support_screen.dart`
+- **File:** `lib/features/support/screens/support_screen.dart`
+- **Status:** FROZEN — Phase 8B (Profile Modernization) · **Frozen on:** 2026-07-25
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **What is frozen:** `CustomAppBar` → **`ProfilePageHeader`** (mobile) / `WebMenuBar` (desktop) · support illustration hero + "We're here to help" · **MoonJoin contact cards** (`_contactCard`: brand-green icon chip · title · info · chevron) for **Email / Call / Address**.
+- **Reuses:** `ProfilePageHeader`, `FooterView`, `WebMenuBar`, `MenuDrawer`, existing support illustration.
+- **Preserved:** `SplashController` config values (email/phone/address) · `tel:` call launch · `mailto:` email launch (made robust: `canLaunchUrlString` + `LaunchMode.externalApplication` + graceful fallback, same intent) · desktop `WebSupportScreen` · navigation. **No controller/repository/service/API/model changes. No FAQ/ticket/live-chat/support-API added.**
+- **Obsolete (retained):** `support/widgets/support_button_widget.dart` → **OBSOLETE — Pending Final Legacy Cleanup** (superseded by the MoonJoin contact cards; zero call sites; not deleted).
+- **Note:** on the iOS Simulator `mailto:` has no handler (no Mail app) → graceful fallback; opens the mail composer on real devices.
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
+### 🧊 Notifications — `notification_screen.dart`
+- **File:** `lib/features/notification/screens/notification_screen.dart`
+- **Status:** FROZEN — Phase 8A (Profile Modernization) · **Frozen on:** 2026-07-25
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **What is frozen:** `CustomAppBar` → **`ProfilePageHeader`** migration (`onBack` preserves `fromNotification` deep-link) / `WebMenuBar` desktop · **MoonJoin notification card** (`_notificationCard`: green type-icon chip · title · 2-line body · time · optional push image) · **unread visual system** (unread = green dot + bold title + soft green tint + border + shadow; read = flat/muted) built **only** from the existing local `notificationIdList`.
+- **Reuses:** `ProfilePageHeader`, `NoDataScreen`, `CustomImage`, `CustomAssetImageWidget`, `FooterView`, `WebScreenTitleWidget`.
+- **Preserved:** `NotificationController` · `NotificationService` · `GET /customer/notifications` · `NotificationModel` · local unread tracking (`getSeenNotificationIdList`/`addSeenNotificationId`/`saveSeenNotificationCount`) · date sorting/grouping · refresh · empty state · `NotLoggedInScreen` · detail flows (`NotificationBottomSheet` mobile / `NotificationDialogWidget` desktop) · `PopScope`+`fromNotification` navigation. **No backend unread system added; no controller/repo/service/API/model changes.**
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
 ### 🧊 My Wallet + Wallet History — `wallet_screen.dart`
 - **Files:** `lib/features/wallet/screens/wallet_screen.dart` (+ `wallet_card_widget.dart`, `wallet_history_widget.dart`, `add_fund_dialogue_widget.dart`)
 - **Status:** FROZEN — Phase 7 (Profile Modernization) · **Frozen on:** 2026-07-25

@@ -833,3 +833,21 @@ hardcoding, no filtering (proof: `config_model.dart:283` adds every gateway; che
 Action: **do NOT patch the legacy backend.** The correct config lifecycle (TTL, version/ETag, segmented
 config, push invalidation, foreground refresh) belongs to **MoonJoin World** and its sync client. Interim: a
 network not challenged by Imunify (VPN) loads all gateways correctly.
+
+---
+
+## Help & Support — future capabilities (Phase 8B audit; documentation only, DO NOT implement)
+Current Help & Support = static contact info (email/phone/address) from config. Future enhancements belong to
+**MoonJoin World** (new endpoints):
+1. **FAQ / knowledge base** (searchable articles).
+2. **Support ticket system** (create/track tickets).
+3. **In-app live support** integration.
+Not built now; frontend has no FAQ/ticket/support API.
+
+---
+
+## HTML pages — legacy content/branding limitation (Phase 8C; documentation only)
+The HTML container (About/Terms/Privacy/Refund/Shipping/Cancellation) renders **backend-provided HTML**. Any
+remaining "6amMart" wording or outdated branding lives in the **backend content**, not the frontend — the
+frontend controls presentation/chrome only. **MoonJoin World** will own future CMS / content management (and
+should ship MoonJoin-branded policy content). No frontend action; do not patch legacy backend content.
