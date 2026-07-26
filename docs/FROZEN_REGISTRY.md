@@ -9,6 +9,16 @@ redesign request.
 
 ## FROZEN SCREENS / SHELLS
 
+### 🧊 Settings — `setting_page.dart`
+- **File:** `lib/features/profile/screens/setting_page.dart` (+ isolated variants in `notification_status_change_bottom_sheet.dart` and chrome polish in `language_bottom_sheet_widget.dart`)
+- **Status:** FROZEN — Phase 8G (Profile Modernization) · **Frozen on:** 2026-07-26
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin Profile language. Presentation only.
+- **What is frozen:** `CustomAppBar` → **`ProfilePageHeader`** (mobile) / `WebMenuBar` (desktop); MoonJoin surface. **Rows reuse the FROZEN `ProfileButtonWidget` unchanged** (Language selector · Dark Mode toggle · Notification toggle [gated by `isLoggedIn`, pre-existing] · Version). **Settings now owns the `LanguageBottomSheetWidget` experience** (MoonJoin chrome polish; only call site). The **`NotificationStatusChangeBottomSheet`** gets an **isolated `moonjoin` Settings-only variant** (icon chip · "Are you sure?" · Cancel + accent Confirm; red=disable/green=enable).
+- **Reuses:** `ProfilePageHeader`, `WebMenuBar`, `ProfileButtonWidget` (frozen, unchanged), `LanguageCardWidget` (shared, unchanged), `CustomButton`.
+- **Isolation (Shared Widget Protection):** `NotificationStatusChangeBottomSheet.moonjoin` defaults `false` → `profile_screen.dart` + `web_profile_widget.dart` keep the legacy sheet unchanged; only Settings passes `moonjoin: true`.
+- **Preserved:** `LocalizationController` · `ThemeController` · `AuthController` (notification toggle + `notificationLoading` + persistence) · `setLanguage`/`saveCacheLanguage`/`searchSelectedLanguage` · dark-mode toggle · navigation · version. **No controller/repo/service/API/model/persistence/business-logic changes. No Guest/Auth entanglement.**
+- **Rule:** Presentation frozen. Do not restyle without product-owner approval.
+
 ### 🧊 Live Chat — Conversation List — `conversation_screen.dart`
 - **File:** `lib/features/chat/screens/conversation_screen.dart`
 - **Status:** FROZEN — Phase 8E (Profile Modernization) · **Frozen on:** 2026-07-26

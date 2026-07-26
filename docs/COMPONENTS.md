@@ -736,3 +736,18 @@ muted type · time · green unread badge, exact condition preserved) + `NoDataSc
 send-message/image-attachment/getChatRoute/refresh/FAB) preserved. **Chat Thread (message screen) intentionally
 untouched.** Card layout is generic (avatar·name·subtitle·time·unread) = official MoonJoin foundation for the
 future MoonJoin World messaging platform; websocket/live-sync can plug in without a redesign.
+
+### 🧊 Settings — `setting_page.dart` (FROZEN 2026-07-26, Phase 8G)
+Presentation-only redesign to MoonJoin. `ProfilePageHeader` (mobile) / `WebMenuBar` (desktop); rows reuse the
+FROZEN `ProfileButtonWidget` UNCHANGED (Language selector · Dark Mode · Notification [isLoggedIn-gated] ·
+Version). Settings owns `LanguageBottomSheetWidget` (MoonJoin chrome; `LanguageCardWidget` reused unchanged;
+Update logic preserved). `NotificationStatusChangeBottomSheet` gets an isolated `moonjoin` Settings-only
+variant (default false → profile_screen + web_profile keep legacy). All logic (Localization/Theme/Auth
+notification toggle + persistence) preserved.
+
+### `NotificationStatusChangeBottomSheet` — isolated MoonJoin Settings variant (Phase 8G)
+`lib/features/profile/widgets/notification_status_change_bottom_sheet.dart` — additive presentation-only
+`moonjoin` flag (default false). `true` → MoonJoin sheet (icon chip · "Are you sure?" · Cancel + accent Confirm;
+red=disable/green=enable). Callbacks unchanged (`setNotificationActive`/`notificationLoading`/`Get.back`). Only
+Settings passes it; the other 2 call sites (profile_screen, web_profile_widget) stay legacy. Shared Widget
+Protection enforced — no global change.

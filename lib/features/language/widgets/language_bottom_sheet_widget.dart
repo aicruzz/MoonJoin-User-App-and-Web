@@ -42,26 +42,26 @@ class _LanguageBottomSheetWidgetState extends State<LanguageBottomSheetWidget> {
             Text('choose_your_language'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
             const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
-            Text('choose_your_language_to_proceed'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
+            Text('choose_your_language_to_proceed'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor)),
 
           ]),
-          const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+          const SizedBox(height: Dimensions.paddingSizeLarge),
 
           Flexible(
-            child: SingleChildScrollView(
-              child: ListView.builder(
-                itemCount: localizationController.languages.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
-                itemBuilder: (context, index) {
-                  return LanguageCardWidget(
+            child: ListView.builder(
+              itemCount: localizationController.languages.length,
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
+                  child: LanguageCardWidget(
                     languageModel: localizationController.languages[index],
                     localizationController: localizationController,
                     index: index, fromBottomSheet: true,
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           ),
 

@@ -2757,3 +2757,37 @@ bubbles, attachments, typing indicators, read receipts, delivery status, voice/i
 websocket integration + MoonJoin World messaging architecture.
 
 **Legacy / obsolete:** none newly obsolete. No deletions.
+
+---
+
+## Phase 8G — Settings — FROZEN (2026-07-26)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin Profile language (presentation only).
+
+**Implementation:** `setting_page.dart` — `CustomAppBar` → `ProfilePageHeader` (mobile) / `WebMenuBar`
+(desktop); rows reuse the FROZEN `ProfileButtonWidget` UNCHANGED (Language selector, Dark Mode, Notification
+[isLoggedIn-gated, pre-existing], Version). `LanguageBottomSheetWidget` chrome modernized to MoonJoin
+(`LanguageCardWidget` reused unchanged; Update logic preserved) — Settings owns it (only call site).
+`NotificationStatusChangeBottomSheet` gained an isolated `moonjoin` Settings-only variant (default false → the
+other 2 call sites profile_screen + web_profile_widget stay legacy).
+
+**Preserved:** LocalizationController · ThemeController · AuthController (notification toggle + notificationLoading
++ persistence) · setLanguage/saveCacheLanguage/searchSelectedLanguage · dark-mode toggle · navigation · version.
+No controller/repo/service/API/model/persistence/business-logic changes. No Guest/Auth entanglement.
+
+**Verification:** flutter analyze clean (settings + both sheets + the 2 other notification call sites, 0 issues);
+runtime run73 0 Settings/Notification/RenderFlex/subtype/null-check (12 log lines = 6 benign APNS-simulator +
+startup null-check noise); on-device — Settings page + Notification MoonJoin sheet (red disable, Cancel/Confirm)
++ Language MoonJoin sheet (cards + Update) all verified. Owner-approved.
+
+**Permanent architecture decisions recorded:** Settings owns the LanguageBottomSheetWidget experience;
+NotificationStatusChangeBottomSheet uses an isolated MoonJoin Settings variant only; Shared Widget Protection
+enforced; ProfileButtonWidget = frozen foundation; LanguageCardWidget = shared frozen foundation.
+
+**Legacy / obsolete:** none newly obsolete. No deletions.
+
+## Phase 8F — Language (onboarding screen) — STATUS: IMPLEMENTED, NOT FROZEN
+`ChooseLanguageScreen` (`language_screen.dart`) is implemented (presentation-only; menu = ProfilePageHeader,
+first-run = onboarding identity preserved), analyze-clean, runtime-clean, but **visual verification is pending**
+on its natural entry point (fresh install / onboarding / drawer). Deliberately **NOT frozen** per owner
+instruction; to be verified + frozen later. The Settings language bottom sheet (a different widget) belongs to
+Phase 8G (above).

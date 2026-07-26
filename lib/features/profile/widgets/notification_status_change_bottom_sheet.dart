@@ -9,10 +9,18 @@ import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 
 class NotificationStatusChangeBottomSheet extends StatelessWidget {
-  const NotificationStatusChangeBottomSheet({super.key});
+  /// Presentation-only MoonJoin variant (Phase 8G). When true (Settings only) the
+  /// sheet renders in the MoonJoin language. Default false keeps the existing
+  /// appearance used by profile_screen + web_profile_widget, unchanged. Callbacks/
+  /// controllers/logic are identical.
+  final bool moonjoin;
+  const NotificationStatusChangeBottomSheet({super.key, this.moonjoin = false});
 
   @override
   Widget build(BuildContext context) {
+    if(moonjoin) {
+      return _moonjoinSheet(context);
+    }
     return Container(
       width: 500,
       padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
@@ -83,6 +91,79 @@ class NotificationStatusChangeBottomSheet extends StatelessWidget {
 
           ]),
         );
+      }),
+    );
+  }
+
+  // ── MoonJoin premium notification-toggle sheet (isolated Settings variant) ──
+  // Same callbacks: Confirm → setNotificationActive(!notification); Cancel → back.
+  Widget _moonjoinSheet(BuildContext context) {
+    final bool isDesktop = ResponsiveHelper.isDesktop(context);
+    return Container(
+      width: 500,
+      padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: isDesktop ? BorderRadius.circular(Dimensions.radiusExtraLarge) : const BorderRadius.only(
+          topLeft: Radius.circular(Dimensions.radiusExtraLarge), topRight: Radius.circular(Dimensions.radiusExtraLarge),
+        ),
+      ),
+      child: GetBuilder<AuthController>(builder: (authController) {
+        final bool enabling = !authController.notification;
+        final Color accent = enabling ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.error;
+        return SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+
+          isDesktop
+              ? Align(alignment: Alignment.topRight, child: InkWell(
+                  onTap: () => Get.back(), borderRadius: BorderRadius.circular(30),
+                  child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.clear, size: 20)),
+                ))
+              : Container(
+                  height: 5, width: 40,
+                  decoration: BoxDecoration(color: Theme.of(context).disabledColor.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10)),
+                ),
+          const SizedBox(height: Dimensions.paddingSizeLarge),
+
+          Container(
+            height: 64, width: 64, alignment: Alignment.center,
+            decoration: BoxDecoration(color: accent.withValues(alpha: 0.10), shape: BoxShape.circle),
+            child: Icon(enabling ? Icons.notifications_active_rounded : Icons.notifications_off_rounded, color: accent, size: 30),
+          ),
+          const SizedBox(height: Dimensions.paddingSizeDefault),
+
+          Text('are_you_sure'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge), textAlign: TextAlign.center),
+          const SizedBox(height: Dimensions.paddingSizeSmall),
+
+          Text(
+            enabling ? 'you_want_to_enable_notification'.tr : 'you_want_to_disable_notification'.tr,
+            style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).hintColor), textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+          Row(children: [
+            Expanded(child: TextButton(
+              onPressed: () => Get.back(),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 52), padding: EdgeInsets.zero,
+                side: BorderSide(color: Theme.of(context).disabledColor.withValues(alpha: 0.4)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+              ),
+              child: Text('cancel'.tr, style: robotoBold.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color)),
+            )),
+            const SizedBox(width: Dimensions.paddingSizeDefault),
+            Expanded(child: CustomButton(
+              buttonText: 'confirm'.tr,
+              color: accent,
+              isLoading: authController.notificationLoading,
+              radius: Dimensions.radiusDefault, height: 52,
+              onPressed: () async {
+                await authController.setNotificationActive(!authController.notification);
+                Get.back();
+              },
+            )),
+          ]),
+
+        ]));
       }),
     );
   }
