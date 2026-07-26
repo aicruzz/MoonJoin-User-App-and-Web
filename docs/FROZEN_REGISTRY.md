@@ -9,6 +9,17 @@ redesign request.
 
 ## FROZEN SCREENS / SHELLS
 
+### 🧊 Guest Foundation — `NotLoggedInScreen`
+- **File:** `lib/common/widgets/not_logged_in_screen.dart`
+- **Status:** FROZEN — Phase 9B (Guest User Experience) · **Frozen on:** 2026-07-26
+- **Design authority:** No dedicated Figma/ui-designs image → reproduces the frozen MoonJoin language. Presentation only.
+- **What it is:** THE single, permanent **MoonJoin Guest Foundation** — the one shared not-logged-in guard rendered by ALL ~14 protected user surfaces (Wallet, Coupon, My Address, Loyalty, Refer & Earn, Notifications, Chat, Edit Profile, Checkout, Parcel, …). Redesigned **in place, Option A — one shared implementation, NO isolated variants.** Layout: soft-green MoonJoin halo (168px, `primaryColor` @ 8% alpha) around `Images.guest` (110px) → bold `you_are_not_logged_in` → hint `please_login_to_continue` → green `CustomButton` "login" (width 240, `radiusLarge`, `Icons.login_rounded`). `Dimensions.*` tokens replace the old MediaQuery-fraction sizing; `SingleChildScrollView + FooterView` host wrapper kept. **No secondary CTA.**
+- **Reuses:** `CustomButton`, `FooterView`, `Images.guest`, existing i18n keys (`you_are_not_logged_in`, `please_login_to_continue`, `login`).
+- **Shared Widget Protection:** this IS the shared foundation — the redesign is intentionally global. The single param `callBack(bool success)` is unchanged, so all ~14 call sites compile untouched. Future modifications MUST preserve: the **callback contract**, the **navigation contract**, the **desktop dialog flow**, and the **mobile login flow**. No isolated variants. No business-logic changes.
+- **Preserved (verbatim):** Login `onPressed` — mobile `Get.toNamed(RouteHelper.getSignInRoute(Get.currentRoute))` · desktop `AuthDialogWidget(exitFromApp:false, backFromThis:true)` then `callBack(true)` · `OrderController.showRunningOrders()` guard · trailing `callBack(true)` (return-after-login refresh). Untouched: `AuthController` · session · token · Firebase · OTP · guest login · social login · `RouteHelper` · navigation · repositories · APIs · models · services.
+- **Runtime verification:** `flutter analyze` clean · guest **Wallet** verified · guest **My Address** verified · 0 exceptions/overflow on guest surfaces. (The unrelated `CachedNetworkImage` "null host" log = pre-existing null-avatar on the logged-in profile, NOT caused by Guest UX — this screen uses a bundled `Image.asset`.)
+- **Rule:** Presentation frozen. Do not restyle, fork, or add variants without product-owner approval.
+
 ### 🧊 Settings — `setting_page.dart`
 - **File:** `lib/features/profile/screens/setting_page.dart` (+ isolated variants in `notification_status_change_bottom_sheet.dart` and chrome polish in `language_bottom_sheet_widget.dart`)
 - **Status:** FROZEN — Phase 8G (Profile Modernization) · **Frozen on:** 2026-07-26

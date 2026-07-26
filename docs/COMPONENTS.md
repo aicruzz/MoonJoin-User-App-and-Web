@@ -721,11 +721,20 @@ primary "Logout"). Used ONLY by the logout call in `menu_screen.dart`. The other
 dialog. No duplicate dialog; callbacks/behaviour identical (green Logout → onYesPressed cleanup; Cancel →
 Get.back). Reuses `CustomButton`.
 
-### ⚠️ Shared foundation identified — `NotLoggedInScreen` (Guest User Experience; future phase)
-`lib/common/widgets/not_logged_in_screen.dart` — ONE shared guest/not-logged-in prompt reused in ~15 locations
-(Edit Profile, My Address, Coupon, Loyalty, Refer & Earn, Notifications, Chat, Checkout, Parcel, rental
-favourite, …). Modernizing this single component updates every guest login prompt app-wide. NOT redesigned in
-Phase 8D — reserved for its own future "Guest User Experience" phase, coordinated with Sign In / Sign Up.
+### 🧊 Guest Foundation — `NotLoggedInScreen` (FROZEN 2026-07-26, Phase 9B)
+`lib/common/widgets/not_logged_in_screen.dart` — THE single, permanent **MoonJoin Guest Foundation**: ONE shared
+not-logged-in guard rendered by ALL ~14 protected surfaces (Wallet, Coupon, My Address, Loyalty, Refer & Earn,
+Notifications, Chat, Edit Profile, Checkout, Parcel, rental favourite, …). Redesigned **in place — Option A, one
+shared implementation, NO isolated variants**; one change updates every guest prompt app-wide. Layout: soft-green
+MoonJoin halo (168px, `primaryColor` @ 8% alpha) around `Images.guest` (110px) → bold `you_are_not_logged_in` →
+hint `please_login_to_continue` → green `CustomButton` "login" (width 240, `radiusLarge`, `Icons.login_rounded`);
+`Dimensions.*` tokens (no MediaQuery fractions); `SingleChildScrollView + FooterView` host wrapper kept. **No
+secondary CTA.** Reuses `CustomButton`, `FooterView`, `Images.guest`, existing i18n keys. **Protected shared
+foundation** — future changes MUST preserve the callback contract (`callBack(bool)`), navigation contract, desktop
+dialog flow, and mobile login flow; no variants, no business-logic changes. Login `onPressed` preserved verbatim
+(mobile `getSignInRoute(Get.currentRoute)` · desktop `AuthDialogWidget` · `OrderController.showRunningOrders()` ·
+`callBack(true)` return-refresh); `AuthController`/session/token/Firebase/OTP/guest+social login/`RouteHelper`/
+navigation/repos/APIs/models/services all untouched. `flutter analyze` clean; guest Wallet + My Address verified.
 
 ### 🧊 Live Chat — Conversation List — `conversation_screen.dart` (FROZEN 2026-07-26, Phase 8E)
 Presentation-only redesign of the Conversation LIST to MoonJoin. `ProfilePageHeader` (mobile, showBack:

@@ -2723,9 +2723,9 @@ snackbar · navigation. Green Logout → same onYesPressed (cleanup + close); Ca
 on-device — dialog appears, Cancel works, Logout executes cleanup + lands correctly, other confirmations
 unchanged (regression pass) — owner-approved.
 
-**New architectural finding (documented, NOT implemented):** `NotLoggedInScreen` is a single shared guest
-prompt reused ~15× → its own future **Guest User Experience** phase (coordinate with Sign In / Sign Up). See
-BACKEND_INTEGRATION_QUEUE.md / FROZEN_REGISTRY notes.
+**New architectural finding (now implemented in Phase 9B):** `NotLoggedInScreen` is a single shared guest
+prompt reused ~14× → redesigned in place and FROZEN as the permanent MoonJoin **Guest Foundation** (see Phase 9B
+below). Sign In / Sign Up remain a deferred critical-auth phase.
 
 **Legacy / obsolete:** none newly obsolete. No deletions.
 
@@ -2782,6 +2782,38 @@ startup null-check noise); on-device — Settings page + Notification MoonJoin s
 **Permanent architecture decisions recorded:** Settings owns the LanguageBottomSheetWidget experience;
 NotificationStatusChangeBottomSheet uses an isolated MoonJoin Settings variant only; Shared Widget Protection
 enforced; ProfileButtonWidget = frozen foundation; LanguageCardWidget = shared frozen foundation.
+
+**Legacy / obsolete:** none newly obsolete. No deletions.
+
+## Phase 9B — Guest User Experience (`NotLoggedInScreen`) — FROZEN (2026-07-26)
+**Design authority:** none dedicated → reproduces the frozen MoonJoin language (presentation only).
+
+**Implementation:** `lib/common/widgets/not_logged_in_screen.dart` redesigned **in place — Option A: ONE shared
+implementation, NO isolated variants** — now the permanent **MoonJoin Guest Foundation**, the single shared
+not-logged-in guard rendered by ALL ~14 protected surfaces (Wallet, Coupon, My Address, Loyalty, Refer & Earn,
+Notifications, Chat, Edit Profile, Checkout, Parcel, rental favourite, …). One change updates every guest prompt
+app-wide. Layout: soft-green MoonJoin halo (168px, `primaryColor` @ 8% alpha) around `Images.guest` (110px) →
+bold `you_are_not_logged_in` → hint `please_login_to_continue` → green `CustomButton` "login" (width 240,
+`radiusLarge`, `Icons.login_rounded`). `Dimensions.*` tokens replace the old MediaQuery-fraction sizing;
+`SingleChildScrollView + FooterView` host wrapper kept. **No secondary CTA.** The single `callBack(bool success)`
+param is unchanged → all ~14 call sites compile untouched. Reuses `CustomButton`, `FooterView`, `Images.guest`,
+existing i18n keys (`you_are_not_logged_in`, `please_login_to_continue`, `login`).
+
+**Preserved (presentation only, verbatim):** Login `onPressed` — mobile `Get.toNamed(RouteHelper.getSignInRoute(
+Get.currentRoute))` · desktop `AuthDialogWidget(exitFromApp:false, backFromThis:true)` then `callBack(true)` ·
+`OrderController.showRunningOrders()` guard · trailing `callBack(true)` (return-after-login refresh). Untouched:
+AuthController · session · token · Firebase · OTP · guest login · social login · RouteHelper · callback ·
+return-after-login · desktop AuthDialogWidget · navigation · repositories · APIs · models · services.
+
+**Verification:** `flutter analyze` clean (0 issues); runtime run74 — guest **Wallet** verified + guest **My
+Address** verified, 0 exceptions/overflow on guest surfaces. The unrelated `CachedNetworkImage` "No host in URI
+null" log = pre-existing null-avatar on the logged-in profile, NOT caused by Guest UX (this screen uses a bundled
+`Image.asset`). Owner-approved.
+
+**Permanent architecture decisions recorded:** `NotLoggedInScreen` = the permanent MoonJoin Guest Foundation
+(single shared guest guard across all protected surfaces; no isolated variants; one shared implementation). It is
+a **protected shared foundation** — future modifications must preserve the callback contract, navigation contract,
+desktop dialog flow, and mobile login flow; no business-logic changes.
 
 **Legacy / obsolete:** none newly obsolete. No deletions.
 
