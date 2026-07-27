@@ -181,6 +181,25 @@ Foundation components are the single, canonical implementation of a pattern acro
 the **entire** MoonJoin User App. There must be exactly one of each. No alternate
 version may be created without explicit architectural approval.
 
+### 🧊 MoonJoin Auth Foundation — `lib/features/auth/widgets/foundation/`
+- **Files:** `auth_scaffold.dart`, `auth_hero.dart`, `auth_header.dart`, `auth_card.dart`, `auth_input_group.dart`, `auth_otp_field.dart`, `auth_social_button.dart`, `auth_divider.dart`, `auth_footer.dart`, `auth_primary_button.dart` (+ `auth_foundation.dart` barrel; `auth_foundation_gallery.dart` + `auth_foundation_demo_main.dart` = isolated demo, run ONLY via `flutter run -t …/auth_foundation_demo_main.dart`, never wired to production).
+- **Status:** **Implemented · QA Passed · Design Approved · FROZEN** — Phase 9C-1 (Premium Authentication) · **Frozen on:** 2026-07-27
+- **Design authority:** No Sign In frame in the Active Figma and no login image in ui-designs → the frozen MoonJoin design language is the authority (as with the Guest Foundation 9B).
+- **What is frozen (the 10 canonical auth presentation components):**
+  1. **`AuthScaffold`** — the single auth shell for BOTH hosts (mobile full-screen / desktop dialog-body via `isDialog`). Owns responsive body layout, dialog-safe spacing, full-bleed hero + floating overlapping card, and back/close affordance rendering. **Never** creates `Dialog()`, controls `barrierDismissible`, or calls `Navigator`/`Get.back()` — only invokes the `onBack` it is given (host owns the dialog + navigation).
+  2. **`AuthHero`** — premium full-bleed green hero (~36% height, 48px curved bottom) + softly **breathing** haloed logo (ease-in-out scale+glow; no spin/bounce) + white title + trust subtitle. `logoAssetPath` (default `Images.logo`) + `logoCornerRadius` (default 14) clip square/opaque logos elegantly inside the always-perfect circle; transparent logos are unaffected → future logo swaps need no code change. Callers pass already-translated strings (no `.tr`).
+  3. **`AuthHeader`** — titled top bar for verification/forgot/new-password (auth-scoped replacement for `CustomAppBar`; a plain widget, not a `PreferredSizeWidget`).
+  4. **`AuthCard`** — floating form surface: fixed `radiusExtraLarge` + soft premium shadow + `cardColor`; only `padding`/`margin`/`widthConstraint` configurable (Dimensions only).
+  5. **`AuthInputGroup`** — labeled cluster that **wraps** the caller's existing `CustomTextField`s (never owns controllers/focus/validators); `crossAxisAlignment` (default start).
+  6. **`AuthOtpField`** — MoonJoin **theme** wrapper over `PinCodeTextField` (`pin_code_fields`); behavior/verify untouched; `autoFocus` passthrough.
+  7. **`AuthSocialButton`** — **provider-blind** social/OTP pill (icon/label/onTap/`fullWidth` only; no SDK, no provider `if`s). Supersedes the legacy `SocialLoginButton` (staged migration — verify both consumers before marking the old one obsolete).
+  8. **`AuthDivider`** — "or / or continue with" separator; caller supplies the (translated) label.
+  9. **`AuthFooter`** — cross-link row; `enabled` is visual-only, never routes.
+  10. **`AuthPrimaryButton`** — thin preset over the frozen `CustomButton` (green, `radiusLarge`, `isLoading`, default height 54); never reimplements button internals; loading text stays `CustomButton`'s.
+- **Contract (Shared Widget Protection):** all 10 are **pure presentation** — no controllers, navigation, validation, API/repository/service calls, SDK calls, or `Get.find<...Controller>()`; behavior enters via constructor params/callbacks; theme via `Theme.of(context)`, spacing/radius via `Dimensions.*`, no hardcoded hex. `flutter analyze` → 0 issues.
+- **MANDATE:** every MoonJoin authentication surface (Sign In, Sign Up, OTP/Verification, Forgot/Reset Password, New User Setup, and the desktop `AuthDialogWidget`) MUST be built by reusing these components. No alternate auth-shell/hero/card/social widgets. **Do not change any component's visuals, structure, animation, spacing, typography, or API without an explicit owner revision request.**
+- **Rule:** Frozen. Reuse only.
+
 ### 🧊 Account navigation row — `PortionWidget`
 - **File:** `lib/features/menu/widgets/portion_widget.dart`
 - **Status:** FROZEN — FOUNDATION COMPONENT · **Frozen on:** 2026-07-24

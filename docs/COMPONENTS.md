@@ -736,6 +736,27 @@ dialog flow, and mobile login flow; no variants, no business-logic changes. Logi
 `callBack(true)` return-refresh); `AuthController`/session/token/Firebase/OTP/guest+social login/`RouteHelper`/
 navigation/repos/APIs/models/services all untouched. `flutter analyze` clean; guest Wallet + My Address verified.
 
+### 🧊 Auth Foundation — `lib/features/auth/widgets/foundation/` (FROZEN 2026-07-27, Phase 9C-1)
+THE 10 canonical, additive, pure-presentation MoonJoin authentication components — the single visual language for
+ALL auth surfaces (Sign In, Sign Up, OTP/Verification, Forgot/Reset Password, New User Setup, desktop
+`AuthDialogWidget`). Barrel: `auth_foundation.dart`. Isolated demo (`auth_foundation_demo_main.dart`) runs ONLY via
+`flutter run -t …`; never wired to production.
+- **`AuthScaffold`** — one shell for both hosts (mobile full-screen / desktop dialog-body via `isDialog`); full-bleed hero + floating overlapping card; renders back/close affordance but never creates `Dialog()`/navigates (host owns that).
+- **`AuthHero`** — full-bleed green hero (~36% h, 48px curved bottom) + softly breathing haloed logo (`logoAssetPath` default `Images.logo`, `logoCornerRadius` default 14 clips square/opaque logos; transparent unaffected) + title + subtitle (no `.tr` inside).
+- **`AuthHeader`** — titled bar for verification/forgot/new-pass (auth-scoped `CustomAppBar` replacement; plain widget).
+- **`AuthCard`** — floating surface, fixed `radiusExtraLarge` + soft shadow; only padding/margin/width configurable.
+- **`AuthInputGroup`** — wraps caller's `CustomTextField`s (owns no controller/validator); `crossAxisAlignment`.
+- **`AuthOtpField`** — theme-only wrapper over `PinCodeTextField`; `autoFocus`; behavior untouched.
+- **`AuthSocialButton`** — provider-blind pill (icon/label/onTap/`fullWidth`); supersedes legacy `SocialLoginButton` (staged migration).
+- **`AuthDivider`** — "or"/"or continue with"; caller supplies label.
+- **`AuthFooter`** — cross-link row; `enabled` visual-only, never routes.
+- **`AuthPrimaryButton`** — thin preset over frozen `CustomButton` (green, `radiusLarge`, default height 54); loading text stays CustomButton's.
+All pure-presentation: no controllers/nav/validation/API/SDK/`Get.find`; theme via `Theme.of(context)`, spacing via
+`Dimensions.*`, no hardcoded hex. `flutter analyze` = 0 issues. **MANDATE:** all auth surfaces reuse these; no
+alternate auth shell/hero/card/social widgets. **Do not change any component's visuals/structure/animation/spacing/
+typography/API without an explicit owner revision request.** Config-driven login gating (`centralizeLoginSetup` via
+`CentralizeLoginHelper`) stays in `SignInView` and is wired to this foundation in Phase 9C-2 (not started).
+
 ### 🧊 Live Chat — Conversation List — `conversation_screen.dart` (FROZEN 2026-07-26, Phase 8E)
 Presentation-only redesign of the Conversation LIST to MoonJoin. `ProfilePageHeader` (mobile, showBack:
 !fromNavBar) / `WebMenuBar` (desktop) + premium conversation cards (avatar w/ soft green ring · bold name ·

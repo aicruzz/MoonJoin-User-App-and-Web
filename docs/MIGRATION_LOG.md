@@ -2817,6 +2817,44 @@ desktop dialog flow, and mobile login flow; no business-logic changes.
 
 **Legacy / obsolete:** none newly obsolete. No deletions.
 
+## Phase 9C-1 — Auth Foundation — FROZEN (2026-07-27)
+**Status:** Implemented · QA Passed · Design Approved · FROZEN. **Design authority:** none (no Sign In Figma / no
+login ui-designs) → the frozen MoonJoin language, as with Guest Foundation 9B. Presentation only.
+
+**Implementation:** 10 additive, pure-presentation components in **`lib/features/auth/widgets/foundation/`** (new
+folder; zero edits to existing auth screens/controllers/services/routes): `AuthScaffold`, `AuthHero`, `AuthHeader`,
+`AuthCard`, `AuthInputGroup`, `AuthOtpField`, `AuthSocialButton`, `AuthDivider`, `AuthFooter`, `AuthPrimaryButton`
+(+ `auth_foundation.dart` barrel). Premium approved look: full-bleed green hero (~36% h, 48px curved bottom) with a
+softly **breathing** haloed logo (ease-in-out scale+glow; configurable `logoCornerRadius` clips square/opaque logos,
+transparent unaffected → future logo swap needs no code) + "Welcome back to MoonJoin" + subtitle; floating
+overlapping `AuthCard` (radiusExtraLarge + soft shadow); horizontal Google/Apple/Facebook pills (owner approved
+as-is); "or → Sign in with OTP" affordance (visual parity with old `manualAndOtp`).
+
+**Owner design-refinement history:** premium green hero + breathing logo approved; social pills kept horizontal
+"as-is" per owner; logo given a configurable corner-radius clip; demo interactivity reverted to match approved
+design; OTP affordance added after verifying the old system.
+
+**Contract / Shared Widget Protection:** every component is pure presentation — no controllers, navigation,
+validation, API/repository/service, SDK, or `Get.find<...Controller>()`; behavior via constructor params/callbacks;
+theme via `Theme.of(context)`; spacing/radius via `Dimensions.*`; no hardcoded hex. `AuthScaffold` never creates
+`Dialog()`/navigates; `AuthSocialButton` is provider-blind; `AuthInputGroup` owns no controllers/validators;
+`AuthOtpField` is theme-only over `PinCodeTextField`; `AuthPrimaryButton` only presets frozen `CustomButton`.
+
+**Verification:** `flutter analyze lib/features/auth/widgets/foundation/` → **No issues found!** Isolated demo
+launched on the iOS simulator via `flutter run -t …/auth_foundation_demo_main.dart` and screenshotted for design
+review; owner approved. (Required an environment repair — CocoaPods was broken by a Ruby 2.6-vs-rbenv-3.4.1
+mismatch with no `pod` shim; fixed via `rbenv rehash`. `pod 1.16.2` / `ruby 3.4.1` / `flutter doctor` all green.
+Host Xcode builds are extremely slow due to thermal throttling.)
+
+**Recorded (not implemented) — Phase 9C-2 Manual Login Persistence UX contract:** always auto-fill last successful
+manual **email/phone**; **never** auto-store password; on reopen auto-fill email/phone + auto-focus password; future
+biometric may use platform secure storage; **no "Remember me" checkbox**; preserve all login/OTP/Firebase/nav/
+business logic; implement in 9C-2 only. (See project memory `auth-redesign-phase-9c`.)
+
+**MANDATE:** all future auth surfaces (Sign In, Sign Up, OTP/Verification, Forgot/Reset, New User Setup, desktop
+`AuthDialogWidget`) reuse this frozen foundation. No visual/structural/animation/spacing/typography/API change
+without an explicit owner revision request. Phase 9C-2 (Sign In wiring) NOT started — awaiting owner approval.
+
 ## Phase 8F — Language (onboarding screen) — STATUS: IMPLEMENTED, NOT FROZEN
 `ChooseLanguageScreen` (`language_screen.dart`) is implemented (presentation-only; menu = ProfilePageHeader,
 first-run = onboarding identity preserved), analyze-clean, runtime-clean, but **visual verification is pending**
