@@ -755,7 +755,34 @@ All pure-presentation: no controllers/nav/validation/API/SDK/`Get.find`; theme v
 `Dimensions.*`, no hardcoded hex. `flutter analyze` = 0 issues. **MANDATE:** all auth surfaces reuse these; no
 alternate auth shell/hero/card/social widgets. **Do not change any component's visuals/structure/animation/spacing/
 typography/API without an explicit owner revision request.** Config-driven login gating (`centralizeLoginSetup` via
-`CentralizeLoginHelper`) stays in `SignInView` and is wired to this foundation in Phase 9C-2 (not started).
+`CentralizeLoginHelper`) stays in `SignInView`; wired to this foundation in Phase 9C-2 (FROZEN below).
+**REJECTED (never recreate):** the experimental Earth/network/world header (`AuthHeroWorld`) was explored and fully
+removed 2026-07-27 — the plain premium green `AuthHero` is the permanent hero. Do not recreate the globe/network
+header unless the owner explicitly requests it.
+
+### 🧊 Sign In — `sign_in_screen.dart` (+ SignInView/Manual/OTP/Social) (FROZEN 2026-07-27, Phase 9C-2)
+Presentation-only migration of the mobile Sign In to the **frozen Auth Foundation**: `AuthScaffold(hero: AuthHero,
+child: AuthCard(SignInView))`. `ManualLoginWidget` + `OtpLoginWidget` composed from foundation (`AuthPrimaryButton`/
+`AuthFooter`; welcome heading now in `AuthHero`); `SocialLoginWidget` → `AuthDivider` + horizontal `AuthSocialButton`
+pills (Google·Apple·Facebook). **Manual Login Persistence (owner-approved):** auto-fill last email/phone only, NEVER
+store password, no "Remember me" checkbox anywhere, auto-focus password on reopen (else email/phone), biometric =
+future extension. Preserved: `AuthController`/`LocationController`/Firebase/Google-Apple-Facebook SDK/`ExistingUserBottomSheet`/
+`SignInView` config switch (`CentralizeLoginHelper`, 7 layouts, never hardcoded)/`PopScope`/`getSignInRoute`/return-after-login.
+QA bug fixed: `setState() after dispose()` from delayed auto-focus → `if(!mounted) return`. Real-app verified; analyze clean.
+`SocialLoginButton` (in `login_suggestion_bottomsheet.dart`) superseded by `AuthSocialButton` on Sign In → OBSOLETE-candidate
+(still used by the login-suggestion sheet; retained).
+**AuthHero owner revision (2026-07-27):** the logo now fills the white disc 100% (`Image.asset(fit: BoxFit.cover)` in a
+fixed circular disc, `clipBehavior: antiAlias`; `logoCornerRadius` retained but unused). Applies to Sign In + Sign Up.
+`logo.png` must be lowercase `.png` (iOS case-sensitive).
+
+### 🧊 Sign Up — `sign_up_screen.dart` (+ `sign_up_widget.dart`) (FROZEN 2026-07-27, Phase 9C-3)
+Presentation-only migration of mobile Sign Up to the **frozen Auth Foundation**: `AuthScaffold(hero: AuthHero(
+create_your_moonjoin_account + subtitle), child: AuthCard(SignUpWidget))`; `SignUpWidget` mobile → `AuthPrimaryButton` +
+`AuthFooter`; container width→`double.infinity` (fits AuthCard, no overflow). Desktop `_desktopBody`/`SignUpWidget` desktop
+branch preserved. **UX consistency audit (Sign In ↔ Sign Up) passed** — hero/curve/breathing/logo-fill/card overlap/radius/
+shadow/scroll/safe-area identical by shared foundation; aligned 4 mobile spacing drifts in Sign Up (top gap 10→0, button
+surrounds 15→20, footer bottom 20→0). Preserved: `AuthController.registration`/`SignUpBodyModel`/all validation/
+`ConditionCheckBoxWidget` terms gate/refer-code/verification routing/`getSignInRoute`. Real-app verified; analyze clean.
 
 ### 🧊 Live Chat — Conversation List — `conversation_screen.dart` (FROZEN 2026-07-26, Phase 8E)
 Presentation-only redesign of the Conversation LIST to MoonJoin. `ProfilePageHeader` (mobile, showBack:

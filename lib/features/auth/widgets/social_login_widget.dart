@@ -6,10 +6,9 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:sixam_mart/common/models/response_model.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/common/widgets/login_suggestion_bottomsheet.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/auth/domain/enum/centralize_login_enum.dart';
 import 'package:sixam_mart/features/auth/domain/models/social_log_in_body.dart';
 import 'package:sixam_mart/features/auth/screens/new_user_setup_screen.dart';
@@ -50,226 +49,75 @@ class SocialLoginWidget extends StatelessWidget {
     && Get.find<SplashController>().configModel!.centralizeLoginSetup!.appleLoginStatus!;
 
     if(onlySocialLogin) {
+      // MoonJoin 9C-2: full-width AuthSocialButton pills (frozen foundation).
+      // SDK calls, config gates and OTP link behavior preserved exactly.
       return Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           canGoogleAndFacebookLogin ? Column(children: [
 
             showWelcomeText ? Text('${'welcome_to'.tr} ${AppConstants.appName}', style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)) : const SizedBox(),
-            const SizedBox(height: Dimensions.paddingSizeLarge),
+            SizedBox(height: showWelcomeText ? Dimensions.paddingSizeLarge : 0),
 
-            googleLoginActive ? Container(
-              height: 50,
-              padding: const EdgeInsets.all(1),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-                boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, spreadRadius: 1, blurRadius: 5, offset: const Offset(2, 2))],
-              ),
-              child: CustomInkWell(
-                onTap: ()=> _googleLogin(googleSignIn),
-                radius: Dimensions.radiusDefault,
-                child: Padding(
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Image.asset(Images.google, height: 20, width: 20),
-                    const SizedBox(width: Dimensions.paddingSizeSmall),
+            if(googleLoginActive) ...[
+              AuthSocialButton(iconPath: Images.google, label: 'continue_with_google'.tr, fullWidth: true, onTap: () => _googleLogin(googleSignIn)),
+              const SizedBox(height: Dimensions.paddingSizeDefault),
+            ],
 
-                    Text('continue_with_google'.tr, style: robotoMedium.copyWith()),
-                  ]),
-                ),
-              ),
-            ) : const SizedBox(),
-            SizedBox(height: googleLoginActive ? Dimensions.paddingSizeLarge : 0),
+            if(facebookLoginActive) ...[
+              AuthSocialButton(iconPath: Images.socialFacebook, label: 'continue_with_facebook'.tr, fullWidth: true, onTap: () => _facebookLogin()),
+              const SizedBox(height: Dimensions.paddingSizeDefault),
+            ],
 
-            facebookLoginActive ? Container(
-              height: 50,
-              padding: const EdgeInsets.all(1),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-                boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, spreadRadius: 1, blurRadius: 5, offset: const Offset(2, 2))],
-              ),
-              child: CustomInkWell(
-                onTap: ()=> _facebookLogin(),
-                radius: Dimensions.radiusDefault,
-                child: Padding(
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Image.asset(Images.socialFacebook, height: 20, width: 20),
-                    const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                    Text('continue_with_facebook'.tr, style: robotoMedium.copyWith()),
-                  ]),
-                ),
-              ),
-            ) : const SizedBox(),
-            SizedBox(height: facebookLoginActive ? Dimensions.paddingSizeLarge : 0),
-
-            appleLoginActive ? Container(
-              height: 50,
-              padding: const EdgeInsets.all(1),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-                boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, spreadRadius: 1, blurRadius: 5, offset: const Offset(2, 2))],
-              ),
-              child: CustomInkWell(
-                onTap: ()=> _appleLogin(),
-                radius: Dimensions.radiusDefault,
-                child: Padding(
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Image.asset(Images.appleLogo, height: 20, width: 20),
-                    const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                    Text('continue_with_apple'.tr, style: robotoMedium.copyWith()),
-                  ]),
-                ),
-              ),
-            ) : const SizedBox(),
-            SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeLarge : onOtpViewClick != null ? 0 : Dimensions.paddingSizeLarge),
+            if(appleLoginActive) ...[
+              AuthSocialButton(iconPath: Images.appleLogo, label: 'continue_with_apple'.tr, fullWidth: true, onTap: () => _appleLogin()),
+              const SizedBox(height: Dimensions.paddingSizeDefault),
+            ],
 
           ]) : const SizedBox(),
 
-          onOtpViewClick != null ? Container(
-            height: 50,
-            padding: const EdgeInsets.all(1),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-              boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, spreadRadius: 1, blurRadius: 5, offset: const Offset(2, 2))],
-            ),
-            margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtremeLarge),
-            child: CustomInkWell(
-              onTap: onOtpViewClick!,
-              radius: Dimensions.radiusDefault,
-              child: Padding(
-                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Image.asset(Images.otp, height: 20, width: 20),
-                  const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                  Text('otp_sign_in'.tr, style: robotoMedium.copyWith()),
-                ]),
-              ),
-            ),
+          onOtpViewClick != null ? Padding(
+            padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtremeLarge),
+            child: AuthSocialButton(iconPath: Images.otp, label: 'otp_sign_in'.tr, fullWidth: true, onTap: onOtpViewClick!),
           ) : const SizedBox(),
         ],
       );
     }
 
+    // MoonJoin 9C-2: divider + horizontal AuthSocialButton pills (frozen
+    // foundation). Provider order Google · Apple · Facebook (approved design);
+    // each only renders when its admin config gate is active. SDK calls and the
+    // desktop Get.back() behavior are preserved exactly.
+    final bool isDesktop = ResponsiveHelper.isDesktop(context);
+    final List<Widget> socialButtons = [
+      if(googleLoginActive)
+        AuthSocialButton(iconPath: Images.google, label: 'google'.tr, fullWidth: true, onTap: () {
+          if(isDesktop) { Get.back(); }
+          _googleLogin(googleSignIn);
+        }),
+      if(appleLoginActive)
+        AuthSocialButton(iconPath: Images.appleLogo, label: 'apple'.tr, fullWidth: true, onTap: () {
+          if(isDesktop) { Get.back(); }
+          _appleLogin();
+        }),
+      if(facebookLoginActive)
+        AuthSocialButton(iconPath: Images.facebook2, label: 'facebook'.tr, fullWidth: true, onTap: () {
+          if(isDesktop) { Get.back(); }
+          _facebookLogin();
+        }),
+    ];
+
     return canGoogleAndFacebookLogin || canAppleLogin ? Column(children: [
 
-      const SizedBox(height: Dimensions.paddingSizeSmall),
+      AuthDivider(label: 'or_continue_with'.tr),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
 
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
-        child: Row(children: [
-          Expanded(child: Container(height: 1, color: Theme.of(context).disabledColor)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
-            child: Text('or_continue_with'.tr, style: robotoMedium.copyWith(color: Theme.of(context).disabledColor)),
-          ),
-          Expanded(child: Container(height: 1, color: Theme.of(context).disabledColor)),
-        ]),
-      ),
-      const SizedBox(height: Dimensions.paddingSizeSmall),
-
-      Wrap(spacing: 15, runSpacing: 15, children: [
-        if(facebookLoginActive)
-          SocialLoginButton(
-            iconPath: Images.facebook2,
-            label: 'facebook'.tr,
-            onTap: () {
-              if(ResponsiveHelper.isDesktop(context)) {
-                Get.back();
-              }
-              _facebookLogin();
-            },
-          ),
-
-        if(googleLoginActive)
-          SocialLoginButton(
-            iconPath: Images.google,
-            label: 'google'.tr,
-            onTap: () {
-              if(ResponsiveHelper.isDesktop(context)) {
-                Get.back();
-              }
-              _googleLogin(googleSignIn);
-            },
-          ),
-
-        if(appleLoginActive)
-          SocialLoginButton(
-            iconPath: Images.appleLogo,
-            label: 'apple'.tr,
-            onTap: () {
-              if(ResponsiveHelper.isDesktop(context)) {
-                Get.back();
-              }
-              _appleLogin();
-            },
-          ),
+      Row(children: [
+        for(int i = 0; i < socialButtons.length; i++) ...[
+          if(i > 0) const SizedBox(width: Dimensions.paddingSizeSmall),
+          Expanded(child: socialButtons[i]),
+        ],
       ]),
-
-      // Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      //
-      //   googleLoginActive ? InkWell(
-      //     onTap: () => _googleLogin(googleSignIn),
-      //     child: Container(
-      //       height: 40,width: 40,
-      //       padding: const EdgeInsets.all(1),
-      //       decoration: BoxDecoration(
-      //         color: Theme.of(context).cardColor,
-      //         borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-      //         boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, spreadRadius: 1, blurRadius: 5, offset: const Offset(2, 2))],
-      //       ),
-      //       child: CustomInkWell(
-      //         radius: Dimensions.radiusDefault,
-      //         padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-      //         onTap: () => _googleLogin(googleSignIn),
-      //         child: Image.asset(Images.google),
-      //       ),
-      //     ),
-      //   ) : const SizedBox(),
-      //
-      //   facebookLoginActive ? Padding(
-      //     padding: EdgeInsets.only(left: Get.find<LocalizationController>().isLtr ? Dimensions.paddingSizeLarge : 0, right: Get.find<LocalizationController>().isLtr ? 0 : Dimensions.paddingSizeLarge),
-      //     child: InkWell(
-      //       onTap: () => _facebookLogin(),
-      //       child: Container(
-      //         height: 40, width: 40,
-      //         padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-      //         decoration: BoxDecoration(
-      //           color: Theme.of(context).cardColor,
-      //           borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-      //           boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, spreadRadius: 1, blurRadius: 5, offset: const Offset(2, 2))],
-      //         ),
-      //         child: Image.asset(Images.socialFacebook),
-      //       ),
-      //     ),
-      //   ) : const SizedBox(),
-      //
-      //   appleLoginActive ? Padding(
-      //     padding: const EdgeInsets.only(left: Dimensions.paddingSizeLarge),
-      //     child: InkWell(
-      //       onTap: ()=> _appleLogin(),
-      //       child: Container(
-      //         height: 40, width: 40,
-      //         padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-      //         decoration: BoxDecoration(
-      //           color: Theme.of(context).cardColor,
-      //           borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-      //           boxShadow: [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, spreadRadius: 1, blurRadius: 5, offset: const Offset(2, 2))],
-      //         ),
-      //         child: Image.asset(Images.appleLogo),
-      //       ),
-      //     ),
-      //   ) : const SizedBox(),
-      //
-      // ]),
       const SizedBox(height: Dimensions.paddingSizeSmall),
 
     ]) : const SizedBox();

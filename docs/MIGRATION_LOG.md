@@ -2855,6 +2855,78 @@ business logic; implement in 9C-2 only. (See project memory `auth-redesign-phase
 `AuthDialogWidget`) reuse this frozen foundation. No visual/structural/animation/spacing/typography/API change
 without an explicit owner revision request. Phase 9C-2 (Sign In wiring) NOT started — awaiting owner approval.
 
+## Phase 9C-2 — Sign In — FROZEN (2026-07-27)
+**Status:** Implemented · Runtime Verified · QA Passed · Owner Approved · FROZEN. **Design authority:** none (no Sign
+In Figma / login image) → the frozen MoonJoin language via the Auth Foundation (9C-1). Presentation only.
+
+**Implementation (6 files):** `sign_in_screen.dart` — mobile host rebuilt via `AuthScaffold(hero: AuthHero, child:
+AuthCard(SignInView))`, `PopScope` (exit-app / OTP-back / notification-reset) preserved verbatim, desktop `_desktopBody`
+kept. `sign_in_view.dart` — config-driven `CentralizeLoginType` switch + `_login`/`_otpLogin`/`_process*` unchanged
+except persistence. `manual_login_widget.dart` + `otp_login_widget.dart` — composed from the foundation
+(`AuthPrimaryButton`/`AuthFooter`; welcome heading moved to `AuthHero`; **Remember Me checkbox removed** mobile+desktop).
+`social_login_widget.dart` — presentation → `AuthDivider` + horizontal `AuthSocialButton` pills (Google·Apple·Facebook);
+all Google/Apple/Facebook SDK flows + config gates preserved; stopped importing legacy `SocialLoginButton`. `assets/
+language/{en,ar,bn,es}.json` — 2 hero keys (`welcome_back_to_moonjoin`, `your_world_of_services_awaits`; en value in
+ar/bn/es pending).
+
+**Manual Login Persistence (owner-approved UX contract, implemented):** always auto-fill last **email/phone**; **never**
+auto-store password (`_processSuccessSetup` saves email/phone with EMPTY password; password pre-fill removed); on reopen
+auto-fill email/phone + **auto-focus password** (else email/phone); **no Remember Me checkbox**; biometric = future
+extension point. All login/OTP/Firebase/nav/controllers/business rules preserved.
+
+**Preserved:** AuthController · VerificationController · ProfileController · LocationController · Firebase phone verify ·
+Google/Apple/Facebook SDKs · `ExistingUserBottomSheet` · admin **Login Setup** gating (`centralizeLoginSetup` via
+`CentralizeLoginHelper`, 7 layouts — never hardcoded) · routes/callbacks (`getSignInRoute`, `backFromThis`,
+`fromNotification`, `fromResetPassword`, return-after-login). No controller/repo/service/API/model/route/business-logic
+changes. Frozen `AuthHero` + all foundation components reused, never modified.
+
+**Verification:** `flutter analyze lib/features/auth` → **No issues found!** (full project = pre-existing baseline only,
+zero new). **Real-app runtime verified** on the iOS simulator through the genuine flow (logout → guest → Sign In):
+phone auto-filled, password empty + auto-focused, social pills + OTP affordance gated by config, 0 exceptions/overflow.
+**QA bug found + fixed:** `setState() called after dispose()` from the delayed auto-focus firing after view disposal →
+guarded with `if(!mounted) return` in `SignInView`; re-verified clean.
+
+**Legacy / obsolete:** `SocialLoginButton` (declared in `login_suggestion_bottomsheet.dart`) superseded by
+`AuthSocialButton` on Sign In → **OBSOLETE — Pending Final Legacy Cleanup** (still used by the login-suggestion sheet;
+retained, not removed).
+
+**Experiment note:** a premium Earth/network/world header (`AuthHeroWorld`) was explored during 9C-2 review and
+**REJECTED & fully removed** (2026-07-27) — the plain premium green `AuthHero` remains the permanent hero. Do not
+recreate the globe/network header without explicit owner request.
+
+## Phase 9C-3 — Sign Up — FROZEN (2026-07-27)
+**Status:** Implemented · Runtime Verified · QA Passed · Owner Approved · FROZEN. **Design authority:** the frozen Auth
+Foundation (9C-1). Presentation only.
+
+**Implementation (2 files + i18n):** `sign_up_screen.dart` — mobile rebuilt via `AuthScaffold(showBack: !exitFromApp,
+onBack: Get.back, hero: AuthHero(create_your_moonjoin_account + your_world_of_services_awaits), child: AuthCard(
+SignUpWidget))`; desktop `_desktopBody` preserved (logo + "Sign Up" title + SignUpWidget). `sign_up_widget.dart` — mobile
+presentation → `AuthPrimaryButton` (Sign Up) + `AuthFooter` (Already have account? Sign In); mobile container width
+`context.width` → `double.infinity` (fits AuthCard, no overflow); desktop `CustomButton` + dialog row preserved. `assets/
+language/{en,ar,bn,es}.json` — 1 hero key `create_your_moonjoin_account` (en value in ar/bn/es pending).
+
+**UX consistency audit (Sign In ↔ Sign Up) — PASSED.** Hero height/curve, breathing logo, logo size/fill, welcome
+typography, floating AuthCard position+overlap, card radius+shadow, input spacing/alignment, primary-button height/radius/
+spacing, footer spacing, keyboard/safe-area/scroll — all **identical by shared frozen foundation** (both use the same
+`hero != null` AuthScaffold path). Fixed 4 mobile spacing drifts in Sign Up so internal rhythm matches Sign In: top gap
+paddingSizeSmall→0, primary-button surrounds paddingSizeDefault→paddingSizeLarge (×2), footer bottom paddingSizeLarge→0.
+No overflow, no RenderFlex, no runtime exceptions, no regressions.
+
+**AuthHero logo-fill revision (owner-requested):** the logo now fills the white circular disc 100% —
+`Image.asset(fit: BoxFit.cover)` inside a fixed circular disc (`discSize = logoWidth + 2·paddingSizeLarge`, `clipBehavior:
+antiAlias`, `shape: circle`) replacing the padded `ClipRRect(width: logoWidth)`; breathing scale+glow kept;
+`logoCornerRadius` retained (unused). Applies to Sign In + Sign Up (shared AuthHero) → consistent. Asset fix: `logo.png`
+must be lowercase `.png` (iOS case-sensitive; a `.PNG` upload failed to load — corrected by owner).
+
+**Preserved:** AuthController.registration · SignUpBodyModel · all validation · ConditionCheckBoxWidget terms gate ·
+refer-code · verification routing (Firebase / VerificationScreen / getVerificationRoute) · CartController/ProfileController/
+LocationController · getSignInRoute · desktop AuthDialogWidget. No controller/repo/service/API/model/route/business-logic
+changes. Frozen Auth Foundation reused (AuthHero revised only per owner request above).
+
+**Verification:** `flutter analyze lib/features/auth` → **No issues found!** Real-app runtime verified on the iOS
+simulator (guest → Sign In → Sign Up): logo fills disc, all fields present, Full-Name auto-focus, terms/button/footer
+working, 0 overflow/exceptions/asset-errors.
+
 ## Phase 8F — Language (onboarding screen) — STATUS: IMPLEMENTED, NOT FROZEN
 `ChooseLanguageScreen` (`language_screen.dart`) is implemented (presentation-only; menu = ProfilePageHeader,
 first-run = onboarding identity preserved), analyze-clean, runtime-clean, but **visual verification is pending**

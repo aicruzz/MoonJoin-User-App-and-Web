@@ -79,6 +79,8 @@ class _AuthHeroState extends State<AuthHero> with SingleTickerProviderStateMixin
     final double screenHeight = MediaQuery.of(context).size.height;
     final double topInset = MediaQuery.of(context).padding.top;
     final double heroHeight = (screenHeight * widget.heightFactor).clamp(280.0, 420.0);
+    // White logo disc: the logo now fills the circle 100% (owner revision).
+    final double discSize = widget.logoWidth + Dimensions.paddingSizeLarge * 2;
 
     return Container(
       width: double.infinity,
@@ -99,14 +101,16 @@ class _AuthHeroState extends State<AuthHero> with SingleTickerProviderStateMixin
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Softly glowing, breathing logo on a clean white disc for contrast.
+          // Softly glowing, breathing logo — fills the white circle 100%.
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
               return Transform.scale(
                 scale: widget.animate ? _scale.value : 1.0,
                 child: Container(
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+                  width: discSize,
+                  height: discSize,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     shape: BoxShape.circle,
@@ -122,10 +126,7 @@ class _AuthHeroState extends State<AuthHero> with SingleTickerProviderStateMixin
                 ),
               );
             },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(widget.logoCornerRadius),
-              child: Image.asset(widget.logoAssetPath, width: widget.logoWidth),
-            ),
+            child: Image.asset(widget.logoAssetPath, width: discSize, height: discSize, fit: BoxFit.cover),
           ),
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
 

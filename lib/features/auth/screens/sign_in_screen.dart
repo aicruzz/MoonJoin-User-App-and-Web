@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/auth/widgets/sign_in/sign_in_view.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
@@ -62,53 +63,73 @@ class SignInScreenState extends State<SignInScreen> {
           }
         }
       },
-      child: Scaffold(
-        backgroundColor: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor,
-        appBar: (ResponsiveHelper.isDesktop(context) ? null : !widget.exitFromApp ? AppBar(leading: IconButton(
-            onPressed: () {
-              if(widget.fromNotification || widget.fromResetPassword) {
-                Navigator.pushNamed(context, RouteHelper.getInitialRoute());
-              }else if(Get.find<AuthController>().isOtpViewEnable){
-                Get.find<AuthController>().enableOtpView(enable: false);
-              }else{
-                Get.back(result: false);
-              }
-            },
-            icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).textTheme.bodyLarge!.color),
-          ),
-          elevation: 0, backgroundColor: Theme.of(context).cardColor, actions: const [SizedBox()],
-        ) : null),
-        endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
+      child: ResponsiveHelper.isDesktop(context) ? _desktopBody(context) : _mobileBody(context),
+    );
+  }
 
-        body: SafeArea(
-          child: Align(
-            alignment: Alignment.center,
-            child: Container(
-              width: context.width > 700 ? 500 : context.width,
-              padding: context.width > 700 ? const EdgeInsets.all(50) : const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeExtraLarge),
-              margin: context.width > 700 ? const EdgeInsets.all(50) : EdgeInsets.zero,
-              decoration: context.width > 700 ? BoxDecoration(
-                color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                boxShadow: ResponsiveHelper.isDesktop(context) ? null : const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-              ) : null,
-              child: SingleChildScrollView(
-                child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+  // MoonJoin 9C-2: mobile Sign In composed from the frozen Auth Foundation.
+  // AuthHero carries the branding/welcome; the AuthCard hosts the existing
+  // SignInView (all config-driven login logic preserved). The back affordance
+  // mirrors the previous AppBar back behavior exactly.
+  Widget _mobileBody(BuildContext context) {
+    return AuthScaffold(
+      showBack: !widget.exitFromApp,
+      onBack: () {
+        if(widget.fromNotification || widget.fromResetPassword) {
+          Navigator.pushNamed(context, RouteHelper.getInitialRoute());
+        } else if(Get.find<AuthController>().isOtpViewEnable){
+          Get.find<AuthController>().enableOtpView(enable: false);
+        } else {
+          Get.back(result: false);
+        }
+      },
+      hero: AuthHero(
+        title: 'welcome_back_to_moonjoin'.tr,
+        subtitle: 'your_world_of_services_awaits'.tr,
+      ),
+      child: AuthCard(
+        child: SignInView(
+          exitFromApp: widget.exitFromApp,
+          backFromThis: widget.backFromThis,
+          fromResetPassword: widget.fromResetPassword,
+          isOtpViewEnable: (v) {},
+        ),
+      ),
+    );
+  }
 
-                  ResponsiveHelper.isDesktop(context) ? Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      onPressed: () => Get.back(),
-                      icon: const Icon(Icons.clear),
-                    ),
-                  ) : const SizedBox(),
+  // Desktop / web layout preserved as before.
+  Widget _desktopBody(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
+      body: SafeArea(
+        child: Align(
+          alignment: Alignment.center,
+          child: Container(
+            width: context.width > 700 ? 500 : context.width,
+            padding: context.width > 700 ? const EdgeInsets.all(50) : const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeExtraLarge),
+            margin: context.width > 700 ? const EdgeInsets.all(50) : EdgeInsets.zero,
+            decoration: context.width > 700 ? BoxDecoration(
+              color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+            ) : null,
+            child: SingleChildScrollView(
+              child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
 
-                  Image.asset(Images.logo, width: 125),
-                  const SizedBox(height: Dimensions.paddingSizeExtremeLarge),
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.clear),
+                  ),
+                ),
 
-                  SignInView(exitFromApp: widget.exitFromApp, backFromThis: widget.backFromThis, fromResetPassword: widget.fromResetPassword, isOtpViewEnable: (v){},),
+                Image.asset(Images.logo, width: 125),
+                const SizedBox(height: Dimensions.paddingSizeExtremeLarge),
 
-                ]),
-              ),
+                SignInView(exitFromApp: widget.exitFromApp, backFromThis: widget.backFromThis, fromResetPassword: widget.fromResetPassword, isOtpViewEnable: (v){},),
+
+              ]),
             ),
           ),
         ),

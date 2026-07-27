@@ -1,15 +1,14 @@
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart/features/auth/widgets/social_login_widget.dart';
 import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/validate_check.dart';
 import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
 
 class OtpLoginWidget extends StatelessWidget {
   final TextEditingController phoneController;
@@ -28,9 +27,8 @@ class OtpLoginWidget extends StatelessWidget {
     return GetBuilder<AuthController>(builder: (authController) {
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: isDesktop ? Dimensions.paddingSizeLarge : 0),
+        // Welcome heading now lives in AuthHero above; omitted here.
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('hey_there_welcome_back'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
-          const SizedBox(height: Dimensions.paddingSizeExtraOverLarge),
 
           CustomTextField(
             titleText: 'xxx-xxx-xxxxx'.tr,
@@ -47,42 +45,11 @@ class OtpLoginWidget extends StatelessWidget {
           ),
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
 
-          Align(
-            alignment: Alignment.centerLeft,
-            child: InkWell(
-              onTap: () => authController.toggleRememberMe(),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: 24, width: 24,
-                    child: Checkbox(
-                      side: BorderSide(color: Theme.of(context).hintColor),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      activeColor: Theme.of(context).primaryColor,
-                      value: authController.isActiveRememberMe,
-                      onChanged: (bool? isChecked) => authController.toggleRememberMe(),
-                    ),
-                  ),
-                  const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                  Text('remember_me'.tr, style: robotoRegular),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: Dimensions.paddingSizeLarge),
-
-          // const ConditionCheckBoxWidget(forSignUp: true),
-          // const SizedBox(height: Dimensions.paddingSizeLarge),
-
-          CustomButton(
-            buttonText: 'login'.tr,
-            radius: Dimensions.radiusDefault,
-            isBold: isDesktop ? false : true,
+          // Remember-me checkbox removed (MoonJoin 9C-2).
+          AuthPrimaryButton(
+            text: 'login'.tr,
             isLoading: authController.isLoading,
-            onPressed: onClickLoginButton,
-            fontSize: isDesktop ? Dimensions.fontSizeSmall : Dimensions.fontSizeDefault,
+            onPressed: () => onClickLoginButton(),
           ),
           const SizedBox(height: Dimensions.paddingSizeLarge),
 

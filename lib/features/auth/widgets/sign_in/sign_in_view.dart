@@ -51,7 +51,8 @@ class _SignInViewState extends State<SignInView> {
 
     _countryDialCode = authController.getUserCountryCode().isNotEmpty ? authController.getUserCountryCode() : CountryCode.fromCountryCode(splashController.configModel!.country!).dialCode;
     _phoneController.text =  authController.getUserNumber();
-    _passwordController.text = authController.getUserPassword();
+    // MoonJoin 9C-2 Manual Login Persistence: auto-fill the last email/phone only.
+    // The password is NEVER auto-stored or auto-filled (see _processSuccessSetup).
 
     WidgetsBinding.instance.addPostFrameCallback((_){
       bool isOtpActive = CentralizeLoginHelper.getPreferredLoginMethod(splashController.configModel!.centralizeLoginSetup!, authController.isOtpViewEnable).type == CentralizeLoginType.otp
@@ -71,7 +72,14 @@ class _SignInViewState extends State<SignInView> {
     if (!kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Future.delayed(const Duration(milliseconds: 800), () {
-          FocusScope.of(Get.context!).requestFocus(_phoneFocus);
+          // Guard against the delayed callback firing after this view is
+          // disposed (e.g. rapid navigation) — otherwise requesting focus
+          // notifies an already-disposed field's listener.
+          if (!mounted) return;
+          // MoonJoin 9C-2: when a remembered email/phone is already pre-filled,
+          // send the user straight to the password field.
+          final bool prefilled = _phoneController.text.isNotEmpty;
+          FocusScope.of(Get.context!).requestFocus(prefilled ? _passwordFocus : _phoneFocus);
         });
       });
     }
@@ -233,11 +241,9 @@ class _SignInViewState extends State<SignInView> {
   }
 
   Future<void> _processSuccessSetup(AuthController authController, String phone, String email, String password, ResponseModel status) async {
-    if (authController.isActiveRememberMe) {
-      authController.saveUserNumberAndPassword(phone, password, authController.countryDialCode);
-    } else {
-      authController.clearUserNumberAndPassword();
-    }
+    // MoonJoin 9C-2 Manual Login Persistence: always remember the email/phone,
+    // NEVER store the password (the "Remember me" checkbox has been removed).
+    authController.saveUserNumberAndPassword(phone, '', authController.countryDialCode);
     if(GetPlatform.isWeb){
       // await Get.find<FavouriteController>().getFavouriteList();
     }
@@ -270,11 +276,8 @@ class _SignInViewState extends State<SignInView> {
   }
 
   void _processOtpSuccessSetup(ResponseModel response, AuthController authController, String phone, String countryDialCode) async {
-    if (authController.isActiveRememberMe) {
-      authController.saveUserNumberAndPassword(phone, '', countryDialCode);
-    } else {
-      authController.clearUserNumberAndPassword();
-    }
+    // MoonJoin 9C-2: remember the last phone for OTP too; password never stored.
+    authController.saveUserNumberAndPassword(phone, '', countryDialCode);
     if(GetPlatform.isWeb && response.authResponseModel == null){
       await Get.find<FavouriteController>().getFavouriteList();
     }

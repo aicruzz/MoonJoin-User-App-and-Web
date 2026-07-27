@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart/features/auth/widgets/condition_check_box_widget.dart';
 import 'package:sixam_mart/features/auth/widgets/sign_up_widget.dart';
@@ -39,9 +40,9 @@ class ManualLoginWidget extends StatelessWidget {
         return webView(isDesktop, context, authController);
       }
       
+      // Mobile Sign In card body. The welcome heading now lives in AuthHero
+      // (the hero above this card), so it is intentionally omitted here.
       return Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('hey_there_welcome_back'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
-        const SizedBox(height: Dimensions.paddingSizeExtraOverLarge),
 
         CustomTextField(
           onCountryChanged: (countryCode) => authController.countryDialCode = countryCode.dialCode!,
@@ -107,56 +108,30 @@ class ManualLoginWidget extends StatelessWidget {
         SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeExtraSmall),
 
 
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          InkWell(
-            onTap: () => authController.toggleRememberMe(),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  height: 24, width: 24,
-                  child: Checkbox(
-                    side: BorderSide(color: Theme.of(context).hintColor),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    activeColor: Theme.of(context).primaryColor,
-                    value: authController.isActiveRememberMe,
-                    onChanged: (bool? isChecked) => authController.toggleRememberMe(),
-                  ),
-                ),
-                const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                Text('remember_me'.tr, style: robotoRegular),
-              ],
-            ),
-          ),
-
-          TextButton(
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+        // Remember-me checkbox removed (MoonJoin 9C-2: the email/phone is always
+        // remembered and auto-filled; the password is never stored). Only the
+        // Forgot Password affordance remains, right-aligned.
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
             onPressed: () {
               Get.toNamed(RouteHelper.getForgotPassRoute());
             },
-            child: Text('${'forgot_password'.tr}?', style: robotoRegular.copyWith(color: Theme.of(context).primaryColor)),
+            child: Text('${'forgot_password'.tr}?', style: robotoMedium.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall)),
           ),
-        ]),
-
-        const SizedBox(height: Dimensions.paddingSizeSmall),
-
-        // const ConditionCheckBoxWidget(forSignUp: true),
-        // const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-
-        CustomButton(
-          height: isDesktop ? 50 : null,
-          width:  isDesktop ? 250 : null,
-          buttonText: 'login'.tr,
-          radius: isDesktop ? Dimensions.radiusSmall : Dimensions.radiusDefault,
-          isBold: isDesktop ? false : true,
-          isLoading: authController.isLoading,
-          onPressed: onClickLoginButton,
         ),
         const SizedBox(height: Dimensions.paddingSizeLarge),
 
-        SizedBox(height: isDesktop ? Dimensions.paddingSizeLarge : 0),
+        AuthPrimaryButton(
+          text: 'login'.tr,
+          isLoading: authController.isLoading,
+          onPressed: () => onClickLoginButton(),
+        ),
+        const SizedBox(height: Dimensions.paddingSizeLarge),
 
+        // OTP affordance — shown only when the admin Login Setup enables OTP
+        // alongside manual (onOtpViewClick != null). Behavior preserved.
         onOtpViewClick != null ? Column(children: [
           Text('or'.tr, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor)),
           const SizedBox(height: Dimensions.paddingSizeExtraSmall),
@@ -170,23 +145,19 @@ class ManualLoginWidget extends StatelessWidget {
               child: Text('otp'.tr, style: robotoRegular.copyWith(color: Theme.of(context).primaryColor, decoration: TextDecoration.underline)),
             ),
           ]),
+          const SizedBox(height: Dimensions.paddingSizeLarge),
         ]) : const SizedBox(),
 
         socialEnable ? SocialLoginWidget(onlySocialLogin: false, backFromThis: backFromThis) : const SizedBox(),
 
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('do_not_have_account'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
-
-          InkWell(
-            onTap: authController.isLoading ? null : () {
-              Get.toNamed(RouteHelper.getSignUpRoute());
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-              child: Text('sign_up'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
-            ),
-          ),
-        ]),
+        AuthFooter(
+          leadingText: '${'do_not_have_account'.tr} ',
+          actionText: 'sign_up'.tr,
+          enabled: !authController.isLoading,
+          onAction: () {
+            Get.toNamed(RouteHelper.getSignUpRoute());
+          },
+        ),
 
       ]);
     });
@@ -264,30 +235,10 @@ class ManualLoginWidget extends StatelessWidget {
             SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeExtraSmall),
 
 
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              InkWell(
-                onTap: () => authController.toggleRememberMe(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: 24, width: 24,
-                      child: Checkbox(
-                        side: BorderSide(color: Theme.of(context).hintColor),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        activeColor: Theme.of(context).primaryColor,
-                        value: authController.isActiveRememberMe,
-                        onChanged: (bool? isChecked) => authController.toggleRememberMe(),
-                      ),
-                    ),
-                    const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                    Text('remember_me'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
-                  ],
-                ),
-              ),
-
-              TextButton(
+            // Remember-me checkbox removed (MoonJoin 9C-2). Forgot Password only.
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
                 style: TextButton.styleFrom(padding: EdgeInsets.zero),
                 onPressed: () {
                   if(isDesktop) {
@@ -299,7 +250,7 @@ class ManualLoginWidget extends StatelessWidget {
                 },
                 child: Text('${'forgot_password'.tr}?', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor)),
               ),
-            ]),
+            ),
 
             const SizedBox(height: Dimensions.paddingSizeLarge),
 

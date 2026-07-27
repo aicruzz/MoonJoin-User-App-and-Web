@@ -1,3 +1,4 @@
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/auth/widgets/sign_up_widget.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
@@ -18,14 +19,25 @@ class SignUpScreen extends StatefulWidget {
 class SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
+    if (ResponsiveHelper.isDesktop(context)) return _desktopBody(context);
+
+    // MoonJoin 9C-3: mobile Sign Up composed from the frozen Auth Foundation.
+    // AuthHero carries branding; SignUpWidget hosts the existing form + logic.
+    return AuthScaffold(
+      showBack: !widget.exitFromApp,
+      onBack: () => Get.back(),
+      hero: AuthHero(
+        title: 'create_your_moonjoin_account'.tr,
+        subtitle: 'your_world_of_services_awaits'.tr,
+      ),
+      child: const AuthCard(child: SignUpWidget()),
+    );
+  }
+
+  // Desktop / web layout preserved as before.
+  Widget _desktopBody(BuildContext context) {
     return Scaffold(
-      appBar: (ResponsiveHelper.isDesktop(context) ? null : !widget.exitFromApp ? AppBar(leading: IconButton(
-        onPressed: () => Get.back(),
-        icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).textTheme.bodyLarge!.color),
-      ), elevation: 0, backgroundColor: Colors.transparent,
-        actions: const [SizedBox()],
-      ) : null),
-      backgroundColor: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor,
+      backgroundColor: Colors.transparent,
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: SafeArea(
         child: Center(
@@ -40,13 +52,13 @@ class SignUpScreenState extends State<SignUpScreen> {
             child: SingleChildScrollView(
               child: Column(children: [
 
-                ResponsiveHelper.isDesktop(context) ? Align(
+                Align(
                   alignment: Alignment.topRight,
                   child: IconButton(
                     onPressed: () => Get.back(),
                     icon: const Icon(Icons.clear),
                   ),
-                ) : const SizedBox(),
+                ),
 
                 Image.asset(Images.logo, width: 125),
                 const SizedBox(height: Dimensions.paddingSizeExtraLarge),

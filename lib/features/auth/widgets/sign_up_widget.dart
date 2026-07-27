@@ -12,6 +12,7 @@ import 'package:sixam_mart/features/auth/domain/enum/centralize_login_enum.dart'
 import 'package:sixam_mart/features/auth/domain/models/signup_body_model.dart';
 import 'package:sixam_mart/features/auth/widgets/auth_dialog_widget.dart';
 import 'package:sixam_mart/features/auth/widgets/condition_check_box_widget.dart';
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
 import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/features/location/controllers/location_controller.dart';
@@ -62,7 +63,8 @@ class SignUpWidgetState extends State<SignUpWidget> {
     return Form(
       key: _formKeySignUp,
       child: Container(
-        width: context.width > 700 ? 700 : context.width,
+        // Mobile: fill the hosting AuthCard width (9C-3). Desktop: 700 card.
+        width: context.width > 700 ? 700 : double.infinity,
         decoration: context.width > 700 ? BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
@@ -90,7 +92,7 @@ class SignUpWidgetState extends State<SignUpWidget> {
                     child: Text('sign_up'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge)),
                   ) : const SizedBox(),
 
-                SizedBox(height: isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeSmall),
+                SizedBox(height: isDesktop ? Dimensions.paddingSizeExtraLarge : 0),
 
                   Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Expanded(
@@ -257,45 +259,53 @@ class SignUpWidgetState extends State<SignUpWidget> {
                   SizedBox(height: isDesktop ? 0 : Dimensions.paddingSizeLarge),
 
                   const ConditionCheckBoxWidget(forDeliveryMan: true),
-                  SizedBox(height: isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeDefault),
+                  SizedBox(height: isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeLarge),
 
-                  CustomButton(
-                    height: isDesktop ? 50 : null,
-                    width:  isDesktop ? 250 : null,
-                    radius: isDesktop ? Dimensions.radiusSmall : Dimensions.radiusDefault,
-                    isBold: !isDesktop,
-                    fontSize: isDesktop ? Dimensions.fontSizeSmall : null,
+                  // Mobile → frozen AuthPrimaryButton; desktop → existing CustomButton.
+                  // acceptTerms gate + _register logic preserved verbatim.
+                  isDesktop ? CustomButton(
+                    height: 50,
+                    width:  250,
+                    radius: Dimensions.radiusSmall,
+                    isBold: false,
+                    fontSize: Dimensions.fontSizeSmall,
                     buttonText: 'sign_up'.tr,
                     isLoading: authController.isLoading,
                     onPressed: authController.acceptTerms ? () => _register(authController, _countryDialCode!) : null,
+                  ) : AuthPrimaryButton(
+                    text: 'sign_up'.tr,
+                    isLoading: authController.isLoading,
+                    onPressed: authController.acceptTerms ? () => _register(authController, _countryDialCode!) : null,
                   ),
-                  SizedBox(height: isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeDefault),
+                  SizedBox(height: isDesktop ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeLarge),
 
                   Padding(
-                    padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeLarge),
-                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    padding: EdgeInsets.only(bottom: isDesktop ? Dimensions.paddingSizeLarge : 0),
+                    child: isDesktop ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Text('already_have_account'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
 
                       InkWell(
                         onTap: authController.isLoading ? null : () {
-                          if(isDesktop){
-                            Get.back();
-                            Get.dialog(const Center(child: AuthDialogWidget(exitFromApp: false, backFromThis: false)));
-
-                          }else{
-                            if(Get.currentRoute == RouteHelper.signUp) {
-                            Get.back();
-                            } else {
-                              Get.toNamed(RouteHelper.getSignInRoute(RouteHelper.signUp));
-                            }
-                          }
+                          Get.back();
+                          Get.dialog(const Center(child: AuthDialogWidget(exitFromApp: false, backFromThis: false)));
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
                           child: Text('sign_in'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
                         ),
                       ),
-                    ]),
+                    ]) : AuthFooter(
+                      leadingText: '${'already_have_account'.tr} ',
+                      actionText: 'sign_in'.tr,
+                      enabled: !authController.isLoading,
+                      onAction: () {
+                        if(Get.currentRoute == RouteHelper.signUp) {
+                          Get.back();
+                        } else {
+                          Get.toNamed(RouteHelper.getSignInRoute(RouteHelper.signUp));
+                        }
+                      },
+                    ),
                   ),
 
                 ]),
