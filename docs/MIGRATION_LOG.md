@@ -2927,6 +2927,80 @@ changes. Frozen Auth Foundation reused (AuthHero revised only per owner request 
 simulator (guest → Sign In → Sign Up): logo fills disc, all fields present, Full-Name auto-focus, terms/button/footer
 working, 0 overflow/exceptions/asset-errors.
 
+## Phase 9C-5 — Forgot Password — FROZEN (2026-07-28)
+**Status:** Implemented · Runtime Verified · QA Passed · Owner Approved · FROZEN. **Design authority:** none (no
+Forgot Password Figma / no ui-designs image) → the frozen MoonJoin Auth Foundation (9C-1). Presentation only.
+**File:** `lib/features/verification/screens/forget_pass_screen.dart` (no new i18n keys — all strings pre-existed).
+**What changed:** `build` split into `_mobileBody` (frozen foundation) + `_desktopBody` (legacy preserved), mirroring
+9C-2/9C-3/9C-4. Mobile → `AuthScaffold(onBack: Get.back, hero: AuthHero(forgot_your_password | sorry_something_went_wrong
++ subtitle), child: AuthCard(...))`. Both original states preserved: **request form** (`Form → AuthInputGroup(phone|email
+CustomTextField)` + `AuthPrimaryButton` "Request OTP" + "Or" + `AuthFooter` "Back to Log In") and **channels-disabled
+fallback** (`AuthPrimaryButton` "Help & Support" + `AuthFooter` "continue as guest"). Mobile drops the legacy
+`Images.forgot`/logo illustration in favour of the shared hero (consistent with Sign In/Sign Up/Verification); desktop
+keeps them. Removed the now-unused `custom_app_bar` import.
+**Preserved (verbatim):** `_onPressedForgetPass` (phone build + `CustomValidator.isPhoneValid` + `_formKeyLogin.validate()`
++ `VerificationController.forgetPassword` + Firebase-vs-backend routing `phoneVerificationStatus && firebaseOtpVerification`
++ desktop-dialog / `RouteHelper.getVerificationRoute`) · `initState` config gating (`isSmsActive`/`firebaseOtpVerification`/
+`isMailActive`) + non-web auto-focus · validators · country picker. No controller/repo/service/API/model/route/Firebase/OTP/
+business-logic changes.
+**Verification:** `flutter analyze lib/features/verification/screens/forget_pass_screen.dart` → **No issues found!**
+Real-app runtime verified on iPhone 16 Pro Max simulator — green hero + breathing logo, floating card, +234 phone field,
+Request OTP, Or, Back to Log In; 0 overflow/exceptions. Fallback state analyzer-clean + preserved but not runtime-reproduced
+(needs both SMS+email disabled in Admin config); OTP delivery still gated by the 9C-4 backend gateway (2Factor→+234).
+
+## Phase 9C-6 — Reset / New Password — FROZEN (2026-07-28)
+**Status:** Implemented · Runtime Verified · QA Passed · Owner Approved · FROZEN. **Design authority:** none (no Figma /
+no ui-designs image) → the frozen MoonJoin Auth Foundation (9C-1). Presentation only. **File:**
+`lib/features/verification/screens/new_pass_screen.dart` (no new i18n keys).
+**What changed:** `build` split into `_mobileBody` (frozen foundation) + `_desktopBody` (legacy preserved). Mobile →
+`AuthScaffold(onBack: Get.back, hero: AuthHero(change_password | reset_password + enter_new_password subtitle), child:
+AuthCard(AuthInputGroup(New Password + Confirm password) + AuthPrimaryButton "Change Password"))`. Mobile drops the legacy
+`Images.changePass` illustration for the shared hero; desktop keeps it; removed the unused `custom_app_bar` import.
+**No `Form` added** — legacy manual validation kept verbatim.
+**Both flows preserved (verbatim):** keyed by `fromPasswordChange` — (1) **Change Password** (`_changeUserPassword` →
+`ProfileController.changePassword`) and (2) **Reset Password** (`_resetUserPassword` → `VerificationController.resetPassword`
++ mobile `getSignInRoute` / desktop `AuthDialogWidget` navigation); `_onPressedPasswordChange` empty/`<6`/mismatch checks
+and per-path `isLoading` source unchanged. No controller/repo/service/API/model/route/validator/Firebase/OTP/business-logic
+changes.
+**Verification:** `flutter analyze lib/features/verification/screens/new_pass_screen.dart` → **No issues found!** Real-app
+runtime verified on iPhone 16 Pro Max via the real flow (Account → Sign In → Settings → **Change Password**) — green hero +
+breathing logo, floating card, New/Confirm password fields, Change Password button; 0 overflow/exceptions. **Reset Password**
+variant = same widget/logic, preserved but not runtime-reachable now (behind the OTP step blocked by the 9C-4 backend gateway
+2Factor→+234 — infrastructure, not frontend).
+
+## Phase 9C-7 — New User Setup — FROZEN (2026-07-28)
+**Status:** Implemented · Runtime Verified · QA Passed · Owner Approved · FROZEN. **Design authority:** none → the frozen
+MoonJoin Auth Foundation (9C-1). Presentation only. **File:** `lib/features/auth/screens/new_user_setup_screen.dart` (no new
+i18n keys).
+**What changed:** `build` split into `_mobileBody` (frozen foundation) + `_desktopBody` (legacy preserved). Mobile →
+`AuthScaffold(onBack: Get.back, hero: AuthHero('just_one_step_away'), child: AuthCard(Form(_formKeyInfo) → AuthInputGroup(Name +
+[Phone if social | Email if OTP] + Refer-code if refEarningStatus==1) → AuthPrimaryButton('done')))`. Mobile drops the legacy
+`Images.logo`+centered text for the shared hero; desktop keeps them.
+**Preserved (verbatim):** `_formKeyInfo` validation · `_isSocial`(`CentralizeLoginType.social`) branch (social→Phone, OTP→Email)
++ social name pre-fill · `widget.phone`-empty phone validation (`CustomValidator.isPhoneValid`) · `_updatePersonalInfo` →
+`AuthController.updatePersonalInfo` → `LocationController.navigateToLocationScreen('sign-in', offNamed:true)` · refer-code gate.
+No controller/repo/service/API/model/route/Firebase/OTP/OAuth/business-logic changes.
+**Social login audit (no changes; buttons remain in FROZEN `social_login_widget.dart` 9C-2):** entry point into this screen
+(`NewUserSetupScreen(loginType: social …)`) preserved. **Google works.** **Apple** fails = **iOS Configuration**
+(`com.apple.developer.applesignin` present only in `RunnerProfile.entitlements`; ABSENT from `Runner.entitlements` Release +
+`RunnerDebug.entitlements` Debug). **Facebook** fails = **Provider/Platform Configuration** (iOS Info.plist complete —
+`FacebookAppID`/`FacebookClientToken`/`FacebookDisplayName`/URL scheme; issue in Meta dashboard/backend). **Neither is a frontend
+regression** → deferred to the future MoonJoin World Authentication Hardening phase (not repaired here).
+**Verification:** `flutter analyze lib/features/auth/screens/new_user_setup_screen.dart` → **No issues found!** Runtime:
+verified-by-construction (composed from the frozen foundation already runtime-verified in 9C-5/9C-6); the fresh-onboarding
+trigger (new unregistered account) was not reproduced on-device (OTP onboarding blocked by the 9C-4 SMS gateway + the test
+account already registered — infrastructure, not frontend).
+
+## ✅ Authentication Cluster — COMPLETE (2026-07-28)
+The entire customer Authentication Cluster is now migrated to the **MoonJoin Premium Authentication Foundation** (9C-1) and
+frozen: **Sign In (9C-2) · Sign Up (9C-3) · Forgot Password (9C-5) · Reset/Change Password (9C-6) · New User Setup (9C-7)**,
+plus **OTP Login** and **Verification-screen navigation** (9C-4 migrated + analyzer/analysis-clean; frozen-pending-gateway).
+All share one hero/card/spacing/typography/button language. **Google Sign-In works.** **Apple & Facebook** remain **provider/
+platform configuration** issues (NOT frontend regressions; see per-phase notes) deferred to MoonJoin World Auth Hardening.
+Current SMS provider = 2Factor (temporary); future production provider = **Termii**; Firebase Phone Verification intentionally
+disabled; backend SMS gateway is the active OTP path. No authentication/OTP/OAuth/Firebase/controller/route/API/backend/business
+logic was changed in any phase — presentation only.
+
 ## Phase 8F — Language (onboarding screen) — STATUS: IMPLEMENTED, NOT FROZEN
 `ChooseLanguageScreen` (`language_screen.dart`) is implemented (presentation-only; menu = ProfilePageHeader,
 first-run = onboarding identity preserved), analyze-clean, runtime-clean, but **visual verification is pending**

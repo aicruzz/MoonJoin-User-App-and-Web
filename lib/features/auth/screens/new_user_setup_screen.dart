@@ -7,6 +7,7 @@ import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart/features/auth/domain/enum/centralize_login_enum.dart';
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/features/location/controllers/location_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
@@ -54,12 +55,121 @@ class _NewUserSetupScreenState extends State<NewUserSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (ResponsiveHelper.isDesktop(context)) return _desktopBody(context);
+    return _mobileBody(context);
+  }
+
+  // MoonJoin 9C-7: mobile New User Setup composed from the frozen Auth
+  // Foundation (AuthScaffold + AuthHero + AuthCard + AuthInputGroup +
+  // AuthPrimaryButton), matching the rest of the frozen auth cluster. All
+  // onboarding / validation / referral / social + OTP paths preserved verbatim
+  // (see _updatePersonalInfo and the button's onPressed).
+  Widget _mobileBody(BuildContext context) {
+    final bool refEarning = Get.find<SplashController>().configModel!.refEarningStatus == 1;
+    return AuthScaffold(
+      onBack: () => Get.back(),
+      hero: AuthHero(title: 'just_one_step_away'.tr),
+      child: AuthCard(
+        child: Form(
+          key: _formKeyInfo,
+          child: GetBuilder<AuthController>(builder: (authController) {
+            return Column(mainAxisSize: MainAxisSize.min, children: [
+
+              AuthInputGroup(children: [
+
+                CustomTextField(
+                  titleText: 'ex_jhon'.tr,
+                  labelText: 'user_name'.tr,
+                  showLabelText: true,
+                  required: true,
+                  controller: _nameController,
+                  focusNode: _nameFocus,
+                  nextFocus: _isSocial ? _phoneFocus : _emailFocus,
+                  inputType: TextInputType.name,
+                  capitalization: TextCapitalization.words,
+                  prefixIcon: CupertinoIcons.person_alt_circle_fill,
+                  labelTextSize: Dimensions.fontSizeDefault,
+                  validator: (value) => ValidateCheck.validateEmptyText(value, "please_enter_your_name".tr),
+                ),
+
+                _isSocial ? CustomTextField(
+                  titleText: 'xxx-xxx-xxxxx'.tr,
+                  labelText: 'phone'.tr,
+                  showLabelText: true,
+                  required: true,
+                  controller: _phoneController,
+                  focusNode: _phoneFocus,
+                  nextFocus: _referCodeFocus,
+                  inputType: TextInputType.phone,
+                  isPhone: true,
+                  onCountryChanged: (CountryCode countryCode) {
+                    _countryDialCode = countryCode.dialCode;
+                  },
+                  countryDialCode: _countryDialCode != null ? CountryCode.fromCountryCode(Get.find<SplashController>().configModel!.country!).code
+                      : Get.find<LocalizationController>().locale.countryCode,
+                  validator: (value) => ValidateCheck.validateEmptyText(value, "please_enter_phone_number".tr),
+                ) : CustomTextField(
+                  titleText: 'enter_email'.tr,
+                  labelText: 'email'.tr,
+                  showLabelText: true,
+                  required: true,
+                  controller: _emailController,
+                  focusNode: _emailFocus,
+                  nextFocus: _referCodeFocus,
+                  inputType: TextInputType.emailAddress,
+                  prefixIcon: CupertinoIcons.mail_solid,
+                  validator: (value) => ValidateCheck.validateEmail(value),
+                ),
+
+                if (refEarning) CustomTextField(
+                  titleText: 'refer_code'.tr,
+                  labelText: 'refer_code'.tr,
+                  showLabelText: true,
+                  controller: _referCodeController,
+                  focusNode: _referCodeFocus,
+                  inputAction: TextInputAction.done,
+                  inputType: TextInputType.text,
+                  capitalization: TextCapitalization.words,
+                  prefixImage : Images.referCode,
+                  divider: false,
+                  prefixSize: 14,
+                ),
+              ]),
+              const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+              AuthPrimaryButton(
+                text: 'done'.tr,
+                isLoading: authController.isLoading,
+                onPressed: () async {
+                  if(_formKeyInfo!.currentState!.validate()) {
+
+                    if(widget.phone == null || widget.phone!.isEmpty) {
+                      String numberWithCountryCode =  _countryDialCode! + _phoneController.text.trim();
+                      PhoneValid phoneValid = await CustomValidator.isPhoneValid(numberWithCountryCode);
+                      numberWithCountryCode = phoneValid.phone;
+                      if(!phoneValid.isValid) {
+                        showCustomSnackBar('invalid_phone_number'.tr);
+                      } else {
+                        _updatePersonalInfo(authController, numberWithCountryCode);
+                      }
+                    } else {
+                      _updatePersonalInfo(authController, '');
+                    }
+
+                  }
+                },
+              ),
+            ]);
+          }),
+        ),
+      ),
+    );
+  }
+
+  // Desktop / web layout — legacy presentation preserved.
+  Widget _desktopBody(BuildContext context) {
     return Scaffold(
-      backgroundColor: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor,
-      appBar: ResponsiveHelper.isDesktop(context) ? null : AppBar(leading: IconButton(
-        onPressed: () => Get.back(),
-        icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).textTheme.bodyLarge!.color),
-      ), elevation: 0, backgroundColor: Theme.of(context).cardColor),
+      backgroundColor: Colors.transparent,
       body: SafeArea(child: Align(
         alignment: Alignment.center,
         child: Container(
@@ -68,20 +178,19 @@ class _NewUserSetupScreenState extends State<NewUserSetupScreen> {
           margin: context.width > 700 ? const EdgeInsets.all(50) : EdgeInsets.zero,
           decoration: context.width > 700 ? BoxDecoration(
             color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-            boxShadow: ResponsiveHelper.isDesktop(context) ? null : [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, blurRadius: 5, spreadRadius: 1)],
           ) : null,
           child: SingleChildScrollView(
             child: Form(
               key: _formKeyInfo,
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
-                ResponsiveHelper.isDesktop(context) ? Align(
+                Align(
                   alignment: Alignment.topRight,
                   child: IconButton(
                     onPressed: () => Get.back(),
                     icon: const Icon(Icons.clear),
                   ),
-                ) : const SizedBox(),
+                ),
 
                 Image.asset(Images.logo, width: 125),
                 const SizedBox(height: Dimensions.paddingSizeLarge),
@@ -152,11 +261,11 @@ class _NewUserSetupScreenState extends State<NewUserSetupScreen> {
 
                 GetBuilder<AuthController>(builder: (authController) {
                   return CustomButton(
-                    height: ResponsiveHelper.isDesktop(context) ? 50 : null,
-                    width:  ResponsiveHelper.isDesktop(context) ? 250 : null,
-                    radius: ResponsiveHelper.isDesktop(context) ? Dimensions.radiusSmall : Dimensions.radiusDefault,
-                    isBold: !ResponsiveHelper.isDesktop(context),
-                    fontSize: ResponsiveHelper.isDesktop(context) ? Dimensions.fontSizeSmall : null,
+                    height: 50,
+                    width:  250,
+                    radius: Dimensions.radiusSmall,
+                    isBold: false,
+                    fontSize: Dimensions.fontSizeSmall,
                     buttonText: 'done'.tr,
                     isLoading: authController.isLoading,
                     onPressed: () async {

@@ -2,10 +2,10 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/verification/controllers/verification_controller.dart';
 import 'package:sixam_mart/features/verification/screens/verification_screen.dart';
 import 'package:sixam_mart/helper/custom_validator.dart';
@@ -66,9 +66,113 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (ResponsiveHelper.isDesktop(context)) return _desktopBody(context);
+    return _mobileBody(context);
+  }
+
+  // MoonJoin 9C-5: mobile Forgot Password composed from the frozen Auth
+  // Foundation (AuthScaffold + AuthHero + AuthCard + AuthInputGroup +
+  // AuthPrimaryButton + AuthFooter), matching frozen Sign In / Sign Up /
+  // Verification. Both original states are preserved: the request form (when a
+  // channel is enabled) and the "channels disabled" fallback. All routing /
+  // validation / OTP-request logic lives in _onPressedForgetPass, untouched.
+  Widget _mobileBody(BuildContext context) {
+    final bool hasChannel = isPhone || isEmail;
+    return AuthScaffold(
+      onBack: () => Get.back(),
+      hero: AuthHero(
+        title: hasChannel ? 'forgot_your_password'.tr : 'sorry_something_went_wrong'.tr,
+        subtitle: hasChannel
+            ? (isPhone ? 'please_enter_the_registered_phone_where_you_want'.tr : 'please_enter_the_registered_email_where_you_want'.tr)
+            : 'please_try_again_after_some_time_or_contact_with_our_support_team'.tr,
+      ),
+      child: AuthCard(
+        child: hasChannel ? _requestForm(context) : _fallbackContent(context),
+      ),
+    );
+  }
+
+  // Request-OTP form — the phone / email field, request button, and back-to-login link.
+  Widget _requestForm(BuildContext context) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+
+      Form(
+        key: _formKeyLogin,
+        child: AuthInputGroup(children: [
+          isPhone ? CustomTextField(
+            titleText: 'xxx-xxx-xxxxx'.tr,
+            controller: _numberController,
+            focusNode: _numberFocusNode,
+            inputType: TextInputType.phone,
+            inputAction: TextInputAction.done,
+            isPhone: true,
+            onCountryChanged: (CountryCode countryCode) {
+              _countryDialCode = countryCode.dialCode;
+            },
+            countryDialCode: CountryCode.fromCountryCode(Get.find<SplashController>().configModel!.country!).code ?? Get.find<LocalizationController>().locale.countryCode,
+            onSubmit: (text) => GetPlatform.isWeb ? _onPressedForgetPass(_countryDialCode!) : null,
+            labelText: 'phone'.tr,
+            validator: (value) => ValidateCheck.validateEmptyText(value, null),
+          ) : CustomTextField(
+            titleText: 'enter_email'.tr,
+            labelText: 'email'.tr,
+            showLabelText: true,
+            required: true,
+            controller: _emailController,
+            focusNode: _emailFocusNode,
+            inputType: TextInputType.emailAddress,
+            inputAction: TextInputAction.done,
+            prefixIcon: CupertinoIcons.mail_solid,
+            validator: (value) => ValidateCheck.validateEmail(value),
+          ),
+        ]),
+      ),
+      const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+      GetBuilder<VerificationController>(builder: (verificationController) {
+        return GetBuilder<AuthController>(builder: (authController) {
+          return AuthPrimaryButton(
+            text: 'request_otp'.tr,
+            isLoading: verificationController.isLoading || authController.isLoading,
+            onPressed: () => _onPressedForgetPass(_countryDialCode!),
+          );
+        });
+      }),
+      const SizedBox(height: Dimensions.paddingSizeLarge),
+
+      Text('or'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).hintColor), textAlign: TextAlign.center),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
+
+      AuthFooter(
+        leadingText: '${'back_to'.tr} ',
+        actionText: 'login_in'.tr,
+        onAction: () => Get.back(),
+      ),
+    ]);
+  }
+
+  // "Both SMS and email disabled" fallback — Help & Support + continue-as-guest.
+  Widget _fallbackContent(BuildContext context) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+
+      AuthPrimaryButton(
+        text: 'help_and_support'.tr,
+        onPressed: () => Get.toNamed(RouteHelper.getSupportRoute()),
+      ),
+      const SizedBox(height: Dimensions.paddingSizeDefault),
+
+      AuthFooter(
+        leadingText: '${'continue_as'.tr} ',
+        actionText: 'guest'.tr,
+        onAction: () => Get.offAllNamed(RouteHelper.getInitialRoute()),
+      ),
+    ]);
+  }
+
+  // Desktop / web layout — legacy presentation preserved.
+  Widget _desktopBody(BuildContext context) {
     return Scaffold(
-      appBar: ResponsiveHelper.isDesktop(context) ? null : CustomAppBar(title: 'forgot_password'.tr),
-      backgroundColor: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor,
+      backgroundColor: Colors.transparent,
       body: Center(child: SingleChildScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
@@ -79,20 +183,19 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
             width: widget.fromDialog ? 475 : context.width > 700 ? 700 : context.width,
             decoration: context.width > 700 ? BoxDecoration(
               color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-              boxShadow:  ResponsiveHelper.isDesktop(context) ?  null : [BoxShadow(color: Colors.grey[Get.isDarkMode ? 700 : 300]!, blurRadius: 5, spreadRadius: 1)],
             ) : null,
             child: Column(
               children: [
-                ResponsiveHelper.isDesktop(context) ? Align(
+                Align(
                   alignment: Alignment.topRight,
                   child: IconButton(
                     onPressed: () => Get.back(),
                     icon: const Icon(Icons.clear),
                   ),
-                ) : const SizedBox(),
+                ),
 
                 (isPhone || isEmail) ? Padding(
-                  padding: widget.fromDialog ? const EdgeInsets.all(Dimensions.paddingSizeExtremeLarge) : context.width > 700 ? const EdgeInsets.all(Dimensions.paddingSizeDefault) : const EdgeInsets.all(Dimensions.paddingSizeLarge),
+                  padding: widget.fromDialog ? const EdgeInsets.all(Dimensions.paddingSizeExtremeLarge) : const EdgeInsets.all(Dimensions.paddingSizeDefault),
                   child: Column(children: [
 
                     Image.asset(Images.logo, width: 135),
@@ -173,7 +276,7 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
 
                   ]),
                 ) : Padding(
-                  padding: widget.fromDialog ? const EdgeInsets.all(Dimensions.paddingSizeExtremeLarge) : context.width > 700 ? const EdgeInsets.all(Dimensions.paddingSizeDefault) : const EdgeInsets.all(Dimensions.paddingSizeLarge),
+                  padding: widget.fromDialog ? const EdgeInsets.all(Dimensions.paddingSizeExtremeLarge) : const EdgeInsets.all(Dimensions.paddingSizeDefault),
                   child: Column(children: [
 
                     Image.asset(Images.forgot, height:  widget.fromDialog ? 160 : 220),

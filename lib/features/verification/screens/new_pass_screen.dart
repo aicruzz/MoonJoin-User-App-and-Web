@@ -1,11 +1,11 @@
 import 'package:sixam_mart/features/auth/widgets/auth_dialog_widget.dart';
+import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart/features/profile/domain/models/userinfo_model.dart';
 import 'package:sixam_mart/features/verification/controllers/verification_controller.dart';
 import 'package:sixam_mart/helper/validate_check.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
@@ -36,9 +36,72 @@ class _NewPassScreenState extends State<NewPassScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (ResponsiveHelper.isDesktop(context)) return _desktopBody(context);
+    return _mobileBody(context);
+  }
+
+  // MoonJoin 9C-6: mobile Reset / New Password composed from the frozen Auth
+  // Foundation (AuthScaffold + AuthHero + AuthCard + AuthInputGroup +
+  // AuthPrimaryButton), matching frozen Sign In / Sign Up / Verification /
+  // Forgot Password. Serves both entry paths (reset from forgot flow and
+  // change-password from Profile) via `fromPasswordChange`; all validation and
+  // change/reset logic lives in _onPressedPasswordChange, untouched.
+  Widget _mobileBody(BuildContext context) {
+    return AuthScaffold(
+      onBack: () => Get.back(),
+      hero: AuthHero(
+        title: widget.fromPasswordChange ? 'change_password'.tr : 'reset_password'.tr,
+        subtitle: 'enter_new_password'.tr,
+      ),
+      child: AuthCard(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+
+          AuthInputGroup(children: [
+            CustomTextField(
+              titleText: '8+characters'.tr,
+              controller: _newPasswordController,
+              focusNode: _newPasswordFocus,
+              nextFocus: _confirmPasswordFocus,
+              inputType: TextInputType.visiblePassword,
+              prefixIcon: Icons.lock,
+              isPassword: true,
+              divider: false,
+              labelText: 'new_password'.tr,
+              validator: (value) => ValidateCheck.validateEmptyText(value, 'please_enter_new_password'.tr),
+            ),
+            CustomTextField(
+              titleText: '8+characters'.tr,
+              controller: _confirmPasswordController,
+              focusNode: _confirmPasswordFocus,
+              inputAction: TextInputAction.done,
+              inputType: TextInputType.visiblePassword,
+              prefixIcon: Icons.lock,
+              isPassword: true,
+              onSubmit: (text) => GetPlatform.isWeb ? _onPressedPasswordChange() : null,
+              labelText: 'confirm_password'.tr,
+              validator: (value) => ValidateCheck.validateEmptyText(value, 'please_enter_confirm_password'.tr),
+            ),
+          ]),
+          const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+          GetBuilder<ProfileController>(builder: (profileController) {
+            return GetBuilder<VerificationController>(builder: (verificationController) {
+              return AuthPrimaryButton(
+                text: 'change_password'.tr,
+                isLoading: widget.fromPasswordChange ? profileController.isLoading : verificationController.isLoading,
+                onPressed: () => _onPressedPasswordChange(),
+              );
+            });
+          }),
+        ]),
+      ),
+    );
+  }
+
+  // Desktop / web layout — legacy presentation preserved.
+  Widget _desktopBody(BuildContext context) {
     return Scaffold(
-      backgroundColor: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor,
-      appBar:  widget.fromDialog ? null : CustomAppBar(title: widget.fromPasswordChange ? 'change_password'.tr : 'reset_password'.tr),
+      backgroundColor: Colors.transparent,
       body:  SafeArea(child: Center(child: SingleChildScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
@@ -46,7 +109,6 @@ class _NewPassScreenState extends State<NewPassScreen> {
         child: Center(child: Container(
           height: widget.fromDialog ? 516 : null,
           width: widget.fromDialog ? 475 : context.width > 700 ? 700 : context.width,
-          //padding: widget.fromDialog ? const EdgeInsets.all(Dimensions.paddingSizeExtremeLarge) : context.width > 700 ? const EdgeInsets.all(Dimensions.paddingSizeDefault) : null,
           margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           decoration: context.width > 700 ? BoxDecoration(
             color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
@@ -54,16 +116,16 @@ class _NewPassScreenState extends State<NewPassScreen> {
           ) : null,
           child: Column(
             children: [
-              ResponsiveHelper.isDesktop(context) ? Align(
+              Align(
                 alignment: Alignment.topRight,
                 child: IconButton(
                   onPressed: () => Get.back(),
                   icon: const Icon(Icons.clear),
                 ),
-              ) : const SizedBox(),
+              ),
 
               Padding(
-                padding: widget.fromDialog ? const EdgeInsets.all(Dimensions.paddingSizeExtremeLarge) : context.width > 700 ? const EdgeInsets.all(Dimensions.paddingSizeDefault) : const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                padding: widget.fromDialog ? const EdgeInsets.all(Dimensions.paddingSizeExtremeLarge) : const EdgeInsets.all(Dimensions.paddingSizeDefault),
                 child: Column(children: [
                   Image.asset(Images.changePass, height: 200, width: 200),
                   const SizedBox(height: Dimensions.paddingSizeLarge),
