@@ -775,6 +775,33 @@ QA bug fixed: `setState() after dispose()` from delayed auto-focus → `if(!moun
 fixed circular disc, `clipBehavior: antiAlias`; `logoCornerRadius` retained but unused). Applies to Sign In + Sign Up.
 `logo.png` must be lowercase `.png` (iOS case-sensitive).
 
+### 🧊 Favorites — `favourite_screen.dart` (FROZEN 2026-07-29)
+Presentation-only mobile redesign of the Favorites bottom-nav tab to the MoonJoin Premium Design System; **desktop preserved
+legacy** (mobile-first). Mobile → premium green `ProfilePageHeader` ("Favourite", showBack:false) + a **MoonJoin segmented pill**
+(Items / Stores·Restaurants) built by restyling the existing `TabBar` (rounded green selected segment on a soft-green primary@8%
+track, `TabBarIndicatorSize.tab`, transparent divider) + the frozen `FavItemViewWidget → ItemsView` body. Reuses `ProfilePageHeader`,
+`ItemsView` (frozen `MoonjoinStoreCard`/`ItemWidget`/`NoDataScreen`), `NotLoggedInScreen` (Guest Foundation). Preserved: `TabController`
+(len 2, idx 0, NeverScrollable) / `TabBarView` semantics / `showRestaurantText` label / `getFavouriteList` on login / guest-guard
+callback / pull-to-refresh / favourite toggle. No FavouriteController/SplashController/API/model/route/ItemsView change; no new i18n
+keys. analyze clean; runtime verified on simulator (both segments, owner-approved). **Pattern:** for a bottom-nav tab needing tabs,
+reuse `ProfilePageHeader(showBack:false)` + a restyled-`TabBar` segmented pill (keeps TabController wiring 1:1).
+
+### 🧊 Address Experience — `add_address_screen.dart` + `pick_map_screen.dart` (FROZEN 2026-07-28, Physical-Device Verified)
+Presentation-only mobile redesign of Add/Edit Address + Google Maps Pick Map to the MoonJoin Premium Design System;
+**desktop preserved legacy** (mobile-first). Add/Edit form → `ProfilePageHeader` + premium floating map card (rounded/shadow,
+floating pin w/ `IgnorePointer`, current-location FAB, fullscreen) + grouped `SectionHeader` cards (Delivery Address → Contact
+Information → Address Details) + `MoonjoinFilterChip` types (Home/Office/Other) + pinned `BottomActionBar`. Pick Map → Uber/
+Glovo-style full-screen picker (search+back, floating pin, current-location FAB, bottom address + zone-aware action). Preserved:
+LocationController (getCurrentLocation/updatePosition/getZone/setUpdateAddress/setPickData + all map callbacks)/AddressController/
+manual validation (no `Form`)/geocode/zone/permission/`Get.arguments`/all variants (fromCheckout/fromRide/forGuest/fromNavBar,
+Add vs Edit). No controller/API/route/model/logic change; 2 i18n keys added (address_details, move_the_map_to_select).
+**Device-QA regressions fixed (presentation only):** (1) full-cover loading Container swallowed map taps → removed + pin
+IgnorePointer; (2) Pick Map onMapCreated guard/`fromLandingPage` restored to legacy; (3) Edit auto-load hang → removed the
+`GlobalKey`s (they blocked the map recreation legacy used for a 2nd onCameraIdle that overcomes updatePosition's first-call
+no-op) + seeded `_cameraPosition`. analyze clean; **runtime verified on physical iPhone (Add + Edit auto-load, no manual tap).**
+**iOS Simulator is Google-Maps-limited (camera never settles) — not authoritative. Never re-add a GlobalKey to these maps or a
+hit-testable full-cover overlay.**
+
 ### 🧊 New User Setup — `new_user_setup_screen.dart` (FROZEN 2026-07-28, Phase 9C-7)
 Presentation-only migration of mobile New User Setup to the **frozen Auth Foundation**: `build` split into `_mobileBody`
 (foundation) + `_desktopBody` (legacy preserved). Mobile → `AuthScaffold(onBack: Get.back, hero: AuthHero('just_one_step_away'),

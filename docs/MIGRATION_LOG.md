@@ -3001,6 +3001,55 @@ Current SMS provider = 2Factor (temporary); future production provider = **Termi
 disabled; backend SMS gateway is the active OTP path. No authentication/OTP/OAuth/Firebase/controller/route/API/backend/business
 logic was changed in any phase — presentation only.
 
+## Phase — MoonJoin Premium Favorites — FROZEN (2026-07-29)
+**Status:** Implemented · Analyzer Clean · Runtime Verified · Owner Approved · FROZEN. **Design authority:** MoonJoin Premium
+Design System (bottom-nav tab). Presentation only; **mobile redesigned, desktop preserved legacy** (mobile-first). **File:**
+`lib/features/favourite/screens/favourite_screen.dart` (only file changed; no new i18n keys).
+**What changed:** mobile → premium green `ProfilePageHeader` ("Favourite", showBack:false — nav tab) + a **MoonJoin segmented pill**
+(Items / Stores·Restaurants) built by restyling the existing `TabBar` (rounded green selected segment on a soft-green primary@8%
+track; `TabBarIndicatorSize.tab`; transparent divider; splash-border-radius) + the frozen `FavItemViewWidget → ItemsView` body.
+Desktop `_desktopBody` = legacy `WebScreenTitleWidget` + scrollable `TabBar` (unchanged).
+**Preserved (verbatim):** `TabController` (len 2, idx 0, NeverScrollableScrollPhysics) · `TabBarView` semantics (0=Items, 1=Stores/
+Restaurants) · `showRestaurantText` label · `initCall`/`getFavouriteList()` on login · guest-guard `NotLoggedInScreen` callback ·
+pull-to-refresh · favourite toggle (frozen cards). No `FavouriteController`/`SplashController`/API/model/route/`ItemsView` change.
+**Reuses:** `ProfilePageHeader`, `ItemsView` (frozen `MoonjoinStoreCard`/`ItemWidget`/`NoDataScreen`), `NotLoggedInScreen`, `MenuDrawer`.
+**Verification:** `flutter analyze` → **No issues found!** Runtime verified on the iOS Simulator (owner-approved): both Items and
+Restaurants segments render (wishlist item cards + `MoonjoinStoreCard`), segmented toggle works, images render, no overflow. No maps/
+GPS → simulator authoritative.
+**Environment note (independent of this migration):** mid-QA the simulator hit a flaky Flutter **native-assets** embed —
+`objective_c.framework` (transitive via `path_provider_foundation`, Flutter 3.38.5) was built into `build/.../Runner.app/Frameworks/`
+but failed @rpath resolution in the installed bundle → `path_provider` broke → `cached_network_image` cache dir broke → **all images
+broke app-wide**. Root-caused and fixed by a **`flutter clean` full rebuild** (0 `DOBJC`/framework errors after; images restored
+everywhere). Also reset the simulator's default GPS (Cupertino→Ogbomoso via `simctl location`). Both are simulator/toolchain issues,
+fully independent of the pure-Dart, analyzer-clean Favorites change.
+
+## Phase — MoonJoin Premium Address Experience — FROZEN (2026-07-28, Physical-Device Verified)
+**Status:** Implemented · Analyzer Clean · Runtime Verified (Physical Device) · Owner Approved · FROZEN. **Design authority:**
+MoonJoin Premium Design System. Presentation only; **mobile redesigned, desktop preserved legacy** (mobile-first).
+**Files:** `lib/features/address/screens/add_address_screen.dart`, `lib/features/location/screens/pick_map_screen.dart`
+(+ 2 i18n keys `address_details`, `move_the_map_to_select` in en/ar/bn/es).
+**Scope (frozen together):** Add Address · Edit Address · Pick Map · Google Maps Address Picker Flow.
+**What changed:** Add/Edit form → `ProfilePageHeader` + premium floating map card (rounded/shadow, floating pin w/ `IgnorePointer`,
+current-location FAB, fullscreen) + grouped `SectionHeader` cards (Delivery Address → Contact Information → Address Details) +
+`MoonjoinFilterChip` types + pinned `BottomActionBar`. Pick Map → Uber/Glovo full-screen picker (search+back, floating pin,
+current-location FAB, bottom selected-address + zone-aware action).
+**Preserved (verbatim):** `LocationController` (getCurrentLocation/updatePosition/getZone/setUpdateAddress/setPickData +
+onMapCreated/onCameraIdle/onCameraMove/onCameraMoveStarted) · `AddressController` · manual validation (no `Form`) · geocode/zone/
+permission · `Get.arguments → PickMapScreen` · all variants (fromCheckout/fromRide/forGuest/fromNavBar, Add vs Edit). No
+controller/API/route/model/business-logic change.
+**Regressions found in device QA & fixed (presentation/widget-identity only):** (1) full-cover loading `Container` on the map
+card was hit-testable → swallowed taps → removed + pin wrapped in `IgnorePointer`. (2) Pick Map `onMapCreated` used the desktop
+guard (`RouteHelper.onBoarding`) + dropped the `fromLandingPage` auto-pick → restored the exact legacy mobile `onMapCreated`
+(`'splash'` guard + `.then`). (3) **Edit auto-load hang** — a `GlobalKey` added to the maps prevented the map recreation that
+legacy implicitly relied on to fire a *second* `onCameraIdle` (needed to overcome `updatePosition`'s first-call
+`_updateAddAddressData` no-op) → **removed the `GlobalKey`s**; seeded `_cameraPosition` in `initState` (Edit + `fromAddAddress`)
+for the complementary null/flag path. Result: Edit loads automatically with **no manual current-location tap**.
+**Verification:** `flutter analyze` both files → **No issues found!** **Runtime verified on the owner's physical iPhone (PASSED):**
+Add + Edit both auto-load (inline + fullscreen), spinner clears automatically, drag-pick/zone/geocode/save/update all work, no
+endless loading, no manual workaround. **iOS Simulator is environment-limited for Google Maps (camera never settles) — documented
+as environment-only, non-blocking; production target = physical device.** **Permanent rule:** never re-add a `GlobalKey` to these
+maps or a hit-testable full-cover overlay.
+
 ## Phase 8F — Language (onboarding screen) — STATUS: IMPLEMENTED, NOT FROZEN
 `ChooseLanguageScreen` (`language_screen.dart`) is implemented (presentation-only; menu = ProfilePageHeader,
 first-run = onboarding identity preserved), analyze-clean, runtime-clean, but **visual verification is pending**
