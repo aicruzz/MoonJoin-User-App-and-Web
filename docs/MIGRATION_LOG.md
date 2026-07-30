@@ -1239,6 +1239,94 @@ endpoints).
 
 ---
 
+## CHAT THREAD (message screen) — Phase B (B1 + B2) — ✅ COMPLETE • FROZEN (2026-07-30)
+
+**Chat Thread — Implemented · Analyzer Verified · Runtime Verified (physical iPhone) · Owner Approved · FROZEN.**
+Presentation-only migration of the message screen (`ChatScreen`), closing the Chat cluster (Conversation List
+frozen 8E). Design authority: MoonJoin Premium Design System (no Figma frame for the thread).
+
+### What changed (presentation only)
+- **B1 — Header:** mobile legacy `AppBar` → frozen **`ProfilePageHeader`** (green wave, centered receiver name,
+  back button, receiver-avatar `trailing`); back logic preserved verbatim (`fromNotification`→`getInitialRoute()`
+  else `Get.back()` via `onBack`). Desktop keeps `WebMenuBar`. Body wrapped so the header sits above the thread.
+- **B2 — Bubbles (`message_bubble_widget.dart`):** sent = MoonJoin **medium brand-green** (`primaryColor`) fill +
+  white text + premium rounded (large radii, small bottom-right tail); received = neutral **theme token**
+  (`disabledColor@12%`) + adaptive text + premium rounded (small top-left tail); in-thread order-card status →
+  frozen **`StatusBadge`**. Removed hardcoded `#E8EEFA` and `Colors.deepPurple`; tokens only, dark-mode safe.
+- **Keyboard fix (FocusNode):** dedicated `_inputFocusNode`; **iOS-only** post-frame `requestFocus()` after the
+  native image picker (capture focus → `unfocus()` → `await pickImage()` → re-focus if previously focused), so the
+  keyboard reopens via Flutter's own metrics path and the composer + full send button stay above the keyboard on
+  every image upload. `pickImage` signature `void`→`Future<void>` (enabler only). **`resizeToAvoidBottomInset`
+  unchanged; Android/web unchanged.**
+
+### Draft ownership — PER-CONVERSATION (permanent architecture rule)
+Owner rule (2026-07-30): **one conversation = one isolated draft state; global/shared draft state is FORBIDDEN.**
+Each conversation owns its own **text + image** draft, keyed by the chat route's conversation identifier
+(`_draftOwnerKey` → `conversationID`, with a notification-target fallback). Implemented on `ChatController` as
+`_textDrafts` / `_imageDrafts` / `_rawImageDrafts` + `loadConversationDraft(key)` / `saveConversationDraft(key,
+text)`; `ChatScreen` restores only its own draft on `initState`, saves only its own on `dispose`; the active
+`_chatImage`/`_chatRawImage` remain the current-conversation working set (used unchanged by pick/remove/send);
+sending clears only that conversation's draft. **The previous global draft experiment was rejected because it
+violated conversation isolation. The final implementation uses conversation-keyed drafts.** (The global
+`typedDraft` on the singleton had leaked Vendor→Admin→Store; a global/shared draft must never be reintroduced.)
+
+### Preserved / not touched
+`ChatController` business logic, send/receive, image upload/compression, attachment flow, pagination, Pusher,
+read status (`isSeen`), `NotificationBodyModel`, `getChatRoute`, routing, notification flow, frozen Conversation
+List (8E).
+
+### Verification
+`flutter analyze` (chat_screen + message_bubble + chat_controller) → **No issues found!**; full project **0
+errors** (baseline unchanged). Runtime verified on a **physical iPhone** (owner-approved): header, bubbles
+(light/dark), keyboard-on-image-upload (continue typing immediately, send button visible), image send,
+send/receive, read status, pagination, navigation, **no draft leakage**, no regressions.
+
+### Files
+`features/chat/screens/chat_screen.dart`, `features/chat/widgets/message_bubble_widget.dart`,
+`features/chat/controllers/chat_controller.dart` (pickImage signature + per-conversation draft maps/methods).
+
+---
+
+## MOONJOIN NOTIFICATION SYSTEM — Phase A1 — ✅ COMPLETE • FROZEN (2026-07-30)
+
+**MoonJoin Notification System — Implemented · Analyzer Clean · Runtime Unaffected · Owner Approved · FROZEN.**
+Phase A1 = the **architectural notification layer only** (façade + catalog). **NOT a redesign, NOT UI polish,
+NOT an order-communication migration.** The existing order-communication experiences remain frozen and untouched.
+
+### What was created (additive only)
+- **Façade** `lib/common/widgets/moonjoin/notifications/moonjoin_notifications.dart` — `MoonJoinNotifications`, a
+  **thin orchestration layer** over existing frozen primitives (`SuccessBanner`, `InformationCard`, `StatusBadge`,
+  `MoonjoinBottomSheet`, `MoonjoinButton`, `MoonjoinDialog`, `ConfirmationDialog(moonjoin:true)`,
+  `MoonjoinErrorState`, `MoonjoinEmptyState`, `showCustomSnackBar`). **No new UI component.** Pure presentation —
+  no state, no API, no controller/repository/service; all behaviour via caller callbacks. Plus a tiny
+  `MoonJoinNotificationAction` data holder (label + callback + isPrimary) for `warningSheet` actions.
+- **Taxonomy → method map:** Success → `success()`/`successBlock()` · Information → `infoCard()`/`statusBadge()` ·
+  Warning → `warningSheet()` · Error → `error()`/`confirm()` · Transient → `transient()` (→ `showCustomSnackBar`,
+  the one toast) · page states → `errorState()`/`emptyState()`. Reused the existing i18n key
+  `sorry_something_went_wrong` (no new keys invented).
+- **Barrel export** added to `moonjoin_components.dart` (one line).
+- **Standard doc** `docs/MOONJOIN_NOTIFICATION_SYSTEM.md` (purpose · architecture principle · taxonomy · component
+  mapping · reuse rules · forbidden duplicate patterns · protected frozen surfaces · future-AI compatibility).
+
+### Protected — NOT touched (frozen)
+`module_landing_view.dart` `_UnavailableItemsCard` · `order_edit_screen.dart` (Edit Unavailable Items) ·
+`dashboard_screen.dart` + `running_order_view_widget.dart` · `OrderController`/`CartController`/`CheckoutController`
+· all APIs/models/routes · every existing MoonJoin primitive. **A2 (running-order status-card polish)** and
+**A3 (unavailable-preference sheet restyle)** are separate future decisions — excluded from A1.
+
+### Verification
+`flutter analyze` on the façade + barrel → **No issues found!**; full project **0 errors** (35 pre-existing
+info/warnings, none in the new file; baseline unchanged). No symbol clash (`MoonJoinNotifications`/
+`MoonJoinNotificationAction` defined only in the new file). **Additive foundation with zero call sites → runtime
+behaviour unchanged** (nothing new to navigate to; it exercises naturally at its first call site). No frozen UI
+changed, no business logic changed, no duplicate component created.
+
+### Files
+`lib/common/widgets/moonjoin/notifications/moonjoin_notifications.dart` (new),
+`lib/common/widgets/moonjoin/moonjoin_components.dart` (barrel +1 line), `docs/MOONJOIN_NOTIFICATION_SYSTEM.md` (new).
+
+---
+
 ## PARCEL MODULE — ✅ COMPLETE • FROZEN (2026-07-30)
 
 **Parcel Module — Implemented · Analyzer Clean · Runtime Verified · Owner Approved · FROZEN.** Owner-approved

@@ -21,6 +21,7 @@ export 'organic_module_icon.dart';
 export 'moonjoin_bottom_sheet.dart';
 export 'moonjoin_button.dart';
 export 'moonjoin_dialog.dart';
+export 'notifications/moonjoin_notifications.dart';
 export 'moonjoin_search_bar.dart';
 export 'moonjoin_text_field.dart';
 export 'option_group_selector.dart';

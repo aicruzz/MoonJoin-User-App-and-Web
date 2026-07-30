@@ -10,6 +10,7 @@ import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/status_badge.dart';
 
 class MessageBubbleWidget extends StatelessWidget {
   final Message message;
@@ -43,12 +44,16 @@ class MessageBubbleWidget extends StatelessWidget {
 
               if(message.message != null) Flexible(
                 child: Container(
+                  // Received (theirs): neutral MoonJoin surface (theme token, no
+                  // hardcoded color), dark/adaptive text, premium rounded shape
+                  // with a small top-left tail toward the sender.
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withValues(alpha: .10),
+                    color: Theme.of(context).disabledColor.withValues(alpha: 0.12),
                     borderRadius: const BorderRadius.only(
-                      bottomRight: Radius.circular(Dimensions.radiusDefault),
-                      topRight: Radius.circular(Dimensions.radiusDefault),
-                      bottomLeft: Radius.circular(Dimensions.radiusDefault),
+                      topLeft: Radius.circular(Dimensions.radiusSmall),
+                      topRight: Radius.circular(Dimensions.radiusLarge),
+                      bottomRight: Radius.circular(Dimensions.radiusLarge),
+                      bottomLeft: Radius.circular(Dimensions.radiusLarge),
                     ),
                   ),
                   padding: EdgeInsets.all(message.message != null ? Dimensions.paddingSizeDefault : 0),
@@ -92,13 +97,21 @@ class MessageBubbleWidget extends StatelessWidget {
 
                 (message.message != null && message.message!.isNotEmpty) ? Flexible(
                   child: Container(
+                    // Sent (mine): MoonJoin medium brand-green fill (theme primary
+                    // token — not a bright rectangle), white text, premium rounded
+                    // shape with a small bottom-right tail. Content-hugging (Flexible).
                     decoration: BoxDecoration(
-                      color: Get.isDarkMode ? Theme.of(context).primaryColor.withValues(alpha: 0.2) : const Color(0xffE8EEFA),
-                      borderRadius: const BorderRadius.all(Radius.circular(50)),
+                      color: Theme.of(context).primaryColor,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(Dimensions.radiusLarge),
+                        topRight: Radius.circular(Dimensions.radiusLarge),
+                        bottomLeft: Radius.circular(Dimensions.radiusLarge),
+                        bottomRight: Radius.circular(Dimensions.radiusSmall),
+                      ),
                     ),
                     child: Container(
                       padding: EdgeInsets.all(message.message != null ? Dimensions.paddingSizeDefault : 0),
-                      child: Text(message.message ?? '', style: robotoRegular.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: Dimensions.fontSizeSmall),),
+                      child: Text(message.message ?? '', style: robotoRegular.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),),
                     ),
                   ),
                 ) : const SizedBox(),
@@ -185,17 +198,11 @@ class MessageBubbleWidget extends StatelessWidget {
 
             Expanded(
               child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                  ),
-                  padding: const EdgeInsets.all(4),
-                  margin: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '${order.orderStatus}'.tr, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Colors.deepPurple),
-                  ),
+                Padding(
+                  // In-thread order status → frozen MoonJoin StatusBadge language
+                  // (replaces the legacy hardcoded deep-purple chip).
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: StatusBadge(text: '${order.orderStatus}'.tr),
                 ),
 
                 Text(DateConverter.stringToLocalDateOnly(order.createdAt!), style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall)),

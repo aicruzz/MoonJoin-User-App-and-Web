@@ -46,6 +46,40 @@ class ChatController extends GetxController implements GetxService {
   
   List <Uint8List>_chatRawImage = [];
   List<Uint8List> get chatRawImage => _chatRawImage;
+
+  // --- Per-conversation draft ownership (text + selected images) ---
+  // One conversation = one isolated draft state. Each conversation owns its own
+  // draft, keyed by the chat route's conversation identifier — NEVER a global
+  // shared draft. The active _chatImage/_chatRawImage above remain the working set
+  // for the CURRENT conversation (used unchanged by pickImage / removeImage /
+  // sendMessage). These maps persist each conversation's own draft and swap the
+  // working set in/out on enter/leave, so a draft is never shared across chats.
+  final Map<String, String> _textDrafts = {};
+  final Map<String, List<XFile>> _imageDrafts = {};
+  final Map<String, List<Uint8List>> _rawImageDrafts = {};
+
+  /// Restore [key]'s draft into the active working set; returns its text.
+  String loadConversationDraft(String key) {
+    _chatImage = List<XFile>.from(_imageDrafts[key] ?? const <XFile>[]);
+    _chatRawImage = List<Uint8List>.from(_rawImageDrafts[key] ?? const <Uint8List>[]);
+    return _textDrafts[key] ?? '';
+  }
+
+  /// Persist [key]'s text + selected images, then clear the working set so the
+  /// next conversation starts from its own draft. Empty drafts are removed.
+  void saveConversationDraft(String key, String text) {
+    if(text.trim().isEmpty && _chatImage.isEmpty) {
+      _textDrafts.remove(key);
+      _imageDrafts.remove(key);
+      _rawImageDrafts.remove(key);
+    } else {
+      _textDrafts[key] = text;
+      _imageDrafts[key] = List<XFile>.from(_chatImage);
+      _rawImageDrafts[key] = List<Uint8List>.from(_chatRawImage);
+    }
+    _chatImage = [];
+    _chatRawImage = [];
+  }
   
   ChatModel?  _messageModel;
   ChatModel? get messageModel => _messageModel;
@@ -230,7 +264,7 @@ class ChatController extends GetxController implements GetxService {
   }
 
 
-  void pickImage(bool isRemove) async {
+  Future<void> pickImage(bool isRemove) async {
     if(isRemove) {
       _chatImage = [];
       _chatRawImage = [];

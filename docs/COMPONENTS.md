@@ -135,9 +135,52 @@ owner approval.** Every storefront business module must reuse them.
 | 10b | **Parcel Screen 3** (Parcel Request) | `features/parcel/screens/parcel_request_screen.dart` |
 | 11 | **Rental Provider Details** (`VendorDetailScreen`) | `features/rental_module/vendor/screens/vendor_detail_screen.dart` |
 | 12 | **`RentalProviderHeroHeader`** (Store-hero clone for rental) | `features/rental_module/vendor/widgets/rental_provider_hero_header.dart` |
+| 13 | **MoonJoin Notification System** (façade + catalog) | `common/widgets/moonjoin/notifications/moonjoin_notifications.dart` (`MoonJoinNotifications`) · doc `docs/MOONJOIN_NOTIFICATION_SYSTEM.md` |
+| 14 | **Chat Thread** (message screen, B1 header + B2 bubbles + keyboard fix) | `features/chat/screens/chat_screen.dart` + `features/chat/widgets/message_bubble_widget.dart` |
 
 Together these form the **official MoonJoin reusable storefront foundation**. No future redesign should
 recreate them; reuse them unchanged.
+
+## Chat Thread (message screen) — FROZEN (Phase B, 2026-07-30)
+
+**Chat Thread uses isolated conversation-owned draft state. Global draft sharing is forbidden.**
+
+**The Chat Thread presentation migration is COMPLETE and FROZEN**, closing the Chat cluster (Conversation List
+frozen 8E). B1 = mobile header → frozen **`ProfilePageHeader`** (receiver name + avatar), desktop `WebMenuBar`
+preserved. B2 = `MessageBubbleWidget` retokenized (sent = medium brand-green `primaryColor` + white text;
+received = neutral `disabledColor@12%` token; in-thread order status → **`StatusBadge`**; removed hardcoded
+`#E8EEFA`/`deepPurple`, dark-mode safe). Keyboard fix = dedicated `_inputFocusNode` with iOS-only post-frame
+`requestFocus` after the image picker (composer stays above the keyboard; `resizeToAvoidBottomInset` untouched).
+**Permanent rule: per-conversation draft ownership — one conversation = one isolated draft state; global/shared
+draft state is FORBIDDEN.** Each conversation owns its own text + image draft, keyed by the chat route's
+`conversationID` (`ChatController._textDrafts`/`_imageDrafts`/`_rawImageDrafts` + `loadConversationDraft`/
+`saveConversationDraft`; restored on `initState`, saved on `dispose`; sending clears only that conversation). The
+rejected global `typedDraft` (leaked Vendor→Admin→Store) must never return. Preserved: ChatController send/receive
+logic, upload/compression, attachments, pagination, Pusher, read status, APIs, models, routing, notification flow.
+**Do not polish, tweak, or refactor without owner approval; never reintroduce a shared draft.**
+
+## MoonJoin Notification System — FROZEN (Phase A1, 2026-07-30)
+
+**THE single notification language for MoonJoin.** `MoonJoinNotifications`
+(`common/widgets/moonjoin/notifications/moonjoin_notifications.dart`) is a **thin façade that orchestrates the
+existing frozen primitives** — it creates **no new UI** and holds **no business logic** (callbacks only). Import
+via the barrel `moonjoin_components.dart`. **Any feature that must tell the user something calls this façade and
+picks a category — never a bespoke dialog/sheet/banner/toast.** Full standard: `docs/MOONJOIN_NOTIFICATION_SYSTEM.md`.
+
+| Category | Façade method | Renders via (existing primitive) |
+|---|---|---|
+| **Success** (order placed, payment successful) | `success()` / `successBlock()` | `SuccessBanner` |
+| **Information** (updates, progress) | `infoCard()` / `statusBadge()` | `InformationCard` / `StatusBadge` |
+| **Warning** (attention required) | `warningSheet()` | `MoonjoinBottomSheet` + `InformationCard` (+ `MoonjoinButton`) |
+| **Error** (payment/order failed) | `error()` / `confirm()` | `MoonjoinDialog` / `ConfirmationDialog(moonjoin:true)` |
+| **Transient** (saved, updated) | `transient()` | `showCustomSnackBar` — the ONE toast |
+| Page states (error/empty) | `errorState()` / `emptyState()` | `MoonjoinErrorState` / `MoonjoinEmptyState` |
+
+**Rules:** reuse — never fork; extend the catalog (add a primitive to `moonjoin/` + map it here) rather than a
+one-off in a feature; **AI/vendor/delivery/admin/customer messages must all use this system — AI must never build
+its own notification UI**. **Protected (untouched by A1):** the frozen order-communication surfaces (Home
+`_UnavailableItemsCard`, `order_edit_screen.dart`, `running_order_view_widget.dart`) and all order/cart
+controllers. A2 (running-order polish) / A3 (unavailable-preference sheet) are separate future decisions.
 
 ## Business Module Types (permanent) — six only
 

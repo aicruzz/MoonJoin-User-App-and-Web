@@ -26,6 +26,7 @@ import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
 import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/features/chat/widgets/message_bubble_widget.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 
 class ChatScreen extends StatefulWidget {
   final NotificationBodyModel? notificationBody;
@@ -43,11 +44,37 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _inputMessageController = TextEditingController();
+  // Dedicated focus node for the composer field. Lets us restore focus after the
+  // native image picker returns (iOS), reopening the keyboard through Flutter's
+  // own focus→metrics pipeline so the composer never sits behind a keyboard that
+  // iOS silently restored with a stale viewInsets.
+  final FocusNode _inputFocusNode = FocusNode();
   StreamSubscription? _stream;
+
+  // The conversation that OWNS this composer's draft — the chat route's existing
+  // conversation identifier. Falls back to the notification target so admin /
+  // notification-opened chats each own a distinct draft when conversationID is null.
+  String get _draftOwnerKey {
+    if(widget.conversationID != null) return 'c${widget.conversationID}';
+    final nb = widget.notificationBody;
+    if(nb == null || nb.adminId != null) return 'admin';
+    if(nb.restaurantId != null) return 'v${nb.restaurantId}';
+    if(nb.deliverymanId != null) return 'd${nb.deliverymanId}';
+    if(widget.user != null) return 'u${widget.user!.id}';
+    return 'default';
+  }
 
   @override
   void initState() {
     super.initState();
+
+    // Restore ONLY this conversation's own draft (text + selected images), owned by
+    // the conversation identifier — never global. See ChatController draft maps.
+    final String draft = Get.find<ChatController>().loadConversationDraft(_draftOwnerKey);
+    if(draft.isNotEmpty) {
+      _inputMessageController.text = draft;
+      _inputMessageController.selection = TextSelection.fromPosition(TextPosition(offset: draft.length));
+    }
 
     initCall();
 
@@ -80,8 +107,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    super.dispose();
+    // Persist ONLY this conversation's own draft (text + selected images) before
+    // leaving, keyed by its conversation identifier. A sent message already cleared
+    // the field and images, so an empty draft is correctly discarded here.
+    Get.find<ChatController>().saveConversationDraft(_draftOwnerKey, _inputMessageController.text);
+    _inputFocusNode.dispose();
     _stream?.cancel();
+    super.dispose();
   }
 
   @override
@@ -100,43 +132,9 @@ class _ChatScreenState extends State<ChatScreen> {
         },
         child: Scaffold(
           endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
-          appBar: (ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : AppBar(
-            leading: IconButton(
-              onPressed: () {
-                if(widget.fromNotification) {
-                  Get.offAllNamed(RouteHelper.getInitialRoute());
-                }else {
-                  Get.back();
-                }
-              },
-              icon: const Icon(Icons.arrow_back_ios),
-            ),
-            title: Text(
-              chatController.messageModel != null ? '${chatController.messageModel!.conversation!.receiver!.fName}'' ${chatController.messageModel!.conversation!.receiver!.lName}' : 'receiver_name'.tr,
-              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, fontWeight: FontWeight.w600, color: Theme.of(context).textTheme.bodyLarge!.color),
-            ),
-            backgroundColor: Theme.of(context).cardColor,
-            surfaceTintColor: Theme.of(context).cardColor,
-            shadowColor: Theme.of(context).disabledColor.withValues(alpha: 0.5),
-            elevation: 2,
-            actions: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  width: 40, height: 40, alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
-                    border: Border.all(width: 1, color: Theme.of(context).primaryColor),
-                    color: Theme.of(context).cardColor,
-                  ),
-                  child: ClipOval(child: CustomImage(
-                    image: '${chatController.messageModel != null ? chatController.messageModel!.conversation!.receiver!.imageFullUrl : ''}',
-                    fit: BoxFit.cover, height: 40, width: 40,
-                  )),
-                ),
-              )
-            ],
-          )),
+          // B1: mobile uses the frozen MoonJoin ProfilePageHeader inside the body
+          // (rendered below); desktop keeps the legacy WebMenuBar unchanged.
+          appBar: ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : null,
 
           body: isLoggedIn ? ResponsiveHelper.isDesktop(context) ? Column(children: [
 
@@ -395,8 +393,38 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ],
-          ) : SafeArea(
-            child: Center(
+          ) : Column(children: [
+
+            // MoonJoin thread header (B1) — reuses the frozen ProfilePageHeader to
+            // match the Conversation List language. Title = receiver name, trailing
+            // = receiver avatar. Existing back logic preserved verbatim.
+            ProfilePageHeader(
+              title: chatController.messageModel != null
+                  ? '${chatController.messageModel!.conversation!.receiver!.fName} ${chatController.messageModel!.conversation!.receiver!.lName}'
+                  : 'receiver_name'.tr,
+              onBack: () {
+                if(widget.fromNotification) {
+                  Get.offAllNamed(RouteHelper.getInitialRoute());
+                } else {
+                  Get.back();
+                }
+              },
+              trailing: Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Theme.of(context).cardColor, width: 1.5),
+                ),
+                child: ClipOval(child: CustomImage(
+                  image: '${chatController.messageModel != null ? chatController.messageModel!.conversation!.receiver!.imageFullUrl : ''}',
+                  fit: BoxFit.cover, height: 36, width: 36,
+                )),
+              ),
+            ),
+
+            Expanded(child: SafeArea(
+              top: false,
+              child: Center(
               child: SizedBox(
                 width: ResponsiveHelper.isDesktop(context) ? Dimensions.webMaxWidth : MediaQuery.of(context).size.width,
                 child: Column(children: [
@@ -521,7 +549,23 @@ class _ChatScreenState extends State<ChatScreen> {
 
                         InkWell(
                           onTap: () async {
-                            Get.find<ChatController>().pickImage(false);
+                            // iOS only: capture focus ownership, let Flutter dismiss the
+                            // keyboard cleanly, then after the picker returns and the tree
+                            // settles re-request focus so the keyboard reopens through
+                            // Flutter (correct viewInsets) and the user keeps typing.
+                            // Android/web behaviour is left exactly as before.
+                            if(GetPlatform.isIOS) {
+                              final bool hadFocus = _inputFocusNode.hasFocus;
+                              _inputFocusNode.unfocus();
+                              await Get.find<ChatController>().pickImage(false);
+                              if(hadFocus && mounted) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if(mounted) _inputFocusNode.requestFocus();
+                                });
+                              }
+                            } else {
+                              Get.find<ChatController>().pickImage(false);
+                            }
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
@@ -539,6 +583,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           child: TextField(
                             inputFormatters: [LengthLimitingTextInputFormatter(Dimensions.messageInputLength)],
                             controller: _inputMessageController,
+                            focusNode: _inputFocusNode,
                             textCapitalization: TextCapitalization.sentences,
                             style: robotoRegular,
                             keyboardType: TextInputType.multiline,
@@ -620,7 +665,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ),
-          ) : NotLoggedInScreen(callBack: (value){
+          ))]) : NotLoggedInScreen(callBack: (value){
             initCall();
             setState(() {});
           }),
