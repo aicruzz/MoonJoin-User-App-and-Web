@@ -12,8 +12,8 @@ class SearchService implements SearchServiceInterface {
   SearchService({required this.searchRepositoryInterface});
 
   @override
-  Future<Response> getSearchData(String? query, bool isStore) async {
-    return await searchRepositoryInterface.getList(query: query, isStore: isStore);
+  Future<Response> getSearchData(String? query, bool isStore, {int? searchModuleId}) async {
+    return await searchRepositoryInterface.getList(query: query, isStore: isStore, searchModuleId: searchModuleId);
   }
 
   @override

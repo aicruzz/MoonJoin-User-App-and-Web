@@ -44,11 +44,11 @@ class SearchRepository implements SearchRepositoryInterface {
   }
 
   @override
-  Future getList({int? offset, String? query, bool? isStore, bool isSuggestedItems = false}) async {
+  Future getList({int? offset, String? query, bool? isStore, bool isSuggestedItems = false, int? searchModuleId}) async {
     if(isSuggestedItems) {
       return await _getSuggestedItems();
     } else {
-      return await _getSearchData(query, isStore!);
+      return await _getSearchData(query, isStore!, searchModuleId: searchModuleId);
     }
   }
 
@@ -62,8 +62,19 @@ class SearchRepository implements SearchRepositoryInterface {
     return suggestedItemList;
   }
 
-  Future<Response> _getSearchData(String? query, bool isStore) async {
-    return await apiClient.getData('${AppConstants.searchUri}${isStore ? 'stores' : 'items'}/search?name=$query&offset=1&limit=50');
+  Future<Response> _getSearchData(String? query, bool isStore, {int? searchModuleId}) async {
+    // MoonJoin Search Scope: override ONLY the moduleId header for this request
+    // (a clone of the current headers), so search is scoped to the chosen module
+    // WITHOUT touching _mainHeaders / SplashController.module / setModule.
+    Map<String, String>? scopedHeaders;
+    if(searchModuleId != null) {
+      scopedHeaders = Map<String, String>.from(apiClient.getHeader());
+      scopedHeaders[AppConstants.moduleId] = '$searchModuleId';
+    }
+    return await apiClient.getData(
+      '${AppConstants.searchUri}${isStore ? 'stores' : 'items'}/search?name=$query&offset=1&limit=50',
+      headers: scopedHeaders,
+    );
   }
 
   @override

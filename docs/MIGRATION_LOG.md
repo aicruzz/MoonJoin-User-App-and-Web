@@ -3001,6 +3001,37 @@ Current SMS provider = 2Factor (temporary); future production provider = **Termi
 disabled; backend SMS gateway is the active OTP path. No authentication/OTP/OAuth/Firebase/controller/route/API/backend/business
 logic was changed in any phase — presentation only.
 
+## Phase — MoonJoin Context-Aware Scoped Search — FROZEN (2026-07-30)
+**Status:** Implemented · Analyzer Clean · Runtime Verified (Simulator) · Owner Approved · FROZEN. **Permanent platform standard:**
+`docs/MOONJOIN_SEARCH_ARCHITECTURE.md`. Presentation completion + a permanent MoonJoin platform architecture decision.
+**Architecture summary:** **Application Context (`SplashController.module`) and Search Scope are two INDEPENDENT platform concepts.**
+Search Scope (`SearchController._searchScope`, session-persistent) is applied ONLY as a **per-request `moduleId` header override**
+(`search_repository._getSearchData` clones `apiClient.getHeader()` and overrides only `moduleId`). Search NEVER changes `setModule()`,
+`cacheModule`, `SplashController.module`, or `ApiClient._mainHeaders`. Resolution: inside a module → current module · else session scope
+· else last-used (`cacheModule`) · else the **Module Scope Sheet** (never "Module ID Required", never `moduleList[0]`; voice + search
+scope-gated).
+**Files changed:** NEW `search_scope.dart`, `common/widgets/moonjoin/scope_selector.dart`, `search/widgets/search_scope_sheet.dart`;
+MODIFIED (additive) `search_controller.dart`, `search_service(.interface).dart`, `search_repository(.interface).dart`,
+`search_screen.dart`, `search_result_widget.dart`, `assets/language/*.json` (+6 keys).
+**Presentation (legacy → MoonJoin, reuse-only):** results Items/Stores → **frozen Favorites segmented pill**; Recent Searches →
+MoonJoin removable chips; Popular Categories → `MoonjoinFilterChip`; Suggestions → MoonJoin cards; scope pill `MoonJoinScopeSelector`
+below the header in both states. Desktop preserved legacy.
+**Components frozen (reusable platform):** `SearchScope` (abstraction, not hardcoded to ModuleModel), `MoonJoinScopeSelector` (DS scope
+pill), `SearchScopeSheet` (Module Scope Sheet, reuses MoonjoinBottomSheet+OrganicModuleIcon).
+**Business logic preserved:** no change to SearchController search/history/suggestions/filters/pagination/voice, routes, APIs, models,
+backend contracts — additive scope orchestration + per-request header value only.
+**Search Scope independence (verified):** searched Food → switched scope to Pharmacy → exited Search → landed on the all-modules Home
+(never entered Food/Pharmacy). Application Context untouched.
+**Reuse rules (permanent):** never fork the scope selector / Search module sheet / Items-Stores segmented control — reuse
+`MoonJoinScopeSelector` / `SearchScopeSheet` / the frozen Favorites segmented pill (single source of truth across MoonJoin).
+**Future scalability (prepared, NOT implemented, no redesign needed):** 🌍 All Modules · 📍 Nearby · ❤️ Favorites · 🔥 Trending ·
+🏷 Promotions · 🤖 AI Search; future backend Global-Search endpoint unlocks "All Modules".
+**Verification:** `flutter analyze` (all Search files) → **No issues found!** Runtime verified on iOS Simulator (clean build, 0
+`objective_c`/framework errors, images healthy): Scope Sheet on no-context (no "Module ID Required"), scope pill, scoped results
+(9 for "rice" in Food via header override), scope switch Food→Pharmacy, recent-search chips, suggestions/popular MoonJoin, back-nav
+independence. Simulator was authoritative (no maps); per [[favorites-and-nav-toolchain]] the image QA used a clean build (Flutter
+native-assets bug #180603 workflow, `docs/ENVIRONMENT_NOTES.md`).
+
 ## Phase — MoonJoin Premium Favorites — FROZEN (2026-07-29)
 **Status:** Implemented · Analyzer Clean · Runtime Verified · Owner Approved · FROZEN. **Design authority:** MoonJoin Premium
 Design System (bottom-nav tab). Presentation only; **mobile redesigned, desktop preserved legacy** (mobile-first). **File:**

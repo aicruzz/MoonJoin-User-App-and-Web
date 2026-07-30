@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/features/language/controllers/language_controller.dart';
 import 'package:sixam_mart/features/search/domain/models/popular_categories_model.dart';
+import 'package:sixam_mart/features/search/domain/models/search_scope.dart';
 import 'package:sixam_mart/features/search/domain/models/search_suggestion_model.dart';
+import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/search/domain/services/search_service_interface.dart';
@@ -106,6 +108,34 @@ class SearchController extends GetxController implements GetxService {
   
   String? _searchHomeText = '';
   String? get searchHomeText => _searchHomeText;
+
+  // ---- MoonJoin Search Scope (independent of Application Context) ----
+  // Which module the current search targets. Session-persistent (this controller
+  // is a permanent singleton). Applied ONLY as a per-request moduleId header
+  // override; NEVER calls setModule / changes SplashController.module.
+  SearchScope? _searchScope;
+  SearchScope? get searchScope => _searchScope;
+
+  void setSearchScope(SearchScope scope, {bool rerun = false}) {
+    _searchScope = scope;
+    update();
+    if(rerun && _searchText != null && _searchText!.isNotEmpty) {
+      searchData(_searchText, true);
+    }
+  }
+
+  /// Resolve the scope when opening Search: inside a module → the current module;
+  /// else keep the session scope; else the last-used module (cacheModule); else
+  /// null (caller presents the Module Scope Sheet). Never mutates app context.
+  void resolveInitialScope() {
+    final SplashController splash = Get.find<SplashController>();
+    if(splash.module != null) {
+      _searchScope = SearchScope.module(splash.module);
+    } else if(_searchScope == null && splash.cacheModule != null) {
+      _searchScope = SearchScope.module(splash.cacheModule);
+    }
+    update();
+  }
 
   SearchSuggestionModel? _searchSuggestionModel;
   SearchSuggestionModel? get searchSuggestionModel => _searchSuggestionModel;
@@ -245,7 +275,7 @@ class SearchController extends GetxController implements GetxService {
         update();
       }
 
-      Response response = await searchServiceInterface.getSearchData(query, _isStore);
+      Response response = await searchServiceInterface.getSearchData(query, _isStore, searchModuleId: _searchScope?.moduleId);
       if (response.statusCode == 200) {
         if (query.isEmpty) {
           if (_isStore) {

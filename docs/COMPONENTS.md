@@ -775,6 +775,25 @@ QA bug fixed: `setState() after dispose()` from delayed auto-focus → `if(!moun
 fixed circular disc, `clipBehavior: antiAlias`; `logoCornerRadius` retained but unused). Applies to Sign In + Sign Up.
 `logo.png` must be lowercase `.png` (iOS case-sensitive).
 
+### 🧊 Search (Context-Aware Scoped Search) — `search_screen.dart` + scope components (FROZEN 2026-07-30)
+Presentation completion + **Context-Aware Scoped Search architecture** (permanent platform standard, `docs/MOONJOIN_SEARCH_ARCHITECTURE.md`).
+**Application Context (`SplashController.module`) and Search Scope are independent** — Search Scope is applied ONLY via a per-request
+`moduleId` header override (`search_repository._getSearchData` clones `apiClient.getHeader()`); Search NEVER changes
+`setModule`/`cacheModule`/`SplashController.module`/`ApiClient._mainHeaders`. Resolution: in-module→current · session · last-used ·
+else Module Scope Sheet (no "Module ID Required", never moduleList[0]; voice+search scope-gated). Presentation (reuse-only): results
+Items/Stores → **frozen Favorites segmented pill**; Recent Searches → MoonJoin chips; Popular → `MoonjoinFilterChip`; Suggestions →
+MoonJoin cards; scope pill `MoonJoinScopeSelector`. Preserved: `_searchHeroHeader`/`MoonjoinSearchBar`/`SearchResultWidget`/`ItemsView`/
+frozen cards/`SearchFieldWidget` logic/`BottomCartWidget`/all SearchController search-history-suggestions-filters-pagination-voice/routes/
+APIs/models. analyze clean; runtime verified (simulator, back-nav independence proven).
+**NEW frozen reusable platform components (reuse, NEVER fork):**
+- **`SearchScope`** (`features/search/domain/models/search_scope.dart`) — scope abstraction; not hardcoded to `ModuleModel` (future
+  types 🌍AllModules/📍Nearby/❤️Favorites/🔥Trending/🏷Promotions/🤖AISearch add without redesign).
+- **`MoonJoinScopeSelector`** (`common/widgets/moonjoin/scope_selector.dart`) — reusable DS scope pill (Search/AI/Notifications/Offers/
+  Coupons/Analytics/future Global Search). **Never create another scope selector.**
+- **`SearchScopeSheet`** (`features/search/widgets/search_scope_sheet.dart`) — Module Scope Sheet, reuses `MoonjoinBottomSheet` +
+  `OrganicModuleIcon`. **Never create another Search module-selection sheet.**
+**The frozen Favorites segmented pill is the single source of truth for EVERY Items/Stores segmented control across MoonJoin.**
+
 ### 🧊 Favorites — `favourite_screen.dart` (FROZEN 2026-07-29)
 Presentation-only mobile redesign of the Favorites bottom-nav tab to the MoonJoin Premium Design System; **desktop preserved
 legacy** (mobile-first). Mobile → premium green `ProfilePageHeader` ("Favourite", showBack:false) + a **MoonJoin segmented pill**

@@ -1892,5 +1892,9 @@
   "virtual_account": "Virtual Account",
   "we_are_here_to_help": "We're here to help",
   "address_details": "Address Details",
-  "move_the_map_to_select": "Move the map to select"
+  "move_the_map_to_select": "Move the map to select",
+  "searching_in": "Searching in",
+  "search_in": "Search in",
+  "all_modules": "All Modules",
+  "recent": "Recent"
 }

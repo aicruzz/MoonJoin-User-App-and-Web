@@ -12,6 +12,10 @@ import 'package:sixam_mart/helper/auth_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_search_bar.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/filter_chip_widget.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/scope_selector.dart';
+import 'package:sixam_mart/features/search/domain/models/search_scope.dart';
+import 'package:sixam_mart/features/search/widgets/search_scope_sheet.dart';
 import 'package:sixam_mart/helper/voice_permission_handler.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
@@ -56,9 +60,49 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
       Get.find<search.SearchController>().getSuggestedItems();
     }
     Get.find<search.SearchController>().getHistoryList();
-    if(widget.queryText!.isNotEmpty) {
+    // Resolve Search Scope (independent of Application Context). If none can be
+    // resolved (fresh install / no module ever used), present the Module Scope
+    // Sheet instead of ever leaking a "Module ID Required" error.
+    final search.SearchController sc = Get.find<search.SearchController>();
+    sc.resolveInitialScope();
+    if(sc.searchScope == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if(mounted) _openScopeSheet();
+      });
+    } else if(widget.queryText!.isNotEmpty) {
       _actionSearch(true, widget.queryText, true);
     }
+  }
+
+  // Present the MoonJoin Module Scope Sheet. Sets SEARCH SCOPE only — never
+  // setModule (Application Context is untouched). Re-runs the active query scoped.
+  void _openScopeSheet() {
+    final search.SearchController sc = Get.find<search.SearchController>();
+    SearchScopeSheet.show(
+      context,
+      recent: Get.find<SplashController>().cacheModule,
+      onSelected: (module) {
+        sc.setSearchScope(SearchScope.module(module), rerun: sc.searchText != null && sc.searchText!.isNotEmpty);
+      },
+    );
+  }
+
+  // Premium scope pill under the search field, shown in both landing and results
+  // states (mobile). Reuses the design-system MoonJoinScopeSelector.
+  Widget _scopePillRow(search.SearchController searchController) {
+    final SearchScope? scope = searchController.searchScope;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeLarge, Dimensions.paddingSizeSmall, Dimensions.paddingSizeLarge, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: MoonJoinScopeSelector(
+          leadingText: 'searching_in'.tr,
+          label: scope?.label ?? 'select_module'.tr,
+          iconUrl: scope?.iconUrl,
+          onTap: () => _openScopeSheet(),
+        ),
+      ),
+    );
   }
 
   Future<void> _searchSuggestions(String query) async {
@@ -228,6 +272,11 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                               _searchController.text = '';
                             }
                           } else {
+                            // Voice must respect Search Scope — if none set, choose a module first.
+                            if(searchController.searchScope == null) {
+                              _openScopeSheet();
+                              return;
+                            }
                             await VoicePermissionHandler.openVoiceSearch(
                               context: context,
                               searchTextEditingController: _searchController,
@@ -246,6 +295,9 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                     )),
                     const SizedBox(width: Dimensions.paddingSizeSmall),
                   ])))) : _searchHeroHeader(context, searchController),
+
+              // MoonJoin Search Scope pill (mobile) — below the header in both states.
+              ResponsiveHelper.isDesktop(context) ? const SizedBox() : _scopePillRow(searchController),
 
               Expanded(child: searchController.isSearchMode ? _showSuggestion ? showSuggestions(
                 context, searchController, _itemsAndStors,
@@ -271,16 +323,15 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                       ]),
                     ) : const SizedBox(),
 
-                    SizedBox(
-                      height: ResponsiveHelper.isDesktop(context) ? 36 : null,
+                    ResponsiveHelper.isDesktop(context) ? SizedBox(
+                      height: 36,
                       child: ListView.builder(
                         itemCount: searchController.historyList.length > 10 ? 10 : searchController.historyList.length,
                         physics: const NeverScrollableScrollPhysics(),
-                        scrollDirection: ResponsiveHelper.isDesktop(context) ? Axis.horizontal : Axis.vertical,
+                        scrollDirection: Axis.horizontal,
                         shrinkWrap: true,
                         itemBuilder: (context, index) {
-                          return ResponsiveHelper.isDesktop(context) ?
-                            Container(
+                          return Container(
                             margin: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
                              padding: const EdgeInsets.symmetric(horizontal : Dimensions.paddingSizeDefault),
                               decoration: BoxDecoration(
@@ -291,7 +342,6 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                               child: InkWell(
                                 onTap: () {
                                   _searchController.text = searchController.historyList[index];
-                                  // searchController.setSearchText(searchController.historyList[index]);
                                   searchController.searchData(searchController.historyList[index], false);
                                 },
                                 child: Row(
@@ -309,30 +359,37 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                                   ],
                                 ),
                               ),
-                            ) : InkWell(
-                            onTap: () => searchController.searchData(searchController.historyList[index], false),
-                            child: Row(children: [
-
-                              Icon(CupertinoIcons.search, size: 18, color: Theme.of(context).disabledColor),
-                              const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
-                                  child: Text(
-                                    searchController.historyList[index],
-                                    style: robotoRegular, maxLines: 1, overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
+                            );
+                        },
+                      ),
+                    ) : Wrap(
+                      spacing: Dimensions.paddingSizeSmall,
+                      runSpacing: Dimensions.paddingSizeSmall,
+                      children: List.generate(
+                        searchController.historyList.length > 10 ? 10 : searchController.historyList.length,
+                        (index) {
+                          final String term = searchController.historyList[index];
+                          return InkWell(
+                            onTap: () => searchController.searchData(term, false),
+                            borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+                                border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.25)),
                               ),
-                              InkWell(
-                                onTap: () => searchController.removeHistory(index),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall),
-                                  child: Icon(Icons.close, color: Theme.of(context).disabledColor, size: 20),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Icon(CupertinoIcons.search, size: 14, color: Theme.of(context).hintColor),
+                                const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                                Text(term, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                                InkWell(
+                                  onTap: () => searchController.removeHistory(index),
+                                  child: Icon(Icons.close, size: 14, color: Theme.of(context).hintColor),
                                 ),
-                              )
-                            ]),
+                              ]),
+                            ),
                           );
                         },
                       ),
@@ -352,33 +409,38 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                       shrinkWrap: true,
                       itemCount: searchController.suggestedItemList!.length,
                       itemBuilder: (context, index) {
+                        // MoonJoin premium suggestion card (rounded surface, soft
+                        // shadow, chevron). navigateToItemPage + image + name preserved.
                         return Container(
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                            boxShadow: [BoxShadow(color: Theme.of(context).disabledColor.withValues(alpha: 0.1), blurRadius: 10)]
+                            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
                           ),
                           child: CustomInkWell(
                             onTap: () {
                               Get.find<ItemController>().navigateToItemPage(searchController.suggestedItemList![index], context);
                             },
-                            radius: Dimensions.radiusDefault,
-                            child: Row(children: [
-                              const SizedBox(width: Dimensions.paddingSizeSmall),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                child: CustomImage(
-                                  image: '${searchController.suggestedItemList![index].imageFullUrl}',
-                                  width: 45, height: 45, fit: BoxFit.cover,
+                            radius: Dimensions.radiusLarge,
+                            child: Padding(
+                              padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                              child: Row(children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                  child: CustomImage(
+                                    image: '${searchController.suggestedItemList![index].imageFullUrl}',
+                                    width: 45, height: 45, fit: BoxFit.cover,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: Dimensions.paddingSizeSmall),
-                              Expanded(child: Text(
-                                searchController.suggestedItemList![index].name!,
-                                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
-                                maxLines: 2, overflow: TextOverflow.ellipsis,
-                              )),
-                            ]),
+                                const SizedBox(width: Dimensions.paddingSizeSmall),
+                                Expanded(child: Text(
+                                  searchController.suggestedItemList![index].name!,
+                                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
+                                  maxLines: 2, overflow: TextOverflow.ellipsis,
+                                )),
+                                Icon(Icons.chevron_right_rounded, size: 18, color: Theme.of(context).hintColor),
+                              ]),
+                            ),
                           ),
                         );
                       },
@@ -392,29 +454,15 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                     const SizedBox(height: Dimensions.paddingSizeSmall),
 
                     searchController.popularCategoryList != null && searchController.popularCategoryList!.isNotEmpty ? Wrap(
+                      spacing: Dimensions.paddingSizeSmall,
+                      runSpacing: Dimensions.paddingSizeSmall,
                       children: searchController.popularCategoryList!.map((category) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall, bottom: Dimensions.paddingSizeSmall),
-                          child: CustomInkWell(
-                            onTap: () {
-                              _searchController.text = category.name??'';
-                              searchController.searchData(category.name??'', false);
-                            },
-                            radius: 50,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).disabledColor.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(50),
-                                border: Border.all(color: Theme.of(context).disabledColor, width: 0.1),
-                              ),
-                              child: Text(
-                                category!.name??'',
-                                style: robotoRegular.copyWith(color: Theme.of(context).textTheme.bodyMedium!.color!),
-                                maxLines: 1, overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
+                        return MoonjoinFilterChip(
+                          label: category?.name ?? '',
+                          onTap: () {
+                            _searchController.text = category?.name ?? '';
+                            searchController.searchData(category?.name ?? '', false);
+                          },
                         );
                       }).toList(),
                     ) : const SizedBox(),
@@ -537,6 +585,12 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
   }
 
   void _actionSearch(bool isSubmit, String? queryText, bool fromHome) {
+    // A search can never fire without a Search Scope — choose a module first
+    // instead of leaking a backend "Module ID Required" error.
+    if(Get.find<search.SearchController>().searchScope == null) {
+      _openScopeSheet();
+      return;
+    }
     if(Get.find<search.SearchController>().isSearchMode || isSubmit) {
       if(queryText!.isNotEmpty) {
         Get.find<search.SearchController>().searchData(queryText, fromHome);

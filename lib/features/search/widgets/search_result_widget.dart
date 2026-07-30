@@ -78,26 +78,39 @@ class SearchResultWidgetState extends State<SearchResultWidget> with TickerProvi
         )));
       }),
 
+      // MoonJoin segmented pill — reused EXACTLY from the frozen Favorites screen
+      // (one segmented-control design app-wide). TabController wiring unchanged.
       ResponsiveHelper.isDesktop(context) ? const SizedBox() :
-      Center(child: Container(
-        width: Dimensions.webMaxWidth,
-        color: Theme.of(context).cardColor,
-        child: TabBar(
-          controller: _tabController,
-          indicatorColor: Theme.of(context).primaryColor,
-          indicatorWeight: 3,
-          labelColor: Theme.of(context).primaryColor,
-          unselectedLabelColor: Theme.of(context).disabledColor,
-          unselectedLabelStyle: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
-          labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor),
-
-          tabs: [
-            Tab(text: 'item'.tr),
-            Tab(text: Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText!
-                ? 'restaurants'.tr : 'stores'.tr),
-          ],
+      Padding(
+        padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeLarge, Dimensions.paddingSizeSmall, Dimensions.paddingSizeLarge, Dimensions.paddingSizeSmall),
+        child: Container(
+          padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            indicator: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorPadding: EdgeInsets.zero,
+            dividerColor: Colors.transparent,
+            splashBorderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+            labelColor: Colors.white,
+            unselectedLabelColor: Theme.of(context).hintColor,
+            labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall),
+            unselectedLabelStyle: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
+            tabs: [
+              Tab(text: 'item'.tr),
+              Tab(text: Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText!
+                  ? 'restaurants'.tr : 'stores'.tr),
+            ],
+          ),
         ),
-      )),
+      ),
 
       Expanded(child: NotificationListener(
         onNotification: (dynamic scrollNotification) {
