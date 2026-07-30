@@ -132,6 +132,7 @@ owner approval.** Every storefront business module must reuse them.
 | 8 | **Shared Product Details** (`ItemDetailsScreen`) | `features/item/screens/item_details_screen.dart` |
 | 9 | **Parcel Screen 1** (Parcel Home/Category) | `features/parcel/screens/parcel_category_screen.dart` |
 | 10 | **Parcel Screen 2** (Parcel Location) | `features/parcel/screens/parcel_location_screen.dart` |
+| 10b | **Parcel Screen 3** (Parcel Request) | `features/parcel/screens/parcel_request_screen.dart` |
 | 11 | **Rental Provider Details** (`VendorDetailScreen`) | `features/rental_module/vendor/screens/vendor_detail_screen.dart` |
 | 12 | **`RentalProviderHeroHeader`** (Store-hero clone for rental) | `features/rental_module/vendor/widgets/rental_provider_hero_header.dart` |
 
@@ -157,16 +158,25 @@ Rental note: Car Rental and Short Apartment Rental share the **Rental** business
 reuse the Car Rental architecture; use mock repositories only where the backend isn't yet available; never
 invent backend APIs.
 
-## Parcel (Package Delivery) components — migration in progress
+## Parcel (Package Delivery) components — MODULE FROZEN (2026-07-30)
 
-Parcel is redesigned from `ui-designs/Parcel/`. Screen 1 (Parcel Home/Category) and Screen 2 (Parcel
-Location) are both **FROZEN**. Both reuse the frozen **`WavyHeader`** for their
+**The Parcel Module is COMPLETE and FROZEN — Implemented · Analyzer Clean · Runtime Verified · Owner Approved.**
+All three screens are migrated; there is **no remaining legacy UI**. Do not redesign, refactor Parcel widgets,
+replace components, or open another Parcel improvement cycle — reuse only.
+
+Parcel is redesigned from `ui-designs/Parcel/`. Screen 1 (Parcel Home/Category), Screen 2 (Parcel Location)
+and Screen 3 (Parcel Request) are all **FROZEN**. Screens 1 & 2 reuse the frozen **`WavyHeader`** for their
 green headers (Screen 1 header: `parcel/widgets/parcel_app_bar_widget.dart`; Screen 2 header inline in
 `parcel_location_screen.dart` with a 2-step indicator), the shared `CartController` cart-count, and shared
 routes. Screen 2 also reuses shared `CustomCard` / `CustomTextField` (prefixIcon) / `CustomButton` and the
-existing `ParcelViewWidget` + `SavedAddressBottomSheet`. Screen 3 (Parcel Request — approved) is the parcel
-checkout: it reuses the white `CustomAppBar` + shared `CardWidget`, `TripFromToCard`, `TipsWidget`,
-`CheckoutCondition`, `CustomButton`, and parcel `DetailsWidget` (restyled with a leading avatar).
+existing `ParcelViewWidget` + `SavedAddressBottomSheet`. Screen 3 (Parcel Request — **freeze approved**) is the
+parcel checkout: it reuses the white `CustomAppBar` (the approved `parcel_request.PNG` header) + shared
+`CardWidget`, `TripFromToCard`, `TipsWidget`, `CheckoutCondition`, `CustomButton`, and parcel `DetailsWidget`
+(restyled with a leading avatar).
+
+**Permanent Parcel rules:** reuse the **shared Payment architecture**; reuse shared MoonJoin components; **never
+create duplicate Parcel-specific components when a platform component already exists**; all future Parcel
+features **extend the frozen foundation** — never a second redesign.
 
 **Parcel payment = the shared payment architecture.** Screen 3 now uses the **shared `PaymentSection`** card +
 `PaymentMethodBottomSheet` (the same one used by Food/Grocery/Pharmacy/Ecommerce), driven by
@@ -174,7 +184,7 @@ checkout: it reuses the white `CustomAppBar` + shared `CardWidget`, `TripFromToC
 implementation across every module. Delivery Man Tips uses the shared `TipsWidget` chip; the tips-section
 height overflow was fixed in the shared `deliveryman_tips_section.dart`.
 
-**Package Protection — Frontend: COMPLETE · Backend: READY FOR CONFIGURATION · Status: NOT FROZEN.** New
+**Package Protection — Frontend preparation exists · Backend configuration dependency PENDING · NOT a UI migration blocker.** Future implementation must **extend the existing Parcel architecture** (no redesign, no new total/order/payment system). New
 Parcel Request section (between Delivery Man Tips and Charge Pay By). **Config-driven & backend-ready:**
 `ConfigModel` has nullable `packageProtectionStatus` + `packageProtectionPercentage` (parsed from the config
 API; null until the backend sends them). `ParcelController.packageProtectionEnabled` /

@@ -53,6 +53,52 @@ These are **not** exposed today (the backend supports module-scoped search only)
 **Future backend roadmap (separate, no contract change now):** a module-agnostic **Global Search** endpoint would unlock the
 "🌍 All Modules" scope in the same selector — a MoonJoin World enhancement (see `MOONJOIN_WORLD_ENTERPRISE_ARCHITECTURE.md`).
 
-## 6. Preservation guarantee
+## 6. Search Orchestration Rule (permanent)
+**Search is an ORCHESTRATION LAYER, not a business-logic owner.** Search coordinates: **Search Scope · `SearchController` ·
+Filters · History · Suggestions · Voice Search · AI Search · Nearby Search · future Search Providers.** Search must **never own
+business logic**: module logic, pricing/availability rules, catalog rules, and backend rules live in the appropriate
+controllers / repositories / services / backend APIs. Search must **never duplicate** module logic, controller logic, or backend
+rules — it composes existing capabilities. Future search features **extend existing capabilities**; they never recreate them.
+
+## 7. Capability Inventory (audit 2026-07-30 — extend these, never duplicate)
+| Capability | Status | Where |
+|---|---|---|
+| **Search (items/stores)** | Working | `search_repository` → `/api/v1/{items\|stores}/search?name=` (now scope-aware) |
+| **Search suggestions** (type-ahead) | Working | `getSearchSuggestions` → `/api/v1/items/item-or-store-search`, `SearchSuggestionModel` |
+| **Search history / Recent searches** | Working | `SearchController._historyList` persisted in SharedPref (`6ammart_search_history`); add/remove/clear |
+| **Suggested items** (landing) | Working (logged-in) | `getSuggestedItems` → `/api/v1/customer/suggested-items` |
+| **Popular Categories** | Working | `getPopularCategories` → `/api/v1/categories/popular`, `PopularCategoryModel` |
+| **Search filters** | Working | `FilterWidget` — sort, veg/non-veg (config-gated), available, discounted, price range, rating |
+| **Search sorting** | Working (minimal) | `sortList = [ascending, descending]`, `sortIndex`/`storeSortIndex` |
+| **Voice Search** | Working | `VoicePermissionHandler.openVoiceSearch` + `speech_to_text` (`SearchController._speech`); scope-gated |
+| **Popular items / stores** | Implemented but UNUSED by Search | `/api/v1/items/popular`, `/api/v1/stores/popular` (used by storefront) — available for a future Trending/Popular scope |
+| **Recommendations** | Implemented but UNUSED by Search | `/api/v1/items/recommended`, `/api/v1/stores/recommended`, `/api/v1/items/suggested` — available for a future AI/Recommended scope |
+| **Place autocomplete** | Implemented but UNUSED by item Search | `/api/v1/config/place-api-autocomplete` (address/map only) — could feed a future Nearby scope |
+| **Rental (vehicle) search** | Working — SEPARATE stack | `/api/v1/rental/vehicle/search`, `…/suggestion`, `…/popular-suggestion`, `taxiSearchHistory` — a parallel search to consolidate later |
+| **AI Search / AI Setup** | Not implemented | no config, endpoint, or code |
+| **Trending searches** | Not implemented | no code/endpoint |
+| **Nearby search** | Not implemented | no item/store nearby endpoint |
+**Future-expansion assets already present:** `SearchScope` abstraction + scope-aware `SearchService`/`Repository`; recommendation &
+popular endpoints (data for Trending/Popular/AI scopes); place-autocomplete (Nearby). New scopes REUSE these — never recreate.
+
+## 8. Preservation guarantee
 Presentation + additive scope orchestration only. No change to `SearchController` search/history/suggestions/filters/pagination/
 voice logic, routes, APIs, models, or backend contracts. Application Context ⟂ Search Scope is a permanent invariant.
+
+## 9. AI Capability Classification (permanent) — AI Search ≠ AI Content Generation
+**These are two completely separate platform systems and must NEVER be treated as the same feature:**
+- **AI Search** — a customer-facing search capability. **Status: NOT implemented** (no app code, no endpoint).
+- **AI Content Generation infrastructure** — Admin-Panel/backend infra (**AI Setup / OpenAI Configuration, vendor AI limits**).
+  **Status: already EXISTS in the Admin Panel** (not in the Flutter app), currently unconfigured/unevaluated.
+- **Vendor AI Assistant** — vendor productivity infra. **Status: infrastructure exists but is not configured or evaluated.**
+
+**Future AI Rule (permanent):** future **AI Search must REUSE and EXTEND the existing AI infrastructure** wherever appropriate.
+MoonJoin must **never create a second, parallel AI subsystem** when an existing platform capability can be extended. (Consistent
+with the Search Orchestration Rule §6 and the Legacy-Elimination mandate: extend, never duplicate.)
+
+**Migration Rule (current UI/UX migration — permanent for this phase):**
+- **AI Setup is OUT OF SCOPE.** Existing AI infrastructure remains **untouched**.
+- **Voice Search remains preserved** (it is a separate, working capability — not AI Content Generation).
+- **No OpenAI configuration enabled, no API keys added, no AI feature activated** during the migration.
+- AI is evaluated **only after** User App · Vendor App · Delivery App · Admin Panel migrations are complete and frozen — as part
+  of the deferred **MoonJoin Platform Capability Audit** project (see `MOONJOIN_PLATFORM_CAPABILITY_AUDIT.md`).

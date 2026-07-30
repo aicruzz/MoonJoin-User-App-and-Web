@@ -1140,7 +1140,7 @@ picker, and Continue navigation preserved. No overflow, no build errors.
 
 ---
 
-## PARCEL — Screen 3: Parcel Request — ✅ COMPLETE & VERIFIED (awaiting freeze approval)
+## PARCEL — Screen 3: Parcel Request — ✅ APPROVED • COMPLETE • FROZEN (2026-07-30)
 
 Third/final Parcel screen (the parcel "checkout"/review). Design authority `ui-designs/Parcel/parcel_request.PNG`
 + `parcel_request_scroll_down.PNG` (not in Figma). Presentation only — charge calc, place-order,
@@ -1191,7 +1191,7 @@ Post-approval refinements to the (approved) Parcel Request screen. Presentation/
 - Delivery Man Tips overflow (5px) fixed in the **shared** `deliveryman_tips_section.dart` (60→66),
   correcting Food/Grocery/Pharmacy/Ecommerce at once. `TipsWidget` was already the shared chip.
 
-### Package Protection — Frontend: COMPLETE · Backend: READY FOR CONFIGURATION · NOT FROZEN
+### Package Protection — Frontend preparation exists · Backend configuration dependency PENDING · NOT a UI migration blocker
 New Parcel Request section between Delivery Man Tips and Charge Pay By. **No backend feature exists** (audited
 parcel controller/repo/service/models/config); built as a clean, backend-ready frontend architecture — **no
 invented APIs**.
@@ -1236,6 +1236,31 @@ check that file before creating APIs, models, or admin settings**, and must adap
 contract (never redesign the frontend when backend starts). Currently queued: **Parcel Package Protection**
 (config + order fields) and **Parcel "Why Choose Us" / "Get Service"** (admin configuration of existing
 endpoints).
+
+---
+
+## PARCEL MODULE — ✅ COMPLETE • FROZEN (2026-07-30)
+
+**Parcel Module — Implemented · Analyzer Clean · Runtime Verified · Owner Approved · FROZEN.** Owner-approved
+formal completion (documentation & freeze only — no code change, no redesign, no refactor, no component
+replacement, no business-logic change, no backend-integration change). A full screen-by-screen audit confirmed
+Parcel was **already migrated** and must not be redesigned again (avoids duplicate redesign work).
+
+| Parcel Screen | Status | Migrated | Notes |
+|---|---|---|---|
+| **Screen 1 — Parcel Category/Home** (`parcel_category_screen.dart`) | ✅ Fully Frozen | 100% | Frozen `WavyHeader` reuse; business logic preserved |
+| **Screen 2 — Parcel Location** (`parcel_location_screen.dart`) | ✅ Fully Frozen | 100% | Address flow preserved; business logic preserved |
+| **Screen 3 — Parcel Request** (`parcel_request_screen.dart`) | ✅ Frozen | UI complete & verified | Freeze approved; no remaining legacy UI; shared `PaymentSection` |
+
+- **Package Protection (recorded correctly):** Frontend preparation exists · Backend configuration dependency
+  pending · **NOT a UI migration blocker** · Future implementation must **extend the existing Parcel
+  architecture** · **No redesign required.** Tracked in `BACKEND_INTEGRATION_QUEUE.md`.
+- **Permanent Parcel rules:** reuse the shared Payment architecture · reuse shared MoonJoin components · do NOT
+  create duplicate Parcel-specific components when a platform component exists · future Parcel features extend
+  the frozen foundation.
+- **Do not start another Parcel improvement cycle.** Next migration target moves to the next genuinely-legacy
+  surface (mandatory pre-implementation audit: Already Frozen / Partially Frozen / Legacy / Components to reuse /
+  Business logic to preserve / Must Not Touch).
 
 ---
 
