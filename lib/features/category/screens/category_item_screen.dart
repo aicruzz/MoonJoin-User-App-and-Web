@@ -13,6 +13,8 @@ import 'package:sixam_mart/common/widgets/item_view.dart';
 import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/veg_filter_widget.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_search_bar.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -35,6 +37,7 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
   final ScrollController storeScrollController = ScrollController();
   TabController? _tabController;
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -92,6 +95,12 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GetBuilder<CategoryController>(builder: (catController) {
       List<Item>? item;
@@ -123,97 +132,9 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
           }
         },
         child: Scaffold(
-          appBar: (ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : AppBar(
-            backgroundColor: Theme.of(context).cardColor,
-            surfaceTintColor: Theme.of(context).cardColor,
-            shadowColor: Theme.of(context).disabledColor.withValues(alpha: 0.5),
-            elevation: 2,
-            title: catController.isSearching ? SizedBox(
-              height: 45,
-              child: TextField(
-                autofocus: true,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    borderSide: BorderSide(color: Theme.of(context).disabledColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                    borderSide: BorderSide(color: Theme.of(context).disabledColor),
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed: () => catController.toggleSearch(),
-                    icon: Icon(
-                      catController.isSearching ? Icons.close_sharp : Icons.search,
-                      color: Theme.of(context).disabledColor,
-                    ),
-                  ),
-                ),
-                style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeLarge),
-                onSubmitted: (String query) {
-                  catController.searchData(
-                    query, catController.subCategoryIndex == 0 ? widget.categoryID
-                      : catController.subCategoryList![catController.subCategoryIndex].id.toString(),
-                    catController.type,
-                  );
-                }
-              ),
-            ) : Text(widget.categoryName, style: robotoRegular.copyWith(
-              fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).textTheme.bodyLarge!.color,
-            )),
-            centerTitle: false,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios),
-              color: Theme.of(context).textTheme.bodyLarge!.color,
-              onPressed: () {
-                if(catController.isSearching) {
-                  catController.toggleSearch();
-                }else {
-                  Get.back();
-                }
-              },
-            ),
-            actions: [
-
-              !catController.isSearching ? IconButton(
-                onPressed: () => catController.toggleSearch(),
-                icon: Icon(
-                  catController.isSearching ? Icons.close_sharp : Icons.search,
-                  color: Theme.of(context).textTheme.bodyLarge!.color,
-                ),
-              ) : const SizedBox(),
-
-              IconButton(
-                onPressed: () => Get.toNamed(RouteHelper.getCartRoute()),
-                icon: CartWidget(color: Theme.of(context).textTheme.bodyLarge!.color, size: 25),
-              ),
-
-              VegFilterWidget(type: catController.type, fromAppBar: true, onSelected: (String type) {
-                if(catController.isSearching) {
-                  catController.searchData(
-                    catController.subCategoryIndex == 0 ? widget.categoryID
-                        : catController.subCategoryList![catController.subCategoryIndex].id.toString(), '1', type,
-                  );
-                }else {
-                  if(catController.isStore) {
-                    catController.getCategoryStoreList(
-                      catController.subCategoryIndex == 0 ? widget.categoryID
-                          : catController.subCategoryList![catController.subCategoryIndex].id.toString(), 1, type, true,
-                    );
-                  }else {
-                    catController.getCategoryItemList(
-                      catController.subCategoryIndex == 0 ? widget.categoryID
-                          : catController.subCategoryList![catController.subCategoryIndex].id.toString(), 1, type, true,
-                    );
-                  }
-                }
-              }),
-
-              const SizedBox(width: Dimensions.paddingSizeSmall),
-            ],
-          )),
+          // B1: mobile uses the frozen ProfilePageHeader inside the body (rendered
+          // below); desktop keeps the legacy WebMenuBar unchanged.
+          appBar: ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : null,
           endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
           body: ResponsiveHelper.isDesktop(context) ? SingleChildScrollView(
             child: FooterView(
@@ -332,9 +253,73 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
                 ]),
               )),
             ),
-          ) : SizedBox(
-            width: Dimensions.webMaxWidth,
-            child: Column(children: [
+          ) : Column(children: [
+
+            // B1: mobile legacy AppBar → frozen ProfilePageHeader (back + category
+            // name + cart trailing) + search (frozen MoonjoinSearchBar) + preserved
+            // VegFilterWidget. Desktop (WebMenuBar) branch untouched; all logic preserved.
+            ProfilePageHeader(
+              title: widget.categoryName,
+              onBack: () {
+                if(catController.isSearching) {
+                  catController.toggleSearch();
+                }else {
+                  Get.back();
+                }
+              },
+              trailing: InkWell(
+                onTap: () => Get.toNamed(RouteHelper.getCartRoute()),
+                child: CartWidget(color: Theme.of(context).cardColor, size: 25),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeExtraSmall),
+              child: Row(children: [
+                Expanded(child: MoonjoinSearchBar(
+                  hintText: 'search'.tr,
+                  controller: _searchController,
+                  showFilter: false,
+                  leading: catController.isSearching
+                      ? InkWell(onTap: () { catController.toggleSearch(); _searchController.clear(); }, child: Icon(Icons.close, color: Theme.of(context).hintColor))
+                      : Icon(Icons.search, color: Theme.of(context).hintColor),
+                  onSubmitted: (String query) {
+                    if(query.trim().isNotEmpty) {
+                      catController.searchData(
+                        query, catController.subCategoryIndex == 0 ? widget.categoryID
+                          : catController.subCategoryList![catController.subCategoryIndex].id.toString(),
+                        catController.type,
+                      );
+                    }
+                  },
+                )),
+                const SizedBox(width: Dimensions.paddingSizeSmall),
+                VegFilterWidget(type: catController.type, fromAppBar: true, onSelected: (String type) {
+                  if(catController.isSearching) {
+                    catController.searchData(
+                      catController.subCategoryIndex == 0 ? widget.categoryID
+                          : catController.subCategoryList![catController.subCategoryIndex].id.toString(), '1', type,
+                    );
+                  }else {
+                    if(catController.isStore) {
+                      catController.getCategoryStoreList(
+                        catController.subCategoryIndex == 0 ? widget.categoryID
+                            : catController.subCategoryList![catController.subCategoryIndex].id.toString(), 1, type, true,
+                      );
+                    }else {
+                      catController.getCategoryItemList(
+                        catController.subCategoryIndex == 0 ? widget.categoryID
+                            : catController.subCategoryList![catController.subCategoryIndex].id.toString(), 1, type, true,
+                      );
+                    }
+                  }
+                }),
+              ]),
+            ),
+
+            Expanded(child: SizedBox(
+              width: Dimensions.webMaxWidth,
+              child: Column(children: [
               const SizedBox(height: 10),
 
               (catController.subCategoryList != null && !catController.isSearching) ? Center(child: Container(
@@ -444,7 +429,9 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
               )) : const SizedBox(),
 
             ]),
+            ),
           ),
+          ]),
         ),
       );
     });
