@@ -137,9 +137,22 @@ owner approval.** Every storefront business module must reuse them.
 | 12 | **`RentalProviderHeroHeader`** (Store-hero clone for rental) | `features/rental_module/vendor/widgets/rental_provider_hero_header.dart` |
 | 13 | **MoonJoin Notification System** (façade + catalog) | `common/widgets/moonjoin/notifications/moonjoin_notifications.dart` (`MoonJoinNotifications`) · doc `docs/MOONJOIN_NOTIFICATION_SYSTEM.md` |
 | 14 | **Chat Thread** (message screen, B1 header + B2 bubbles + keyboard fix) | `features/chat/screens/chat_screen.dart` + `features/chat/widgets/message_bubble_widget.dart` |
+| 15 | **Category Items** (Storefront Browse, **B1 header only** frozen) | `features/category/screens/category_item_screen.dart` |
 
 Together these form the **official MoonJoin reusable storefront foundation**. No future redesign should
 recreate them; reuse them unchanged.
+
+## Storefront Browse → Category Items — B1 header FROZEN (2026-07-31)
+
+**`category_item_screen.dart` B1 (mobile header layer) is FROZEN** (Analyzer Verified · Runtime Verified on owner's
+physical iPhone · Owner Approved). Mobile legacy `AppBar` → frozen **`ProfilePageHeader`** (category name + back +
+**cart** in trailing); **search relocated** into the frozen **`MoonjoinSearchBar`** (drives existing
+`searchData`/`toggleSearch` verbatim); **`VegFilterWidget` reused unchanged**. Desktop `WebMenuBar` untouched.
+**No duplicate systems** (reused ProfilePageHeader + MoonjoinSearchBar). **Untouched:** `ItemsView`,
+`MoonjoinStoreCard`, `ItemWidget`, `NoDataScreen`, Product Details, `CategoryController`, Item/Stores `TabBar` +
+`TabController` + reload, sub-category chips, pagination, `searchData`/`toggleSearch`/`setRestaurant`/
+`setSubCategoryIndex`, cart, routes, models. **Still pending (Partially Frozen):** B2 = Item/Stores TabBar → frozen
+Favorites segmented pill; B3 = sub-category chips → `MoonjoinFilterChip`. Do not modify B1 without owner approval.
 
 ## Chat Thread (message screen) — FROZEN (Phase B, 2026-07-30)
 

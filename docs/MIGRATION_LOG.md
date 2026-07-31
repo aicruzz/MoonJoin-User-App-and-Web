@@ -1239,6 +1239,45 @@ endpoints).
 
 ---
 
+## STOREFRONT BROWSE → CATEGORY ITEMS — `category_item_screen.dart` — B1 (header) — ✅ FROZEN (2026-07-31)
+
+**Category Items B1 (mobile header layer) — Analyzer Verified · Runtime Verified (Owner physical iPhone) · Owner
+Approved · FROZEN.** First sub-phase of the Storefront Browse cluster; presentation only. Entry: Home → Category
+→ Category Items.
+
+### What changed (B1, presentation only — one file)
+- **Header:** mobile legacy raw `AppBar` → frozen **`ProfilePageHeader`** (green wave · centered category name ·
+  back button · **cart in `trailing`** using the existing `CartWidget` → `getCartRoute()`). Back preserved verbatim
+  (`isSearching ? toggleSearch() : Get.back()`). `appBar` is now desktop-only (`WebMenuBar`).
+- **Search relocation:** the in-`AppBar` raw search `TextField` → the frozen **`MoonjoinSearchBar`** (persistent,
+  in a control row below the header). Submit → existing `searchData(...)` (verbatim args); close icon → existing
+  `toggleSearch()` + clears the field. `_searchController` added (+ `dispose`).
+- **VegFilter reuse:** **`VegFilterWidget` reused exactly** (identical `onSelected` logic) beside the search bar.
+- **Desktop:** `WebMenuBar` + `FooterView` web layout **untouched**.
+
+### Reused (no duplicate systems introduced)
+`ProfilePageHeader` (no new header), `MoonjoinSearchBar` (no new search field), `CartWidget`, `VegFilterWidget`.
+No new header/search/card/empty-state/loading system.
+
+### Preserved / not touched
+`ItemsView` → `MoonjoinStoreCard`/`ItemWidget`/`NoDataScreen`, Product Details, `CategoryController`, the Item/Stores
+`TabBar` + `TabController` + `NotificationListener` reload, sub-category chips, pagination, `searchData`/
+`toggleSearch`/`setRestaurant`/`setSubCategoryIndex`, `storesOnly`, cart logic, routes, models, desktop.
+
+### Still pending on this screen (Partially Frozen)
+**B2** = Item/Stores `TabBar` → frozen Favorites segmented pill · **B3** = sub-category chips → `MoonjoinFilterChip`.
+Not started; await owner approval.
+
+### Verification
+`flutter analyze lib/features/category/screens/category_item_screen.dart` → **No issues found!** Runtime verified
+on a physical iPhone (release build; owner-approved): header/title/back, cart, search, veg filter, item/store lists,
+sub-category chips, tabs, pagination, empty state — no regression.
+
+### Files
+`lib/features/category/screens/category_item_screen.dart` (only file changed).
+
+---
+
 ## CHAT THREAD (message screen) — Phase B (B1 + B2) — ✅ COMPLETE • FROZEN (2026-07-30)
 
 **Chat Thread — Implemented · Analyzer Verified · Runtime Verified (physical iPhone) · Owner Approved · FROZEN.**
