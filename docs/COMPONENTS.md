@@ -137,12 +137,29 @@ owner approval.** Every storefront business module must reuse them.
 | 12 | **`RentalProviderHeroHeader`** (Store-hero clone for rental) | `features/rental_module/vendor/widgets/rental_provider_hero_header.dart` |
 | 13 | **MoonJoin Notification System** (façade + catalog) | `common/widgets/moonjoin/notifications/moonjoin_notifications.dart` (`MoonJoinNotifications`) · doc `docs/MOONJOIN_NOTIFICATION_SYSTEM.md` |
 | 14 | **Chat Thread** (message screen, B1 header + B2 bubbles + keyboard fix) | `features/chat/screens/chat_screen.dart` + `features/chat/widgets/message_bubble_widget.dart` |
-| 15 | **Category Items** (Storefront Browse, **B1 header + B2 segmented pill** frozen; B3 chips pending) | `features/category/screens/category_item_screen.dart` |
+| 15 | **Category Items** (Storefront Browse, **B1 + B2 + B3 — FULLY FROZEN**) | `features/category/screens/category_item_screen.dart` |
+| 16 | **MoonJoin Sub-Category Component** (`MoonjoinSubCategoryBar`) — single source of truth for category sub-category chips | `common/widgets/moonjoin/moonjoin_sub_category_bar.dart` |
 
 Together these form the **official MoonJoin reusable storefront foundation**. No future redesign should
 recreate them; reuse them unchanged.
 
-## Storefront Browse → Category Items — B1 header + B2 segmented control FROZEN (2026-07-31)
+## MoonJoin Sub-Category Component (`MoonjoinSubCategoryBar`) — FROZEN (2026-07-31)
+
+**THE single source of truth for category-navigation sub-category chips.** `MoonjoinSubCategoryBar`
+(`common/widgets/moonjoin/moonjoin_sub_category_bar.dart`) — a horizontal scrolling row of `MoonjoinFilterChip`
+for category sub-categories (Category Items: All/Red Meat/Poultry…; Restaurant categories; Grocery categories).
+API: `MoonjoinSubCategoryBar({required labels, required selectedIndex, onSelected})`. Frozen render: `SizedBox(52)`
+→ horizontal `ListView` (h-padding only) → `Center` → `MoonjoinFilterChip`. Analyzer Verified · Runtime Verified
+(owner physical iPhone) · Owner Approved. **No duplicate sub-category implementations allowed; no screen may
+implement its own sub-category chip style; all future category sub-category navigation MUST reuse this component
+exactly.** **NOT** for Home/module filter/sort/action chips (Filter · Sort · Fast Delivery · Free Delivery ·
+Rating · Offers · Discount · Nearby) — those are separate and untouched; the unused generic `FilterChipBar` is a
+separate concern, left untouched. **Consumers:** `category_item_screen.dart` (mobile) · `store_screen.dart` (mobile
+store/restaurant category strip — Food/Grocery/Pharmacy/Ecommerce; migrated & physical-iPhone verified 2026-07-31,
+`categoryList`/`categoryIndex`/`setCategoryIndex` preserved, desktop untouched). Any new category-navigation
+sub-category area MUST reuse this component — no duplicate implementations.
+
+## Storefront Browse → Category Items — B1 header + B2 segmented control + B3 sub-category component — FULLY FROZEN (2026-07-31)
 
 **`category_item_screen.dart` B1 (mobile header) + B2 (Item/Stores segmented control) are FROZEN** (Analyzer
 Verified · Runtime Verified on owner's physical iPhone · Owner Approved). **B1:** mobile legacy `AppBar` → frozen
@@ -151,11 +168,12 @@ Verified · Runtime Verified on owner's physical iPhone · Owner Approved). **B1
 unchanged**. **B2:** mobile Item/Stores legacy `TabBar` → the **frozen Favorites segmented pill** (single source of
 truth — soft-green track, green selected segment, white label; same `_tabController` + tabs + `storesOnly` gate;
 styling only). Desktop `WebMenuBar`/TabBar untouched. **No duplicate systems** (reused ProfilePageHeader +
-MoonjoinSearchBar + Favorites pill). **Untouched:** `ItemsView`, `MoonjoinStoreCard`, `ItemWidget`, `NoDataScreen`,
-Product Details, `CategoryController`, `TabController` + `NotificationListener` reload + `setRestaurant`,
-sub-category chips, pagination, `searchData`/`toggleSearch`/`setSubCategoryIndex`, cart, routes, models. **Still
-pending (Partially Frozen):** B3 = sub-category chips → `MoonjoinFilterChip`. Do not modify B1/B2 without owner
-approval.
+MoonjoinSearchBar + Favorites pill). **B3:** mobile sub-category chips → the frozen **`MoonjoinSubCategoryBar`**
+component (single source of truth; see above). **Untouched:** `ItemsView`, `MoonjoinStoreCard`, `ItemWidget`,
+`NoDataScreen`, Product Details, `CategoryController`, `TabController` + `NotificationListener` reload +
+`setRestaurant`, pagination, `searchData`/`toggleSearch`/`setSubCategoryIndex`, cart, routes, models, desktop.
+**Screen status: FULLY FROZEN** (B1+B2+B3 owner-approved). Do not modify without owner approval; sub-category chips
+come from `MoonjoinSubCategoryBar` only.
 
 ## Chat Thread (message screen) — FROZEN (Phase B, 2026-07-30)
 

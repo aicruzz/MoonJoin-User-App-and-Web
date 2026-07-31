@@ -24,6 +24,7 @@ import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
 import 'package:sixam_mart/common/widgets/web_item_view.dart';
 import 'package:sixam_mart/common/widgets/web_item_widget.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_sub_category_bar.dart';
 import 'package:sixam_mart/features/checkout/screens/checkout_screen.dart';
 import 'package:sixam_mart/features/store/widgets/store_banner_widget.dart';
 import 'package:sixam_mart/features/store/widgets/store_description_view_widget.dart';
@@ -517,7 +518,7 @@ class _StoreScreenState extends State<StoreScreen> {
               ResponsiveHelper.isDesktop(context) ? const SliverToBoxAdapter(child:SizedBox()) :
               (storeController.categoryList!.isNotEmpty) ? SliverPersistentHeader(
                 pinned: true,
-                delegate: SliverDelegate(height: 90, child: Center(child: Container(
+                delegate: SliverDelegate(height: 112, child: Center(child: Container(
                   width: Dimensions.webMaxWidth,
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
@@ -577,35 +578,13 @@ class _StoreScreenState extends State<StoreScreen> {
                       ),
                       const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                      SizedBox(
-                        height: 30,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: storeController.categoryList!.length,
-                          padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
-                          physics: const BouncingScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            return InkWell(
-                              onTap: () => storeController.setCategoryIndex(index),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
-                                margin: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                                  color: index == storeController.categoryIndex ? Theme.of(context).primaryColor.withValues(alpha: 0.1) : Colors.transparent,
-                                ),
-                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  Text(
-                                    storeController.categoryList![index].name!,
-                                    style: index == storeController.categoryIndex
-                                        ? robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor)
-                                        : robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall),
-                                  ),
-                                ]),
-                              ),
-                            );
-                          },
-                        ),
+                      // Store category-navigation chips → the frozen MoonjoinSubCategoryBar
+                      // (single source of truth). Same categoryList + categoryIndex +
+                      // setCategoryIndex; mobile only (desktop renders SizedBox above).
+                      MoonjoinSubCategoryBar(
+                        labels: storeController.categoryList!.map((e) => e.name ?? '').toList(),
+                        selectedIndex: storeController.categoryIndex,
+                        onSelected: (index) => storeController.setCategoryIndex(index),
                       ),
                     ],
                   ),

@@ -1239,7 +1239,28 @@ endpoints).
 
 ---
 
-## STOREFRONT BROWSE → CATEGORY ITEMS — `category_item_screen.dart` — B1 (header) + B2 (segmented control) — ✅ FROZEN (2026-07-31)
+## STORE CATEGORY-NAVIGATION CHIPS → `MoonjoinSubCategoryBar` — ✅ FROZEN (2026-07-31)
+
+**Store category chip migration — Analyzer Verified · Runtime Verified (physical iPhone) · Owner Approved · FROZEN.**
+Presentation only; `store_screen.dart` (mobile) — the legacy custom store food-category chip strip replaced with
+the frozen **`MoonjoinSubCategoryBar`** (single source of truth). `MoonjoinSubCategoryBar(labels:
+storeController.categoryList.map(name), selectedIndex: storeController.categoryIndex, onSelected: (i)=>
+storeController.setCategoryIndex(i))`. The mobile category `SliverPersistentHeader` height was grown `90 → 112`
+(mobile only) to fit the 52px component; **desktop renders `SizedBox` for this strip and is untouched.**
+
+- **Single source of truth:** store category-navigation chips now use `MoonjoinSubCategoryBar` — the ONE component
+  for category-navigation sub-category chips across MoonJoin. **No duplicate sub-category chip implementations.**
+- **Verified on physical iPhone:** Food, Grocery, Pharmacy, and Ecommerce store journeys — category switching works,
+  chip appearance matches the approved component, no regression.
+- **Preserved / unchanged:** `categoryList` / `categoryIndex` / `setCategoryIndex`, category filtering, item
+  sections, store loading, pagination, APIs, routes, cart, `StoreHeroHeader`, the `StoreFilterChip` system
+  (Filter · Sort · Fast Delivery · Free Delivery · Rating · Offers · Discount · Nearby), store cards, item widgets,
+  controllers, business logic, desktop layout. **File:** `lib/features/store/screens/store_screen.dart` only.
+- `flutter analyze` → **No issues found!**
+
+---
+
+## STOREFRONT BROWSE → CATEGORY ITEMS — `category_item_screen.dart` — B1 + B2 + B3 — ✅ FULLY FROZEN (2026-07-31)
 
 **Category Items B1 (mobile header layer) — Analyzer Verified · Runtime Verified (Owner physical iPhone) · Owner
 Approved · FROZEN.** First sub-phase of the Storefront Browse cluster; presentation only. Entry: Home → Category
@@ -1273,8 +1294,27 @@ segmented control.** Desktop TabBar untouched. Preserved: `NotificationListener`
 pagination, `searchData`/`toggleSearch`, `storesOnly`, controllers, routes, models. Analyzer Verified · Runtime
 Verified (owner physical iPhone, release build) · Owner Approved · FROZEN.
 
-### Still pending on this screen (Partially Frozen)
-**B3** = sub-category chips → `MoonjoinFilterChip`. Not started; await owner approval.
+### B3 (sub-category chips) + MoonJoin Sub-Category Component — ✅ FROZEN (2026-07-31)
+Mobile sub-category chips migrated to a **new single reusable component** and the screen's inline implementation
+removed. **New file:** `common/widgets/moonjoin/moonjoin_sub_category_bar.dart` — **`MoonjoinSubCategoryBar`**
+(`labels`, `selectedIndex`, `onSelected`), render frozen exactly as owner-approved: `SizedBox(height:52)` →
+horizontal `ListView.builder` (`padding: horizontal paddingSizeDefault`) → `Center` → `MoonjoinFilterChip`
+(the label-clipping bug — a fixed-height cap below the chip's intrinsic height — was fixed inside the component
+by using horizontal-only list padding + `Center`). `category_item_screen.dart` now calls
+`MoonjoinSubCategoryBar(labels: subCategoryList.map(name), selectedIndex: subCategoryIndex, onSelected: (i)=>
+setSubCategoryIndex(i, categoryID))`; gate/filtering/scroll/selected state unchanged.
+
+**SINGLE SOURCE OF TRUTH (permanent rule):** `MoonjoinSubCategoryBar` is the ONLY sub-category chip implementation.
+No duplicate sub-category chips; no screen implements its own sub-category chip style; all future category-navigation
+sub-category areas MUST reuse it exactly. **Scope: category-navigation sub-categories only — NOT** Home/module
+filter/sort/action chips (Filter · Sort · Fast Delivery · Free Delivery · Rating · Offers · Discount · Nearby),
+which are separate and untouched; the unused generic `FilterChipBar` was inspected and left untouched (it cannot
+reproduce the fixed-height approved render, so it was not forced). Analyzer Verified · Runtime Verified (owner
+physical iPhone, release build) · Owner Approved.
+
+### Screen status: FULLY FROZEN
+`category_item_screen.dart` is **Fully Frozen** — B1 (header) + B2 (segmented control) + B3 (sub-category
+component) all owner-approved. Desktop layout preserved legacy (its own chips/TabBar untouched, mobile-first).
 
 ### Verification
 `flutter analyze lib/features/category/screens/category_item_screen.dart` → **No issues found!** Runtime verified

@@ -14,7 +14,7 @@ import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/veg_filter_widget.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_search_bar.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/filter_chip_widget.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_sub_category_bar.dart';
 import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -323,32 +323,12 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
               child: Column(children: [
               const SizedBox(height: 10),
 
-              // B3: sub-category chips → frozen MoonJoin chip component (MoonjoinFilterChip).
-              // Same horizontal scroll + setSubCategoryIndex + selected state; styling only.
-              (catController.subCategoryList != null && !catController.isSearching) ? SizedBox(
-                height: 52,
-                child: ListView.builder(
-                  key: scaffoldKey,
-                  scrollDirection: Axis.horizontal,
-                  itemCount: catController.subCategoryList!.length,
-                  // Horizontal padding only. The list's vertical padding was shrinking
-                  // the bar's content height below the chip's intrinsic height, capping
-                  // the chip and clipping its label — removed so labels render fully.
-                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-                  physics: const BouncingScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
-                      // Center lets the chip take its intrinsic height (avoids the
-                      // horizontal ListView stretching it and clipping the label).
-                      child: Center(child: MoonjoinFilterChip(
-                        label: catController.subCategoryList![index].name!,
-                        selected: index == catController.subCategoryIndex,
-                        onTap: () => catController.setSubCategoryIndex(index, widget.categoryID),
-                      )),
-                    );
-                  },
-                ),
+              // B3: sub-category chips → the ONE frozen MoonJoin Sub-Category component
+              // (MoonjoinSubCategoryBar). Same gate + setSubCategoryIndex + selected state.
+              (catController.subCategoryList != null && !catController.isSearching) ? MoonjoinSubCategoryBar(
+                labels: catController.subCategoryList!.map((e) => e.name ?? '').toList(),
+                selectedIndex: catController.subCategoryIndex,
+                onSelected: (index) => catController.setSubCategoryIndex(index, widget.categoryID),
               ) : const SizedBox(),
 
               // B2: Item/Stores control → the frozen MoonJoin Favorites segmented pill
