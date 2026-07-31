@@ -1239,7 +1239,7 @@ endpoints).
 
 ---
 
-## STOREFRONT BROWSE → CATEGORY ITEMS — `category_item_screen.dart` — B1 (header) — ✅ FROZEN (2026-07-31)
+## STOREFRONT BROWSE → CATEGORY ITEMS — `category_item_screen.dart` — B1 (header) + B2 (segmented control) — ✅ FROZEN (2026-07-31)
 
 **Category Items B1 (mobile header layer) — Analyzer Verified · Runtime Verified (Owner physical iPhone) · Owner
 Approved · FROZEN.** First sub-phase of the Storefront Browse cluster; presentation only. Entry: Home → Category
@@ -1264,9 +1264,17 @@ No new header/search/card/empty-state/loading system.
 `TabBar` + `TabController` + `NotificationListener` reload, sub-category chips, pagination, `searchData`/
 `toggleSearch`/`setRestaurant`/`setSubCategoryIndex`, `storesOnly`, cart logic, routes, models, desktop.
 
+### B2 (Item/Stores segmented control) — ✅ FROZEN (2026-07-31)
+Mobile Item/Stores legacy `TabBar` → the **frozen MoonJoin Favorites segmented pill** (single source of truth):
+soft-green track (`primary@0.08`, `radiusExtraLarge`), rounded green filled indicator (`TabBarIndicatorSize.tab`,
+`indicatorPadding: zero`), `dividerColor: transparent`, white selected / `hintColor` unselected labels. **Same
+`_tabController` + tabs (`item` / `restaurants`|`stores`); `storesOnly` gate preserved; styling only — no new
+segmented control.** Desktop TabBar untouched. Preserved: `NotificationListener` reload, `setRestaurant`,
+pagination, `searchData`/`toggleSearch`, `storesOnly`, controllers, routes, models. Analyzer Verified · Runtime
+Verified (owner physical iPhone, release build) · Owner Approved · FROZEN.
+
 ### Still pending on this screen (Partially Frozen)
-**B2** = Item/Stores `TabBar` → frozen Favorites segmented pill · **B3** = sub-category chips → `MoonjoinFilterChip`.
-Not started; await owner approval.
+**B3** = sub-category chips → `MoonjoinFilterChip`. Not started; await owner approval.
 
 ### Verification
 `flutter analyze lib/features/category/screens/category_item_screen.dart` → **No issues found!** Runtime verified
