@@ -14,6 +14,7 @@ import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/veg_filter_widget.dart';
 import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_search_bar.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/filter_chip_widget.dart';
 import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -322,38 +323,33 @@ class CategoryItemScreenState extends State<CategoryItemScreen> with TickerProvi
               child: Column(children: [
               const SizedBox(height: 10),
 
-              (catController.subCategoryList != null && !catController.isSearching) ? Center(child: Container(
-                height: 40, width: Dimensions.webMaxWidth, color: Theme.of(context).cardColor,
-                padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall),
+              // B3: sub-category chips → frozen MoonJoin chip component (MoonjoinFilterChip).
+              // Same horizontal scroll + setSubCategoryIndex + selected state; styling only.
+              (catController.subCategoryList != null && !catController.isSearching) ? SizedBox(
+                height: 52,
                 child: ListView.builder(
                   key: scaffoldKey,
                   scrollDirection: Axis.horizontal,
                   itemCount: catController.subCategoryList!.length,
-                  padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
+                  // Horizontal padding only. The list's vertical padding was shrinking
+                  // the bar's content height below the chip's intrinsic height, capping
+                  // the chip and clipping its label — removed so labels render fully.
+                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                   physics: const BouncingScrollPhysics(),
                   itemBuilder: (context, index) {
-                    return InkWell(
-                      onTap: () => catController.setSubCategoryIndex(index, widget.categoryID),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
-                        margin: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                          color: index == catController.subCategoryIndex ? Theme.of(context).primaryColor.withValues(alpha: 0.1) : Colors.transparent,
-                        ),
-                        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Text(
-                            catController.subCategoryList![index].name!,
-                            style: index == catController.subCategoryIndex
-                                ? robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor)
-                                : robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall),
-                          ),
-                        ]),
-                      ),
+                    return Padding(
+                      padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
+                      // Center lets the chip take its intrinsic height (avoids the
+                      // horizontal ListView stretching it and clipping the label).
+                      child: Center(child: MoonjoinFilterChip(
+                        label: catController.subCategoryList![index].name!,
+                        selected: index == catController.subCategoryIndex,
+                        onTap: () => catController.setSubCategoryIndex(index, widget.categoryID),
+                      )),
                     );
                   },
                 ),
-              )) : const SizedBox(),
+              ) : const SizedBox(),
 
               // B2: Item/Stores control → the frozen MoonJoin Favorites segmented pill
               // (single source of truth). Same _tabController + tabs; styling only.
