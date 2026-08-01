@@ -22,6 +22,7 @@ import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_commerce_header.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
@@ -405,49 +406,31 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  // Renders the shared MoonjoinCommerceHeader (single source of truth for the
+  // commerce header — extracted verbatim from this screen). Rendering is
+  // pixel-identical to the previous inline implementation; call sites unchanged.
   Widget _mobileHeader(BuildContext context, CartController cartController, int count) {
-    return Container(
-      color: Theme.of(context).primaryColor,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
-          child: Row(children: [
-            InkWell(
-              onTap: () => Get.back(),
-              borderRadius: BorderRadius.circular(30),
-              child: Container(
-                height: 40, width: 40,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-              ),
-            ),
-            const SizedBox(width: Dimensions.paddingSizeSmall),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('your_cart'.tr, style: robotoBold.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeExtraLarge)),
-              Text('$count ${count == 1 ? 'item'.tr : 'items'.tr}', style: robotoRegular.copyWith(color: Colors.white.withValues(alpha: 0.9), fontSize: Dimensions.fontSizeSmall)),
-            ])),
-            if (count > 0) InkWell(
-              onTap: () => Get.dialog(ConfirmationDialog(
-                icon: Images.warning,
-                title: 'are_you_sure_to_delete'.tr,
-                description: 'you_want_to_delete_all_carts'.tr,
-                onYesPressed: () {
-                  Get.back();
-                  cartController.clearCartList();
-                  Get.find<CartController>().calculationCart();
-                },
-              ), barrierDismissible: false),
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-              child: Container(
-                height: 40, width: 40,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
-                child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
-              ),
-            ),
-          ]),
+    return MoonjoinCommerceHeader(
+      title: 'your_cart'.tr,
+      subtitle: '$count ${count == 1 ? 'item'.tr : 'items'.tr}',
+      trailing: count > 0 ? InkWell(
+        onTap: () => Get.dialog(ConfirmationDialog(
+          icon: Images.warning,
+          title: 'are_you_sure_to_delete'.tr,
+          description: 'you_want_to_delete_all_carts'.tr,
+          onYesPressed: () {
+            Get.back();
+            cartController.clearCartList();
+            Get.find<CartController>().calculationCart();
+          },
+        ), barrierDismissible: false),
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+        child: Container(
+          height: 40, width: 40,
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)),
+          child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
         ),
-      ),
+      ) : null,
     );
   }
 

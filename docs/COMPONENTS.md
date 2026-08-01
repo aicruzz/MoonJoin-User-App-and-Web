@@ -690,7 +690,11 @@ bell, dark-mode toggle, three tappable stat cards (Loyalty/Orders/Wallet action 
 `lib/features/profile/widgets/profile_page_header.dart` — THE official green waved header for every Profile
 child page (title + back + optional trailing + `bottomExtra` avatar overlap; status-bar-aware top spacing;
 concave wave mirroring the Stage-1 Account header). MANDATORY reuse on all remaining Profile screens; no
-duplicate headers. First consumer: Personal Information.
+duplicate headers. First consumer: Personal Information. **Registration-flow consumers (FROZEN 2026-08-01):**
+`delivery_man_registration_screen.dart` (Account → Menu → Earnings → Join as a Delivery Man) and
+`store_registration_screen.dart` (Account → Menu → Earnings → Open Vendor) — both mobile legacy `CustomAppBar`
+→ `ProfilePageHeader` (presentation-only; back preserves each screen's exact step-back logic via `onBack`;
+desktop keeps `CustomAppBar` + `webView`). These registration pages now belong to the Account/Menu design family.
 
 ### 🧊 Personal Information (Edit Profile) — `update_profile_screen.dart` (FROZEN 2026-07-24)
 Presentation-only redesign to the MoonJoin language. Mobile `_mobileView` + desktop `webView()`. Reuses

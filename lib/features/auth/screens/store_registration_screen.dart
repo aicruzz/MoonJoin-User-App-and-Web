@@ -31,6 +31,7 @@ import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
@@ -144,22 +145,41 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> with 
         }
       },
       child: Scaffold(
-        appBar: CustomAppBar(title: 'vendor_registration'.tr, onBackPressed: () async {
+        // B1: mobile drops the legacy white CustomAppBar for the frozen MoonJoin
+        // ProfilePageHeader (added to the body below). Desktop keeps CustomAppBar.
+        appBar: isDesktop ? CustomAppBar(title: 'vendor_registration'.tr, onBackPressed: () async {
           if(Get.find<StoreRegistrationController>().storeStatus != 0.1 && firstTime){
             Get.find<StoreRegistrationController>().storeStatusChange(0.1);
             firstTime = false;
           }else{
             await _showBackPressedDialogue('your_registration_not_setup_yet'.tr);
           }
-        }),
+        }) : null,
         endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
-        body: SafeArea(child: GetBuilder<StoreRegistrationController>(builder: (storeRegController) {
+        body: GetBuilder<StoreRegistrationController>(builder: (storeRegController) {
 
           if(storeRegController.storeAddress != null && _languageList!.isNotEmpty){
             _addressController[0].text = storeRegController.storeAddress.toString();
           }
 
-          return isDesktop ? webView(storeRegController, isDesktop) : Column(children: [
+          return isDesktop ? SafeArea(child: webView(storeRegController, isDesktop)) : Column(children: [
+
+            // B1: mobile legacy CustomAppBar → frozen MoonJoin ProfilePageHeader
+            // (curved green header + back). Back preserves the exact step-back logic
+            // from the original CustomAppBar.onBackPressed.
+            ProfilePageHeader(
+              title: 'vendor_registration'.tr,
+              onBack: () async {
+                if(Get.find<StoreRegistrationController>().storeStatus != 0.1 && firstTime){
+                  Get.find<StoreRegistrationController>().storeStatusChange(0.1);
+                  firstTime = false;
+                }else{
+                  await _showBackPressedDialogue('your_registration_not_setup_yet'.tr);
+                }
+              },
+            ),
+
+            Expanded(child: SafeArea(top: false, child: Column(children: [
 
             storeRegController.storeStatus == 0.9 ? SizedBox() : Padding(
               padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
@@ -929,8 +949,11 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> with 
             ),
 
             isDesktop ? const SizedBox() : buttonView(isDesktop),
+
+            ]))),
+
           ]);
-        })),
+        }),
       ),
     );
   }

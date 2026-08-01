@@ -3287,3 +3287,43 @@ first-run = onboarding identity preserved), analyze-clean, runtime-clean, but **
 on its natural entry point (fresh install / onboarding / drawer). Deliberately **NOT frozen** per owner
 instruction; to be verified + frozen later. The Settings language bottom sheet (a different widget) belongs to
 Phase 8G (above).
+
+## Delivery Man Registration — B1 (header) — STATUS: FROZEN (2026-08-01)
+**File:** `lib/features/auth/screens/delivery_man_registration_screen.dart` (only file changed).
+**Entry:** Account → Menu → Earnings → **Join as a Delivery Man** → Delivery Man Registration.
+**What changed (presentation only):** mobile legacy white `CustomAppBar` → frozen **`ProfilePageHeader`** (curved green
+wave + centered title + back), matching the Account/Menu design family. The header is added as the body's first child
+(owns its own status-bar top padding); the step chips + scrollable form + bottom button now live in
+`Expanded → SafeArea(top: false)`. **Back preserves the two-step logic verbatim** (`onBack`: Step 2 → Step 1 +
+reset chip index; Step 1 → `Get.back()`). Desktop keeps its `CustomAppBar` (gated `isDesktop ? CustomAppBar : null`)
+and `webView` — untouched. Existing white `sectionCard`s were already MoonJoin card language — left as-is.
+**Preserved (verbatim):** `DeliverymanRegistrationController` (+ `StoreRegistrationController` pass check), two-step form +
+both `GlobalKey<FormState>`, `PopScope` step-back, all validation/`showCustomSnackBar`, profile + identity image pickers,
+zone/vehicle/DM-type/identity-type dropdowns, country-code phone, `PassViewWidget`, `ConditionCheckBoxWidget`,
+`registerDeliveryMan(DeliveryManBody(...))`, reset, routes, models, desktop `webView`. No controller/API/route/model/
+business-logic change.
+**Verification:** `flutter analyze` (file) → **No issues found!** Release build ✓ (88.5MB AOT) installed + launched on the
+owner's physical iPhone (`00008120-…-201E`, `com.moonjoin.com`). **Runtime verified & owner-approved:** green curved
+header + back, step navigation (Next → Step 2 → back → Step 1), image pickers, dropdowns, validation, submit — no regression.
+**Next:** Open Vendor → Vendor Registration (one screen at a time).
+
+## Vendor Registration — B1 (header) — STATUS: FROZEN (2026-08-01)
+**File:** `lib/features/auth/screens/store_registration_screen.dart` (only file changed).
+**Entry:** Account → Menu → Earnings → **Open Vendor** → Vendor Registration.
+**Design family:** now belongs to the approved **MoonJoin Account/Menu design family**; **reuses the frozen `ProfilePageHeader`**
+(consistent with Delivery Man Registration).
+**What changed (presentation only):** mobile legacy white `CustomAppBar` → frozen **`ProfilePageHeader`** (curved green
+wave + centered title + back). Header added as the body's first child (owns its status-bar top padding); the step tabs
++ scrollable form + bottom button now live in `Expanded → SafeArea(top: false)`; the outer body `SafeArea` moved
+per-branch (desktop → `SafeArea(webView)`; mobile → `SafeArea(top:false)`). **Back preserves the exact original
+`CustomAppBar.onBackPressed` logic verbatim** (`onBack`: `storeStatus != 0.1 && firstTime` → `storeStatusChange(0.1)` +
+`firstTime=false`; else `_showBackPressedDialogue`). All three states covered (0.1 Vendor Info · 0.6 Owner Info · 0.9
+Business Plan). Desktop keeps its `CustomAppBar` (gated `isDesktop ? CustomAppBar : null`) + `webView` — untouched.
+**Preserved (business logic, registration flow, validation, controllers, APIs, routes, forms, step navigation, desktop —
+all unchanged):** `StoreRegistrationController`, three-step `storeStatus` flow + `storeStatusChange`, `_tabController`/
+`_tabButton`, both `GlobalKey<FormState>`, `PopScope` + `_showBackPressedDialogue`, all validation, logo/cover image
+pickers, zone/module/business dropdowns, address + map, language tabs, business-plan selection (`BaseCardWidget`/
+`PackageCardWidget`/`Swiper`), `_submitData`/registration API, routes, models, desktop `webView`. **Presentation-only.**
+**Verification:** `flutter analyze` (file) → **No issues found!** Release build ✓ (88.5MB AOT) installed + launched on the
+owner's physical iPhone. **Runtime verified & owner-approved:** header + back, step navigation + back-dialog, image
+pickers, dropdowns/map/address, submit — no regression. **FROZEN.**

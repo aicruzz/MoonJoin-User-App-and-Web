@@ -24,6 +24,7 @@ import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_commerce_header.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_dropdown.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
@@ -177,9 +178,16 @@ class CheckoutScreenState extends State<CheckoutScreen> {
 
     return Scaffold(
       backgroundColor: ResponsiveHelper.isDesktop(context) ? null : const Color(0xFFF6F8F0),
-      appBar: CustomAppBar(title: 'checkout'.tr),
+      // Commerce-consistency: mobile drops the legacy white CustomAppBar and reuses
+      // the shared MoonjoinCommerceHeader (the frozen Cart commerce header). Desktop
+      // keeps its CustomAppBar (matching the frozen Cart). Presentation only.
+      appBar: ResponsiveHelper.isDesktop(context) ? CustomAppBar(title: 'checkout'.tr) : null,
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
-      body: guestCheckoutPermission || AuthHelper.isLoggedIn() ? GetBuilder<CheckoutController>(builder: (checkoutController) {
+      body: Column(children: [
+
+        if(!ResponsiveHelper.isDesktop(context)) MoonjoinCommerceHeader(title: 'checkout'.tr),
+
+        Expanded(child: guestCheckoutPermission || AuthHelper.isLoggedIn() ? GetBuilder<CheckoutController>(builder: (checkoutController) {
 
         List<DropdownItem<int>> addressList = _getDropdownAddressList(context: context, addressList: Get.find<AddressController>().addressList, store: checkoutController.store);
         address = _getAddressList(addressList: Get.find<AddressController>().addressList, store: checkoutController.store);
@@ -452,7 +460,8 @@ class CheckoutScreenState extends State<CheckoutScreen> {
       }) : NotLoggedInScreen(callBack: (value){
         initCall();
         setState(() {});
-      }),
+      })),
+    ]),
     );
   }
 

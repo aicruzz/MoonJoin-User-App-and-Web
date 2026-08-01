@@ -12,6 +12,7 @@ import 'package:sixam_mart/features/auth/domain/models/delivery_man_body.dart';
 import 'package:sixam_mart/features/auth/controllers/deliveryman_registration_controller.dart';
 import 'package:sixam_mart/features/auth/widgets/condition_check_box_widget.dart';
 import 'package:sixam_mart/features/auth/widgets/pass_view_widget.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
 import 'package:sixam_mart/helper/custom_validator.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/validate_check.dart';
@@ -97,7 +98,10 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).cardColor,
-        appBar: CustomAppBar(title: 'delivery_man_registration'.tr, onBackPressed: (){
+        // B1: mobile drops the legacy white CustomAppBar in favour of the frozen
+        // MoonJoin ProfilePageHeader (added to the body below). Desktop keeps its
+        // CustomAppBar chrome untouched.
+        appBar: ResponsiveHelper.isDesktop(context) ? CustomAppBar(title: 'delivery_man_registration'.tr, onBackPressed: (){
           if(Get.find<DeliverymanRegistrationController>().dmStatus != DMRegistrationSteps.stepOne){
             Get.find<DeliverymanRegistrationController>().dmStatusChange(DMRegistrationSteps.stepOne);
             setState(() {
@@ -106,7 +110,7 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
           }else{
             Future.delayed(const Duration(milliseconds: 0), () => Get.back());
           }
-        },),
+        },) : null,
         endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
         body: GetBuilder<DeliverymanRegistrationController>(builder: (deliverymanRegistrationController) {
 
@@ -155,7 +159,26 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
             }
           }
 
-          return SafeArea(child: ResponsiveHelper.isDesktop(context) ? webView(deliverymanRegistrationController, zoneList, dmTypeList, vehicleList, identityTypeList) : Column(children: [
+          return ResponsiveHelper.isDesktop(context) ? SafeArea(child: webView(deliverymanRegistrationController, zoneList, dmTypeList, vehicleList, identityTypeList)) : Column(children: [
+
+            // B1: mobile legacy CustomAppBar → frozen MoonJoin ProfilePageHeader
+            // (curved green header + back). Back preserves the step-two → step-one
+            // logic from the original CustomAppBar.onBackPressed.
+            ProfilePageHeader(
+              title: 'delivery_man_registration'.tr,
+              onBack: () {
+                if(Get.find<DeliverymanRegistrationController>().dmStatus != DMRegistrationSteps.stepOne){
+                  Get.find<DeliverymanRegistrationController>().dmStatusChange(DMRegistrationSteps.stepOne);
+                  setState(() {
+                    _selectedIndex = 0;
+                  });
+                }else{
+                  Future.delayed(const Duration(milliseconds: 0), () => Get.back());
+                }
+              },
+            ),
+
+            Expanded(child: SafeArea(top: false, child: Column(children: [
             Container(
               height: 50,
               padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
@@ -746,7 +769,9 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
 
             (ResponsiveHelper.isDesktop(context) || ResponsiveHelper.isWeb()) ? const SizedBox() : buttonView(),
 
-          ]));
+            ]))),
+
+          ]);
         }),
       ),
     );
