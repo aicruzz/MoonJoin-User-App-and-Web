@@ -119,6 +119,8 @@ MoonJoin has **only two** Product Details screens. **No third implementation may
 
 Only module data / APIs / terminology / business logic differ — the two UIs above are the complete set.
 
+**Both screens also serve as the Cart Item EDIT surface (FROZEN 2026-08-01).** Mobile "Your Cart" item tap → `ItemController.navigateToCartItemEdit(item, cart:)` → the same `FoodDetailsScreen`/`ItemDetailsScreen` in edit mode (preloaded via `getItemDetails(cart:)`; updates the existing line in place via `ItemCartHelper.addOrUpdateCart` → `CartController.updateCartOnline`; no duplicate). `ItemDetailsScreen` gained an additive optional `cart` param. The legacy `ItemBottomSheet` is now **desktop-only** (desktop Add + desktop Cart edit). Never reintroduce the mobile `ItemBottomSheet` edit surface; never create a third Product Details.
+
 ## Frozen Registry — official reusable production components (LOCKED)
 
 These are approved, production, reusable. **Do not redesign or modify any of them without explicit product

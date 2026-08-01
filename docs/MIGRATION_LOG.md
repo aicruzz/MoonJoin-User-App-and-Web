@@ -3353,3 +3353,35 @@ Checkout freeze** (the Bottom Checkout Container was redesigned after it).
 **Backend/Admin dependency (future MoonJoin World/Admin — NOT built in Flutter):** Admin → Delivery Tip Settings, default tip config, zone-level tip config, zone currency selection. Backend → `dm_default_tips`, zone `dm_tips`, zone currency resolution.
 **Preserved / unchanged (confirmed):** order creation, parcel creation, payment flow, delivery assignment, **`dm_tips` API payload**, validation, `CheckoutController`/`ParcelController`, routes. Presentation + configuration architecture only.
 **Verification:** `flutter analyze` → zero new issues (baseline unchanged). Release build ✓ (88.5MB AOT) installed + launched on the owner's physical iPhone. **Runtime verified (Checkout + Parcel Request) · Owner approved · FROZEN.** No additional UI changes after freeze without a new migration decision.
+
+## Cart Item Edit Journey — mobile edit → approved Product Details Edit Mode — STATUS: FROZEN (2026-08-01)
+**Files:** `lib/features/item/controllers/item_controller.dart` (`navigateToCartItemEdit`), `lib/features/cart/widgets/cart_item_widget.dart`
+(both tap handlers — card tap + "Change" link), `lib/features/item/screens/item_details_screen.dart` (additive `cart` param),
+`lib/features/item/screens/food_details_screen.dart` (label). Reuses the two frozen Product Details + `getItemDetails(cart:)` +
+`ItemCartHelper.addOrUpdateCart` + `CartController.updateCartOnline`.
+**Problem:** mobile Add opened the full-page Product Details, but mobile Cart EDIT still opened the legacy `ItemBottomSheet` — a journey
+inconsistency (explicit code comment even said "cart editing continues to use ItemBottomSheet (unchanged)").
+**Fix (navigation only):** mobile Cart item tap + "Change" → `navigateToCartItemEdit(item, cart:)` → `FoodDetailsScreen` (food) /
+`ItemDetailsScreen` (grocery/others) in EDIT MODE (food/non-food split mirrors `navigateToItemPage`). `ItemDetailsScreen` got an
+additive optional `cart` forwarded to `getItemDetails(cart:)` (label + `_addToCart` already keyed on `cartIndex != -1`); `FoodDetailsScreen`
+label now reads "Update in Cart" from Cart. **Update mechanism unchanged & single-source:** `getItemDetails(cart:)` restores
+variations/add-ons/quantity + sets `cartIndex`; `addOrUpdateCart` updates the existing line (`cart != null || cartIndex != -1` →
+`updateCartOnline`) — no duplicate.
+**Desktop:** unchanged — `ItemBottomSheet` dialog remains for desktop Add + desktop Cart edit (already-consistent). Not deleted (Legacy
+Cleanup = separate later phase).
+**Preserved:** Your Cart UI, `MoonjoinCommerceHeader`, cart calculations, coupons, taxes, delivery, Checkout navigation, `CartController`,
+cart APIs, `ItemCartHelper`, order creation. No business-logic change.
+**Verification:** `flutter analyze` (4 files) → **No issues found!** Release build ✓ (88.5MB AOT) installed + launched on the owner's
+physical iPhone. **Runtime verified (Food + Non-food — preloaded edit, Update in Cart, same line updates, no duplicate) · Owner approved · FROZEN.**
+
+## Rental Trip Payment — Unification to shared payment architecture — STATUS: BLOCKED (BACKEND DEPENDENCY) (2026-08-01)
+**First-task verification result: Rental Trips CANNOT consume the existing `PaymentModel` — this migration is blocked on backend, NOT implemented in Flutter (no workaround invented).**
+**Evidence:** `OrderController.getPaymentFailedDetails` → `GET /api/v1/customer/order/payment-failed?order_id=$id` is **order-scoped**. Trips are a **separate entity** in the `/api/v1/rental/user/trip/*` namespace, keyed by `trip_id`, modeled by `TripDetailsModel` (NO `order_id`/`orderType`/order linkage). The rental module never calls the order PaymentModel endpoint; it uses its own `tripPaymentUri` (`/api/v1/rental/user/trip/payment`) returning a raw URL. So the approved `PaymentMethodBottomSheet`/`PaymentModel`/`PaymentScreen` architecture cannot be driven for a trip today.
+**Current legacy flow (to be replaced once unblocked):** My Trips → History → Completed+Unpaid → Pay Now → `TaxiPaymentBottomSheet` (`rental_module/rental_order/widgets/taxi_payment_bottom_sheet.dart`) → `TaxiOrderController.makePayment` → digital: `Get.to(TaxiPaymentScreen(paymentUrl: response.body))`. `TaxiPaymentScreen` is a bespoke WebView lacking the shared success/fail redirect + callback handling that `PaymentScreen` provides → **blank page**.
+**EXACT BACKEND DEPENDENCY (MoonJoin World) required to unblock:** expose a **`PaymentModel` for a rental trip** so Flutter can drive the shared components — either (A) extend `/api/v1/customer/order/payment-failed` (or add `/api/v1/rental/user/trip/payment-details`) to accept a `trip_id` and return the same `PaymentModel` JSON shape (`order_id`=trip id, `order_type`='rental'/'taxi', `order_amount`, `is_cash_on_delivery_active`, `is_digital_payment_active`, `is_offline_payment_active`, `payment_status`, `zone_id`, gateway/return URLs), AND/OR (B) route trip digital payment through the **shared payment-session/gateway** that `PaymentScreen` consumes (proper `callback`/success/fail return URLs) instead of the raw `tripPaymentUri` response.
+**Flutter migration plan (ready, deferred until backend ships the above):** replace `TaxiPaymentBottomSheet` with `PaymentMethodBottomSheet(paymentModel:)` (responsive: desktop dialog / mobile bottom sheet — exactly the frozen `order_info_widget` "Pay Again" pattern), digital routes through the shared `PaymentScreen` (fixes blank page), retire `TaxiPaymentBottomSheet`/`TaxiPaymentScreen` from the mobile journey (files left in place — Legacy Cleanup is a separate phase). No trip-details/history/business-logic/API change beyond consuming the new PaymentModel. **Flutter remains a pure consumer of backend configuration.**
+
+## Parcel Request — Commerce Header migration — STATUS: FROZEN (2026-08-01) [documentation backfill]
+**File:** `lib/features/parcel/screens/parcel_request_screen.dart`. **Backfilled record** — this owner-approved migration was implemented earlier but not yet written to the freeze docs (they still described the legacy white `CustomAppBar`).
+**What changed (presentation only):** mobile legacy white `CustomAppBar(title:'parcel_request')` → the frozen shared **`MoonjoinCommerceHeader`** (same green commerce header as Cart + Checkout); content moved into `Expanded → SafeArea(top:false)`; back = `Get.back()`. Desktop keeps `CustomAppBar` (gated). Supersedes the header description in the earlier Parcel module freeze.
+**Rule:** Parcel Request = commerce journey → `MoonjoinCommerceHeader` (not `ProfilePageHeader`). **Preserved:** all parcel functionality/logic/APIs/routes/desktop. `flutter analyze` clean; release build deployed to physical iPhone; owner approved. FROZEN.
