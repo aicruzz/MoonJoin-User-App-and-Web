@@ -32,7 +32,12 @@ class ItemDetailsScreen extends StatefulWidget {
   final bool inStorePage;
   final bool isCampaign;
   final Item? item;
-  const ItemDetailsScreen({super.key, required this.itemId, required this.inStorePage, this.isCampaign = false, this.item});
+  /// EDIT MODE (from Cart): when [cart] is supplied the page preloads the existing
+  /// variations/add-ons/quantity via getItemDetails(cart:) (which sets
+  /// itemController.cartIndex) and UPDATES the existing cart line instead of adding
+  /// a new one. Same single Shared Product Details implementation — no layout change.
+  final CartModel? cart;
+  const ItemDetailsScreen({super.key, required this.itemId, required this.inStorePage, this.isCampaign = false, this.item, this.cart});
 
   @override
   State<ItemDetailsScreen> createState() => _ItemDetailsScreenState();
@@ -53,7 +58,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   void initState() {
     super.initState();
 
-    Get.find<ItemController>().getItemDetails(itemId: widget.itemId, item: widget.isCampaign ? widget.item : null);
+    Get.find<ItemController>().getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null);
     Get.find<ItemController>().setSelect(0, false);
   }
 

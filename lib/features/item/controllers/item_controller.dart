@@ -828,6 +828,24 @@ class ItemController extends GetxController implements GetxService {
     }
   }
 
+  /// MoonJoin Cart Item Edit (mobile): open the SAME approved full-page Product
+  /// Details used by the Add flow — FoodDetailsScreen (food) / ItemDetailsScreen
+  /// (grocery/others) — in EDIT MODE (preloaded via getItemDetails(cart:)), so the
+  /// existing cart line is UPDATED (ItemCartHelper.addOrUpdateCart →
+  /// CartController.updateCartOnline), never duplicated. Replaces the legacy mobile
+  /// ItemBottomSheet edit surface. Desktop keeps the ItemBottomSheet dialog (handled
+  /// by the caller). Food/non-food split mirrors navigateToItemPage. No business
+  /// logic changed — same route, same details/cart mechanism.
+  void navigateToCartItemEdit(Item? item, {required CartModel cart}) {
+    final bool isFood = Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText! || item!.moduleType == 'food';
+    Get.toNamed(
+      RouteHelper.getItemDetailsRoute(item!.id, false),
+      arguments: isFood
+          ? FoodDetailsScreen(itemId: item.id!, item: item, cart: cart)
+          : ItemDetailsScreen(itemId: item.id!, inStorePage: false, item: item, cart: cart),
+    );
+  }
+
   void itemDirectlyAddToCart(Item? item, BuildContext context, {bool inStore = false, bool isCampaign = false}) {
     getItemDetails(itemId: item!.id!).then((value) {
       if (((_item!.foodVariations != null && _item!.foodVariations!.isEmpty) && _item?.moduleType == AppConstants.food) || (_item?.variations != null && _item!.variations!.isEmpty && _item?.moduleType != AppConstants.food)) {

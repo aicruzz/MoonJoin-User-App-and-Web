@@ -275,7 +275,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             height: 50,
             isLoading: cartController.isLoading,
             radius: Dimensions.radiusLarge,
-            buttonText: stockOut ? 'out_of_stock'.tr : widget.isEdit ? 'save'.tr : widget.isCampaign ? 'order_now'.tr : 'add_to_cart'.tr,
+            buttonText: stockOut ? 'out_of_stock'.tr : widget.isEdit ? 'save'.tr : widget.cart != null ? 'update_in_cart'.tr : widget.isCampaign ? 'order_now'.tr : 'add_to_cart'.tr,
             onPressed: stockOut ? null : () async {
               await ItemCartHelper.addOrUpdateCart(
                 context: context, item: item, itemController: itemController, data: data,

@@ -20,6 +20,7 @@ import 'package:sixam_mart/common/widgets/item_bottom_sheet.dart';
 import 'package:sixam_mart/common/widgets/quantity_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 
 class CartItemWidget extends StatefulWidget {
   final CartModel cart;
@@ -89,14 +90,16 @@ class _CartItemWidgetState extends State<CartItemWidget> {
           clipBehavior: Clip.antiAlias,
           child: CustomInkWell(
             onTap: () {
-              ResponsiveHelper.isMobile(context) ? showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (con) => ItemBottomSheet(itemId: widget.cart.item!.id!, cartIndex: widget.cartIndex, cart: widget.cart),
-              ) : showDialog(context: context, builder: (con) => Dialog(
-                child: ItemBottomSheet(itemId: widget.cart.item!.id!, cartIndex: widget.cartIndex, cart: widget.cart),
-              ));
+              // MoonJoin Cart Item Edit: mobile opens the approved full-page Product
+              // Details in edit mode (updates the existing line, no duplicate). Desktop
+              // keeps the ItemBottomSheet dialog (already-consistent desktop journey).
+              if (ResponsiveHelper.isMobile(context)) {
+                Get.find<ItemController>().navigateToCartItemEdit(widget.cart.item, cart: widget.cart);
+              } else {
+                showDialog(context: context, builder: (con) => Dialog(
+                  child: ItemBottomSheet(itemId: widget.cart.item!.id!, cartIndex: widget.cartIndex, cart: widget.cart),
+                ));
+              }
             },
             radius: Dimensions.radiusLarge,
             padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
@@ -233,12 +236,14 @@ class _CartItemWidgetState extends State<CartItemWidget> {
                           style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor))),
                       InkWell(
                         onTap: () {
-                          ResponsiveHelper.isMobile(context) ? showModalBottomSheet(
-                            context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-                            builder: (con) => ItemBottomSheet(itemId: widget.cart.item!.id!, cartIndex: widget.cartIndex, cart: widget.cart),
-                          ) : showDialog(context: context, builder: (con) => Dialog(
-                            child: ItemBottomSheet(itemId: widget.cart.item!.id!, cartIndex: widget.cartIndex, cart: widget.cart),
-                          ));
+                          // Same MoonJoin Cart Item Edit journey as the card tap.
+                          if (ResponsiveHelper.isMobile(context)) {
+                            Get.find<ItemController>().navigateToCartItemEdit(widget.cart.item, cart: widget.cart);
+                          } else {
+                            showDialog(context: context, builder: (con) => Dialog(
+                              child: ItemBottomSheet(itemId: widget.cart.item!.id!, cartIndex: widget.cartIndex, cart: widget.cart),
+                            ));
+                          }
                         },
                         child: Text('change'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).primaryColor)),
                       ),
