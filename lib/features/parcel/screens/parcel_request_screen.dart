@@ -25,6 +25,8 @@ import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/images.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_commerce_header.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/delivery_man_tips.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
@@ -34,7 +36,6 @@ import 'package:sixam_mart/common/widgets/menu_drawer.dart';
 import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
 import 'package:sixam_mart/features/checkout/widgets/condition_check_box.dart';
 import 'package:sixam_mart/features/checkout/widgets/payment_section.dart';
-import 'package:sixam_mart/features/checkout/widgets/tips_widget.dart';
 import 'package:sixam_mart/features/parcel/widgets/card_widget.dart';
 import 'package:sixam_mart/features/parcel/widgets/delivery_instruction_bottom_sheet_widget.dart';
 import 'package:sixam_mart/features/parcel/widgets/details_widget.dart';
@@ -121,10 +122,17 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
     bool guestCheckoutPermission = AuthHelper.isGuestLoggedIn() && Get.find<SplashController>().configModel!.guestCheckoutStatus!;
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'parcel_request'.tr),
+      // Mobile: legacy white CustomAppBar → shared frozen MoonjoinCommerceHeader
+      // (same green commerce header as Cart + Checkout). Desktop keeps CustomAppBar.
+      appBar: ResponsiveHelper.isDesktop(context) ? CustomAppBar(title: 'parcel_request'.tr) : null,
       endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
-      body: GetBuilder<CheckoutController>(builder: (checkoutController) {
+      body: Column(children: [
+
+        if(!ResponsiveHelper.isDesktop(context)) MoonjoinCommerceHeader(title: 'parcel_request'.tr),
+
+        Expanded(child: GetBuilder<CheckoutController>(builder: (checkoutController) {
         return SafeArea(
+          top: false,
           child: guestCheckoutPermission || _isLoggedIn ? GetBuilder<ParcelController>(builder: (parcelController) {
             double charge = -1;
             double total = 0;
@@ -337,111 +345,53 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
 
                     SizedBox(height: isGuestLoggedIn ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeExtraSmall),
 
-                    (Get.find<SplashController>().configModel!.dmTipsStatus == 1) ? CardWidget(
-                      // color: Theme.of(context).cardColor,
-                      // padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge, horizontal: Dimensions.paddingSizeSmall),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                        Text('delivery_man_tips'.tr, style: robotoMedium),
-                        const SizedBox(height: Dimensions.paddingSizeSmall),
-
-                        SizedBox(
-                          height: (parcelController.selectedTips == AppConstants.tips.length-1) && parcelController.canShowTipsField ? 0 : 66,
-                          child: (parcelController.selectedTips == AppConstants.tips.length-1) && parcelController.canShowTipsField ? const SizedBox() : ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            shrinkWrap: true,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: AppConstants.tips.length,
-                            itemBuilder: (context, index) {
-                              return TipsWidget(
-                                title: AppConstants.tips[index] == '0' ? 'not_now'.tr : (index != AppConstants.tips.length -1)
-                                    ? PriceConverter.convertPrice(double.parse(AppConstants.tips[index].toString()), forDM: true)
-                                    : AppConstants.tips[index].tr,
-                                isSelected: parcelController.selectedTips == index,
-                                isSuggested: index != 0 && AppConstants.tips[index] == parcelController.mostDmTipAmount.toString(),
-                                onTap: () {
-                                  parcelController.updateTips(index);
-                                  if(parcelController.selectedTips != 0 && parcelController.selectedTips != AppConstants.tips.length-1){
-                                    parcelController.addTips(double.parse(AppConstants.tips[index]));
-                                  }
-                                  if(parcelController.selectedTips == AppConstants.tips.length-1){
-                                    parcelController.showTipsField();
-                                  }
-                                  _tipController.text = parcelController.tips.toString();
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(height: (parcelController.selectedTips == AppConstants.tips.length-1) && parcelController.canShowTipsField ? Dimensions.paddingSizeExtraSmall : 0),
-
-                        parcelController.selectedTips == AppConstants.tips.length-1 ? const SizedBox() : ListTile(
-                          onTap: () => parcelController.toggleDmTipSave(),
-                          leading: Checkbox(
-                            visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                            activeColor: Theme.of(context).primaryColor,
-                            value: parcelController.isDmTipSave,
-                            onChanged: (bool? isChecked) => parcelController.toggleDmTipSave(),
-                          ),
-                          title: Text('save_for_later'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
-                          dense: true,
-                          horizontalTitleGap: 0,
-                        ),
-                        SizedBox(height: parcelController.selectedTips == AppConstants.tips.length-1 ? Dimensions.paddingSizeDefault : 0),
-
-                        parcelController.selectedTips == AppConstants.tips.length-1 ? Row(children: [
-                          Expanded(
-                            child: CustomTextField(
-                              titleText: 'enter_amount'.tr,
-                              controller: _tipController,
-                              inputAction: TextInputAction.done,
-                              inputType: TextInputType.number,
-                              onSubmit: (value) {
-                                if(value.isNotEmpty){
-                                  if(double.parse(value) >= 0) {
-                                    parcelController.addTips(double.parse(value));
-                                  }else {
-                                    showCustomSnackBar('tips_can_not_be_negative'.tr);
-                                  }
-                                }else{
-                                  parcelController.addTips(0.0);
-                                }
-                              },
-                              onChanged: (String value) {
-                                if(value.isNotEmpty) {
-                                  if(double.parse(value) >= 0) {
-                                    parcelController.addTips(double.parse(value));
-                                  }else{
-                                    showCustomSnackBar('tips_can_not_be_negative'.tr);
-                                  }
-                                }else{
-                                  parcelController.addTips(0.0);
-                                }
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                          InkWell(
-                            onTap: (){
-                              parcelController.updateTips(0);
-                              parcelController.showTipsField();
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                              ),
-                              padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                              child: const Icon(Icons.clear),
-                            ),
-                          ),
-
-                        ]) : const SizedBox(),
-
-                      ]),
+                    (Get.find<SplashController>().configModel!.dmTipsStatus == 1) ? DeliveryManTips(
+                      // Shared MoonJoin Delivery Man Tips component (same as Checkout).
+                      // Tip amounts come from the dynamic AppConstants.tips
+                      // (DeliveryManTipsConfig → backend/admin config). ParcelController
+                      // wiring stays here; no controller logic changed.
+                      selectedIndex: parcelController.selectedTips,
+                      showCustomField: (parcelController.selectedTips == AppConstants.tips.length - 1) && parcelController.canShowTipsField,
+                      mostTipAmount: parcelController.mostDmTipAmount,
+                      saveForLater: parcelController.isDmTipSave,
+                      customController: _tipController,
+                      onSelectTip: (index) {
+                        parcelController.updateTips(index);
+                        if (parcelController.selectedTips != 0 && parcelController.selectedTips != AppConstants.tips.length - 1) {
+                          parcelController.addTips(double.parse(AppConstants.tips[index]));
+                        }
+                        if (parcelController.selectedTips == AppConstants.tips.length - 1) {
+                          parcelController.showTipsField();
+                        }
+                        _tipController.text = parcelController.tips.toString();
+                      },
+                      onToggleSave: () => parcelController.toggleDmTipSave(),
+                      onCustomChanged: (String value) {
+                        if (value.isNotEmpty) {
+                          if (double.parse(value) >= 0) {
+                            parcelController.addTips(double.parse(value));
+                          } else {
+                            showCustomSnackBar('tips_can_not_be_negative'.tr);
+                          }
+                        } else {
+                          parcelController.addTips(0.0);
+                        }
+                      },
+                      onCustomSubmit: (String value) {
+                        if (value.isNotEmpty) {
+                          if (double.parse(value) >= 0) {
+                            parcelController.addTips(double.parse(value));
+                          } else {
+                            showCustomSnackBar('tips_can_not_be_negative'.tr);
+                          }
+                        } else {
+                          parcelController.addTips(0.0);
+                        }
+                      },
+                      onClearCustom: () {
+                        parcelController.updateTips(0);
+                        parcelController.showTipsField();
+                      },
                     ) : const SizedBox.shrink(),
                     SizedBox(height: (Get.find<SplashController>().configModel!.dmTipsStatus == 1) ? Dimensions.paddingSizeDefault : 0),
 
@@ -588,7 +538,8 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
             setState(() {});
           }),
         );
-      }),
+      })),
+    ]),
     );
   }
 

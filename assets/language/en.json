@@ -113,6 +113,7 @@
   "delivery_option": "Delivery Option",
   "home_delivery": "Home Delivery",
   "take_away": "Take Away",
+  "pick_up": "Pick Up",
   "item_price": "Item Price",
   "vat_tax": "Vat/Tax",
   "subtotal": "Subtotal",

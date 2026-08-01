@@ -25,6 +25,7 @@ import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_commerce_header.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_commerce_action_bar.dart';
 import 'package:sixam_mart/common/widgets/custom_button.dart';
 import 'package:sixam_mart/common/widgets/custom_dropdown.dart';
 import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
@@ -419,38 +420,29 @@ class CheckoutScreenState extends State<CheckoutScreen> {
                 )),
               )),
 
-              ResponsiveHelper.isDesktop(context) ? const SizedBox() : Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.1), blurRadius: 10)],
-                ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeExtraSmall),
-                      child: Row(children: [
-                        Text(
-                          checkoutController.isPartialPay ? 'due_payment'.tr : 'total_amount'.tr,
-                          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
-                        ),
+              ResponsiveHelper.isDesktop(context) ? const SizedBox() : MoonjoinCommerceActionBar(
+                // Total Amount row — reused exactly (same Text widgets/typography).
+                summary: Row(children: [
+                  Text(
+                    checkoutController.isPartialPay ? 'due_payment'.tr : 'total_amount'.tr,
+                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+                  ),
 
-                        (checkoutController.taxIncluded == 1) ? Text(' ${'vat_tax_inc'.tr}', style: robotoMedium.copyWith(
-                          fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor,
-                        )) : const SizedBox(),
+                  (checkoutController.taxIncluded == 1) ? Text(' ${'vat_tax_inc'.tr}', style: robotoMedium.copyWith(
+                    fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).primaryColor,
+                  )) : const SizedBox(),
 
-                        const Expanded(child: SizedBox()),
+                  const Expanded(child: SizedBox()),
 
-                        PriceConverter.convertAnimationPrice(
-                          checkoutController.viewTotalPrice,
-                          textStyle: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
-                        ),
-                      ]),
-                    ),
-
-                    _orderPlaceButton(
-                        checkoutController, todayClosed, tomorrowClosed, orderAmount, deliveryCharge, checkoutController.orderTax!, discount, total, maxCodOrderAmount, isPrescriptionRequired,
-                    ),
-                  ],
+                  PriceConverter.convertAnimationPrice(
+                    checkoutController.viewTotalPrice,
+                    textStyle: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+                  ),
+                ]),
+                // Place Order button — same widget + onPressed; bare so the bar owns the single SafeArea.
+                action: _orderPlaceButton(
+                    checkoutController, todayClosed, tomorrowClosed, orderAmount, deliveryCharge, checkoutController.orderTax!, discount, total, maxCodOrderAmount, isPrescriptionRequired,
+                    bare: true,
                 ),
               ),
 
@@ -467,13 +459,8 @@ class CheckoutScreenState extends State<CheckoutScreen> {
 
 
   Widget _orderPlaceButton(CheckoutController checkoutController, bool todayClosed, bool tomorrowClosed,
-      double orderAmount, double? deliveryCharge, double tax, double? discount, double total, double? maxCodOrderAmount, bool isPrescriptionRequired) {
-    return Container(
-      width: Dimensions.webMaxWidth,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeLarge),
-      child: SafeArea(
-        child: CustomButton(
+      double orderAmount, double? deliveryCharge, double tax, double? discount, double total, double? maxCodOrderAmount, bool isPrescriptionRequired, {bool bare = false}) {
+    final Widget placeOrderButton = CustomButton(
           isLoading: checkoutController.isLoading,
           buttonText: 'place_order'.tr,
           onPressed: checkoutController.acceptTerms ? () async {
@@ -678,8 +665,17 @@ class CheckoutScreenState extends State<CheckoutScreen> {
               );
             }
           }
-        } : null),
-      ),
+        } : null);
+    // Desktop keeps the original wrapper (Container + SafeArea). Mobile passes
+    // bare:true so the shared MoonjoinCommerceActionBar hosts the button (single
+    // SafeArea + premium container). The button widget and its onPressed logic are
+    // byte-identical in both paths.
+    if (bare) return placeOrderButton;
+    return Container(
+      width: Dimensions.webMaxWidth,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeLarge),
+      child: SafeArea(child: placeOrderButton),
     );
   }
 

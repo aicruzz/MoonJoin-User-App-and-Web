@@ -55,6 +55,10 @@ prices/ratings are pre-formatted strings. Import the barrel `moonjoin/moonjoin_c
 | `VariationSelector` | `variation_selector.dart` | Chip toggles for grocery variations (Size/Type) |
 | `OptionGroupSelector` (`OptionItem`) | `option_group_selector.dart` | Food radio-card / checkbox-card option groups with Required/Optional tag |
 | `BottomActionBar` | `bottom_action_bar.dart` | Pinned footer surface (card bg, top shadow, safe area) |
+| `MoonjoinCommerceActionBar` | `moonjoin/moonjoin_commerce_action_bar.dart` | **Official MoonJoin Commerce Bottom Action Container** — summary line + primary action; composes `BottomActionBar` (single safe-area, no duplicate chrome). Reuse across Checkout/Parcel/Wallet/Booking/Subscription |
+| `MoonjoinCommerceHeader` | `moonjoin/moonjoin_commerce_header.dart` | Shared flat green commerce header (Cart + Checkout) — back + title + optional subtitle/trailing |
+| `DeliveryManTips` | `moonjoin/delivery_man_tips.dart` | **Single MoonJoin Delivery Man Tips UI** (Checkout + Parcel Request) — dynamic tip options + Not Now + custom + save-for-later; presentation only, controller wired via callbacks |
+| `DeliveryManTipsConfig` | `helper/delivery_man_tips_config.dart` | Tip resolver — Zone → Global (`dm_default_tips`) → temporary fallback [100,200,300,400]; feeds `AppConstants.tips` (now a dynamic getter) |
 | `MoonjoinEmptyState` | `empty_state_widget.dart` | Empty-state placeholder + optional action |
 | `MoonjoinErrorState` | `error_state_widget.dart` | Error/no-connection state + retry |
 | `SkeletonBox` / `MoonjoinSkeleton` / `SkeletonListLoader` | `loading_skeleton.dart` | Shimmer skeleton primitives + ready-made list loader (uses `shimmer_animation`) |

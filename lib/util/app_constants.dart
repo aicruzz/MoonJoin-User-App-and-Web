@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:sixam_mart/common/models/choose_us_model.dart';
 import 'package:sixam_mart/features/language/domain/models/language_model.dart';
+import 'package:sixam_mart/helper/delivery_man_tips_config.dart';
 import 'package:sixam_mart/util/images.dart';
 
 class AppConstants {
@@ -263,8 +264,14 @@ class AppConstants {
     'you_made_your_earning'.tr,
   ];
 
-  /// Delivery Tips
-  static List<String> tips = ['0' ,'15', '10', '20', '40', 'custom'];
+  /// Delivery Man tip options — now DYNAMIC (MoonJoin backend/admin-owned config).
+  /// Delegates to [DeliveryManTipsConfig] (zone → global `dm_default_tips` →
+  /// temporary migration fallback [100,200,300,400]). Compatibility shim: tip
+  /// amounts no longer live here (the old hardcoded ['0','15','10','20','40',
+  /// 'custom'] is removed); the shape stays ['0', ...amounts, 'custom'] so the tip
+  /// controllers' index contract (custom == last) is unchanged. Do NOT re-hardcode
+  /// tip amounts here — they come from backend/admin configuration.
+  static List<String> get tips => DeliveryManTipsConfig.options();
   static List<String> deliveryInstructionList = [
     'deliver_to_front_door',
     'deliver_the_reception_desk',

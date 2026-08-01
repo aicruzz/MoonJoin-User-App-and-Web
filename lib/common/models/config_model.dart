@@ -47,6 +47,11 @@ class ConfigModel {
   int? minimumPointToTransfer;
   int? customerWalletStatus;
   int? dmTipsStatus;
+  /// Global default Delivery Man tip amounts (ordered). Backend dependency — sent
+  /// as `dm_default_tips` once MoonJoin Admin "Delivery Tip Settings" ships; null
+  /// until then (Flutter falls back to the temporary migration defaults). Zone-level
+  /// overrides are a further backend dependency (see DeliveryManTipsConfig).
+  List<int>? dmDefaultTips;
   int? refEarningStatus;
   double? refEarningExchangeRate;
   List<SocialLogin>? socialLogin;
@@ -143,6 +148,7 @@ class ConfigModel {
     this.minimumPointToTransfer,
     this.customerWalletStatus,
     this.dmTipsStatus,
+    this.dmDefaultTips,
     this.refEarningStatus,
     this.refEarningExchangeRate,
     this.socialLogin,
@@ -248,6 +254,9 @@ class ConfigModel {
     minimumPointToTransfer = json['loyalty_point_minimum_point'];
     customerWalletStatus = json['customer_wallet_status'];
     dmTipsStatus = json['dm_tips_status'];
+    dmDefaultTips = json['dm_default_tips'] != null
+        ? List<int>.from((json['dm_default_tips'] as List).map((e) => int.tryParse('$e') ?? 0).where((e) => e > 0))
+        : null;
     refEarningStatus = json['ref_earning_status'];
     refundActiveStatus = json['refund_active_status'];
     refEarningExchangeRate = json['ref_earning_exchange_rate']?.toDouble();
@@ -374,6 +383,7 @@ class ConfigModel {
     data['loyalty_point_minimum_point'] = minimumPointToTransfer;
     data['customer_wallet_status'] = customerWalletStatus;
     data['dm_tips_status'] = dmTipsStatus;
+    data['dm_default_tips'] = dmDefaultTips;
     data['ref_earning_status'] = refEarningStatus;
     data['ref_earning_exchange_rate'] = refEarningExchangeRate;
     data['refund_active_status'] = refundActiveStatus;

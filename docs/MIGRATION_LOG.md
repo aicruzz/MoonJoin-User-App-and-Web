@@ -3327,3 +3327,29 @@ pickers, zone/module/business dropdowns, address + map, language tabs, business-
 **Verification:** `flutter analyze` (file) → **No issues found!** Release build ✓ (88.5MB AOT) installed + launched on the
 owner's physical iPhone. **Runtime verified & owner-approved:** header + back, step navigation + back-dialog, image
 pickers, dropdowns/map/address, submit — no regression. **FROZEN.**
+
+## Checkout — Commerce Header + Commerce Bottom Action Container + "Pick Up" — STATUS: FROZEN (2026-08-01)
+**Files:** `lib/features/checkout/screens/checkout_screen.dart`, `lib/features/checkout/widgets/top_section.dart`,
+`assets/language/{en,bn,ar,es}.json`. **New shared component:** `lib/common/widgets/moonjoin/moonjoin_commerce_action_bar.dart`
+(`MoonjoinCommerceActionBar`). Reuses `MoonjoinCommerceHeader` + `BottomActionBar`. **Supersedes the earlier partial
+Checkout freeze** (the Bottom Checkout Container was redesigned after it).
+**What changed (presentation only):**
+(1) **Commerce header** — mobile legacy white `CustomAppBar` → shared frozen `MoonjoinCommerceHeader` (same header as Your Cart); desktop keeps `CustomAppBar`.
+(2) **Delivery wording** — "Take Away" → **"Pick Up"** (display `title` only; backend `value:'take_away'` orderType unchanged). New `pick_up` i18n key (en="Pick Up"; bn/ar/es reuse existing take-away wording). Home filter + "Home Delivery" untouched.
+(3) **Bottom Checkout Container redesign** — legacy flat white rectangle → **`MoonjoinCommerceActionBar`** (the official MoonJoin Commerce Bottom Action Container): premium rounded-top elevated surface, soft upward shadow, intentional spacing rhythm, single safe-area (composes the frozen `BottomActionBar` — no duplicated chrome). **Total row reused exactly** (same Text/typography/animated price). **Place Order button reused exactly** — same widget + `onPressed`; a `bare` flag only branches the return wrapper (mobile → the bar owns the single SafeArea; desktop `_orderPlaceButton` byte-identical).
+**Root-cause note (why the redesign, not padding):** a measured widget-test probe proved the old container's height was the genuine sum of Total row (33) + gap (10) + button (50) + a SINGLE iOS SafeArea (34) + padding (10) = 137px, with NO duplicated inset anywhere in the parent tree (Scaffold→…→container fully traced). So the container was technically correct; the owner chose a premium redesign over reducing the required safe-area.
+**Preserved (unchanged):** `CheckoutController`/`CouponController`/`AddressController`, total calculation, `placeOrder`/`placePrescriptionOrder`, the full Place Order validation chain, payment selection + `PaymentMethodBottomSheet`, delivery type/address/preference-time/promo/tips/notes, `TopSection`/`BottomSection`, routes, models, guest flow, desktop `webView`. No controller/API/route/model/business-logic change.
+**Verification:** `flutter analyze` → zero new issues (only a pre-existing baseline lint). Release build ✓ (88.5MB AOT) installed + launched on the owner's physical iPhone. **Runtime verified & owner-approved.** **FROZEN.**
+
+## Delivery Man Tip System — Phase 2 (dynamic config + shared component) — STATUS: FROZEN (2026-08-01)
+**Files:** NEW `lib/common/widgets/moonjoin/delivery_man_tips.dart` (shared UI), NEW `lib/helper/delivery_man_tips_config.dart` (resolver),
+`lib/util/app_constants.dart` (`tips` → dynamic getter), `lib/common/models/config_model.dart` (`dmDefaultTips` / `dm_default_tips` seam),
+`lib/features/checkout/widgets/deliveryman_tips_section.dart` (wiring), `lib/features/parcel/screens/parcel_request_screen.dart` (wiring).
+**What changed:** Delivery Man Tips moved from **Flutter-hardcoded values to configuration-driven architecture**; Flutter is now a pure consumer.
+- **Resolver priority: Zone → Global (`dm_default_tips`) → Temporary fallback.** `DeliveryManTipsConfig.options()` = `['0', ...amounts, 'custom']`; `AppConstants.tips` is now a getter delegating to it (old hardcoded list removed) → controllers' index contract (custom == last) unchanged, **zero controller edits**.
+- **Temporary migration fallback `[100,200,300,400]`** — documented as TEMPORARY until backend tip config ships; must be removed once `dm_default_tips`/zone tips land. Checkout + Parcel now show ₦100/₦200/₦300/₦400.
+- **Shared `DeliveryManTips` component** — single MoonJoin tip UI for Checkout + Parcel Request (no duplicate tip UI logic); presentation only, each screen wires its own controller via callbacks. Keeps Not Now + custom + save-for-later + `most-tips` "Suggested" badge. Parcel tip card visually unified to the Checkout MoonJoin design.
+- **Currency:** follows Business Settings via `PriceConverter` today (no hardcoded symbol); future-ready for zone currency + zone tips + backend/admin config.
+**Backend/Admin dependency (future MoonJoin World/Admin — NOT built in Flutter):** Admin → Delivery Tip Settings, default tip config, zone-level tip config, zone currency selection. Backend → `dm_default_tips`, zone `dm_tips`, zone currency resolution.
+**Preserved / unchanged (confirmed):** order creation, parcel creation, payment flow, delivery assignment, **`dm_tips` API payload**, validation, `CheckoutController`/`ParcelController`, routes. Presentation + configuration architecture only.
+**Verification:** `flutter analyze` → zero new issues (baseline unchanged). Release build ✓ (88.5MB AOT) installed + launched on the owner's physical iPhone. **Runtime verified (Checkout + Parcel Request) · Owner approved · FROZEN.** No additional UI changes after freeze without a new migration decision.

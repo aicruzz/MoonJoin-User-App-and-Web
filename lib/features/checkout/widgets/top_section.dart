@@ -223,7 +223,7 @@ class TopSection extends StatelessWidget {
                   )),
                   if(deliveryEnabled && takeawayEnabled) const SizedBox(width: Dimensions.paddingSizeDefault),
                   if(takeawayEnabled) Expanded(child: DeliveryOptionButtonWidget(
-                    value: 'take_away', title: 'take_away'.tr, charge: deliveryCharge, isFree: true, fromWeb: true, total: total,
+                    value: 'take_away', title: 'pick_up'.tr, charge: deliveryCharge, isFree: true, fromWeb: true, total: total,
                     deliveryChargeForView: deliveryChargeForView, badWeatherCharge: badWeatherCharge, extraChargeForToolTip: extraChargeForToolTip,
                   )),
                 ]));
