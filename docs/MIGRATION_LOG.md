@@ -3411,3 +3411,57 @@ Financial/security states must feel calm & trustworthy.
 **Verification:** `flutter analyze` (motion + popup) → **No issues found!** Release build ✓ (88.6MB AOT) installed + launched on the
 owner's physical iPhone. **Runtime verified & owner-approved. FROZEN.** Future status surfaces (Trip/Parcel/Payment/Wallet/…)
 reuse `MoonJoinStatusAnimation` only — one at a time, each its own freeze; legacy GIFs retained until proven unreferenced (Legacy Cleanup phase).
+
+## MoonJoin In-App Notification Banner (`MoonJoinNotificationBanner`) — STATUS: FROZEN (2026-08-02)
+**Files:** NEW `lib/common/widgets/moonjoin/notifications/moonjoin_notification_banner.dart`; MODIFIED (foreground display only)
+`lib/helper/notification_helper.dart`.
+**What this is:** THE official notification presentation layer for the MoonJoin platform — a premium in-app foreground banner
+(Apple/Stripe-calm) shown via a native OverlayEntry (no new dependency). `MoonJoinNotificationBanner.show(MoonJoinNotificationData{
+title, message, state, onTap, unavailable, autoDismiss})`. **Reuses the frozen MoonJoin Motion System** (`MoonJoinStatusAnimation`
+moon icon per `MoonJoinMotionState`) + approved MoonJoin colours/typography. Slide-down+fade entrance, tap→route+dismiss, swipe-up
+dismiss, close ✕, ~5s auto-dismiss, one at a time. **THE ONLY in-app notification component — no duplicates ever.** All future
+notification types reuse it: Orders · Trips · Parcel · Wallet · Payment · KYC · Rewards · Promotions · Unavailable Items.
+**Unavailable-ready:** `unavailable:true` → approved Home unavailable palette (warm #FBF3E2 + amber #C98B3E + red #E84D4F) + the
+`unavailable` moon (reused, not reinvented).
+**notification_helper wiring (foreground only):** mobile-foreground order/status FCM → `MoonJoinNotificationBanner.show`, state via
+frozen `MoonJoinMotion.forOrderStatus` (+ trip/wallet/reward/unavailable). **Preserved:** all FCM handlers, OS `showNotification`
+(system/background/tray), `onMessageOpenedApp` deep links, order refresh, chat/demo, all routing; web keeps its dialog.
+**Protected:** no frozen system touched (only reuses `MoonJoinStatusAnimation`); frozen `MoonJoinNotifications` façade + `RunningOrderViewWidget` untouched.
+**Verification:** `flutter analyze` (banner + helper) → **No issues found!** Release build ✓ (88.6MB AOT) installed + launched on the
+owner's physical iPhone. **Runtime verified & owner-approved ("works perfectly"). FROZEN.**
+
+## Phase 3 — Unavailable Order Notification (resolver + watcher + refined banner) — STATUS: FROZEN (2026-08-02) · PRODUCTION APPROVED
+**Files:** NEW `lib/common/widgets/moonjoin/moonjoin_presentation_state.dart` (shared resolver), NEW
+`lib/common/widgets/moonjoin/notifications/moonjoin_unavailable_watcher.dart` (state-reactive presenter); MODIFIED
+`.../notifications/moonjoin_notification_banner.dart` (unavailable refinement), `.../motion/moonjoin_motion.dart` +
+`.../motion/moonjoin_motion_painters.dart` (additive `MoonAmbient.sweep`), `features/dashboard/screens/dashboard_screen.dart`
+(watcher mount), `features/dashboard/widgets/running_order_view_widget.dart` (resolver adoption), `helper/notification_helper.dart`
+(resolver + priority guard).
+**What this is:** the unavailable-items order state elevated into the MoonJoin notification language as an **action-required,
+persistent** notification — reusing every frozen foundation, adding no business logic.
+**Single source of truth:** `MoonJoinPresentationState.fromOrder(order)` → `{motion, unavailable}` is THE only place the "unavailable
+overrides pending" rule lives (Home `_UnavailableItemsCard` rule reused exactly: `orderStatus=='pending' && unavailableItemNote
+non-empty`). Consumed by the Running Order popup, the watcher, and `notification_helper`. **Rule never duplicated again.**
+**Watcher behaviour (permanent):** zero-layout `GetBuilder<OrderController>` mounted first in the dashboard `ExpandableBottomSheet`
+background. (1) transient `null` model ignored (no tear-down); (2) one session per order via `_activeOrderId` (survives refreshes,
+no flicker); (3) persistent (`autoDismiss:null`) until the customer resolves; (4) dismissal never clears business state; (5) higher
+priority than normal status — `notification_helper` suppresses the normal banner while `isUnavailableActive`.
+**Refinement (visual/motion only):** warm-in arrival (bg `cardColor→#FBF3E2` over 400ms then stable) · breathing on ONE element
+(moon container, ~3s, ~6%) · periodic `sweep` Arc-Light over a short rim segment then quiets (never a loop) · warmer circular moon
+container at the same 46dp footprint · solid 5dp amber leading strip · title amber `#B5772A`, body neutral gray. **Normal banner
+unchanged** (all gated behind `data.unavailable`).
+**Investigation history:** three earlier blind attempts failed (no FCM for a client-derived state; a limit-10 `getRunningOrders(1)`
+overwrote the dashboard limit-50 model tearing the banner mid-animation; the banner selected state from `orderStatus` alone showing
+"Pending"). Device-log instrumentation (`[MJUW]`/`[MJNB]`, since fully removed) proved the render was fine but torn down by
+transient-null churn. Fixes: state-reactive watcher + shared resolver + priority guard.
+**Out of scope (separate future task):** Firebase/iOS background reception, permissions, token, AppDelegate — NOT modified.
+**Protected:** all business logic, `OrderController`/cart/checkout, `unavailableItemNote` parsing, FCM handlers, `showNotification`,
+deep links, routing, order refresh, Home `_UnavailableItemsCard`, `order_edit_screen`, the `MoonJoinNotifications` façade, and the
+Motion System's 14 states (only additive `sweep`).
+**Verification:** `flutter analyze` → **ZERO issues in all Phase 3 files** (full-repo residual = pre-existing, unrelated). Release
+build ✓ (88.6MB AOT) installed + launched on the owner's physical iPhone. **Owner approved ("looks and behaves exactly as
+intended"). FROZEN · PRODUCTION APPROVED.**
+**Rule:** future work may EXTEND the notification system (new event types / `MoonJoinMotionState`s) but must NEVER replace or redesign
+this resolver/watcher/banner foundation without explicit architectural approval. **Banned:** duplicating the unavailable rule;
+deciding unavailable inside `notification_helper`/banner; dismissal clearing business state; auto-dismissing the unavailable banner;
+any loop/spinner/alarm styling.

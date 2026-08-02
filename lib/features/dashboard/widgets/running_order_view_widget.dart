@@ -7,6 +7,7 @@ import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_motion.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_status_animation.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_presentation_state.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/features/order/screens/order_details_screen.dart';
 
@@ -51,6 +52,9 @@ class RunningOrderViewWidget extends StatelessWidget {
               bool isFirstOrder =  index == 0;
 
               String? orderStatus = reversOrder[index].orderStatus;
+              // Effective customer-facing state via the single shared resolver —
+              // unavailable overrides 'pending' (same rule as the Home card + banner).
+              final MoonJoinPresentationState ps = MoonJoinPresentationState.fromOrder(reversOrder[index]);
               int status = 0;
 
               if(orderStatus == AppConstants.pending){
@@ -85,7 +89,7 @@ class RunningOrderViewWidget extends StatelessWidget {
                       // status animation (replaces the legacy 6amMart status GIFs).
                       // Centralized backend-status → motion-state mapping; themeable.
                       MoonJoinStatusAnimation(
-                        state: MoonJoinMotion.forOrderStatus(orderStatus),
+                        state: ps.motion,
                         size: 56,
                       ),
 
@@ -94,11 +98,14 @@ class RunningOrderViewWidget extends StatelessWidget {
                       Expanded(
                         child: Column(mainAxisAlignment: isFirstOrder ? MainAxisAlignment.center : MainAxisAlignment.start,
                             crossAxisAlignment: isFirstOrder ? CrossAxisAlignment.center : CrossAxisAlignment.start, children: [
-                              Row( mainAxisAlignment: isFirstOrder ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
+                              ps.unavailable
+                                ? Text('some_items_are_unavailable'.tr, textAlign: TextAlign.center,
+                                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: MoonJoinMotionPalette.amberToken))
+                                : Row( mainAxisAlignment: isFirstOrder ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
 
-                                Text('${'your_order_is'.tr} ', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
-                                Text(reversOrder[index].orderStatus!.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor)),
-                              ]) ,
+                                    Text('${'your_order_is'.tr} ', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                                    Text(reversOrder[index].orderStatus!.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: Theme.of(context).primaryColor)),
+                                  ]) ,
                               const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                               Text(

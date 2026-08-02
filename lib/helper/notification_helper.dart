@@ -21,6 +21,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:sixam_mart/features/dashboard/screens/dashboard_screen.dart';
 import 'package:sixam_mart/features/notification/widgets/notifiation_popup_dialog_widget.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_motion.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_presentation_state.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/notifications/moonjoin_notification_banner.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/notifications/moonjoin_unavailable_watcher.dart';
+import 'package:sixam_mart/features/order/domain/models/order_model.dart';
 
 class NotificationHelper {
 
@@ -103,7 +108,8 @@ class NotificationHelper {
         NotificationHelper.showNotification(message, flutterLocalNotificationsPlugin);
         if(AuthHelper.isLoggedIn()) {
           if(message.data['type'] != 'trip_status') {
-            Get.find<OrderController>().getRunningOrders(1);
+            // Keep the dashboard's limit-50 model consistent (never a limit-10 overwrite).
+            Get.find<OrderController>().getRunningOrders(1, fromDashboard: true);
             Get.find<OrderController>().getHistoryOrders(1);
           }
 
@@ -143,6 +149,45 @@ class NotificationHelper {
         showDialog(context: Get.context!, builder: (context) => Center(
           child: NotificationPopUpDialogWidget(payload),
         ));
+      } else {
+        // MoonJoin premium in-app foreground notification — normal order/status
+        // events (reuses the frozen MoonJoin Motion System). The OS system
+        // notification (showNotification, above) still serves background/tray.
+        // The UNAVAILABLE state is NOT decided here — it is a state-reactive
+        // presentation driven by MoonJoinUnavailableWatcher off the same
+        // OrderController data the Home card uses (single source of truth).
+        final String nType = '${message.data['type']}';
+        if(nType != 'message' && nType != 'demo_reset') {
+          final String orderIdStr = '${message.data['order_id']}';
+          final bool hasOrder = orderIdStr.isNotEmpty && orderIdStr != 'null' && int.tryParse(orderIdStr) != null;
+
+          // Effective customer-facing state via the SINGLE shared resolver: an order
+          // carrying an unavailableItemNote is "Unavailable" even while orderStatus is
+          // 'pending'. Unavailable is action-required and OVERRIDES normal status —
+          // the persistent unavailable banner (MoonJoinUnavailableWatcher) owns that
+          // presentation, so we never show Pending/Confirmed/etc. for it.
+          final OrderModel? order = hasOrder ? _findRunningOrder(int.parse(orderIdStr)) : null;
+          final bool orderUnavailable = order != null && MoonJoinPresentationState.fromOrder(order).unavailable;
+
+          if(!orderUnavailable && !MoonJoinUnavailableWatcher.isUnavailableActive) {
+            MoonJoinNotificationBanner.show(MoonJoinNotificationData(
+              title: '${message.data['title']}',
+              message: '${message.data['body']}',
+              state: order != null ? MoonJoinPresentationState.fromOrder(order).motion : _bannerState(nType, message.data['status']),
+              onTap: () {
+                if(hasOrder) {
+                  if(nType == 'trip_status') {
+                    Get.to(() => TaxiOrderDetailsScreen(tripId: int.parse(orderIdStr)));
+                  } else {
+                    Get.toNamed(RouteHelper.getOrderDetailsRoute(int.parse(orderIdStr), fromNotification: true));
+                  }
+                } else {
+                  Get.toNamed(RouteHelper.getNotificationRoute(fromNotification: true));
+                }
+              },
+            ));
+          }
+        }
       }
     });
 
@@ -172,6 +217,25 @@ class NotificationHelper {
         }
       }catch (_) {}
     });
+  }
+
+  /// Maps an FCM payload (type + status) to a frozen MoonJoin motion state for the
+  /// in-app banner. Order/general statuses go through the frozen
+  /// `MoonJoinMotion.forOrderStatus`; extend here as new event types are added.
+  static MoonJoinMotionState _bannerState(String type, String? status) {
+    if(type == 'trip_status') return status == 'completed' ? MoonJoinMotionState.delivered : MoonJoinMotionState.onTheWay;
+    if(type == 'add_fund' || type == 'referral_earn' || type == 'cashback') return MoonJoinMotionState.walletSuccess;
+    if(type == 'loyalty_point') return MoonJoinMotionState.reward;
+    return MoonJoinMotion.forOrderStatus(status);
+  }
+
+  /// Read-only lookup of a running order (never re-fetches / overwrites the model),
+  /// so the banner can resolve the effective state via `MoonJoinPresentationState`.
+  static OrderModel? _findRunningOrder(int id) {
+    final List<OrderModel>? orders = Get.find<OrderController>().runningOrderModel?.orders;
+    if(orders == null) return null;
+    for(final OrderModel o in orders) { if(o.id == id) return o; }
+    return null;
   }
 
   static Future<void> showNotification(RemoteMessage message, FlutterLocalNotificationsPlugin fln) async {

@@ -13,6 +13,7 @@ import 'package:sixam_mart/features/order/domain/models/order_model.dart';
 import 'package:sixam_mart/features/address/screens/address_screen.dart';
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart/features/dashboard/widgets/bottom_nav_item_widget.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/notifications/moonjoin_unavailable_watcher.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/rental_module/rental_favourite/screens/vehicle_favourite_screen.dart';
 import 'package:sixam_mart/helper/auth_helper.dart';
@@ -190,6 +191,10 @@ class DashboardScreenState extends State<DashboardScreen> {
                   key: _scaffoldKey,
                   body: ExpandableBottomSheet(
                     background: Stack(children: [
+                      // Invisible: state-reactive MoonJoin unavailable notification —
+                      // presents the frozen banner off the SAME OrderController data as
+                      // the Home unavailable card (single source of truth). Zero layout.
+                      const MoonJoinUnavailableWatcher(),
                       PageView.builder(
                           controller: _pageController,
                           itemCount: _screens.length,

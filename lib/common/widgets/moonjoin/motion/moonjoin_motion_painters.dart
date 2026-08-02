@@ -99,6 +99,21 @@ class MoonJoinMoonPainter extends CustomPainter {
         _arcLight(c, rimEnd, s, alpha: (1 - k).clamp(0.0, 1.0));
       }
     }
+
+    // Subtle periodic Arc-Light "reminder" sweep (action-required states only):
+    // once the reveal has settled, a faint light traces a short rim segment then
+    // quiets — never a loop, never a spinner. Occupies ~40% of the ambient cycle.
+    if (spec.ambient == MoonAmbient.sweep && reveal >= 1.0) {
+      const double window = 0.4;
+      if (ambient < window) {
+        final double sk = ambient / window;
+        final double a = _rimStart + _rimSpan * 0.5 * sk; // short segment
+        final double glow = math.sin(sk * math.pi) * 0.55; // gentle fade in/out
+        if (glow > 0.02) {
+          _arcLight(c, Offset(cx + math.cos(a) * r, cy + math.sin(a) * r), s, alpha: glow);
+        }
+      }
+    }
     c.restore();
   }
 

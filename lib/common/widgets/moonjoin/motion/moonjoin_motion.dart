@@ -30,7 +30,9 @@ enum MoonJoinMotionTone { brand, neutral, negative }
 enum MoonNode { rim, terminator, center, tip, below, off, none }
 
 /// The single allowed ongoing motion, for genuinely-active states only.
-enum MoonAmbient { none, forming, drift }
+/// `sweep` = a very subtle periodic Arc-Light travel over a short rim segment, used
+/// by the action-required `unavailable` state to quietly remind (never a loop/spinner).
+enum MoonAmbient { none, forming, drift, sweep }
 
 /// The full visual spec for a state — the "how the moon is drawn" struct. Mirrors
 /// the approved MoonJoin visual reference exactly.
@@ -92,7 +94,7 @@ class MoonJoinMotion {
       // ── Extended states ─────────────────────────────────────────────────────
       case MoonJoinMotionState.unavailable:
       case MoonJoinMotionState.attention:
-        return const MoonJoinMoonSpec(p: 0.9, eclipse: true, badge: true);
+        return const MoonJoinMoonSpec(p: 0.9, eclipse: true, badge: true, ambient: MoonAmbient.sweep);
       case MoonJoinMotionState.cancelled:
         return const MoonJoinMoonSpec(p: 0.22, tone: MoonJoinMotionTone.neutral, node: MoonNode.below);
       case MoonJoinMotionState.failed:
