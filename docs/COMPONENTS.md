@@ -59,6 +59,9 @@ prices/ratings are pre-formatted strings. Import the barrel `moonjoin/moonjoin_c
 | `MoonjoinCommerceHeader` | `moonjoin/moonjoin_commerce_header.dart` | Shared flat green commerce header (Cart + Checkout) — back + title + optional subtitle/trailing |
 | `DeliveryManTips` | `moonjoin/delivery_man_tips.dart` | **Single MoonJoin Delivery Man Tips UI** (Checkout + Parcel Request) — dynamic tip options + Not Now + custom + save-for-later; presentation only, controller wired via callbacks |
 | `DeliveryManTipsConfig` | `helper/delivery_man_tips_config.dart` | Tip resolver — Zone → Global (`dm_default_tips`) → temporary fallback [100,200,300,400]; feeds `AppConstants.tips` (now a dynamic getter) |
+| `MoonJoinStatusAnimation` | `moonjoin/motion/moonjoin_status_animation.dart` | **THE MoonJoin status motion** — `MoonJoinStatusAnimation({state, size, play})`. The Moon + Node + Arc-Light system; single renderer for every animated status (order/trip/parcel/payment/wallet/verification/reward). No spinners, no GIF, no Lottie |
+| `MoonJoinMotion` / `MoonJoinMoonSpec` / `MoonJoinMotionPalette` | `moonjoin/motion/moonjoin_motion.dart` | Motion model: 20 states → moon spec (phase/tone/node/accents), `forOrderStatus()` mapping, theme palette (moonlight + approved unavailable amber/red) |
+| `MoonJoinMoonPainter` | `moonjoin/motion/moonjoin_motion_painters.dart` | Flutter-native moon renderer + Arc-Light choreography (Node→trace rim→resolve→settle). Internal to the widget |
 | `MoonjoinEmptyState` | `empty_state_widget.dart` | Empty-state placeholder + optional action |
 | `MoonjoinErrorState` | `error_state_widget.dart` | Error/no-connection state + retry |
 | `SkeletonBox` / `MoonjoinSkeleton` / `SkeletonListLoader` | `loading_skeleton.dart` | Shimmer skeleton primitives + ready-made list loader (uses `shimmer_animation`) |

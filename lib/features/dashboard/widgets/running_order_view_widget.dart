@@ -5,7 +5,8 @@ import 'package:sixam_mart/features/order/domain/models/order_model.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_motion.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_status_animation.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/features/order/screens/order_details_screen.dart';
 
@@ -20,21 +21,22 @@ class RunningOrderViewWidget extends StatelessWidget {
       return Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius : const BorderRadius.only(
-            topLeft: Radius.circular(Dimensions.paddingSizeExtraLarge),
-            topRight : Radius.circular(Dimensions.paddingSizeExtraLarge),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(28),
+            topRight: Radius.circular(28),
           ),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+          // Premium MoonJoin soft upward shadow (replaces the flat black12).
+          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, -6))],
         ),
         child: Column(children: [
 
            Center(
             child: Container(
-              margin: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
-              height: 3, width: 40,
+              margin: const EdgeInsets.only(top: Dimensions.paddingSizeSmall + 2),
+              height: 4, width: 44,
               decoration: BoxDecoration(
-                  color: Theme.of(context).highlightColor,
-                  borderRadius: BorderRadius.circular(Dimensions.paddingSizeExtraSmall)
+                  color: Theme.of(context).disabledColor.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
               ),
             ),
            ),
@@ -79,17 +81,12 @@ class RunningOrderViewWidget extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                     child: Row( crossAxisAlignment: CrossAxisAlignment.center, children: [
 
-                      Center(
-                        child: SizedBox(
-                          height: orderStatus == AppConstants.pending ? 50 : 60, width: orderStatus == AppConstants.pending ? 50 : 60,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Image.asset( status == 2 ? orderStatus == AppConstants.confirmed || orderStatus == AppConstants.accepted ? Images.confirmedGif
-                                : Images.processingGif : status == 3
-                                ? orderStatus == AppConstants.handover ? Images.handoverGif : Images.onTheWayGif : Images.pendingGif,
-                        height: 60, width: 60, fit: BoxFit.fill),
-                          ),
-                        ),
+                      // MoonJoin Motion Design System — reusable, Flutter-native
+                      // status animation (replaces the legacy 6amMart status GIFs).
+                      // Centralized backend-status → motion-state mapping; themeable.
+                      MoonJoinStatusAnimation(
+                        state: MoonJoinMotion.forOrderStatus(orderStatus),
+                        size: 56,
                       ),
 
                       SizedBox(width: isFirstOrder ? 0 : Dimensions.paddingSizeSmall),
@@ -155,7 +152,12 @@ class RunningOrderViewWidget extends StatelessWidget {
   }
 
   Widget trackView(BuildContext context, {required bool status}) {
-    return Container(height: 5, decoration: BoxDecoration(color: status ? Theme.of(context).primaryColor
-        : Theme.of(context).disabledColor.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(Dimensions.radiusDefault)));
+    return Container(
+      height: 5,
+      decoration: BoxDecoration(
+        color: status ? Theme.of(context).primaryColor : Theme.of(context).primaryColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+      ),
+    );
   }
 }

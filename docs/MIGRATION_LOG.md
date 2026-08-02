@@ -3385,3 +3385,29 @@ physical iPhone. **Runtime verified (Food + Non-food — preloaded edit, Update 
 **File:** `lib/features/parcel/screens/parcel_request_screen.dart`. **Backfilled record** — this owner-approved migration was implemented earlier but not yet written to the freeze docs (they still described the legacy white `CustomAppBar`).
 **What changed (presentation only):** mobile legacy white `CustomAppBar(title:'parcel_request')` → the frozen shared **`MoonjoinCommerceHeader`** (same green commerce header as Cart + Checkout); content moved into `Expanded → SafeArea(top:false)`; back = `Get.back()`. Desktop keeps `CustomAppBar` (gated). Supersedes the header description in the earlier Parcel module freeze.
 **Rule:** Parcel Request = commerce journey → `MoonjoinCommerceHeader` (not `ProfilePageHeader`). **Preserved:** all parcel functionality/logic/APIs/routes/desktop. `flutter analyze` clean; release build deployed to physical iPhone; owner approved. FROZEN.
+
+## MoonJoin Motion & Status Design Language ("The MoonJoin Moon") + Running Order popup — STATUS: FROZEN (2026-08-02)
+**Files:** NEW `lib/common/widgets/moonjoin/motion/{moonjoin_motion.dart, moonjoin_motion_painters.dart, moonjoin_status_animation.dart}`;
+first consumer `lib/features/dashboard/widgets/running_order_view_widget.dart`.
+**What this is:** an official MoonJoin design system (peer of Commerce Header / Action Bar / Cards / Buttons) — the MoonJoin
+**Moon + Node + Arc-Light** status-motion identity. Replaces the 6amMart status GIFs and permanently supersedes an earlier
+rejected rotating/loader animation experiment.
+**Design language (owner-approved via the visual reference artifact):** an order is a moon that *waxes* from new→full as it travels;
+the join is a single point of light (the **Node**) that traces the lit rim and settles. Status = a phase, never a spinner. 14 states
+(Pending→Delivered journey + Unavailable/Cancelled/Failed/Payment Success·Failed/Verification/Reward/Promotion), each a
+configuration of the same moon + node + top-left moonlight + accents. **Arc-Light signature (mandatory):** Node appears → Arc-Light
+travels the rim while the moon waxes to phase → light joins/settles → calm easeOutBack settle → still. Plays ONCE; only Preparing
+(forming breath) + On-the-way (≈4% drift) carry refined ongoing motion. No rotation, no loop, no loader.
+**Architecture:** `MoonJoinMotionState`(20) → `MoonJoinMotion.spec()` = `MoonJoinMoonSpec` (p/tone/tilt/node/ambient/accent flags);
+`forOrderStatus()` centralizes backend mapping; `MoonJoinMotionPalette.of(context)` = moonlight (theme primaryColor) on graphite,
+light/dark aware, + the APPROVED Home unavailable palette (amber #C98B3E, red #E84D4F) reused exactly; `MoonJoinStatusAnimation`
+= the one reusable renderer (RepaintBoundary, one-shot reveal controller + optional slow ambient). Labels stay PLAIN/functional
+("Order Preparing", "Payment Failed") — poetic phase names are internal only.
+**Running Order popup (presentation only):** status GIFs → `MoonJoinStatusAnimation`; premium rounded card + soft upward shadow;
+refined handle + green progress track. **Preserved:** OrderController, backend status handling, popup behaviour + auto-dismiss,
+navigation, progress step logic, +N more, order data. No business logic changed.
+**Permanent bans:** no spinners, rotating loaders, generic Material status icons, GIF replacements, childish/attention-seeking motion.
+Financial/security states must feel calm & trustworthy.
+**Verification:** `flutter analyze` (motion + popup) → **No issues found!** Release build ✓ (88.6MB AOT) installed + launched on the
+owner's physical iPhone. **Runtime verified & owner-approved. FROZEN.** Future status surfaces (Trip/Parcel/Payment/Wallet/…)
+reuse `MoonJoinStatusAnimation` only — one at a time, each its own freeze; legacy GIFs retained until proven unreferenced (Legacy Cleanup phase).
