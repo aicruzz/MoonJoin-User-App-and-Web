@@ -163,6 +163,11 @@ redesign request.
 - **Verification:** `flutter analyze` → clean; release build ✓ on the owner's iPhone; **owner-approved on-device.**
 - **Rule:** reuse the frozen Product Details only; keep `OrderEditController.addCartItem`; never reintroduce `ItemBottomSheet` on mobile; never touch the normal Cart/`CartController`. **Phase 3B (Update Cart) is a SEPARATE, independent task** — not part of this freeze.
 
+### ⛔ Phase 3B — Update Cart — NOT FROZEN · BLOCKED BY BACKEND API CONTRACT (2026-08-04)
+- **Not a freeze — a blocker record.** Edit Unavailable Items → "Update Cart" fails because `/api/v1/customer/order/update` is internally inconsistent: validation requires `cart` as an **array** (422 on a string) while its controller `json_decode`s `cart` (500 on an array, `OrderController.php:845`), diverging from the working Place Order convention (`cart = jsonEncode` string). Device-proven across all edit scenarios.
+- **Frontend is correct and reverted** to the approved checkpoint `73a8e79` (`order_repository.dart:183` `'cart': cart`) — no workaround kept. Full audit + minimal backend fix in `docs/BACKEND_INTEGRATION_QUEUE.md`; blocker logged in MIGRATION_LOG.
+- **Unblock path:** backend aligns the update `cart` validation to the Place Order contract (JSON string) → reapply `'cart': jsonEncode(cart)` → FULL runtime verification (increase/decrease/remove/add/mixed/wallet-deduction/refund/insufficient-balance) → only then document/freeze/commit/push. No frontend workarounds; no duplicate APIs.
+
 ### 🧊 MoonJoin Motion & Status Design Language ("The MoonJoin Moon") + Running Order popup — FROZEN
 - **Files:** `lib/common/widgets/moonjoin/motion/moonjoin_motion.dart` (model + mapping + palette), `lib/common/widgets/moonjoin/motion/moonjoin_motion_painters.dart` (moon renderer + Arc-Light), `lib/common/widgets/moonjoin/motion/moonjoin_status_animation.dart` (the reusable widget). First consumer: `lib/features/dashboard/widgets/running_order_view_widget.dart`.
 - **Status:** **Implemented · Analyzer Verified · Runtime Verified (physical iPhone) · Owner Approved · FROZEN** — **Frozen on:** 2026-08-02. **Official MoonJoin design system** (peer of Commerce Header, Commerce Action Bar, Cards, Buttons). Visual reference (owner-approved): the "MoonJoin Status Icons — Visual Reference" artifact.

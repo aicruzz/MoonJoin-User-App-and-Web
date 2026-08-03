@@ -3574,3 +3574,15 @@ Details reused (no duplicate flow); `OrderEditController.addCartItem` owns the a
 untouched** (separate flow — never route Add-More through the cart).
 **Verification:** `flutter analyze` → clean; release build ✓ installed + launched on the owner's physical iPhone; **owner approved on-device.**
 **Phase 3B (Update Cart) = SEPARATE independent task** — investigation-first, not part of this freeze.
+
+## Phase 3B — Update Cart — STATUS: BLOCKED BY BACKEND API CONTRACT (2026-08-04) · NOT FROZEN
+Investigation-first, device-verified. The Edit Unavailable Items → **Update Cart** fails because the customer
+`/api/v1/customer/order/update` endpoint's contract is **internally inconsistent** and diverges from the working Place Order flow —
+NOT a frontend bug. Evidence (owner's iPhone, all edit scenarios): `cart` array → HTTP **500** `json_decode(): array given`
+(`OrderController.php:845`); `cart` JSON string → HTTP **422** `The cart must be an array.` The endpoint's validation (array) contradicts
+its own controller (`json_decode`, i.e. string) and the production Place Order convention (`cart = jsonEncode(...)` string). **Full
+side-by-side audit + minimal backend fix documented in `docs/BACKEND_INTEGRATION_QUEUE.md` ("Order Update — API contract inconsistent").**
+**Frontend reverted to the approved checkpoint `73a8e79`** (`'cart': cart`) — no workaround kept. **Phase 3B is NOT frozen.** When the
+backend aligns the update `cart` validation to the Place Order contract (JSON string): reapply `'cart': jsonEncode(cart)` and run the FULL
+verification (increase/decrease/remove/add/mixed/wallet-deduction/refund/insufficient-balance) before documenting/freezing/committing.
+No further frontend workarounds; no duplicate APIs; existing architecture only.

@@ -851,3 +851,36 @@ The HTML container (About/Terms/Privacy/Refund/Shipping/Cancellation) renders **
 remaining "6amMart" wording or outdated branding lives in the **backend content**, not the frontend — the
 frontend controls presentation/chrome only. **MoonJoin World** will own future CMS / content management (and
 should ship MoonJoin-branded policy content). No frontend action; do not patch legacy backend content.
+
+## Order Update (customer) — API contract inconsistent vs Place Order — BLOCKS Phase 3B (2026-08-04)
+**Runtime-proven (device logs) blocker for the Edit Unavailable Items → "Update Cart" flow.** The frontend is correct; the
+`/api/v1/customer/order/update` endpoint contradicts both its own controller and the working Place Order endpoint. **No frontend
+encoding can satisfy it** — do not attempt further frontend workarounds.
+
+### Side-by-side comparison
+| Aspect | Place Order (WORKS) | Update Order (BROKEN) |
+|---|---|---|
+| Endpoint | `POST /api/v1/customer/order/place` (`placeOrderUri`) | `PUT /api/v1/customer/order/update/{id}` (`updateOrderUri`) |
+| Transport | `apiClient.postMultipartData(...)` → **multipart/form-data** | `apiClient.putData(...)` → **application/json** |
+| Body type | `Map<String,String>` (`PlaceOrderBodyModel.toJson`) | `Map<String,dynamic>` (`{cart, order_note}`) |
+| `cart` encoding (frontend) | **JSON STRING**: `data['cart'] = jsonEncode(_cart.map(toJson).toList())` (`place_order_body_model.dart:213`) | raw **ARRAY**: `'cart': cart` (`order_repository.dart:183`) |
+| Backend validation of `cart` | accepts the string (json-decoded on read) | **requires ARRAY** → 422 `The cart must be an array.` on a string |
+| Backend controller | `json_decode($cart)` (needs a STRING) | `json_decode($cart)` at `OrderController.php:845` (needs a STRING) → **500** `json_decode(): array given` on an array |
+
+### Where they diverge (root cause)
+Update Order's **validation rule (`cart` = array)** contradicts **its own controller (`json_decode($cart)` = string)** — and both
+contradict the production Place Order convention (cart = JSON string). Evidence: `cart` array → HTTP **500** (`json_decode array given`,
+`OrderController.php:845`); `cart` JSON string → HTTP **422** (`cart must be an array`). Both captured on the owner's device across
+increase/decrease/remove/add/mixed edits. (Update also uniquely uses a real PUT + JSON body; every other order op — place, cod-switch,
+cancel — uses POST + form-data.)
+
+### Minimal backend change required (single, precise)
+Align `/api/v1/customer/order/update` to the **Place Order contract**: change the `cart` **validation rule from `array` to
+`string`/`json`** so it matches its own `json_decode($cart)` (line 845) and the Place Order endpoint. (Equivalently, accept the same
+multipart/form-data + `jsonEncode(cart)` string the Place Order flow already sends.) The alternative — keep `array` validation and remove
+the `json_decode` — is NOT preferred because it diverges from the established Place Order convention.
+
+### Frontend (after backend fix)
+Once the endpoint accepts a JSON-string cart, the frontend one-line change `order_repository.dart:183` → `'cart': jsonEncode(cart)`
+(matching Place Order) makes it work — reverted for now, to be reapplied + fully runtime-verified (increase/decrease/remove/add/mixed/
+wallet-deduct/refund/insufficient-balance) before Phase 3B is documented/frozen. **No duplicate APIs, no rewrite.**
