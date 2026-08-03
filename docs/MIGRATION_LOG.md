@@ -3586,3 +3586,22 @@ side-by-side audit + minimal backend fix documented in `docs/BACKEND_INTEGRATION
 backend aligns the update `cart` validation to the Place Order contract (JSON string): reapply `'cart': jsonEncode(cart)` and run the FULL
 verification (increase/decrease/remove/add/mixed/wallet-deduction/refund/insufficient-balance) before documenting/freezing/committing.
 No further frontend workarounds; no duplicate APIs; existing architecture only.
+
+## Migration Audit & Cleanup Roadmap — architecture refinement (2026-08-04) · documentation only
+Canonical audit created at **`docs/MIGRATION_AUDIT.md`** (revised per owner architecture review). Key decisions recorded:
+- **No subjective percentages.** Objective wording: "Mobile migration is functionally complete for all frozen features, with only
+  documented deferred work remaining (Phase 3B backend dependency, Language verification, future backend-dependent enhancements)."
+- **Legacy ≠ Alternative Production.** Widgets classified into A Production (active) · B Legacy · C Unknown · D Candidate for future
+  consolidation (design decision, NOT cleanup). Distinct production surfaces (`FlashProductCard`, `ReviewItemCard`, `ItemThatYouLoveCard`,
+  `ItemCard`, `ItemCardWidget`) are Class A — NOT cleanup candidates. Cleanup removes obsolete implementations; it does not collapse
+  everything into one widget.
+- **SAFE TO DELETE = none proven** (unchanged) — nothing enters it without Phase-4 runtime-reference proof.
+- **New mandatory Phase 4 — Runtime Reference Audit** inserted before Legacy Cleanup: for every candidate prove ZERO references across
+  call hierarchy · route references · Navigator usage · widget instantiation · dynamic references · mobile · desktop.
+- **Roadmap:** Phase 1 Frozen UI Migration → Phase 2 Architecture Freeze → Phase 3 Backend-dependent (3B + Language) → Phase 4 Runtime
+  Reference Audit → Phase 5 Legacy Cleanup (batch by batch) → Phase 6 Final Architecture Freeze → MoonJoin Production Freeze.
+- **Desktop Strategy = PENDING architectural decision.** Desktop cleanup PROHIBITED until Option A (keep desktop legacy) vs Option B
+  (redesign desktop then remove legacy) is officially chosen.
+- **Cleanup Status: NOT READY** — Phase 3B blocked · Language not frozen · Desktop undecided · Phase 4 not done · active runtime legacy
+  paths still exist (mobile `ItemBottomSheet` food-variation quick-add; desktop legacy).
+**No production code modified; no freeze checkpoints changed; no cleanup/deletion performed.**

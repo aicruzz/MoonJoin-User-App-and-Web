@@ -5,6 +5,17 @@ refactor, restyle, or fork them. Reuse only. A frozen item may be revisited only
 for: a production bug, a required API/backend change, or an explicit product-owner
 redesign request.
 
+> **Project roadmap (authoritative):** Phase 1 Frozen UI Migration ✅ → Phase 2 Architecture Freeze ✅ →
+> Phase 3 Backend-dependent items (Phase 3B Update Cart — backend-blocked; Language verification) ◻ →
+> **Phase 4 Runtime Reference Audit (MANDATORY — prove every cleanup candidate unreachable)** ◻ →
+> Phase 5 Legacy Cleanup (batch by batch, gated) ⛔ → Phase 6 Final Architecture Freeze ⛔ → MoonJoin Production Freeze.
+> **Cleanup Status: NOT READY** (Phase 3B blocked · Language not frozen · Desktop strategy undecided · Phase 4 not done ·
+> active runtime legacy paths still exist). **Desktop cleanup is PROHIBITED** until the desktop strategy (Option A keep-legacy /
+> Option B redesign-then-remove) is officially decided. Full audit, widget classification (A Production / B Legacy / C Unknown /
+> D Future-consolidation), and the Phase 4 spec live in **`docs/MIGRATION_AUDIT.md`**. Legacy ≠ Alternative Production: distinct
+> production surfaces (e.g. `FlashProductCard`, `ReviewItemCard`, `ItemThatYouLoveCard`) are NOT cleanup candidates. **SAFE TO DELETE:
+> none proven** — nothing enters it without Phase-4 runtime-reference proof.
+
 ---
 
 ## FROZEN SCREENS / SHELLS
