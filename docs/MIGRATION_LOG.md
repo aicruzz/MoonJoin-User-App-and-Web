@@ -3558,3 +3558,19 @@ iPhone. **Owner approved on-device: Fashion shows Brands; every other module hid
 (frozen Phase 1), onboarding, notifications.
 **Rule:** Brands = Ecommerce-only until backend module-scopes `/api/v1/brand`; reuse the one engine (never fork); headers stay module-aware
 via `ModuleTerminology` (backend `provider_label_plural` overrides when shipped); Parcel/Rental headers and all frozen cards stay untouched.
+
+## Phase 3A — Edit Unavailable Items "Add More Items" → frozen MoonJoin Product Details — STATUS: FROZEN (2026-08-03) · owner-approved on iPhone
+**File:** `lib/features/order/screens/order_edit_screen.dart` only (widget/navigation swap + removed unused `item_bottom_sheet.dart`
+import). No other file; no business logic changed.
+**Change:** the "Add More Items" **"+ Add"** button opened the LEGACY 6amMart `ItemBottomSheet` (its last mobile caller). It now opens the
+FROZEN MoonJoin `FoodDetailsScreen` — the exact Product Details page already used by `_openEdit` (line 241, editing an unavailable item)
+and throughout the app — via `Get.to(() => FoodDetailsScreen(itemId, item, onCartItemAdd: (c) => controller.addCartItem(c)))`.
+**Investigation (device-verified path):** Order Details → Edit → `order_edit_screen` → "Add More Items" → `_showAddItemsSheet` →
+`_AddItemsBottomSheet` → each item "+ Add" (was `showModalBottomSheet(ItemBottomSheet(...))`). Existing-item edit (`_openEdit`) already used
+`FoodDetailsScreen`; `navigateToCartItemEdit` was NOT reused (it targets the normal cart via `CartController.updateCartOnline`);
+`ItemDetailsScreen` has no `onCartItemAdd`, and the flow is food-focused, so `FoodDetailsScreen` mirrors `_openEdit` exactly.
+**Permanent rules:** legacy `ItemBottomSheet` no longer used by Edit Unavailable Items (never reintroduce on mobile); ONE frozen Product
+Details reused (no duplicate flow); `OrderEditController.addCartItem` owns the added item (edit-order state); **normal Cart / `CartController`
+untouched** (separate flow — never route Add-More through the cart).
+**Verification:** `flutter analyze` → clean; release build ✓ installed + launched on the owner's physical iPhone; **owner approved on-device.**
+**Phase 3B (Update Cart) = SEPARATE independent task** — investigation-first, not part of this freeze.

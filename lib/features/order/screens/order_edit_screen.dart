@@ -11,7 +11,6 @@ import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/item_bottom_sheet.dart';
 import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/common/widgets/custom_text_field.dart';
@@ -911,18 +910,17 @@ class _StoreItemTile extends StatelessWidget {
           // Add button
           GestureDetector(
             onTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) => ItemBottomSheet(
-                  itemId: item.id!,
-                  item: item,
-                  onCartItemAdd: (CartModel cartModel) {
-                    controller.addCartItem(cartModel);
-                  },
-                ),
-              );
+              // Reuse the FROZEN MoonJoin Food Product Details (the exact same screen
+              // `_openEdit` uses above) instead of the legacy `ItemBottomSheet`. The
+              // added item flows back through the SAME OrderEditController callback —
+              // the normal Cart / CartController are NOT touched. Widget/nav swap only.
+              Get.to(() => FoodDetailsScreen(
+                itemId: item.id!,
+                item: item,
+                onCartItemAdd: (CartModel cartModel) {
+                  controller.addCartItem(cartModel);
+                },
+              ));
             },
             child: Container(
               padding: const EdgeInsets.symmetric(
