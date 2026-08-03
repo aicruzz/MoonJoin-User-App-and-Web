@@ -3494,3 +3494,30 @@ physical iPhone (fresh install to re-trigger the intro flag). **Owner approved. 
 **Rule:** THE MoonJoin onboarding — reuse-only; never restyle back toward 6amMart; never introduce raster/stock onboarding art; never
 fork the illustration system; do not modify the frozen Motion System (reuse its visual language only). Future changes = additive
 scenes/copy with owner approval.
+
+## Phase 1 — Item Owner/Provider Identity — STATUS: FROZEN (2026-08-03) · commit `c827af8`
+**File:** `lib/common/widgets/item_widget.dart` only (owner label in the normal layout + `_premiumStoreDishCard`; owner font size
+unified). `ItemCard` NOT touched. No backend change (reuses the existing `Item.storeName` ← `store_name`).
+**Permanent rule:** OUTSIDE a Store/Restaurant/Provider page, every customer-facing item card shows the owner/provider identity from
+**real `item.storeName` only** (no fake fallback, no duplicate identity system). INSIDE an owner page it stays hidden (`inStore==true`).
+**Investigation (device-traced, not static):** the owner appeared missing on the customer-facing item list. Extensive runtime tracing
+(temporary `debugPrint`, since fully removed) proved the visible cards are **not** `ItemCard`/`MostPopularItemView` (those never
+rendered) but `AllStoreScreen → ItemsView(premiumStoreLayout:true) → ItemWidget → _premiumStoreDishCard`. `_premiumStoreDishCard`
+returned before reaching the owner line, so a populated `storeName` (proven via device log: `storeName=Perozona/Chicken Republic/…`,
+`hideItemStoreName=false`) was never painted. Earlier attempts edited the wrong widgets (`ItemCard`, flash/love cards) and were reverted;
+one build even appeared to regress Set Location (stale SharedPreferences) → full restore to baseline `dbf46dc` (clean build + fresh
+install) before the correct, minimal fix.
+**Fix (minimal, single widget):** added the muted owner line **directly below the item name** inside `_premiumStoreDishCard`, gated on
+`!inStore`, reusing the exact Search/`ItemWidget` presentation (real `item.storeName`, `robotoRegular`/`disabledColor`, single-line
+ellipsis, graceful-hide). Because it's the shared premium card, this covers all modules (Food/Grocery/Pharmacy/Fashion/…).
+**Typography refinement (unified standard):** owner size raised `fontSizeExtraSmall` → `(fontSizeExtraSmall+fontSizeSmall)/2` (≈11 phone /
+13 wide) in **both** owner labels — bigger/more readable, still strictly below the item name (normal name = `fontSizeSmall`, premium name
+= `fontSizeDefault`); muted color/opacity/position/font-family unchanged; item name & card layout unchanged; store address (`isStore`)
+left as-is.
+**Shared identity:** Search / Favorites / Category lists / All-Store premium all use `ItemWidget` identity — one presentation, never a
+second system. **Frozen:** item name typography, image size/crop/layout, buttons, spacing, favourite icon, rating/price, animations,
+proportions — all unchanged.
+**Verification:** `flutter analyze` → clean (repo residual pre-existing). Release build ✓ installed + launched on the owner's physical
+iPhone; **owner approved on-device**. Onboarding + Notification freezes verified intact; zero debug/investigation code remains.
+**Rule:** reuse-only; never fork the owner-identity label; never fake it; never show it inside owner pages; never change its
+color/opacity/position/font-family; keep the item name & card layout frozen. New surfaces reuse `ItemWidget`'s presentation.
