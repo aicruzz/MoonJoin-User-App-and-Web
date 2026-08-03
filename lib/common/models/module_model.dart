@@ -12,6 +12,11 @@ class ModuleModel {
   String? updatedAt;
   List<ModuleZoneData>? zones;
 
+  /// Future backend terminology override for module-aware headers (e.g. "Restaurants",
+  /// "Grocery Stores", "Pharmacies"). NULL today → `ModuleTerminology` falls back to a
+  /// deterministic moduleType+moduleName label. Never hardcoded, never invented.
+  String? providerLabelPlural;
+
   /// Scheduled availability (Glovo-style). These are **adapter fields** for the
   /// future Admin → Module Schedule backend — all NULL today, so every module
   /// stays [ModuleAvailability.enabled]. When the backend sends them,
@@ -58,6 +63,8 @@ class ModuleModel {
       zones = <ModuleZoneData>[];
       json['zones'].forEach((v) => zones!.add(ModuleZoneData.fromJson(v)));
     }
+    // Adapter field — absent today (null), populated when the backend ships it.
+    providerLabelPlural = json['provider_label_plural'];
     // Adapter fields — absent today (null), populated when the backend ships them.
     openTime = json['open_time'];
     closeTime = json['close_time'];

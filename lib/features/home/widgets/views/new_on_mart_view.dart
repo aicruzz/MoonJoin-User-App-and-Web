@@ -5,8 +5,8 @@ import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
 import 'package:sixam_mart/features/store/widgets/moonjoin_store_card.dart';
 import 'package:sixam_mart/features/home/widgets/web/web_new_on_view_widget.dart';
+import 'package:sixam_mart/helper/module_terminology_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/common/widgets/rating_bar.dart';
 import 'package:sixam_mart/common/widgets/title_widget.dart';
@@ -32,7 +32,7 @@ class NewOnMartView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
             child: TitleWidget(
-              title: '${'new_on'.tr} ${AppConstants.appName}',
+              title: ModuleTerminology.newOnHeader(Get.find<SplashController>().module),
               onTap: () => Get.toNamed(RouteHelper.getAllStoreRoute('latest')),
             ),
           ),

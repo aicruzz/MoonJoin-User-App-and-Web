@@ -4,6 +4,7 @@ import 'package:sixam_mart/features/home/widgets/filter_view.dart';
 import 'package:sixam_mart/features/home/widgets/store_filter_button_widget.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
+import 'package:sixam_mart/helper/module_terminology_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
@@ -25,7 +26,7 @@ class AllStoreFilterWidget extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(
-                    Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText! ? 'restaurants'.tr : 'stores'.tr,
+                    ModuleTerminology.providerLabelPlural(Get.find<SplashController>().module),
                     style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge),
                   ),
 
@@ -47,7 +48,7 @@ class AllStoreFilterWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(right: Dimensions.paddingSizeSmall),
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   Text(
-                  Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText! ? 'restaurants'.tr : 'stores'.tr,
+                  ModuleTerminology.providerLabelPlural(Get.find<SplashController>().module),
                     style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge),
                   ),
                   Flexible(

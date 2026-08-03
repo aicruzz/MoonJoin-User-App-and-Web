@@ -12,6 +12,7 @@ import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
+import 'package:sixam_mart/helper/module_terminology_helper.dart';
 import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
 import 'package:sixam_mart/features/store/screens/store_screen.dart';
@@ -109,7 +110,11 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     if (widget.isPopular) return widget.isNearbyStore ? 'best_store_nearby'.tr : showRestaurant ? 'popular_restaurants'.tr : 'popular_stores'.tr;
     if (widget.isTopOfferStore) return 'top_offers_near_me'.tr;
     if (widget.isRecommendedStore) return 'recommended_store'.tr;
-    return showRestaurant ? 'all_restaurants'.tr : '${'new_on'.tr} ${AppConstants.appName}';
+    // Module-aware header (reuse the shared terminology helper): premium bare label —
+    // "Restaurants", "Grocery Stores", "Pharmacies", "Fashion Stores", "Markets",
+    // "Fuel Stations", "Drink Distributors" (no "All" prefix; was a binary
+    // restaurant/"New On MoonJoin" fallback that mislabelled non-food modules).
+    return ModuleTerminology.providerLabelPlural(Get.find<SplashController>().module);
   }
 
   @override
@@ -386,6 +391,13 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
   }
 
   Widget _topBrands() {
+    // Brands are backend-supported ONLY for the Ecommerce/Fashion module today.
+    // Every other module must hide the Brands section — the backend currently returns
+    // the SAME brand for all modules, so without this gate Grocery/Pharmacy/Market/Fuel/
+    // Drink Distributor would show Fashion's brand. Reuse-only: no engine change.
+    if (Get.find<SplashController>().module?.moduleType != AppConstants.ecommerce) {
+      return const SizedBox();
+    }
     return GetBuilder<BrandsController>(builder: (brandsController) {
       final brands = brandsController.brandList;
       if (brands == null || brands.isEmpty) return const SizedBox();

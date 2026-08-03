@@ -3521,3 +3521,40 @@ proportions — all unchanged.
 iPhone; **owner approved on-device**. Onboarding + Notification freezes verified intact; zero debug/investigation code remains.
 **Rule:** reuse-only; never fork the owner-identity label; never fake it; never show it inside owner pages; never change its
 color/opacity/position/font-family; keep the item name & card layout frozen. New surfaces reuse `ItemWidget`'s presentation.
+
+## Phase 2 — Brands reuse + Module-aware Header Terminology — STATUS: FROZEN (2026-08-03) · owner-approved on iPhone
+**Reuse-only, no new systems. Frozen item/card/onboarding/notification work untouched.**
+
+**Brands — reuse the ONE Ecommerce/Fashion engine; ENABLED FOR ECOMMERCE ONLY (final):** `BrandsController`/`BrandsRepository`/
+`BrandsScreen`/`BrandsProductScreen`/`BrandsViewWidget` are module-agnostic (`/api/v1/brand` carries the `moduleId` header; cache key
+includes module.id; widget hides when empty). **Runtime-proven backend reality:** `/api/v1/brand` returns the **SAME brand ("Quality")
+for every module** (Food/Grocery/Fashion/Pharmacy all count=1) — the backend does NOT yet filter brands by module. Therefore Brands are
+rendered for the **Ecommerce/Fashion module ONLY**; every other commerce module (Grocery/Pharmacy/Market/Fuel/Drink Distributor) HIDES the
+Brands section until backend support exists. **Enforcement (the actual gate):** `all_store_screen.dart:_topBrands()` returns `SizedBox`
+unless `SplashController.module.moduleType == ecommerce` — the AllStoreScreen "Top Brands" section is the shell those module homes delegate
+to, and it was the sole unguarded render point. (Investigation note: a brief attempt to place `BrandsViewWidget` on grocery/pharmacy homes
+showed Fashion's brand and was **fully reverted** — module homes carry no Brands widget.) `shop_home` `BrandsViewWidget` mounts only inside
+`ShopHomeScreen` (ecommerce by construction); web already gated to shop. **No new screens/controllers/models/repos; Fashion implementation
+unchanged.** **Backend dependency (documented):** `/api/v1/brand` must scope by `moduleId` (return per-module brands / empty) before Brands
+can be enabled for other commerce modules — then re-enable is a one-line gate change.
+
+**Rental brands (documented FUTURE only — NOT implemented):** Car Rental keeps its existing vehicle-brand FILTER (`TaxiBrandModel`,
+`/api/v1/rental/vehicle/brand-list`) unchanged; Short Apartment Rental has no brands and none created. Future rental brand BROWSE = module-
+owned, separate data sources: Car Rental = vehicle manufacturers · Apartment = accommodation providers/categories · Commerce = product
+brands. **Never mix these three.**
+
+**Module-aware header terminology (one shared helper, config-driven):** NEW `lib/helper/module_terminology_helper.dart` (`ModuleTerminology`)
+prefers a FUTURE backend field `provider_label_plural` (added to `ModuleModel` as nullable `providerLabelPlural`, forward-compat), else a
+deterministic fallback by moduleType + backend `moduleName`. **Approved wording (premium bare labels, NO "All" prefix):** Food→"Restaurants" ·
+Grocery→"Grocery Stores" · Pharmacy→"Pharmacies" · Fashion→"Fashion Stores" · Market→"Markets" · Fuel & Gas→"Fuel Stations" · Drink
+Distributor→"Drink Distributors" (grocery-type resolved by moduleName heuristics). Applied to: `all_store_screen._title()` (bare label),
+`new_on_mart_view` ("New {label} on {App}"), `all_store_filter_widget` title ({label}). **Parcel & Rental headers untouched.** No generic
+"Stores"/"Shops"/"All"/"New On MoonJoin" where a better identity exists. New i18n keys (en/bn/es/ar): pharmacies, markets, fuel_stations,
+drink_distributors, header_new, header_on.
+
+**Verification:** `flutter analyze` → clean (repo residual pre-existing). Release build ✓ installed + launched on the owner's physical
+iPhone. **Owner approved on-device: Fashion shows Brands; every other module hides Brands; headers read the premium bare labels.** FROZEN.
+**Protected & NOT touched:** ItemWidget/`_premiumStoreDishCard`/Search/Favourite cards/item image/Add buttons/cart/store-page item cards
+(frozen Phase 1), onboarding, notifications.
+**Rule:** Brands = Ecommerce-only until backend module-scopes `/api/v1/brand`; reuse the one engine (never fork); headers stay module-aware
+via `ModuleTerminology` (backend `provider_label_plural` overrides when shipped); Parcel/Rental headers and all frozen cards stay untouched.
