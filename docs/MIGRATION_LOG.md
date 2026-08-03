@@ -3465,3 +3465,32 @@ intended"). FROZEN · PRODUCTION APPROVED.**
 this resolver/watcher/banner foundation without explicit architectural approval. **Banned:** duplicating the unavailable rule;
 deciding unavailable inside `notification_helper`/banner; dismissal clearing business state; auto-dismissing the unavailable banner;
 any loop/spinner/alarm styling.
+
+## Onboarding — "One Orbit" original MoonJoin experience — STATUS: FROZEN (2026-08-03)
+**Files:** NEW `lib/common/widgets/moonjoin/onboarding/moonjoin_onboarding_art.dart` (illustration system) · NEW
+`.../onboarding/moonjoin_moon_phase_progress.dart` (progress) · redesigned `lib/features/onboard/screens/onboarding_screen.dart` ·
+8 new i18n keys in `assets/language/{en,bn,es,ar}.json`.
+**What this is:** the first emotional experience for every new MoonJoin customer — an ORIGINAL product experience designed from first
+principles (there is NO onboarding design in the Active Figma or ui-designs), NOT a restyled 6amMart onboarding. Approved over a
+2-round design review (concept → CTO refinements). An immersive branded twilight *living connected city at night*, drawn 100%
+programmatically (no raster assets / no 6amMart art / no external/stock illustration).
+**Concept "One Orbit":** everything MoonJoin orbits one calm center; services woven into ONE ecosystem, never an icon grid. Four-beat
+story that waxes to a peak then resolves (pacing 20/40/25/15): Arrival (minimal, waxing sliver) · **Ecosystem (hero — one connected
+ecosystem: 11 services as desaturated organic accent-nodes woven by light-arcs + city skyline w/ warm windows + one travelling Node
+of light)** · Delivery (trust: one light vendor→home) · Resolution (quiet full moon + halo, settled ecosystem, strong Get Started).
+**Built from our own language (reuse, not fork):** organic blobs = OrganicModuleIcon curve family; MoonJoin green; soft light-arcs +
+central moon reuse the FROZEN Motion System's light model (visual language only — Motion System code untouched). Progress = moon
+phases (crescent→full), not dots. 11 services: Food·Grocery·Pharmacy·Shopping·Car Rental·Short Apartment·Fuel·Parcel·Messenger·
+Wallet·Payments — never labelled.
+**Performance:** static layer recorded ONCE into a `ui.Picture` per (scene,size); only a thin light layer animates; NO
+`MaskFilter.blur`/`ImageFilter` (glows are radial-gradient shaders); single shared 9s ambient ticker; `RepaintBoundary`; Reduce-Motion
+honored (holds a calm frame).
+**Business logic PRESERVED (presentation-only):** route `/on-boarding`; first-launch gating `showIntro()`/`disableIntro()`
+(`AppConstants.intro`, set true first-launch at `splash_repository.dart:84-85`); exit `disableIntro()→guestLogin()→(address?Initial:
+Location)` kept verbatim; Language precedes onboarding when multi-language; `OnBoardingController`/service/repo/model untouched
+(already a mock repo, no backend); existing `on_boarding_*` keys retained.
+**Verification:** `flutter analyze` (3 files) → **No issues found**. Release build ✓ (88.6MB AOT) installed + launched on the owner's
+physical iPhone (fresh install to re-trigger the intro flag). **Owner approved. FROZEN.**
+**Rule:** THE MoonJoin onboarding — reuse-only; never restyle back toward 6amMart; never introduce raster/stock onboarding art; never
+fork the illustration system; do not modify the frozen Motion System (reuse its visual language only). Future changes = additive
+scenes/copy with owner approval.

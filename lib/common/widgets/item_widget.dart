@@ -201,7 +201,10 @@ class ItemWidget extends StatelessWidget {
                           inStore ? const SizedBox() : (isStore ? store!.address != null : (item!.storeName != null && !hideItemStoreName)) ? Text(
                             isStore ? store!.address ?? '' : item!.storeName ?? '',
                             style: robotoRegular.copyWith(
-                              fontSize: Dimensions.fontSizeExtraSmall,
+                              // Unified owner-identity size: bigger than the old muted
+                              // extra-small, still below the item name. Item names / store
+                              // address unchanged. (isStore = store address: left as-is.)
+                              fontSize: isStore ? Dimensions.fontSizeExtraSmall : (Dimensions.fontSizeExtraSmall + Dimensions.fontSizeSmall) / 2,
                               color: Theme.of(context).disabledColor,
                             ),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -353,16 +356,30 @@ class ItemWidget extends StatelessWidget {
                 // Veg/Non-Veg indicator sits IMMEDIATELY after the item name (the
                 // approved MoonJoin position) — hugging the title, never beside the
                 // favourite/rating/price/image.
-                Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Flexible(child: Text(item!.name ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
-                  if (showVeg) ...[
-                    const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Flexible(child: Text(item!.name ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault))),
+                    if (showVeg) ...[
+                      const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Image.asset(item!.veg == 0 ? Images.nonVegImage : Images.vegImage, height: 12, width: 12, fit: BoxFit.contain),
+                      ),
+                    ],
+                  ]),
+                  // Owner identity — directly below the item name, OUTSIDE owner pages
+                  // only (`!inStore`). Reuses the exact Search presentation: the real
+                  // `item.storeName`, muted robotoRegular / disabledColor / extraSmall,
+                  // hidden gracefully when the backend omits it (never faked).
+                  if (!inStore && item!.storeName != null && item!.storeName!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
-                      child: Image.asset(item!.veg == 0 ? Images.nonVegImage : Images.vegImage, height: 12, width: 12, fit: BoxFit.contain),
+                      child: Text(item!.storeName!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          // Unified owner-identity size (same standard as the normal ItemWidget
+                          // layout): bigger than the old extra-small, still below the item name.
+                          style: robotoRegular.copyWith(fontSize: (Dimensions.fontSizeExtraSmall + Dimensions.fontSizeSmall) / 2, color: Theme.of(context).disabledColor)),
                     ),
-                  ],
                 ])),
                 const SizedBox(width: Dimensions.paddingSizeExtraSmall),
                 GetBuilder<FavouriteController>(builder: (favouriteController) {
