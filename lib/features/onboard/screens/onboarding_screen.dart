@@ -1,7 +1,8 @@
 import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
 import 'package:sixam_mart/features/location/controllers/location_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/onboard/controllers/onboard_controller.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/onboarding/moonjoin_onboarding_art.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/onboarding/moonjoin_moon_phase_progress.dart';
 import 'package:sixam_mart/helper/address_helper.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
@@ -12,6 +13,22 @@ import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+/// A single onboarding story beat — an original MoonJoin "One Orbit" scene
+/// (drawn programmatically, no assets) plus its calm headline/support copy.
+class _Beat {
+  final MoonJoinOnboardingScene scene;
+  final String titleKey;
+  final String bodyKey;
+  const _Beat(this.scene, this.titleKey, this.bodyKey);
+}
+
+const List<_Beat> _beats = [
+  _Beat(MoonJoinOnboardingScene.arrival, 'onboarding_arrival_title', 'onboarding_arrival_body'),
+  _Beat(MoonJoinOnboardingScene.ecosystem, 'onboarding_ecosystem_title', 'onboarding_ecosystem_body'),
+  _Beat(MoonJoinOnboardingScene.delivery, 'onboarding_delivery_title', 'onboarding_delivery_body'),
+  _Beat(MoonJoinOnboardingScene.resolution, 'onboarding_resolution_title', 'onboarding_resolution_body'),
+];
+
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});
 
@@ -19,124 +36,148 @@ class OnBoardingScreen extends StatefulWidget {
   State<OnBoardingScreen> createState() => _OnBoardingScreenState();
 }
 
-class _OnBoardingScreenState extends State<OnBoardingScreen> {
+class _OnBoardingScreenState extends State<OnBoardingScreen> with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
+  late final AnimationController _ambient;
+  int _index = 0;
+  double _page = 0;
 
   @override
   void initState() {
     super.initState();
+    // ONE shared calm ambient ticker for every scene (battery friendly).
+    _ambient = AnimationController(vsync: this, duration: const Duration(seconds: 9));
+    _pageController.addListener(_onScroll);
+  }
 
-    Get.find<OnBoardingController>().getOnBoardingList();
+  void _onScroll() {
+    if (_pageController.hasClients && _pageController.page != null) {
+      setState(() => _page = _pageController.page!);
+    }
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Respect Reduce Motion — hold a calm frame instead of looping.
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      _ambient.value = 0.5;
+    } else if (!_ambient.isAnimating) {
+      _ambient.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.removeListener(_onScroll);
+    _pageController.dispose();
+    _ambient.dispose();
+    super.dispose();
+  }
+
+  bool get _isLast => _index == _beats.length - 1;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : null,
-      body: SafeArea(
-        child: GetBuilder<OnBoardingController>(
-          builder: (onBoardingController) {
-            bool showIndicatorAndButton = onBoardingController.selectedIndex < onBoardingController.onBoardingList.length-1;
-            return onBoardingController.onBoardingList.isNotEmpty ? SafeArea(
-              child: Center(child: SizedBox(width: Dimensions.webMaxWidth, child: Column(children: [
+    final bool desktop = ResponsiveHelper.isDesktop(context);
+    final Widget content = Stack(children: [
 
-                Expanded(child: PageView.builder(
-                  itemCount: onBoardingController.onBoardingList.length,
-                  controller: _pageController,
-                  // physics: const BouncingScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      // ── Full-bleed living-city art; swiping pages the scene ──
+      PageView.builder(
+        controller: _pageController,
+        itemCount: _beats.length,
+        onPageChanged: (i) => setState(() => _index = i),
+        itemBuilder: (context, i) => MoonJoinOnboardingArt(scene: _beats[i].scene, ambient: _ambient),
+      ),
 
-                      showIndicatorAndButton && onBoardingController.onBoardingList[index].imageUrl != '' ? Padding(
-                        padding: EdgeInsets.all(context.height*0.05),
-                        child: Image.asset(onBoardingController.onBoardingList[index].imageUrl, height: context.height*0.4),
-                      ) : const SizedBox(),
+      // ── Overlay: Skip (top), copy + progress + CTA (bottom) ──
+      SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-                      Text(
-                        onBoardingController.onBoardingList[index].title,
-                        style: robotoMedium.copyWith(fontSize: context.height*0.022),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: context.height*0.025),
+            Align(
+              alignment: Alignment.centerRight,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 250),
+                opacity: _isLast ? 0.0 : 1.0,
+                child: TextButton(
+                  onPressed: _isLast ? null : _configureToRouteInitialPage,
+                  child: Text('skip'.tr, style: robotoMedium.copyWith(color: Colors.white.withValues(alpha: 0.75))),
+                ),
+              ),
+            ),
 
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
-                        child: Text(
-                          onBoardingController.onBoardingList[index].description,
-                          style: robotoRegular.copyWith(fontSize: context.height*0.015, color: Theme.of(context).disabledColor),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
+            const Spacer(),
 
-                    ]);
-                  },
-                  onPageChanged: (index) {
-                    onBoardingController.changeSelectIndex(index);
-                    if(onBoardingController.selectedIndex == 3) {
-                      _configureToRouteInitialPage();
-                    }
-                  },
-                )),
-
-                showIndicatorAndButton ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _pageIndicators(onBoardingController, context),
-                ) : const SizedBox(),
-                SizedBox(height: context.height*0.05),
-
-                showIndicatorAndButton ? Padding(
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                  child: Row(children: [
-                    onBoardingController.selectedIndex == 2 ? const SizedBox() : Expanded(
-                      child: CustomButton(
-                        transparent: true,
-                        onPressed: () {
-                          _configureToRouteInitialPage();
-                        },
-                        buttonText: 'skip'.tr,
+            // Calm cross-fade of the copy, with a light parallax against the swipe.
+            Transform.translate(
+              offset: Offset((_index - _page) * 40, 0),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 450),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeIn,
+                child: Column(
+                  key: ValueKey<int>(_index),
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _beats[_index].titleKey.tr,
+                      style: robotoBold.copyWith(fontSize: 30, color: Colors.white, height: 1.15, letterSpacing: -0.5),
+                    ),
+                    const SizedBox(height: Dimensions.paddingSizeSmall),
+                    Text(
+                      _beats[_index].bodyKey.tr,
+                      style: robotoRegular.copyWith(
+                        fontSize: Dimensions.fontSizeLarge,
+                        color: Colors.white.withValues(alpha: 0.72),
+                        height: 1.45,
                       ),
                     ),
-                    Expanded(
-                      child: CustomButton(
-                        buttonText: onBoardingController.selectedIndex != 2 ? 'next'.tr : 'get_started'.tr,
-                        onPressed: () {
-                          if(onBoardingController.selectedIndex != 2) {
-                           _pageController.nextPage(duration: const Duration(seconds: 1), curve: Curves.easeInOut);
-                          } else {
-                            _configureToRouteInitialPage();
-                          }
-                        },
-                      ),
-                    ),
-                  ]),
-                ) : const SizedBox(),
+                  ],
+                ),
+              ),
+            ),
 
-              ]))),
-            ) : const SizedBox();
-          },
+            const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+            MoonJoinMoonPhaseProgress(count: _beats.length, active: _index),
+
+            const SizedBox(height: Dimensions.paddingSizeLarge),
+
+            CustomButton(
+              buttonText: _isLast ? 'get_started'.tr : 'next'.tr,
+              radius: Dimensions.radiusDefault,
+              onPressed: () {
+                if (_isLast) {
+                  _configureToRouteInitialPage();
+                } else {
+                  _pageController.nextPage(
+                    duration: const Duration(milliseconds: 550), curve: Curves.easeInOutCubic,
+                  );
+                }
+              },
+            ),
+
+            const SizedBox(height: Dimensions.paddingSizeLarge),
+          ]),
         ),
       ),
+    ]);
+
+    return Scaffold(
+      backgroundColor: MoonJoinOnboardingPalette.bgTop,
+      appBar: desktop ? const WebMenuBar() : null,
+      body: desktop
+          ? Center(child: SizedBox(width: Dimensions.webMaxWidth, child: content))
+          : content,
     );
   }
 
-  List<Widget> _pageIndicators(OnBoardingController onBoardingController, BuildContext context) {
-    List<Container> indicators = [];
-
-    for (int i = 0; i < onBoardingController.onBoardingList.length-1; i++) {
-      indicators.add(
-        Container(
-          width: 7, height: 7,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            color: i == onBoardingController.selectedIndex ? Theme.of(context).primaryColor : Theme.of(context).disabledColor,
-            borderRadius: i == onBoardingController.selectedIndex ? BorderRadius.circular(50) : BorderRadius.circular(25),
-          ),
-        ),
-      );
-    }
-    return indicators;
-  }
-
+  /// PRESERVED business logic (first-launch gating + exit sequence): disable the
+  /// intro so onboarding shows only once, guest-login, then route to the initial
+  /// page (if an address exists) or the location screen. Unchanged behaviour.
   void _configureToRouteInitialPage() async {
     Get.find<SplashController>().disableIntro();
     await Get.find<AuthController>().guestLogin();
@@ -144,7 +185,9 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
       Get.offNamed(RouteHelper.getInitialRoute(fromSplash: true));
     } else {
       Get.find<LocationController>().navigateToLocationScreen(RouteHelper.onBoarding, offNamed: true).then((v) {
-        _pageController.jumpToPage(Get.find<OnBoardingController>().onBoardingList.length-2);
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_beats.length - 1);
+        }
       });
     }
   }
