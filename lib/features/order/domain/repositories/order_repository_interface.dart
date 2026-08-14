@@ -15,5 +15,5 @@ abstract class OrderRepositoryInterface extends RepositoryInterface {
   Future<Response> switchToWalletPayment(String? orderID);
   Future<bool> submitParcelReturn({required int orderId, required String orderStatus, required int returnOtp});
   Future<PaymentModel?> getPaymentFailedDetails(String? orderID);
-  Future<bool> updateOrder({required int orderId, required List<Map<String, dynamic>> cart, String? orderNote});
+  Future<Response> updateOrder({required int orderId, required List<Map<String, dynamic>> cart, String? orderNote});
 }

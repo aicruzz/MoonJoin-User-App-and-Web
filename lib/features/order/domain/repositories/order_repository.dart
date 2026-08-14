@@ -178,7 +178,7 @@ class OrderRepository implements OrderRepositoryInterface {
   }
 
   @override
-  Future<bool> updateOrder({required int orderId, required List<Map<String, dynamic>> cart, String? orderNote}) async {
+  Future<Response> updateOrder({required int orderId, required List<Map<String, dynamic>> cart, String? orderNote}) async {
     final Map<String, dynamic> data = {
       'cart': cart,
       if (orderNote != null && orderNote.isNotEmpty) 'order_note': orderNote,
@@ -196,7 +196,7 @@ class OrderRepository implements OrderRepositoryInterface {
     debugPrint('Status: ${response.statusCode}');
     debugPrint('Body: ${response.body}');
 
-    return response.statusCode == 200;
+    return response;
   }
 
   @override

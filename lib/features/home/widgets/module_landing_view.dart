@@ -188,9 +188,13 @@ class ModuleLandingView extends StatelessWidget {
       final orders = orderController.runningOrderModel?.orders;
       if (orders != null) {
         for (final o in orders) {
-          // Reviewable = a still-pending order the vendor flagged with an
-          // unavailable-item note. Resolved/advanced orders drop off automatically.
-          if (o.orderStatus == 'pending' && (o.unavailableItemNote ?? '').trim().isNotEmpty) { flagged = o; break; }
+          // Reviewable = a pending OR confirmed order for which the vendor has
+          // requested a customer edit (authoritative signal). Confirmed is included
+          // because the live backend authorizes customer edit for [pending,
+          // confirmed]; the card appears only when customer_edit_requested is set,
+          // never from the customer's own note. Resolved/advanced orders drop off
+          // automatically once the backend resets customer_edit_requested to 0.
+          if ((o.orderStatus == 'pending' || o.orderStatus == 'confirmed') && o.customerEditRequested == true) { flagged = o; break; }
         }
       }
       if (flagged == null) return const SizedBox();

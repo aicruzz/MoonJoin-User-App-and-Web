@@ -85,6 +85,11 @@ class OrderModel {
   int? processingTime;
   bool? cutlery;
   String? unavailableItemNote;
+  // Vendor "Request Customer Edit" workflow (separate from the customer's checkout
+  // note above). customer_edit_requested is the authoritative edit-access signal;
+  // unavailable_item_vendor_note is the vendor's shortage message to the customer.
+  bool customerEditRequested = false;
+  String? unavailableItemVendorNote;
   String? deliveryInstruction;
   double? taxPercentage;
   double? additionalCharge;
@@ -151,6 +156,8 @@ class OrderModel {
     this.processingTime,
     this.cutlery,
     this.unavailableItemNote,
+    this.customerEditRequested = false,
+    this.unavailableItemVendorNote,
     this.deliveryInstruction,
     this.taxPercentage,
     this.additionalCharge,
@@ -223,6 +230,11 @@ class OrderModel {
     processingTime = json['processing_time'];
     cutlery = json['cutlery'];
     unavailableItemNote = json['unavailable_item_note'];
+    // Backend sends 0/1 (may also arrive as bool/'1'); normalise to a non-null bool.
+    customerEditRequested = json['customer_edit_requested'] == 1
+        || json['customer_edit_requested'] == true
+        || json['customer_edit_requested'] == '1';
+    unavailableItemVendorNote = json['unavailable_item_vendor_note'];
     deliveryInstruction = json['delivery_instruction'];
     taxPercentage = json['tax_percentage']?.toDouble();
     additionalCharge = json['additional_charge']?.toDouble() ?? 0;
@@ -320,6 +332,8 @@ class OrderModel {
     data['processing_time'] = processingTime;
     data['cutlery'] = cutlery;
     data['unavailable_item_note'] = unavailableItemNote;
+    data['customer_edit_requested'] = customerEditRequested ? 1 : 0;
+    data['unavailable_item_vendor_note'] = unavailableItemVendorNote;
     data['delivery_instruction'] = deliveryInstruction;
     data['additional_charge'] = additionalCharge;
     data['partially_paid_amount'] = partiallyPaidAmount;

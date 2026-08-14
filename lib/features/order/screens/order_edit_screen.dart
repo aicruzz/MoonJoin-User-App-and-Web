@@ -161,7 +161,7 @@ class _OrderEditScreenState extends State<OrderEditScreen> {
   Widget _buildShortageBanner(BuildContext context) {
     final Color error = Theme.of(context).colorScheme.error;
     // Show the vendor's actual order note when present; else the default text.
-    final String? vendorNote = widget.orderModel.unavailableItemNote?.trim();
+    final String? vendorNote = widget.orderModel.unavailableItemVendorNote?.trim();
     final String message = (vendorNote != null && vendorNote.isNotEmpty) ? vendorNote : 'items_below_currently_unavailable'.tr;
     return Padding(
       padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, 0, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),

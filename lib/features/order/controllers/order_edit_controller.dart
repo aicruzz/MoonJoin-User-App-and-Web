@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sixam_mart/common/models/error_response.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/features/order/domain/models/order_details_model.dart';
 import 'package:sixam_mart/features/order/domain/models/order_model.dart';
@@ -46,11 +47,39 @@ class OrderEditController extends GetxController implements GetxService {
 
   // ── Check if order is editable ────────────────────────────────────────────
   static bool canEdit(OrderModel order) {
-    final bool hasUnavailable = (order.unavailableItemNote ?? '').trim().isNotEmpty;
-    // A pending order is editable before it is unpaid — OR when the vendor has
-    // flagged unavailable items on it (the vendor-shortage flow applies even to
-    // already-paid orders, which must be adjusted before fulfilment).
-    return order.orderStatus == 'pending' && (order.paymentStatus == 'unpaid' || hasUnavailable);
+    // A pending order is editable while it is still unpaid — OR the vendor has
+    // requested a customer edit (`customer_edit_requested`), the authoritative
+    // negotiation signal. The vendor-request path applies to both pending AND
+    // confirmed orders (the live backend authorizes customer update for
+    // order_status in [pending, confirmed] while unclaimed); confirmed orders are
+    // editable ONLY when the vendor requested it — never blanket-confirmed, never
+    // processing. The customer's own checkout note (`unavailable_item_note`) must
+    // NOT grant edit access.
+    return (order.orderStatus == 'pending' && order.paymentStatus == 'unpaid')
+        || ((order.orderStatus == 'pending' || order.orderStatus == 'confirmed')
+            && order.customerEditRequested == true);
+  }
+
+  // ── Update-failure messaging ──────────────────────────────────────────────
+  // Pure/testable. The backend financial guard returns HTTP 403 with an error
+  // whose `code == 'wallet'` when the edited total exceeds the customer's wallet
+  // balance. Surface a clear, specific message for that case ONLY; every other
+  // failure keeps the existing generic wording. Never widens all 403s.
+  static bool isWalletInsufficient(Response response) {
+    if (response.statusCode != 403) return false;
+    try {
+      final ErrorResponse error = ErrorResponse.fromJson(response.body);
+      return error.errors?.any((e) => (e.code ?? '').toLowerCase() == 'wallet') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static String updateFailureMessage(Response response) {
+    if (isWalletInsufficient(response)) {
+      return 'Insufficient wallet balance. Your wallet balance is not enough to cover the updated order total.';
+    }
+    return 'Could not update your order. Please try again.';
   }
 
   int? _moduleId;
@@ -453,11 +482,12 @@ class OrderEditController extends GetxController implements GetxService {
       }
       debugPrint('================================================');
 
-      final bool success = await orderServiceInterface.updateOrder(
+      final Response response = await orderServiceInterface.updateOrder(
         orderId: _orderModel!.id!,
         cart: cartPayload,
         orderNote: _orderNote,
       );
+      final bool success = response.statusCode == 200;
 
       _isLoading = false;
       update();
@@ -483,7 +513,7 @@ class OrderEditController extends GetxController implements GetxService {
         debugPrint('❌ Order update failed for #${_orderModel!.id}.');
         Get.snackbar(
           'Update Failed',
-          'Could not update your order. Please try again.',
+          updateFailureMessage(response),
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.redAccent,
           colorText: Colors.white,

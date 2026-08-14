@@ -171,7 +171,7 @@ class OrderService implements OrderServiceInterface {
   }
 
   @override
-  Future<bool> updateOrder({required int orderId, required List<Map<String, dynamic>> cart, String? orderNote}) async {
+  Future<Response> updateOrder({required int orderId, required List<Map<String, dynamic>> cart, String? orderNote}) async {
     return await orderRepositoryInterface.updateOrder(orderId: orderId, cart: cart, orderNote: orderNote);
   }
 
