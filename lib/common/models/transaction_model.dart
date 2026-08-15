@@ -66,8 +66,12 @@ class Transaction {
     balance = json["balance"].toDouble();
     transactionType = json["transaction_type"];
     reference = json["reference"];
-    createdAt = DateTime.parse(json["created_at"]);
-    updatedAt = DateTime.parse(json["updated_at"]);
+    createdAt = json["created_at"] != null
+        ? DateTime.tryParse(json["created_at"])
+        : null;
+    updatedAt = json["updated_at"] != null
+        ? DateTime.tryParse(json["updated_at"])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -80,8 +84,8 @@ class Transaction {
     data["balance"] = balance;
     data["transaction_type"] = transactionType;
     data["reference"] = reference;
-    data["created_at"] = createdAt!.toIso8601String();
-    data["updated_at"] = updatedAt!.toIso8601String();
+    data["created_at"] = createdAt?.toIso8601String();
+    data["updated_at"] = updatedAt?.toIso8601String();
     return data;
   }
 }

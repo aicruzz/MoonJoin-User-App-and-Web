@@ -3615,3 +3615,14 @@ Canonical audit created at **`docs/MIGRATION_AUDIT.md`** (revised per owner arch
 - **Cleanup Status: NOT READY** — Phase 3B blocked · Language not frozen · Desktop undecided · Phase 4 not done · active runtime legacy
   paths still exist (mobile `ItemBottomSheet` food-variation quick-add; desktop legacy).
 **No production code modified; no freeze checkpoints changed; no cleanup/deletion performed.**
+
+## Wallet History — null-safe Transaction timestamps (9PSB funding visibility) — STATUS: FROZEN (2026-08-15) · owner-approved on iPhone
+**Original failure:** after a 9PSB virtual-account funding, Wallet History stayed permanently on the grey loading skeleton.
+
+**Root cause (confirmed via read-only User App + backend source trace):** `Transaction.fromJson()` (`lib/common/models/transaction_model.dart`) force-parsed the nullable `created_at`/`updated_at` with `DateTime.parse(json[...])`. 9PSB `add_fund` rows carry `updated_at = NULL`; once the newly-visible 9PSB row reached history page 1, `DateTime.parse(null)` threw an uncaught `TypeError: type 'Null' is not a subtype of type 'String'`. With no try/catch in model → repository → controller, the loading state never cleared → permanent shimmer. The same shared model is used by Loyalty History.
+
+**Backend context (separate repo `aicruzz/admin.moonjoin.com`):** commit `62379b8` (stamp `created_at` on PAYIN_SUCCESS `add_fund`) was applied earlier and **remains intact / NOT reverted** — it is necessary so new 9PSB rows carry a real `created_at` and sort correctly under the history's `latest()` (`created_at DESC`) ordering. That fix is what made the 9PSB row reach page 1, which exposed the pre-existing User App null-parse bug. **No `updated_at` was added on the backend** (the app never uses it).
+
+**User App fix (smallest, presentation/parsing only):** null-safe parse — `createdAt = json["created_at"] != null ? DateTime.tryParse(json["created_at"]) : null;` (same for `updated_at`); `toJson` now uses `createdAt?.toIso8601String()` / `updatedAt?.toIso8601String()`. Files: `lib/common/models/transaction_model.dart` (+ `test/common/transaction_model_test.dart`). No backend/API/DB/WalletController/Wallet-History-UI/shimmer/repository change.
+
+**Validation:** `flutter analyze` clean; **5 focused tests pass** (A: created_at set + updated_at null; B: both null → no throw; C: both valid; a Wallet-History page containing the exact production row parses without throwing; toJson null-safe). Release build ✓; **physical iPhone verified** — Wallet History loads normally and the new 9PSB funding **+₦100, 2026-08-15 00:35** (production `WalletTransaction` row 306, `created_at=2026-08-15 00:35:58`, `updated_at=NULL`) appears at the top; the exact failure case is exercised on-device. This shared-model fix also protects Loyalty History.
