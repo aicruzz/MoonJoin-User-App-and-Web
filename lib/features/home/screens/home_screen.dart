@@ -66,12 +66,19 @@ class HomeScreen extends StatefulWidget {
     if(Get.find<SplashController>().module != null && !Get.find<SplashController>().configModel!.moduleConfig!.module!.isParcel! && !Get.find<SplashController>().configModel!.moduleConfig!.module!.isTaxi!) {
       Get.find<BannerController>().getBannerList(reload);
       Get.find<StoreController>().getRecommendedStoreList();
-      if(Get.find<SplashController>().module!.moduleType.toString() == AppConstants.grocery) {
+      final String moduleType = Get.find<SplashController>().module!.moduleType.toString();
+      // Flash Sale is shown on the shared storefront home (AllStoreScreen) for
+      // Food/Grocery/Pharmacy/Ecommerce. Refresh it for ALL of them on every
+      // loadData(reload): checkout calls HomeScreen.loadData(true) after a
+      // successful order, so the mounted Flash card's sold count stays in sync.
+      // (Previously only grocery/ecommerce refreshed here, leaving Food/Pharmacy
+      // stale on the mounted screen until an app restart.)
+      if(moduleType == AppConstants.grocery || moduleType == AppConstants.food
+          || moduleType == AppConstants.pharmacy || moduleType == AppConstants.ecommerce) {
         Get.find<FlashSaleController>().getFlashSale(reload, false);
       }
-      if(Get.find<SplashController>().module!.moduleType.toString() == AppConstants.ecommerce) {
+      if(moduleType == AppConstants.ecommerce) {
         Get.find<ItemController>().getFeaturedCategoriesItemList(false, false);
-        Get.find<FlashSaleController>().getFlashSale(reload, false);
         Get.find<BrandsController>().getBrandList();
       }
       Get.find<BannerController>().getPromotionalBannerList(reload);

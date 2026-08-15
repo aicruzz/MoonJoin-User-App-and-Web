@@ -8,6 +8,8 @@ import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import 'package:sixam_mart/features/banner/controllers/banner_controller.dart';
 import 'package:sixam_mart/features/brands/controllers/brands_controller.dart';
 import 'package:sixam_mart/features/category/controllers/category_controller.dart';
+import 'package:sixam_mart/features/flash_sale/controllers/flash_sale_controller.dart';
+import 'package:sixam_mart/features/flash_sale/widgets/flash_sale_view_widget.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
 import 'package:sixam_mart/helper/address_helper.dart';
@@ -62,6 +64,10 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     // link to the promoted / paid-advertising stores configured in the Admin
     // Panel). Reused as-is; store-target banners are filtered at render time.
     Get.find<BannerController>().getBannerList(false);
+    // Flash Deals = the existing per-store, admin-approved Flash Sale feed.
+    // Reuse the existing controller/data; the section self-hides when the module
+    // has no active flash products. No new API/model/business logic.
+    Get.find<FlashSaleController>().getFlashSale(false, false);
   }
 
   void _loadStores() {
@@ -451,6 +457,11 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     // promoted to a hero card (no fallback hero).
     return Column(children: [
       _topBrands(),
+      // Flash Deals — reuse the approved FlashSaleViewWidget (which renders the
+      // approved FlashProductCard). Gated to the clean home state exactly like the
+      // promotional banner; it also self-hides when there are no active flash
+      // products. Order: Promo Banner → [Brand] → Flash → Provider store banners.
+      if (_activeFilter == -1 && _discovery == -1) const FlashSaleViewWidget(),
       ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
