@@ -322,7 +322,7 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
         child: Row(children: [
           Icon(Icons.flash_on, color: Theme.of(context).primaryColor, size: 20),
           const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-          Text('flash_sale'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+          Text('flash_rent'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
         ]),
       ),
       const SizedBox(height: Dimensions.paddingSizeSmall),
