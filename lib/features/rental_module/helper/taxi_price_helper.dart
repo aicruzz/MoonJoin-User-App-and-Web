@@ -4,6 +4,11 @@ import 'package:sixam_mart/helper/price_converter.dart';
 
 class TaxiPriceHelper {
 
+  /// The applicable (charged) trip cost. When an active percent Flash Sale
+  /// targets the selected rental type, `vehicle.applicableRate` returns the
+  /// backend flash price, so the flash rate flows through the whole pipeline
+  /// (cart → checkout → tax base → total → payload). When no flash applies,
+  /// `applicableRate` returns the original rate, so behaviour is unchanged.
   static double calculateTripCost(List<Carts> cartList, UserData userData) {
     double tripCost = 0;
     String rentalType = userData.rentalType!;
@@ -13,19 +18,37 @@ class TaxiPriceHelper {
     }
 
     for (Carts cart in cartList) {
-      double p = 0;
-      if(rentalType == 'hourly') {
-        p = cart.vehicle!.hourlyPrice! * cart.quantity!;
-      } else if(rentalType == 'day_wise') {
-        p = cart.vehicle!.dayWisePrice! * cart.quantity!;
-      }else {
-        p = cart.vehicle!.distancePrice! * cart.quantity!;
-      }
-      tripCost = tripCost + p;
+      tripCost = tripCost + (cart.vehicle!.applicableRate(rentalType) * cart.quantity!);
     }
     tripCost = tripCost * distanceOrHour;
 
     return tripCost;
+  }
+
+  /// The original (pre-flash) trip cost — used only to display the struck-out
+  /// base cost and the Flash Sale saving in Bill Details. Identical to
+  /// [calculateTripCost] but always uses the vehicle's original rate.
+  static double calculateOriginalTripCost(List<Carts> cartList, UserData userData) {
+    double tripCost = 0;
+    String rentalType = userData.rentalType!;
+    double distanceOrHour = rentalType == 'hourly' ? userData.estimatedHours ?? 1 : rentalType == 'day_wise' ? (userData.estimatedHours ?? 0) / 24 : userData.distance??1;
+    if(cartList.isEmpty) {
+      return tripCost;
+    }
+
+    for (Carts cart in cartList) {
+      tripCost = tripCost + (cart.vehicle!.baseRate(rentalType) * cart.quantity!);
+    }
+    tripCost = tripCost * distanceOrHour;
+
+    return tripCost;
+  }
+
+  /// The Flash Sale saving = original trip cost − applicable (flash) trip cost.
+  /// Zero when no per-unit flash applies, so non-flash bookings are unaffected.
+  static double calculateFlashDiscount(List<Carts> cartList, UserData userData) {
+    final double diff = calculateOriginalTripCost(cartList, userData) - calculateTripCost(cartList, userData);
+    return diff > 0 ? diff : 0;
   }
 
   static double calculateDiscountCost(List<Carts> cartList, UserData userData, {required bool calculateProviderDiscount, double? tripCost}) {
@@ -40,7 +63,8 @@ class TaxiPriceHelper {
 
     for (Carts cart in cartList) {
       double p = 0;
-      if(cart.provider!.discount != null && calculateProviderDiscount && tripCost != null && cart.provider!.discount!.minPurchase! <= tripCost) {
+      bool usedProviderDiscount = cart.provider!.discount != null && calculateProviderDiscount && tripCost != null && cart.provider!.discount!.minPurchase! <= tripCost;
+      if(usedProviderDiscount) {
         discountPrice = cart.provider!.discount!.discount!;
         discountType = cart.provider!.discount!.discountType!;
       } else {
@@ -48,13 +72,18 @@ class TaxiPriceHelper {
         discountType = cart.vehicle!.discountType!;
       }
 
-      if(rentalType == 'hourly') {
-        p = PriceConverter.calculation(cart.vehicle!.hourlyPrice! * distanceOrHour, discountPrice, discountType, cart.quantity!);
-      } else if(rentalType == 'day_wise') {
-        p = PriceConverter.calculation(cart.vehicle!.dayWisePrice! * distanceOrHour, discountPrice, discountType, cart.quantity!);
-      } else {
-        p = PriceConverter.calculation(cart.vehicle!.distancePrice! * distanceOrHour, discountPrice, discountType, cart.quantity!);
+      // Flash Sale replaces the vehicle's own promotional discount: when a
+      // per-unit flash rate applies to the selected axis it already embeds the
+      // saving (surfaced separately as the Flash Sale bill line), so the vehicle
+      // discount must not stack on top. Provider-wide promos still apply, but to
+      // the corrected (flash) subtotal.
+      if(!usedProviderDiscount && cart.vehicle!.hasFlashRate(rentalType)) {
+        discountPrice = 0;
       }
+
+      // Base amount uses the applicable (flash-aware) rate so any surviving
+      // discount is computed on the corrected subtotal, never the pre-flash rate.
+      p = PriceConverter.calculation(cart.vehicle!.applicableRate(rentalType) * distanceOrHour, discountPrice, discountType, cart.quantity!);
 
       tripDiscountCost = tripDiscountCost + p;
     }

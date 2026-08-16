@@ -17,10 +17,15 @@ class BillDetailsWidget extends StatelessWidget {
   final bool isCompleted;
   final bool? taxInclude;
   final double? taxPercent;
+  /// Rental Flash Sale saving (original − flash trip cost). When > 0 the Trip
+  /// Cost row shows the original (pre-flash) cost and a Flash Sale line shows the
+  /// saving, so the bill reconciles to the flash-based [tripCost]. Defaults to 0,
+  /// so non-flash bookings render exactly as before.
+  final double flashDiscount;
   const BillDetailsWidget({
     super.key, required this.tripCost, required this.tripDiscountCost, required this.couponDiscountCost,
     required this.subtotal, required this.vat, required this.serviceFee, this.isCompleted = false,
-    this.taxInclude = false, this.taxPercent = 0,
+    this.taxInclude = false, this.taxPercent = 0, this.flashDiscount = 0,
   });
 
   @override
@@ -46,7 +51,13 @@ class BillDetailsWidget extends StatelessWidget {
 
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('trip_cost'.tr, style: robotoRegular),
-            Text(PriceConverter.convertPrice(tripCost, forTaxi: true), style: robotoRegular, textDirection: TextDirection.ltr),
+            Text(PriceConverter.convertPrice(tripCost + flashDiscount, forTaxi: true), style: robotoRegular, textDirection: TextDirection.ltr),
+          ]),
+
+          if(flashDiscount > 0)
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('flash_sale'.tr, style: robotoRegular),
+            Text('- ${PriceConverter.convertPrice(flashDiscount, forTaxi: true)}', style: robotoRegular, textDirection: TextDirection.ltr),
           ]),
 
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

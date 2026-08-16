@@ -186,6 +186,11 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
+                      if(vehicle.flashSale != null) ...[
+                        _flashSaleBanner(context, vehicle),
+                        const SizedBox(height: Dimensions.paddingSizeLarge),
+                      ],
+
                       _whereToGo(context, vehicle, taxiCartController, locationController),
                       const SizedBox(height: Dimensions.paddingSizeLarge),
 
@@ -452,6 +457,76 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   // `TaxiCartController.selectTripType` — both are the card's own built-in modes.
   // An in-cart change is persisted through the production cart update when the user
   // proceeds to checkout (see `_proceedToCheckout`). ──
+  // ── Rental Flash Sale banner (presentation only) ──────────────────────────
+  // Renders the backend's authoritative `flash_sale` payload; it NEVER computes a
+  // discount. Percent campaigns publish per-axis flash_price → shown vs original
+  // (strikethrough) for each axis the campaign applies to AND the vehicle supports.
+  // Amount/booking-total campaigns publish no per-unit price → only the flash
+  // indicator + headline discount are shown. Existing trip-type cards and booking
+  // calculations are untouched.
+  Widget _flashSaleBanner(BuildContext context, VehicleModel vehicle) {
+    final RentalFlashSale flash = vehicle.flashSale!;
+    final Color primary = Theme.of(context).primaryColor;
+
+    final List<Widget> priceRows = [];
+    void addAxis(String key, bool supported, String label) {
+      final RentalFlashAxisPrice? p = flash.axisPrice(key);
+      if (supported && p != null && p.hasFlashPrice) {
+        priceRows.add(Padding(
+          padding: const EdgeInsets.only(top: Dimensions.paddingSizeExtraSmall),
+          child: Row(children: [
+            Text('$label:  ', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)),
+            Text(PriceConverter.convertPrice(p.flashPrice, forTaxi: true), textDirection: TextDirection.ltr,
+                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall, color: primary)),
+            const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+            if (p.originalPrice != null)
+              Text(PriceConverter.convertPrice(p.originalPrice, forTaxi: true), textDirection: TextDirection.ltr,
+                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall,
+                      color: Theme.of(context).disabledColor, decoration: TextDecoration.lineThrough)),
+          ]),
+        ));
+      }
+    }
+    addAxis('hourly', vehicle.tripHourly ?? false, 'hourly'.tr);
+    addAxis('distance_wise', vehicle.tripDistance ?? false, 'distance_wise'.tr);
+    addAxis('day_wise', vehicle.tripDayWise ?? false, 'day_wise'.tr);
+
+    final String headline = (flash.discountType == 'percent' && flash.discount != null)
+        ? '${flash.discount!.toStringAsFixed(0)}% ${'off'.tr}'
+        : (flash.discount != null
+            ? '${PriceConverter.convertPrice(flash.discount, forTaxi: true)} ${'off'.tr}'
+            : 'flash_sale'.tr);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+        border: Border.all(color: primary.withValues(alpha: 0.25)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.flash_on, size: 18, color: primary),
+          const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+          Expanded(
+            child: Text((flash.title != null && flash.title!.isNotEmpty) ? flash.title! : 'flash_sale'.tr,
+                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: primary),
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          const SizedBox(width: Dimensions.paddingSizeSmall),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: 2),
+            decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+            child: Text(headline,
+                style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).cardColor)),
+          ),
+        ]),
+        if (priceRows.isNotEmpty) ...priceRows,
+      ]),
+    );
+  }
+
   Widget _tripTypes(BuildContext context, VehicleModel vehicle, double discount, String discountType, TaxiCartController taxiCartController) {
     final double distanceWiseDiscount = PriceConverter.calculation(vehicle.distancePrice!, discount, discountType, 1);
     final double hourlyDiscount = PriceConverter.calculation(vehicle.hourlyPrice!, discount, discountType, 1);
@@ -644,12 +719,14 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
       final double inputHours = double.tryParse(locationController.estimateTimeController.text) ?? (taxiCartController.carCartModel?.userData?.estimatedHours ?? 0);
       final double inputDays = double.tryParse(locationController.estimateDayController.text) ?? estimatedDay;
 
-      final double a = rentalType == AppConstants.hourly ? (vehicle.hourlyPrice ?? 0)
-          : rentalType == AppConstants.dayWise ? (vehicle.dayWisePrice ?? 0) : (vehicle.distancePrice ?? 0);
+      // Flash Sale-aware applicable rate (backend flash price when the campaign
+      // targets this axis, else the original rate). Flash already embeds the
+      // saving, so the vehicle discount is not stacked on top when flash applies.
+      final double a = vehicle.applicableRate(rentalType);
       final double b = rentalType == AppConstants.hourly ? inputHours
           : rentalType == AppConstants.dayWise ? inputDays : (taxiCartController.carCartModel!.userData!.distance ?? 0);
       final double priceWithoutDiscount = (a * b) * cartQuantity;
-      price = priceWithoutDiscount - _calculateDiscount(priceWithoutDiscount, discount, discountType, vehicle);
+      price = priceWithoutDiscount - (vehicle.hasFlashRate(rentalType) ? 0 : _calculateDiscount(priceWithoutDiscount, discount, discountType, vehicle));
 
       estimateLabel = rentalType == AppConstants.hourly
           ? '${'estimated'.tr} $inputHours ${'hr'.tr}'
@@ -661,8 +738,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
       // until trip context exists; once it does (real distance from the map
       // confirm, or a typed estimate), the REAL total: rate × units − discount —
       // the same maths the in-cart branch and the cart backend use.
-      final double base = tripType == 'hourly' ? (vehicle.hourlyPrice ?? 0)
-          : tripType == 'day_wise' ? (vehicle.dayWisePrice ?? 0) : (vehicle.distancePrice ?? 0);
+      // Flash Sale-aware applicable rate — same rule as the in-cart branch.
+      final double base = vehicle.applicableRate(tripType);
+      final bool flashApplies = vehicle.hasFlashRate(tripType);
       final double units = tripType == 'hourly'
           ? (double.tryParse(locationController.estimateTimeController.text) ?? 0)
           : tripType == 'day_wise'
@@ -670,9 +748,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
               : ((locationController.distance ?? -1) > 0 ? locationController.distance! : 0);
       if(units > 0) {
         final double priceWithoutDiscount = base * units;
-        price = priceWithoutDiscount - _calculateDiscount(priceWithoutDiscount, discount, discountType, vehicle);
+        price = priceWithoutDiscount - (flashApplies ? 0 : _calculateDiscount(priceWithoutDiscount, discount, discountType, vehicle));
       } else {
-        price = base - PriceConverter.calculation(base, discount, discountType, 1);
+        price = flashApplies ? base : (base - PriceConverter.calculation(base, discount, discountType, 1));
       }
 
       estimateLabel = tripType == 'hourly'

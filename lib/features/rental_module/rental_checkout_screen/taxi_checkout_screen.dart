@@ -121,6 +121,7 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
           bool isScheduled = !DateConverter.isSameDate(selectedTime);
 
           double tripCost = TaxiPriceHelper.calculateTripCost(taxiCartController.cartList, taxiCartController.carCartModel!.userData!);
+          double flashDiscount = TaxiPriceHelper.calculateFlashDiscount(taxiCartController.cartList, taxiCartController.carCartModel!.userData!);
 
           double productDiscountPrice = TaxiPriceHelper.calculateDiscountCost(taxiCartController.cartList, taxiCartController.carCartModel!.userData!, tripCost: tripCost, calculateProviderDiscount: false);
           double providerDiscountPrice = TaxiPriceHelper.calculateDiscountCost(taxiCartController.cartList, taxiCartController.carCartModel!.userData!, tripCost: tripCost, calculateProviderDiscount: true);
@@ -419,7 +420,7 @@ class _TaxiCheckoutScreenState extends State<TaxiCheckoutScreen> {
                     padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeLarge),
                     child: BillDetailsWidget(
                       tripCost: tripCost, tripDiscountCost: tripDiscount, couponDiscountCost: couponDiscount,
-                      subtotal: subtotal, vat: taxiCartController.tripTax!, serviceFee: serviceFee,
+                      subtotal: subtotal, vat: taxiCartController.tripTax!, serviceFee: serviceFee, flashDiscount: flashDiscount,
                       taxInclude: (taxiCartController.taxIncluded == 1), taxPercent: taxiCartController.cartList[0].provider!.tax,
                     ),
                   ),

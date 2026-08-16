@@ -169,6 +169,35 @@ class _VehicleCardState extends State<VehicleCard> {
 
                   ]),
                 ),
+
+                // Rental Flash Sale badge — additive; shown only when the backend
+                // flagged this vehicle/apartment with an active flash_sale. Percent
+                // campaigns show % OFF; amount/booking-total show a neutral label
+                // (no fabricated per-unit price). Flash pricing detail is on details.
+                if (widget.vehicle.flashSale != null)
+                  Positioned(
+                    left: 0, bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(Dimensions.radiusDefault),
+                          bottomLeft: Radius.circular(Dimensions.radiusDefault),
+                        ),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.flash_on, size: 11, color: Theme.of(context).cardColor),
+                        const SizedBox(width: 2),
+                        Text(
+                          (widget.vehicle.flashSale!.discountType == 'percent' && widget.vehicle.flashSale!.discount != null)
+                              ? '${widget.vehicle.flashSale!.discount!.toStringAsFixed(0)}% ${'off'.tr}'
+                              : 'flash_sale'.tr,
+                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverSmall, color: Theme.of(context).cardColor),
+                        ),
+                      ]),
+                    ),
+                  ),
               ]),
             ),
             const SizedBox(height: 10),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
+import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 
@@ -14,6 +15,10 @@ class RentalPopularCard extends StatelessWidget {
   final String subtitle;
   final String price;
   final String unit;
+  /// Optional pre-formatted original (pre-flash) price. When supplied it is shown
+  /// struck-through next to [price] to communicate the Flash Sale saving. Null on
+  /// non-flash cards (Main Rental Home), so their presentation is unchanged.
+  final String? originalPrice;
   final double rating;
   final String? ratingCount;
   final bool showBookNow;
@@ -21,6 +26,10 @@ class RentalPopularCard extends StatelessWidget {
   final VoidCallback? onFavourite;
   final VoidCallback? onTap;
   final VoidCallback? onBook;
+  /// Optional Rental Flash Sale (backend-authoritative). When non-null a flash
+  /// badge is shown; null → the card is unchanged. Never passed on the Main Rental
+  /// Home; only the dedicated Car/Apt "Flash Deals" sections supply it.
+  final RentalFlashSale? flashSale;
 
   const RentalPopularCard({
     super.key,
@@ -36,6 +45,8 @@ class RentalPopularCard extends StatelessWidget {
     this.onFavourite,
     this.onTap,
     this.onBook,
+    this.flashSale,
+    this.originalPrice,
   });
 
   @override
@@ -72,6 +83,24 @@ class RentalPopularCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (flashSale != null)
+              Positioned(
+                top: Dimensions.paddingSizeExtraSmall, left: Dimensions.paddingSizeExtraSmall,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: green, borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.flash_on, size: 11, color: Colors.white),
+                    const SizedBox(width: 2),
+                    Text(
+                      (flashSale!.discountType == 'percent' && flashSale!.discount != null)
+                          ? '${flashSale!.discount!.toStringAsFixed(0)}% ${'off'.tr}'
+                          : 'flash_sale'.tr,
+                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverSmall, color: Colors.white),
+                    ),
+                  ]),
+                ),
+              ),
           ]),
 
           Padding(
@@ -85,8 +114,15 @@ class RentalPopularCard extends StatelessWidget {
               const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
               Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text(price, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: green), textDirection: TextDirection.ltr),
+                Flexible(child: Text(price, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault, color: green), textDirection: TextDirection.ltr)),
                 Text(unit, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
+                if (originalPrice != null) ...[
+                  const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                  Flexible(child: Text(originalPrice!, maxLines: 1, overflow: TextOverflow.ellipsis, textDirection: TextDirection.ltr,
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor,
+                          decoration: TextDecoration.lineThrough))),
+                ],
               ]),
               const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 

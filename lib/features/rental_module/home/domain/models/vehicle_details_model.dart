@@ -41,6 +41,7 @@ class VehicleModel {
   List<String>? documentsFullUrl;
   Brand? brand;
   Provider? provider;
+  RentalFlashSale? flashSale;
 
   VehicleModel(
       {this.id,
@@ -85,6 +86,7 @@ class VehicleModel {
         this.documentsFullUrl,
         this.brand,
         this.provider,
+        this.flashSale,
       });
 
   VehicleModel.fromJson(Map<String, dynamic> json) {
@@ -146,6 +148,10 @@ class VehicleModel {
     provider = json['provider'] != null
         ? Provider.fromJson(json['provider'])
         : null;
+    // Rental Flash Sale is appended to every vehicle by the backend (null when no
+    // active/eligible campaign). Parsed defensively so existing vehicle parsing is
+    // never affected when it is null. The frontend renders backend values only.
+    flashSale = json['flash_sale'] != null ? RentalFlashSale.fromJson(json['flash_sale']) : null;
   }
 
   /// Tolerates the backend sending an integer counter as a numeric string.
@@ -207,8 +213,151 @@ class VehicleModel {
     if (provider != null) {
       data['provider'] = provider!.toJson();
     }
+    if (flashSale != null) {
+      data['flash_sale'] = flashSale!.toJson();
+    }
     return data;
   }
+
+  // ── Rental Flash Sale pricing (Rental-level, not vehicle-specific) ──
+  // These resolve pricing by a rentalType STRING key, so every Rental type
+  // resolves the same way: Car Rental uses 'hourly' | 'day_wise' |
+  // 'distance_wise'; a future Short Apt Rental type maps its own rate key(s)
+  // through the same entry points with no rewrite. The frontend NEVER computes
+  // flash pricing — it uses the backend-authoritative `flash_price` verbatim.
+
+  /// The original (pre-flash) per-unit rate for [rentalType]. Falls back to the
+  /// distance rate for any non-hourly / non-day type.
+  double baseRate(String? rentalType) {
+    if (rentalType == 'hourly') return hourlyPrice ?? 0;
+    if (rentalType == 'day_wise') return dayWisePrice ?? 0;
+    return distancePrice ?? 0;
+  }
+
+  /// The applicable per-unit rate for [rentalType]: the backend Flash Sale
+  /// price when an active percent campaign targets that axis, otherwise the
+  /// original rate. Amount / booking_total campaigns publish no per-unit flash
+  /// price, so the original rate is returned unchanged (their discount applies
+  /// at the total level and is never invented here).
+  double applicableRate(String? rentalType) {
+    final RentalFlashAxisPrice? axis = flashSale?.axisPrice(_flashAxisKey(rentalType));
+    if (axis != null && axis.hasFlashPrice) {
+      return axis.flashPrice!;
+    }
+    return baseRate(rentalType);
+  }
+
+  /// Whether a per-unit Flash Sale rate applies to [rentalType].
+  bool hasFlashRate(String? rentalType) {
+    final RentalFlashAxisPrice? axis = flashSale?.axisPrice(_flashAxisKey(rentalType));
+    return axis != null && axis.hasFlashPrice;
+  }
+
+  /// Maps a booking rentalType to its Flash Sale axis key. The distance branch
+  /// is the default, so 'distance' and 'distance_wise' both resolve correctly.
+  static String _flashAxisKey(String? rentalType) {
+    if (rentalType == 'hourly') return 'hourly';
+    if (rentalType == 'day_wise') return 'day_wise';
+    return 'distance_wise';
+  }
+}
+
+/// Rental Flash Sale — read-only presentation of the backend's authoritative
+/// `flash_sale` payload appended to each vehicle. The frontend NEVER computes
+/// flash pricing; it renders backend values and shows nothing when null.
+class RentalFlashSale {
+  final String? title;
+  final String? discountType;       // 'percent' | 'amount'
+  final double? discount;
+  final String? discountAppliesTo;  // 'unit_price' | 'booking_total'
+  final String? appliesTo;          // 'all' | 'hourly' | 'distance_wise' | 'day_wise'
+  final String? startDate;
+  final String? endDate;
+  final RentalFlashPrices? prices;
+
+  RentalFlashSale({this.title, this.discountType, this.discount, this.discountAppliesTo,
+    this.appliesTo, this.startDate, this.endDate, this.prices});
+
+  RentalFlashSale.fromJson(Map<String, dynamic> json)
+      : title = json['title'],
+        discountType = json['discount_type'],
+        discount = json['discount'] != null ? double.tryParse(json['discount'].toString()) : null,
+        discountAppliesTo = json['discount_applies_to'],
+        appliesTo = json['applies_to'],
+        startDate = json['start_date'],
+        endDate = json['end_date'],
+        prices = json['prices'] != null ? RentalFlashPrices.fromJson(json['prices']) : null;
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'discount_type': discountType,
+        'discount': discount,
+        'discount_applies_to': discountAppliesTo,
+        'applies_to': appliesTo,
+        'start_date': startDate,
+        'end_date': endDate,
+        'prices': prices?.toJson(),
+      };
+
+  /// Amount campaigns apply to the booking total and publish no per-unit flash
+  /// price, so the UI must NOT fabricate one.
+  bool get isBookingTotal => discountAppliesTo == 'booking_total';
+
+  /// The backend axis price for [axisKey] ('hourly' | 'distance_wise' | 'day_wise'),
+  /// or null when the campaign does not apply to that axis.
+  RentalFlashAxisPrice? axisPrice(String axisKey) {
+    switch (axisKey) {
+      case 'hourly':
+        return prices?.hourly;
+      case 'distance_wise':
+        return prices?.distanceWise;
+      case 'day_wise':
+        return prices?.dayWise;
+    }
+    return null;
+  }
+}
+
+class RentalFlashPrices {
+  final RentalFlashAxisPrice? hourly;
+  final RentalFlashAxisPrice? distanceWise;
+  final RentalFlashAxisPrice? dayWise;
+
+  RentalFlashPrices({this.hourly, this.distanceWise, this.dayWise});
+
+  RentalFlashPrices.fromJson(Map<String, dynamic> json)
+      : hourly = json['hourly'] != null ? RentalFlashAxisPrice.fromJson(json['hourly']) : null,
+        distanceWise = json['distance_wise'] != null ? RentalFlashAxisPrice.fromJson(json['distance_wise']) : null,
+        dayWise = json['day_wise'] != null ? RentalFlashAxisPrice.fromJson(json['day_wise']) : null;
+
+  Map<String, dynamic> toJson() => {
+        'hourly': hourly?.toJson(),
+        'distance_wise': distanceWise?.toJson(),
+        'day_wise': dayWise?.toJson(),
+      };
+}
+
+class RentalFlashAxisPrice {
+  final double? originalPrice;
+  final double? flashPrice;      // null for amount / booking_total campaigns
+  final double? discountAmount;  // null for amount / booking_total campaigns
+
+  RentalFlashAxisPrice({this.originalPrice, this.flashPrice, this.discountAmount});
+
+  RentalFlashAxisPrice.fromJson(Map<String, dynamic> json)
+      : originalPrice = json['original_price'] != null ? double.tryParse(json['original_price'].toString()) : null,
+        flashPrice = json['flash_price'] != null ? double.tryParse(json['flash_price'].toString()) : null,
+        discountAmount = json['discount_amount'] != null ? double.tryParse(json['discount_amount'].toString()) : null;
+
+  Map<String, dynamic> toJson() => {
+        'original_price': originalPrice,
+        'flash_price': flashPrice,
+        'discount_amount': discountAmount,
+      };
+
+  /// A usable per-unit flash price exists only when the backend supplied a
+  /// non-null flash_price (percent campaigns).
+  bool get hasFlashPrice => flashPrice != null;
 }
 
 class Brand {

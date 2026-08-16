@@ -6,6 +6,9 @@ import 'package:sixam_mart/features/rental_module/common/widgets/rant_cart_widge
 import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
 import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
 import 'package:sixam_mart/features/rental_module/home/widgets/banner_widget.dart';
+import 'package:sixam_mart/features/rental_module/home/widgets/rental_popular_card.dart';
+import 'package:sixam_mart/features/rental_module/vehicle_details_screen/vehicle_details_screen.dart';
+import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/features/rental_module/select_vehicle_screen/search_vehicle_screen.dart';
 import 'package:sixam_mart/common/widgets/no_data_screen.dart';
 import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
@@ -104,13 +107,23 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
               // both via the default `all`). Adapter-classified — queue item 18.
               BannerWidget(section: widget.fromApartment ? RentalSection.apartment : RentalSection.car),
 
-              const SizedBox(height: Dimensions.paddingSizeSmall),
               // Apartment mode: the brand API returns VEHICLE brands only — no real
               // apartment brand data exists, so the section is hidden (never faked).
               // TODO(BACKEND, queue item 17): when the brand API can return apartment
               // brands/platforms, remove this gate (or filter by brand type) — the
               // section itself is UNCHANGED and reactivates without any redesign.
               if (!widget.fromApartment) _topBrands(context, taxiHomeController),
+
+              const SizedBox(height: Dimensions.paddingSizeSmall),
+              // Dedicated Flash Deals section — placed BELOW the brand section,
+              // matching the established Food/Grocery/Ecommerce Flash Sale placement
+              // (after brands, before the provider/listing). Rental-level: the Car
+              // Rental Home shows car flash vehicles and the Short Apartments Home
+              // shows apartment flash vehicles (apartment mode has no brand section,
+              // so it sits directly below the banner — the analogous position).
+              // Backend-authoritative (flashSale != null); category split via the
+              // existing RentalApartmentAdapter. Self-hides when none qualify.
+              _flashDeals(context, taxiHomeController, vehicles),
 
               const SizedBox(height: Dimensions.paddingSizeSmall),
               _providerList(context, taxiHomeController, vehicles),
@@ -288,6 +301,68 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
 
   // ── Vehicle list — existing shared VehicleCard + approved PaginatedListView ──
   // ── Provider banners — mirrors the approved Food All Restaurants flow:
+  // ── Dedicated Flash Deals section (Car Rental Home / Short Apartments Home) ──
+  // Backend-authoritative: shows only vehicles the backend flagged with an active
+  // flash_sale, split by category via the existing RentalApartmentAdapter so car
+  // flash appears only on the Car home and apartment flash only on the Apt home.
+  // Reuses RentalPopularCard (with its new flash badge). Self-hides when empty, so
+  // expired/exhausted/ineligible campaigns (backend → flash_sale null) simply drop.
+  Widget _flashDeals(BuildContext context, TaxiHomeController taxiHomeController, List<VehicleModel>? vehicles) {
+    if (vehicles == null) return const SizedBox();
+    final int? aptId = RentalApartmentAdapter.apartmentCategoryId(taxiHomeController.vehicleCategoryModel);
+    final List<VehicleModel> flashVehicles = vehicles.where((v) {
+      if (v.flashSale == null || v.status != 1) return false;
+      final bool isApt = aptId != null && v.categoryId == aptId;
+      return widget.fromApartment ? isApt : !isApt;
+    }).toList();
+    if (flashVehicles.isEmpty) return const SizedBox();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, 0),
+        child: Row(children: [
+          Icon(Icons.flash_on, color: Theme.of(context).primaryColor, size: 20),
+          const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+          Text('flash_sale'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+        ]),
+      ),
+      const SizedBox(height: Dimensions.paddingSizeSmall),
+      SizedBox(
+        height: 210,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
+          itemCount: flashVehicles.length,
+          separatorBuilder: (_, i) => const SizedBox(width: Dimensions.paddingSizeSmall),
+          itemBuilder: (context, i) {
+            final VehicleModel v = flashVehicles[i];
+            // Feature the day-wise axis (matches the "/day" unit). Show the flash
+            // price as the headline and the original struck-through — all from the
+            // backend flash data via the Rental-level model helpers (never hardcoded).
+            // When this axis carries no per-unit flash price (e.g. an amount campaign
+            // or a campaign scoped to another axis), fall back to the original price
+            // with no strikethrough — the badge still marks the Flash Sale state.
+            const String dayAxis = 'day_wise';
+            final bool dayFlash = v.hasFlashRate(dayAxis);
+            return RentalPopularCard(
+              image: v.thumbnailFullUrl ?? '',
+              title: v.name ?? '',
+              subtitle: '${v.transmissionType ?? ''}${(v.transmissionType != null && v.fuelType != null) ? ' • ' : ''}${v.fuelType ?? ''}',
+              price: PriceConverter.convertPrice(v.applicableRate(dayAxis)),
+              unit: ' /${'day'.tr}',
+              originalPrice: dayFlash ? PriceConverter.convertPrice(v.baseRate(dayAxis)) : null,
+              rating: v.avgRating ?? 0,
+              showBookNow: true,
+              flashSale: v.flashSale,
+              onTap: () => Get.to(() => VehicleDetailsScreen(vehicleId: v.id)),
+              onBook: () => Get.to(() => VehicleDetailsScreen(vehicleId: v.id)),
+            );
+          },
+        ),
+      ),
+      const SizedBox(height: Dimensions.paddingSizeSmall),
+    ]);
+  }
+
   // Provider banner → Provider page → Vehicle list. Providers are derived from the
   // REAL backend `provider` object embedded in each vehicle (see
   // RentalProviderAdapter) because no provider list endpoint exists yet; when it
