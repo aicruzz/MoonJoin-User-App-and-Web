@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
 import 'package:sixam_mart/features/flash_sale/controllers/flash_sale_controller.dart';
+import 'package:sixam_mart/features/flash_sale/domain/models/flash_sale_model.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/features/home/widgets/components/flash_sale_card_widget.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/helper/responsive_helper.dart';
 import 'package:sixam_mart/helper/route_helper.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/features/flash_sale/widgets/timer_widget.dart';
-import 'package:sixam_mart/features/flash_sale/widgets/flash_sale_timer_view_widget.dart';
 
+/// Module Flash Sale (Food/Grocery/Fashion/…) rendered with the approved
+/// MoonJoin Flash Deals presentation (`MoonjoinFlashDealsSection` +
+/// `MoonjoinFlashDealCard`). PRESENTATION ONLY — all data, discount, stock,
+/// duration/countdown, pageIndex and navigation come from the unchanged
+/// `FlashSaleController`/models exactly as before.
 class FlashSaleViewWidget extends StatefulWidget {
   const FlashSaleViewWidget({super.key});
 
@@ -27,122 +31,55 @@ class _FlashSaleViewWidgetState extends State<FlashSaleViewWidget> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<FlashSaleController>(builder: (flashSaleController) {
-      Item? item;
-      int stock = 0;
-      int remaining = 0;
-      int sold = 0;
-      if(flashSaleController.flashSaleModel != null && flashSaleController.flashSaleModel!.activeProducts != null) {
-        int index = flashSaleController.flashSaleModel!.activeProducts!.length > 1 ? flashSaleController.pageIndex : 0;
-        item = flashSaleController.flashSaleModel!.activeProducts![index].item;
-        stock = flashSaleController.flashSaleModel!.activeProducts![index].stock!;
-        sold = flashSaleController.flashSaleModel!.activeProducts![index].sold!;
-        remaining = stock - sold;
+      final FlashSaleModel? model = flashSaleController.flashSaleModel;
+      if (model == null) return const FlashSaleShimmerView();
+
+      final List<ActiveProducts>? products = model.activeProducts;
+      if (products == null || products.isEmpty || (flashSaleController.duration?.inSeconds ?? 0) <= 1) {
+        return const SizedBox();
       }
-      return flashSaleController.flashSaleModel != null ? flashSaleController.flashSaleModel!.activeProducts != null && flashSaleController.duration!.inSeconds > 1 ?  Container(
-        width: Get.width,
-        margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-          border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.2)),
-        ),
-        child: Column(children: [
 
-          Padding(
-            padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-            child: CustomInkWell(
-              onTap: () => Get.toNamed(RouteHelper.getFlashSaleDetailsScreen(flashSaleController.flashSaleModel!.activeProducts![0].flashSaleId!)),
-              radius: Dimensions.paddingSizeSmall,
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('flash_sale'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                  const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-                  Text('limited_time_offer'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
-                ]),
-
-                Text('see_all'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor, decoration: TextDecoration.underline, decorationColor: Theme.of(context).disabledColor, decorationThickness: 1.5)),
-
-              ]),
-            ),
-          ),
-
-          Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-            FlashSaleTimerView(eventDuration: flashSaleController.duration),
-          ]),
-
-          flashSaleController.flashSaleModel!.activeProducts != null
-            ? FlashSaleCard(
-            activeProducts: flashSaleController.flashSaleModel!.activeProducts!,
-            soldOut: remaining == 0,
-          ) : const SizedBox(),
-
-          SizedBox(
-            width: Get.width * 0.7,
-            child: Text("${item!.name}", style: robotoRegular, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
-          ),
-          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-          (Get.find<SplashController>().configModel!.moduleConfig!.module!.unit! && item.unitType != null) ? Text(
-            '(${ item.unitType ?? ''})',
-            style: robotoRegular.copyWith(color: Theme.of(context).disabledColor),
-          ) : const SizedBox(),
-          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-
-            item.discount != null && item.discount! > 0  ? Flexible(child: Text(
-              PriceConverter.convertPrice(Get.find<ItemController>().getStartingPrice(item)),
-              style: robotoMedium.copyWith(
-                fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor,
-                decoration: TextDecoration.lineThrough,
-              ), textDirection: TextDirection.ltr,
-            )) : const SizedBox(),
-            SizedBox(width: item.discount != null && item.discount! > 0 ? Dimensions.paddingSizeExtraSmall : 0),
-
-            Flexible(child: Text(
-              PriceConverter.convertPrice(
-                Get.find<ItemController>().getStartingPrice(item), discount: item.discount,
-                discountType: item.discountType,
-              ),
-              textDirection: TextDirection.ltr, style: robotoMedium,
-            )),
-
-          ]),
-          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-          SizedBox(
-            width: Get.width * 0.7,
-            child: Stack(
-              children: [
-                Builder(
-                  builder: (context) {
-                    bool bothZero = remaining == 0 && stock == 0;
-                    return LinearProgressIndicator(
-                      borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-                      minHeight: 15,
-                      value: bothZero ? 0 : remaining / stock,
-                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                      backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.25),
-                    );
-                  }
-                ),
-
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Text(
-                    '${'sold'.tr} $sold/$stock',
-                    style: robotoMedium.copyWith(color: Theme.of(context).cardColor, fontSize: Dimensions.fontSizeSmall),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: Dimensions.paddingSizeDefault),
-          ],
-        ),
-      ) : const SizedBox() : const FlashSaleShimmerView();
+      return MoonjoinFlashDealsSection(
+        title: 'flash_sale'.tr,
+        subtitle: 'limited_time_offer'.tr,
+        countdownDuration: flashSaleController.duration,
+        onViewAll: () => Get.toNamed(RouteHelper.getFlashSaleDetailsScreen(products[0].flashSaleId!)),
+        itemCount: products.length,
+        initialPage: products.length > 1 ? 1 : 0,
+        onPageChanged: (i) => flashSaleController.setPageIndex(i),
+        itemBuilder: (context, index) => _card(context, products[index]),
+      );
     });
+  }
+
+  Widget _card(BuildContext context, ActiveProducts activeProduct) {
+    final Item item = activeProduct.item!;
+    final double? startPrice = Get.find<ItemController>().getStartingPrice(item);
+    final bool hasDiscount = item.discount != null && item.discount! > 0;
+    final int stock = activeProduct.stock ?? 0;
+    final int sold = activeProduct.sold ?? 0;
+    final int? soldPercent = stock > 0 ? ((sold / stock) * 100).round() : null;
+
+    return MoonjoinFlashDealCard(
+      image: item.imageFullUrl ?? '',
+      badgeText: _badge(item),
+      title: item.name ?? '',
+      provider: item.storeName,
+      flashPrice: PriceConverter.convertPrice(startPrice, discount: item.discount, discountType: item.discountType),
+      originalPrice: hasDiscount ? PriceConverter.convertPrice(startPrice) : null,
+      soldLabel: soldPercent != null ? '$soldPercent% ${'sold'.tr}' : null,
+      soldFraction: stock > 0 ? (sold / stock) : null,
+      onTap: () => Get.find<ItemController>().navigateToItemPage(item, context),
+    );
+  }
+
+  String _badge(Item item) {
+    final double discount = item.discount ?? 0;
+    if (discount <= 0) return 'flash_sale'.tr;
+    if ((item.discountType ?? 'percent') == 'percent') {
+      return '${discount.toStringAsFixed(0)}% ${'off'.tr}';
+    }
+    return '${PriceConverter.convertPrice(discount)} ${'off'.tr}';
   }
 }
 
@@ -236,4 +173,3 @@ class FlashSaleShimmerView extends StatelessWidget {
     );
   }
 }
-

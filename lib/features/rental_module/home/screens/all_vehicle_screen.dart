@@ -6,7 +6,8 @@ import 'package:sixam_mart/features/rental_module/common/widgets/rant_cart_widge
 import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
 import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
 import 'package:sixam_mart/features/rental_module/home/widgets/banner_widget.dart';
-import 'package:sixam_mart/features/rental_module/home/widgets/rental_popular_card.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
 import 'package:sixam_mart/features/rental_module/vehicle_details_screen/vehicle_details_screen.dart';
 import 'package:sixam_mart/helper/price_converter.dart';
 import 'package:sixam_mart/features/rental_module/select_vehicle_screen/search_vehicle_screen.dart';
@@ -316,51 +317,47 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
       return widget.fromApartment ? isApt : !isApt;
     }).toList();
     if (flashVehicles.isEmpty) return const SizedBox();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, 0),
-        child: Row(children: [
-          Icon(Icons.flash_on, color: Theme.of(context).primaryColor, size: 20),
-          const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-          Text('flash_rent'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-        ]),
-      ),
-      const SizedBox(height: Dimensions.paddingSizeSmall),
-      SizedBox(
-        height: 210,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-          itemCount: flashVehicles.length,
-          separatorBuilder: (_, i) => const SizedBox(width: Dimensions.paddingSizeSmall),
-          itemBuilder: (context, i) {
-            final VehicleModel v = flashVehicles[i];
-            // Feature the day-wise axis (matches the "/day" unit). Show the flash
-            // price as the headline and the original struck-through — all from the
-            // backend flash data via the Rental-level model helpers (never hardcoded).
-            // When this axis carries no per-unit flash price (e.g. an amount campaign
-            // or a campaign scoped to another axis), fall back to the original price
-            // with no strikethrough — the badge still marks the Flash Sale state.
-            const String dayAxis = 'day_wise';
-            final bool dayFlash = v.hasFlashRate(dayAxis);
-            return RentalPopularCard(
-              image: v.thumbnailFullUrl ?? '',
-              title: v.name ?? '',
-              subtitle: '${v.transmissionType ?? ''}${(v.transmissionType != null && v.fuelType != null) ? ' • ' : ''}${v.fuelType ?? ''}',
-              price: PriceConverter.convertPrice(v.applicableRate(dayAxis)),
-              unit: ' /${'day'.tr}',
-              originalPrice: dayFlash ? PriceConverter.convertPrice(v.baseRate(dayAxis)) : null,
-              rating: v.avgRating ?? 0,
-              showBookNow: true,
-              flashSale: v.flashSale,
-              onTap: () => Get.to(() => VehicleDetailsScreen(vehicleId: v.id)),
-              onBook: () => Get.to(() => VehicleDetailsScreen(vehicleId: v.id)),
-            );
-          },
-        ),
-      ),
-      const SizedBox(height: Dimensions.paddingSizeSmall),
-    ]);
+    // Rental "Flash Rent" now uses the shared MoonJoin Flash Deals presentation
+    // (same component as the Food/Grocery/Ecommerce Flash Sale) — no duplicate
+    // card. The label stays "Flash Rent"; all values come from the backend flash
+    // data via the frozen Rental-level model helpers (never hardcoded). Countdown
+    // reads the campaign's existing end date; no rental View All destination exists,
+    // so it is hidden. Feature the day-wise axis (falls back to the original price,
+    // no strikethrough, when the campaign does not price that axis).
+    const String dayAxis = 'day_wise';
+    final DateTime? endTime = DateTime.tryParse(flashVehicles.first.flashSale?.endDate ?? '');
+    return MoonjoinFlashDealsSection(
+      title: 'flash_rent'.tr,
+      subtitle: 'limited_time_offer'.tr,
+      endTime: endTime,
+      itemCount: flashVehicles.length,
+      itemBuilder: (context, i) {
+        final VehicleModel v = flashVehicles[i];
+        final bool dayFlash = v.hasFlashRate(dayAxis);
+        return MoonjoinFlashDealCard(
+          image: v.thumbnailFullUrl ?? '',
+          badgeText: _rentalBadge(v.flashSale),
+          title: v.name ?? '',
+          provider: v.provider?.name,
+          flashPrice: PriceConverter.convertPrice(v.applicableRate(dayAxis)),
+          originalPrice: dayFlash ? PriceConverter.convertPrice(v.baseRate(dayAxis)) : null,
+          onTap: () => Get.to(() => VehicleDetailsScreen(vehicleId: v.id)),
+        );
+      },
+    );
+  }
+
+  /// Flash Rent badge text from the backend campaign (never hardcoded): percent
+  /// campaigns show "X% OFF", amount campaigns the money saved, otherwise the label.
+  String _rentalBadge(RentalFlashSale? flash) {
+    if (flash == null) return 'flash_rent'.tr;
+    if (flash.discountType == 'percent' && flash.discount != null) {
+      return '${flash.discount!.toStringAsFixed(0)}% ${'off'.tr}';
+    }
+    if (flash.discount != null && flash.discount! > 0) {
+      return '${PriceConverter.convertPrice(flash.discount)} ${'off'.tr}';
+    }
+    return 'flash_rent'.tr;
   }
 
   // Provider banner → Provider page → Vehicle list. Providers are derived from the
