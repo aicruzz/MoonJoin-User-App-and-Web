@@ -57,7 +57,7 @@ class MoonjoinFlashDealCard extends StatelessWidget {
 
           // ── Content column ──
           Expanded(
-            flex: 50,
+            flex: 48,
             child: Padding(
               padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -89,10 +89,18 @@ class MoonjoinFlashDealCard extends StatelessWidget {
                   ],
                 ]),
 
-                // Price
+                // Price — the flash price stays fully readable: FittedBox scales it
+                // down only for genuinely long values (never an "…" truncation),
+                // while the struck original ellipsises first if space runs out.
                 Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Flexible(child: Text(flashPrice, maxLines: 1, overflow: TextOverflow.ellipsis, textDirection: TextDirection.ltr,
-                      style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: green))),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(flashPrice, maxLines: 1, textDirection: TextDirection.ltr,
+                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge, color: green)),
+                    ),
+                  ),
                   if (originalPrice != null) ...[
                     const SizedBox(width: Dimensions.paddingSizeExtraSmall),
                     Flexible(child: Text(originalPrice!, maxLines: 1, overflow: TextOverflow.ellipsis, textDirection: TextDirection.ltr,
@@ -128,10 +136,15 @@ class MoonjoinFlashDealCard extends StatelessWidget {
             ),
           ),
 
-          // ── Bleeding product image ──
+          // ── Product image — the full hero product, never cropped: BoxFit.contain
+          // preserves the whole silhouette and aspect ratio (no bottom cut, no
+          // distortion) on a clean white surface. ──
           Expanded(
-            flex: 50,
-            child: CustomImage(image: image, fit: BoxFit.cover, height: double.infinity, width: double.infinity),
+            flex: 52,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: 4),
+              child: CustomImage(image: image, fit: BoxFit.contain, height: double.infinity, width: double.infinity),
+            ),
           ),
         ]),
       ),

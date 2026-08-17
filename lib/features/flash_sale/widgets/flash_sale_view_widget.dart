@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
@@ -42,7 +43,7 @@ class _FlashSaleViewWidgetState extends State<FlashSaleViewWidget> {
       return MoonjoinFlashDealsSection(
         title: 'flash_sale'.tr,
         subtitle: 'limited_time_offer'.tr,
-        countdownDuration: flashSaleController.duration,
+        endTime: _campaignEnd(model.endDate),
         onViewAll: () => Get.toNamed(RouteHelper.getFlashSaleDetailsScreen(products[0].flashSaleId!)),
         itemCount: products.length,
         initialPage: products.length > 1 ? 1 : 0,
@@ -71,6 +72,18 @@ class _FlashSaleViewWidgetState extends State<FlashSaleViewWidget> {
       soldFraction: stock > 0 ? (sold / stock) : null,
       onTap: () => Get.find<ItemController>().navigateToItemPage(item, context),
     );
+  }
+
+  /// The campaign's absolute end time — parsed exactly like FlashSaleController
+  /// (UTC → local), so the home countdown matches the details-page countdown and
+  /// never drifts. Presentation only: reads the existing `end_date`, no new timer.
+  DateTime? _campaignEnd(String? endDate) {
+    if (endDate == null) return null;
+    try {
+      return DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(endDate, true).toLocal();
+    } catch (_) {
+      return DateTime.tryParse(endDate);
+    }
   }
 
   String _badge(Item item) {

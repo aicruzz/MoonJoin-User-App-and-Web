@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:sixam_mart/features/flash_sale/controllers/flash_sale_controller.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
 import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
 import 'package:sixam_mart/common/widgets/footer_view.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
 import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
-import 'package:sixam_mart/features/flash_sale/widgets/flash_product_card_widget.dart';
-import 'package:sixam_mart/features/flash_sale/widgets/flash_sale_timer_view_widget.dart';
+import 'package:sixam_mart/features/flash_sale/controllers/flash_sale_controller.dart';
+import 'package:sixam_mart/features/flash_sale/domain/models/product_flash_sale.dart';
+import 'package:sixam_mart/features/item/controllers/item_controller.dart';
+import 'package:sixam_mart/features/item/domain/models/item_model.dart';
+import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
+import 'package:sixam_mart/helper/price_converter.dart';
+import 'package:sixam_mart/helper/responsive_helper.dart';
+import 'package:sixam_mart/util/dimensions.dart';
 
+/// View All Flash Sale page — redesigned to the MoonJoin Flash Deals design
+/// language (premium pale-green header with the shared ticking countdown + a
+/// responsive list of the approved `MoonjoinFlashDealCard`). PRESENTATION ONLY:
+/// the controller, `getFlashSaleWithId` pagination, campaign end-time, discount/
+/// stock/sold data and item navigation are all unchanged.
 class FlashSaleDetailsScreen extends StatefulWidget {
   final int id;
   const FlashSaleDetailsScreen({super.key, required this.id});
@@ -25,167 +35,151 @@ class _FlashSaleDetailsScreenState extends State<FlashSaleDetailsScreen> {
   @override
   void initState() {
     super.initState();
-
     Get.find<FlashSaleController>().getFlashSaleWithId(1, false, widget.id);
   }
 
   @override
   void dispose() {
-    super.dispose();
     _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = ResponsiveHelper.isDesktop(context);
     return Scaffold(
-      appBar: CustomAppBar(title: 'flash_sale'.tr),
+      // Approved MoonJoin header language (same as the Favourite page): green
+      // ProfilePageHeader on mobile, legacy CustomAppBar on desktop.
+      appBar: isDesktop ? CustomAppBar(title: 'flash_sale'.tr) : null,
       body: Center(
-        child: GetBuilder<FlashSaleController>(
-            builder: (flashSaleController) {
-              return Column(children: [
-                SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeDefault : 0),
-                Container(
-                  width: Dimensions.webMaxWidth,
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(ResponsiveHelper.isDesktop(context) ? Dimensions.radiusDefault : 0),
-                    border: Border.symmetric(
-                      horizontal: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.2), width: 2),
-                      vertical: BorderSide(color: ResponsiveHelper.isDesktop(context) ? Theme.of(context).primaryColor.withValues(alpha: 0.2) : Theme.of(context).primaryColor.withValues(alpha: 0.2), width: 2),
-                    ),
-                  ),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('flash_sale'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                      const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+        child: GetBuilder<FlashSaleController>(builder: (flashSaleController) {
+          final ProductFlashSale? data = flashSaleController.productFlashSale;
+          return Column(children: [
 
-                      Text(
-                        'limited_time_offer'.tr,
-                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-                      ),
-                    ]),
+            if (!isDesktop) ProfilePageHeader(title: 'flash_sale'.tr, showBack: true),
+            _countdownStrip(context, data),
 
-                    FlashSaleTimerView(eventDuration: flashSaleController.duration),
-                  ]),
-                ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: FooterView(
-                      child: SizedBox(
-                        width: Dimensions.webMaxWidth,
-                        child: PaginatedListView(
-                          scrollController: _scrollController,
-                          totalSize: flashSaleController.productFlashSale?.totalSize,
-                          offset: flashSaleController.productFlashSale?.offset,
-                          onPaginate: (int? offset) async => await flashSaleController.getFlashSaleWithId(offset!, false, widget.id),
-                          itemView: flashSaleController.productFlashSale != null ? GridView.builder(
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: ResponsiveHelper.isDesktop(context) ? 5 : ResponsiveHelper.isTab(context) ? 3 : 2,
-                              crossAxisSpacing: Dimensions.paddingSizeSmall,
-                              mainAxisSpacing: Dimensions.paddingSizeSmall,
-                              mainAxisExtent: ResponsiveHelper.isDesktop(context) ? 340 : 240,
-                            ),
-                            physics: const BouncingScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount: flashSaleController.productFlashSale!.products!.length,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault,
-                                vertical: Dimensions.paddingSizeDefault,
-                            ),
-                            itemBuilder: (context, index) {
-                              return FlashProductCardWidget(product: flashSaleController.productFlashSale!.products![index], index: index);
-                            },
-                          ) : const FlashProductCardShimmer(),
-                        ),
-                      ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: FooterView(
+                  child: SizedBox(
+                    width: Dimensions.webMaxWidth,
+                    child: PaginatedListView(
+                      scrollController: _scrollController,
+                      totalSize: data?.totalSize,
+                      offset: data?.offset,
+                      onPaginate: (int? offset) async => await flashSaleController.getFlashSaleWithId(offset!, false, widget.id),
+                      itemView: data != null
+                          ? GridView.builder(
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: ResponsiveHelper.isDesktop(context) ? 2 : ResponsiveHelper.isTab(context) ? 2 : 1,
+                                crossAxisSpacing: Dimensions.paddingSizeDefault,
+                                mainAxisSpacing: Dimensions.paddingSizeDefault,
+                                mainAxisExtent: 185,
+                              ),
+                              physics: const BouncingScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: data.products!.length,
+                              padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                              itemBuilder: (context, index) => _card(context, data.products![index]),
+                            )
+                          : const _FlashListShimmer(),
                     ),
                   ),
                 ),
-              ]);
-            }
-        ),
+              ),
+            ),
+          ]);
+        }),
       ),
     );
   }
+
+  // Premium centred countdown strip under the MoonJoin green header — the SAME
+  // ticking DAYS:HRS:MINS:SECS block used on the home Flash Deals section, driven
+  // by the existing campaign end date (in sync with the home + controller).
+  Widget _countdownStrip(BuildContext context, ProductFlashSale? data) {
+    final DateTime? endTime = _campaignEnd(data?.flashSale?.endDate);
+    if (endTime == null) return const SizedBox(height: Dimensions.paddingSizeSmall);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeDefault, horizontal: Dimensions.paddingSizeLarge),
+      child: Center(child: MoonjoinFlashCountdown(endTime: endTime)),
+    );
+  }
+
+  Widget _card(BuildContext context, Products product) {
+    final Item? item = product.item;
+    if (item == null) return const SizedBox();
+    final double? startPrice = Get.find<ItemController>().getStartingPrice(item);
+    final bool hasDiscount = item.discount != null && item.discount! > 0;
+    final int stock = product.stock ?? 0;
+    final int sold = product.sold ?? 0;
+    final int remaining = stock - sold;
+    final int? soldPercent = stock > 0 ? ((sold / stock) * 100).round() : null;
+
+    return MoonjoinFlashDealCard(
+      image: item.imageFullUrl ?? '',
+      badgeText: _badge(item),
+      title: item.name ?? '',
+      provider: item.storeName,
+      flashPrice: PriceConverter.convertPrice(startPrice, discount: item.discount, discountType: item.discountType),
+      originalPrice: hasDiscount ? PriceConverter.convertPrice(startPrice) : null,
+      soldLabel: soldPercent != null ? '$soldPercent% ${'sold'.tr}' : null,
+      soldFraction: stock > 0 ? (sold / stock) : null,
+      onTap: remaining == 0 ? null : () => Get.find<ItemController>().navigateToItemPage(item, context),
+    );
+  }
+
+  String _badge(Item item) {
+    final double discount = item.discount ?? 0;
+    if (discount <= 0) return 'flash_sale'.tr;
+    if ((item.discountType ?? 'percent') == 'percent') {
+      return '${discount.toStringAsFixed(0)}% ${'off'.tr}';
+    }
+    return '${PriceConverter.convertPrice(discount)} ${'off'.tr}';
+  }
+
+  /// The campaign end parsed exactly like FlashSaleController (UTC → local), so
+  /// this page's countdown matches the home + controller semantics.
+  DateTime? _campaignEnd(String? endDate) {
+    if (endDate == null) return null;
+    try {
+      return DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(endDate, true).toLocal();
+    } catch (_) {
+      return DateTime.tryParse(endDate);
+    }
+  }
 }
 
-class FlashProductCardShimmer extends StatelessWidget {
-  const FlashProductCardShimmer({super.key});
+/// Premium loading state — a few wide flash-card placeholders matching the new
+/// list layout.
+class _FlashListShimmer extends StatelessWidget {
+  const _FlashListShimmer();
 
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: ResponsiveHelper.isDesktop(context) ? 5 : ResponsiveHelper.isTab(context) ? 3 : 2,
-        crossAxisSpacing: Dimensions.paddingSizeSmall,
-        mainAxisSpacing: Dimensions.paddingSizeSmall,
-        mainAxisExtent: ResponsiveHelper.isDesktop(context) ? 340 : 240,
+        crossAxisCount: ResponsiveHelper.isDesktop(context) ? 2 : ResponsiveHelper.isTab(context) ? 2 : 1,
+        crossAxisSpacing: Dimensions.paddingSizeDefault,
+        mainAxisSpacing: Dimensions.paddingSizeDefault,
+        mainAxisExtent: 185,
       ),
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      itemCount: 10,
-      padding: EdgeInsets.symmetric(
-        horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault,
-        vertical: Dimensions.paddingSizeDefault,
-      ),
-      itemBuilder: (context, index) {
-        return Shimmer(
-          duration: const Duration(seconds: 2),
-          enabled: true,
-          child: Container(
-            padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-            ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(
-                flex: ResponsiveHelper.isDesktop(context) ? 5 : 1,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                  child: Container(
-                    width: double.infinity, height: double.infinity,
-                    color: Theme.of(context).cardColor,
-                  ),
-                ),
-              ),
-              SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeDefault : 0),
-
-              Expanded(
-                flex: ResponsiveHelper.isDesktop(context) ? 3 : 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-
-                      Container(
-                        height: 10, width: 100,
-                        color: Theme.of(context).cardColor,
-                      ),
-
-                      Container(
-                        height: 10, width: 200,
-                        color: Theme.of(context).cardColor,
-                      ),
-
-                      Container(
-                        height: 10, width: 100,
-                        color: Theme.of(context).cardColor,
-                      ),
-
-                    ],
-                  ),
-                ),
-              ),
-            ]),
+      itemCount: 6,
+      padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+      itemBuilder: (context, index) => Shimmer(
+        duration: const Duration(seconds: 2),
+        enabled: true,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
-
-
