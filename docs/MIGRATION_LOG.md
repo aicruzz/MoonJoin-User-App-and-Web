@@ -3672,3 +3672,20 @@ Refinement + finalization of the Flash Deals presentation (previous entry: reusa
 **Reusable component (finalized).** `MoonjoinFlashDealCard` + `MoonjoinFlashDealsSection` + `MoonjoinFlashCountdown` in `lib/common/widgets/moonjoin/` are the single flash presentation, reused by product flash (`flash_sale_view_widget.dart`), Rental Flash Rent (`all_vehicle_screen.dart`) and View All (`flash_sale_details_screen.dart`) — no duplicate implementation. Ready to be reused by future Promotion Management surfaces (Advertisement etc.) as a presentation layer.
 
 **Files:** `moonjoin_flash_deal_card.dart`, `moonjoin_flash_deals_section.dart`, `flash_sale_view_widget.dart`, `flash_sale_details_screen.dart`, `test/moonjoin/flash_countdown_test.dart` (new). `flutter analyze` clean; 35 tests pass; iOS release build + device install ✓; owner-approved on the physical iPhone. FROZEN — future visual changes require design review.
+
+## MoonJoin Advertisement ("Highlights") — Promotion Management migration — STATUS: FROZEN (2026-08-17) · owner-approved on device
+First **Promotion Management** feature migrated to the new MoonJoin design. PRESENTATION ONLY — the customer "Highlights" advertisement carousel now renders through new reusable MoonJoin components; data, API, controller, models, navigation and video mechanism are the existing ones.
+
+**Reusable components (new, `lib/common/widgets/moonjoin/`).** `MoonjoinAdvertisementCard` (one ad banner, branches on `AdvertisementModel.addType`) + `MoonjoinAdvertisementSection` (organic pale-green module + "Highlights for You" header + carousel + pagination + shimmer). No duplicate card/section.
+
+**Placement.** Inserted into the ACTIVE mobile home `all_store_screen.dart` after `FlashSaleViewWidget`, gated to the clean home state → **Top Brands → Flash Deals → Advertisement → store list**. Both promo sections self-hide when empty, so Advertisement is below Flash when present and below Top Brands when Flash is absent. Advertisements were previously only in the legacy `modules/*_home_screen.dart` (mobile no longer routes there), so this surfaces them on the real home. No duplicate fetch — `home_screen.loadData → getAdvertisementList` already loads the data.
+
+**Banner design (ui-designs/text_display.PNG).** Compact full-bleed banner (`aspectRatio: 1.8`), no white sheet; overlay over a dark bottom-left scrim: store logo + name (top-left), title, short description, green Order Now → (bottom-left). Store name resolved best-effort from already-loaded `StoreController` lists (no new API); graceful when unresolved; never hardcoded. Green amoeba section is tight.
+
+**Advertisement Type rule.** Video Promotion (`video_promotion`) → NO profile image/logo (no avatar/placeholder/reserved space; name is text only). Store Promotion → profile image/logo shown. Single `showLogo` flag on the shared banner frame.
+
+**Video.** Raw `VideoPlayer` only → no controls/chrome; muted autoplay; carousel pauses the 7s timer during a video, advances to the next ad on completion, loops when it is the only ad; controllers disposed properly (no leaks). Whole banner + Order Now → the same `StoreScreen`.
+
+**Untouched.** Backend, API contract (`/api/v1/advertisement/list`), `AdvertisementController`/`AdvertisementModel`/repository/service, `RouteHelper`/navigation, `FavouriteController`/`CustomFavouriteWidget`, admin/vendor logic, frozen Flash Sale + Rental, Top Brands, home header, store list. Legacy `HighlightWidget`/`WebHighlightWidget` kept (legacy-cleanup policy); web/desktop left on the legacy path.
+
+**Files.** `moonjoin_advertisement_card.dart`, `moonjoin_advertisement_section.dart` (new), `all_store_screen.dart` (import + one gated insertion), `test/moonjoin/advertisement_test.dart` (new), `ui-designs/advert.PNG` + `advert_reference.PNG` + `text_display.PNG` (design refs). `flutter analyze` clean; 11 moonjoin tests pass (5 advertisement incl. Video-no-logo/Store-logo + 6 flash, no regression); iOS release build + device install ✓; owner-approved on the physical iPhone. FROZEN.

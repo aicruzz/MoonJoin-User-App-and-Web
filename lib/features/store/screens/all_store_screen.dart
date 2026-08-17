@@ -9,6 +9,7 @@ import 'package:sixam_mart/features/banner/controllers/banner_controller.dart';
 import 'package:sixam_mart/features/brands/controllers/brands_controller.dart';
 import 'package:sixam_mart/features/category/controllers/category_controller.dart';
 import 'package:sixam_mart/features/flash_sale/controllers/flash_sale_controller.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_advertisement_section.dart';
 import 'package:sixam_mart/features/flash_sale/widgets/flash_sale_view_widget.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
@@ -462,6 +463,14 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
       // promotional banner; it also self-hides when there are no active flash
       // products. Order: Promo Banner → [Brand] → Flash → Provider store banners.
       if (_activeFilter == -1 && _discovery == -1) const FlashSaleViewWidget(),
+      // Advertisement ("Highlights") — reuse the new MoonjoinAdvertisementSection
+      // (which renders the existing AdvertisementController data via the reusable
+      // MoonjoinAdvertisementCard). Placed BELOW Flash Deals; when Flash Deals is
+      // absent it self-hides, so Advertisement sits directly below Top Brands.
+      // Gated to the clean home state exactly like Flash Deals; self-hides when
+      // there are no advertisements. Data is loaded by the home lifecycle (no
+      // duplicate request). Order: Top Brands → Flash → Advertisement → stores.
+      if (_activeFilter == -1 && _discovery == -1) const MoonjoinAdvertisementSection(),
       ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
