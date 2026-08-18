@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/status_badge.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/moonjoin/status_badge.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// A single option row inside an [OptionGroupSelector] (label + optional
 /// trailing price string).

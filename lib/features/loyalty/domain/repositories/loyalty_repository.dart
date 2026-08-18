@@ -1,8 +1,8 @@
 import 'package:get/get_connect.dart';
-import 'package:sixam_mart/common/models/transaction_model.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/features/loyalty/domain/repositories/loyalty_repository_interface.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/common/models/transaction_model.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/features/loyalty/domain/repositories/loyalty_repository_interface.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 class LoyaltyRepository implements LoyaltyRepositoryInterface {
   final ApiClient apiClient;

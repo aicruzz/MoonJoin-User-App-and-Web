@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_button.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/common/widgets/custom_text_field.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_details_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_button.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/common/widgets/custom_text_field.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_details_model.dart';
+import 'package:moonjoin/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class ReviewBottomSheet extends StatefulWidget {

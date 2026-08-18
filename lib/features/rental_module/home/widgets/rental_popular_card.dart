@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Compact vertical card for the Rental Home "Popular …" rows. Shared by BOTH
 /// Car Rental (VehicleModel) and Short Apartment Rental (placeholder) so the two

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
-import 'package:sixam_mart/common/widgets/no_data_screen.dart';
-import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
-import 'package:sixam_mart/features/rental_module/common/enums/trip_status_enum.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_details_model.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_model.dart';
-import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
-import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/screens/taxi_order_details_screen.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/widgets/taxi_order_shimmer_widget.dart';
-import 'package:sixam_mart/helper/date_converter.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/helper/string_extension.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/custom_ink_well.dart';
+import 'package:moonjoin/common/widgets/no_data_screen.dart';
+import 'package:moonjoin/common/widgets/paginated_list_view.dart';
+import 'package:moonjoin/features/rental_module/common/enums/trip_status_enum.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_details_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_model.dart';
+import 'package:moonjoin/features/rental_module/home/controllers/taxi_home_controller.dart';
+import 'package:moonjoin/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
+import 'package:moonjoin/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
+import 'package:moonjoin/features/rental_module/rental_order/screens/taxi_order_details_screen.dart';
+import 'package:moonjoin/features/rental_module/rental_order/widgets/taxi_order_shimmer_widget.dart';
+import 'package:moonjoin/helper/date_converter.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/helper/string_extension.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Rental Trips/Bookings list (Car design `my_trip.png`, Apartment `my_booking_history.png`
 /// — same card, wording differs). Presentation-only redesign: same controller,

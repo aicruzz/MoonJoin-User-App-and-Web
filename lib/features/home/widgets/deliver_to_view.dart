@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/address_widget.dart';
-import 'package:sixam_mart/common/widgets/custom_loader.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_components.dart';
-import 'package:sixam_mart/features/address/controllers/address_controller.dart';
-import 'package:sixam_mart/features/address/domain/models/address_model.dart';
-import 'package:sixam_mart/features/home/widgets/module_view.dart' show AddressShimmer;
-import 'package:sixam_mart/features/location/controllers/location_controller.dart';
-import 'package:sixam_mart/helper/address_helper.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/address_widget.dart';
+import 'package:moonjoin/common/widgets/custom_loader.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_components.dart';
+import 'package:moonjoin/features/address/controllers/address_controller.dart';
+import 'package:moonjoin/features/address/domain/models/address_model.dart';
+import 'package:moonjoin/features/home/widgets/module_view.dart' show AddressShimmer;
+import 'package:moonjoin/features/location/controllers/location_controller.dart';
+import 'package:moonjoin/helper/address_helper.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 /// "Deliver to" quick address selector — a horizontal list of the user's saved
 /// addresses that switches the active delivery address on tap. Presentation

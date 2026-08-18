@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/models/module_availability.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/organic_module_icon.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/models/module_availability.dart';
+import 'package:moonjoin/common/widgets/moonjoin/organic_module_icon.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Organic module glyph (green ring) with a label beneath — the MoonJoin home
 /// module grid entry. Composes [OrganicModuleIcon] so the per-module blob shape

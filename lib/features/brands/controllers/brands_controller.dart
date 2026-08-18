@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/enums/data_source_enum.dart';
-import 'package:sixam_mart/features/brands/domain/models/brands_model.dart';
-import 'package:sixam_mart/features/brands/domain/services/brands_service_interface.dart';
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/common/enums/data_source_enum.dart';
+import 'package:moonjoin/features/brands/domain/models/brands_model.dart';
+import 'package:moonjoin/features/brands/domain/services/brands_service_interface.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
 
 class BrandsController extends GetxController implements GetxService {
   final BrandsServiceInterface brandsServiceInterface;

@@ -2,17 +2,17 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/order/controllers/order_controller.dart';
-import 'package:sixam_mart/features/order/domain/models/order_model.dart';
-import 'package:sixam_mart/features/location/domain/models/zone_response_model.dart';
-import 'package:sixam_mart/helper/address_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/order/controllers/order_controller.dart';
+import 'package:moonjoin/features/order/domain/models/order_model.dart';
+import 'package:moonjoin/features/location/domain/models/zone_response_model.dart';
+import 'package:moonjoin/helper/address_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_app_bar.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:sixam_mart/features/checkout/widgets/payment_failed_dialog.dart';
-import 'package:sixam_mart/features/wallet/widgets/fund_payment_dialog_widget.dart';
+import 'package:moonjoin/features/checkout/widgets/payment_failed_dialog.dart';
+import 'package:moonjoin/features/wallet/widgets/fund_payment_dialog_widget.dart';
 
 class PaymentScreen extends StatefulWidget {
   final OrderModel orderModel;

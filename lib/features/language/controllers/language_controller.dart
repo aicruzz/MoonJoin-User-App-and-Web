@@ -1,12 +1,12 @@
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/language/domain/models/language_model.dart';
-import 'package:sixam_mart/helper/address_helper.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/features/home/screens/home_screen.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/language/domain/models/language_model.dart';
+import 'package:moonjoin/helper/address_helper.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/features/home/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/language/domain/service/language_service_interface.dart';
+import 'package:moonjoin/features/language/domain/service/language_service_interface.dart';
 
 class LocalizationController extends GetxController implements GetxService {
   final LanguageServiceInterface languageServiceInterface;

@@ -1,4 +1,4 @@
-import 'package:sixam_mart/util/images.dart';
+import 'package:moonjoin/util/images.dart';
 
 /// TODO(BACKEND): TEMPORARY UI-layer placeholder for Short Apartment Rental.
 ///

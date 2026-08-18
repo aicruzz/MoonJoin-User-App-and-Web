@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_category_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/taxi_banner_model.dart';
-import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_category_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/taxi_banner_model.dart';
+import 'package:moonjoin/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
 
 /// The apartment adapter derives everything from REAL backend data: the live
 /// "Short Apt Rental" category and each item's `category_id`. Nothing fabricated.

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:sixam_mart/common/widgets/custom_dropdown.dart';
-import 'package:sixam_mart/features/auth/controllers/store_registration_controller.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_dropdown.dart';
+import 'package:moonjoin/features/auth/controllers/store_registration_controller.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class ZoneSelectionWidget extends StatelessWidget {
   final StoreRegistrationController storeRegController;

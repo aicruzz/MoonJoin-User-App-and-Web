@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/item/controllers/item_controller.dart';
-import 'package:sixam_mart/features/item/domain/models/basic_medicine_model.dart';
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/features/home/widgets/components/review_item_card_widget.dart';
-import 'package:sixam_mart/features/home/widgets/web/web_basic_medicine_nearby_view_widget.dart';
-import 'package:sixam_mart/features/home/widgets/web/widgets/arrow_icon_button.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/features/item/controllers/item_controller.dart';
+import 'package:moonjoin/features/item/domain/models/basic_medicine_model.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/features/home/widgets/components/review_item_card_widget.dart';
+import 'package:moonjoin/features/home/widgets/web/web_basic_medicine_nearby_view_widget.dart';
+import 'package:moonjoin/features/home/widgets/web/widgets/arrow_icon_button.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class WebFeaturedCategoriesViewWidget extends StatefulWidget {
   const WebFeaturedCategoriesViewWidget({super.key});

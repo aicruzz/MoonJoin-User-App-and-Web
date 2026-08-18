@@ -1,10 +1,10 @@
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/readmore_widget.dart';
-import 'package:sixam_mart/features/rental_module/vendor/domain/models/taxi_provider_review_model.dart';
-import 'package:sixam_mart/features/rental_module/vendor/widgets/taxi_rating_bar.dart';
-import 'package:sixam_mart/helper/date_converter.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/readmore_widget.dart';
+import 'package:moonjoin/features/rental_module/vendor/domain/models/taxi_provider_review_model.dart';
+import 'package:moonjoin/features/rental_module/vendor/widgets/taxi_rating_bar.dart';
+import 'package:moonjoin/helper/date_converter.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

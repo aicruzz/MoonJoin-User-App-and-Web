@@ -1,10 +1,10 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/features/rental_module/common/models/taxi_coupon_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/repository/taxi_cart_repository_interface.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/services/taxi_cart_service_interface.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/features/rental_module/common/models/taxi_coupon_model.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/repository/taxi_cart_repository_interface.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/services/taxi_cart_service_interface.dart';
 
 class TaxiCartService implements TaxiCartServiceInterface {
   TaxiCartRepositoryInterface taxiCartRepositoryInterface;

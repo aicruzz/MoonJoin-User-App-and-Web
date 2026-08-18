@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/features/rental_module/domain/models/saved_address_model.dart';import '../../../../util/styles.dart';
+import 'package:moonjoin/features/rental_module/domain/models/saved_address_model.dart';import '../../../../util/styles.dart';
 import '../../../util/dimensions.dart';
 
 class SavedAddressCard extends StatelessWidget {

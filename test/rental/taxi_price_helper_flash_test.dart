@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart' hide Provider;
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
-import 'package:sixam_mart/features/rental_module/helper/taxi_price_helper.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart' hide Provider;
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
+import 'package:moonjoin/features/rental_module/helper/taxi_price_helper.dart';
 
 // Proves the Rental Flash Sale price flows through the actual booking
 // calculation (not just the UI), for every Car Rental axis, using ONLY the

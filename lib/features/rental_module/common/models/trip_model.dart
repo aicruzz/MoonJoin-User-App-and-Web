@@ -1,4 +1,4 @@
-import 'package:sixam_mart/features/rental_module/common/models/trip_details_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_details_model.dart';
 
 class TripModel {
   int? totalSize;

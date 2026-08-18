@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_text_field.dart';
-import 'package:sixam_mart/features/checkout/controllers/checkout_controller.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/helper/validate_check.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_text_field.dart';
+import 'package:moonjoin/features/checkout/controllers/checkout_controller.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/helper/validate_check.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class GuestCreateAccount extends StatelessWidget {
   final TextEditingController guestPasswordController;

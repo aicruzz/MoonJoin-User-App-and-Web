@@ -1,18 +1,18 @@
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sixam_mart/common/enums/data_source_enum.dart';
-import 'package:sixam_mart/features/rental_module/common/models/taxi_brand_model.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_location_screen/controller/taxi_location_controller.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/popular_car_suggestion_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/selected_cars_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/taxi_banner_model.dart';
-import 'package:sixam_mart/features/rental_module/common/models/taxi_coupon_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/top_rated_cars_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_category_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/services/taxi_home_service_interface.dart';
-import 'package:sixam_mart/helper/date_converter.dart';
+import 'package:moonjoin/common/enums/data_source_enum.dart';
+import 'package:moonjoin/features/rental_module/common/models/taxi_brand_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_model.dart';
+import 'package:moonjoin/features/rental_module/rental_location_screen/controller/taxi_location_controller.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/popular_car_suggestion_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/selected_cars_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/taxi_banner_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/taxi_coupon_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/top_rated_cars_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_category_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/services/taxi_home_service_interface.dart';
+import 'package:moonjoin/helper/date_converter.dart';
 
 class TaxiHomeController extends GetxController implements GetxService {
   final TaxiHomeServiceInterface taxiHomeServiceInterface;

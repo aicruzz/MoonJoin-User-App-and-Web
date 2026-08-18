@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_the_tooltip/just_the_tooltip.dart';
-import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
-import 'package:sixam_mart/common/models/config_model.dart';
-import 'package:sixam_mart/features/checkout/controllers/checkout_controller.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/features/checkout/widgets/time_slot_bottom_sheet.dart';
+import 'package:moonjoin/features/cart/domain/models/cart_model.dart';
+import 'package:moonjoin/common/models/config_model.dart';
+import 'package:moonjoin/features/checkout/controllers/checkout_controller.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
+import 'package:moonjoin/features/checkout/widgets/time_slot_bottom_sheet.dart';
 
 class TimeSlotSection extends StatelessWidget {
   final int? storeId;

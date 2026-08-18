@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
-import 'package:sixam_mart/helper/address_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/helper/address_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 /// Premium embedded **Store location map card** (new MoonJoin feature, shared by

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
-import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
-import 'package:sixam_mart/features/notification/controllers/notification_controller.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/store/controllers/store_controller.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
-import 'package:sixam_mart/features/store/widgets/all_restaurants_widgets.dart';
-import 'package:sixam_mart/features/store/widgets/filter_widget.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/features/cart/controllers/cart_controller.dart';
+import 'package:moonjoin/features/favourite/controllers/favourite_controller.dart';
+import 'package:moonjoin/features/notification/controllers/notification_controller.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/store/controllers/store_controller.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/features/store/widgets/all_restaurants_widgets.dart';
+import 'package:moonjoin/features/store/widgets/filter_widget.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Store/Restaurant page hero header (design `store_or_restaurant.png`): a green
 /// hero (name, cuisines, rating · location · delivery, "N Dishes Available",

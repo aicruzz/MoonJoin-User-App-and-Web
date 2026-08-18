@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/bottom_action_bar.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/moonjoin/bottom_action_bar.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 /// THE official **MoonJoin Commerce Bottom Action Container**.
 ///

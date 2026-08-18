@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/features/address/domain/models/address_model.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/features/address/domain/models/address_model.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class DetailsWidget extends StatelessWidget {
   final String title;

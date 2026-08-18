@@ -1,20 +1,20 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_asset_image_widget.dart';
-import 'package:sixam_mart/common/widgets/custom_card.dart';
-import 'package:sixam_mart/features/order/widgets/support_reason_bottom_sheet.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/order/controllers/order_controller.dart';
-import 'package:sixam_mart/features/order/domain/models/order_model.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/features/order/widgets/order_item_widget.dart';
-import 'package:sixam_mart/features/parcel/widgets/details_widget.dart';
+import 'package:moonjoin/common/widgets/custom_asset_image_widget.dart';
+import 'package:moonjoin/common/widgets/custom_card.dart';
+import 'package:moonjoin/features/order/widgets/support_reason_bottom_sheet.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/order/controllers/order_controller.dart';
+import 'package:moonjoin/features/order/domain/models/order_model.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/images.dart';
+import 'package:moonjoin/util/styles.dart';
+import 'package:moonjoin/features/order/widgets/order_item_widget.dart';
+import 'package:moonjoin/features/parcel/widgets/details_widget.dart';
 
 class OrderCalculationWidget extends StatelessWidget {
   final OrderController orderController;

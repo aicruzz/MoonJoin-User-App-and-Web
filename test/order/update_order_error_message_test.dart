@@ -10,7 +10,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/order/controllers/order_edit_controller.dart';
+import 'package:moonjoin/features/order/controllers/order_edit_controller.dart';
 
 void main() {
   const String walletMsg =

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sixam_mart/features/location/widgets/location_search_dialog_widget.dart';
-import 'package:sixam_mart/features/parcel/controllers/parcel_controller.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/features/location/widgets/location_search_dialog_widget.dart';
+import 'package:moonjoin/features/parcel/controllers/parcel_controller.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class SearchLocationWidget extends StatelessWidget {
   final GoogleMapController? mapController;

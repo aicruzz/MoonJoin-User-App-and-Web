@@ -1,10 +1,10 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/features/chat/domain/models/conversation_model.dart';
-import 'package:sixam_mart/features/chat/domain/repositories/chat_repository_interface.dart';
-import 'package:sixam_mart/features/chat/enums/user_type_enum.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/features/chat/domain/models/conversation_model.dart';
+import 'package:moonjoin/features/chat/domain/repositories/chat_repository_interface.dart';
+import 'package:moonjoin/features/chat/enums/user_type_enum.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 class ChatRepository implements ChatRepositoryInterface {
   final ApiClient apiClient;

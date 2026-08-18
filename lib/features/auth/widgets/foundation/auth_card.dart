@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 /// MoonJoin Auth Foundation (Phase 9C-1) — the premium floating form surface.
 ///

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 class CheckoutVehicleCard extends StatelessWidget {
   final Carts cart;
   const CheckoutVehicleCard({super.key, required this.cart});

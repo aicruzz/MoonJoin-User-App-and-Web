@@ -1,9 +1,9 @@
 import 'package:get/get_connect/http/src/response/response.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/common/models/response_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/domain/repositories/taxi_favourite_repository_interface.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/common/models/response_model.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/domain/repositories/taxi_favourite_repository_interface.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 class TaxiFavouriteRepository implements TaxiFavouriteRepositoryInterface {
   final ApiClient apiClient;

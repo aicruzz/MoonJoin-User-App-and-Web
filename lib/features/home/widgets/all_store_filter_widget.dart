@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/home/widgets/filter_view.dart';
-import 'package:sixam_mart/features/home/widgets/store_filter_button_widget.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/store/controllers/store_controller.dart';
-import 'package:sixam_mart/helper/module_terminology_helper.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/features/home/widgets/filter_view.dart';
+import 'package:moonjoin/features/home/widgets/store_filter_button_widget.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/store/controllers/store_controller.dart';
+import 'package:moonjoin/helper/module_terminology_helper.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class AllStoreFilterWidget extends StatelessWidget {
   const AllStoreFilterWidget({super.key, });

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Section title with an optional trailing "See all" action, as seen above the
 /// home carousels ("Special Offers for You  →  See all"). Pure presentation.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// MoonJoin category tile — the single visual implementation of a category entry
 /// (circular backend image + label), matching the approved Food Home category row.

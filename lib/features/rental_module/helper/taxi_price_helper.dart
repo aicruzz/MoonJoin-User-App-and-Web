@@ -1,6 +1,6 @@
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
+import 'package:moonjoin/helper/price_converter.dart';
 
 class TaxiPriceHelper {
 

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/controllers/theme_controller.dart';
-import 'package:sixam_mart/common/widgets/menu_drawer.dart';
-import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
-import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
-import 'package:sixam_mart/features/language/controllers/language_controller.dart';
-import 'package:sixam_mart/features/language/widgets/language_bottom_sheet_widget.dart';
-import 'package:sixam_mart/features/profile/widgets/notification_status_change_bottom_sheet.dart';
-import 'package:sixam_mart/features/profile/widgets/profile_button_widget.dart';
-import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/controllers/theme_controller.dart';
+import 'package:moonjoin/common/widgets/menu_drawer.dart';
+import 'package:moonjoin/common/widgets/web_menu_bar.dart';
+import 'package:moonjoin/features/auth/controllers/auth_controller.dart';
+import 'package:moonjoin/features/language/controllers/language_controller.dart';
+import 'package:moonjoin/features/language/widgets/language_bottom_sheet_widget.dart';
+import 'package:moonjoin/features/profile/widgets/notification_status_change_bottom_sheet.dart';
+import 'package:moonjoin/features/profile/widgets/profile_button_widget.dart';
+import 'package:moonjoin/features/profile/widgets/profile_page_header.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class SettingPage extends StatelessWidget {
   const SettingPage({super.key});

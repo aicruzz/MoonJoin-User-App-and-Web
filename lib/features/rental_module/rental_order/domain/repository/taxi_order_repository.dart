@@ -1,11 +1,11 @@
 
 import 'package:get/get_connect/http/src/response/response.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_details_model.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/domain/repository/taxi_order_repository_interface.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_details_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_model.dart';
+import 'package:moonjoin/features/rental_module/rental_order/domain/repository/taxi_order_repository_interface.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 class TaxiOrderRepository implements TaxiOrderRepositoryInterface {
   final ApiClient apiClient;

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sixam_mart/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
+import 'package:moonjoin/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
 
 /// Regression test for the Rental **Provider Details** parse crash.
 ///

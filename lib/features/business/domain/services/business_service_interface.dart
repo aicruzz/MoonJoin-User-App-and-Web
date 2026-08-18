@@ -1,5 +1,5 @@
-import 'package:sixam_mart/features/business/domain/models/business_plan_body.dart';
-import 'package:sixam_mart/features/business/domain/models/package_model.dart';
+import 'package:moonjoin/features/business/domain/models/business_plan_body.dart';
+import 'package:moonjoin/features/business/domain/models/package_model.dart';
 
 abstract class BusinessServiceInterface{
   Future<PackageModel?> getPackageList();

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
 
 /// Regression test for the **Vehicle Details** parse crash.
 ///

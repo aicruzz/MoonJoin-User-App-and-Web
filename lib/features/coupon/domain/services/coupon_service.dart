@@ -1,6 +1,6 @@
-import 'package:sixam_mart/features/coupon/domain/models/coupon_model.dart';
-import 'package:sixam_mart/features/coupon/domain/repositories/coupon_repository_interface.dart';
-import 'package:sixam_mart/features/coupon/domain/services/coupon_service_interface.dart';
+import 'package:moonjoin/features/coupon/domain/models/coupon_model.dart';
+import 'package:moonjoin/features/coupon/domain/repositories/coupon_repository_interface.dart';
+import 'package:moonjoin/features/coupon/domain/services/coupon_service_interface.dart';
 
 class CouponService implements CouponServiceInterface{
   final CouponRepositoryInterface couponRepositoryInterface;

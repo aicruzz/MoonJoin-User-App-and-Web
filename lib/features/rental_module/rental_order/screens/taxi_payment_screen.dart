@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/widgets/cancel_payment_dialog_widget.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
+import 'package:moonjoin/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
+import 'package:moonjoin/features/rental_module/rental_order/widgets/cancel_payment_dialog_widget.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_app_bar.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class TaxiPaymentScreen extends StatefulWidget {

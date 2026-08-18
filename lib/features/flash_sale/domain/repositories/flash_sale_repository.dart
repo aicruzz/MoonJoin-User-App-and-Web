@@ -1,14 +1,14 @@
 import 'dart:convert';
 
 import 'package:get/get.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/api/local_client.dart';
-import 'package:sixam_mart/common/enums/data_source_enum.dart';
-import 'package:sixam_mart/features/flash_sale/domain/models/flash_sale_model.dart';
-import 'package:sixam_mart/features/flash_sale/domain/models/product_flash_sale.dart';
-import 'package:sixam_mart/features/flash_sale/domain/repositories/flash_sale_repository_interface.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/api/local_client.dart';
+import 'package:moonjoin/common/enums/data_source_enum.dart';
+import 'package:moonjoin/features/flash_sale/domain/models/flash_sale_model.dart';
+import 'package:moonjoin/features/flash_sale/domain/models/product_flash_sale.dart';
+import 'package:moonjoin/features/flash_sale/domain/repositories/flash_sale_repository_interface.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 class FlashSaleRepository implements FlashSaleRepositoryInterface {
   final ApiClient apiClient;

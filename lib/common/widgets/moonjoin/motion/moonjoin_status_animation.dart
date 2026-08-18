@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_motion.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_motion_painters.dart';
+import 'package:moonjoin/common/widgets/moonjoin/motion/moonjoin_motion.dart';
+import 'package:moonjoin/common/widgets/moonjoin/motion/moonjoin_motion_painters.dart';
 
 /// THE official MoonJoin status animation — the single reusable widget for every
 /// animated status across the platform. Give it a [MoonJoinMotionState]; it renders

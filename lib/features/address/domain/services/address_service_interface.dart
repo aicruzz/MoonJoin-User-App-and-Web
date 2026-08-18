@@ -1,5 +1,5 @@
-import 'package:sixam_mart/common/models/response_model.dart';
-import 'package:sixam_mart/features/address/domain/models/address_model.dart';
+import 'package:moonjoin/common/models/response_model.dart';
+import 'package:moonjoin/features/address/domain/models/address_model.dart';
 
 abstract class AddressServiceInterface{
   Future<List<AddressModel>?> getAllAddress();

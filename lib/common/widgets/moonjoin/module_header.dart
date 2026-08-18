@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/wavy_header.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/moonjoin/wavy_header.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// The green MoonJoin top area used on Home and module screens: greeting +
 /// user name, a tappable location row, notification & cart action icons (with

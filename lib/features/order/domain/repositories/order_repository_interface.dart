@@ -1,7 +1,7 @@
 import 'package:get/get_connect/http/src/response/response.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sixam_mart/features/checkout/domain/models/payment_model.dart';
-import 'package:sixam_mart/interfaces/repository_interface.dart';
+import 'package:moonjoin/features/checkout/domain/models/payment_model.dart';
+import 'package:moonjoin/interfaces/repository_interface.dart';
 
 abstract class OrderRepositoryInterface extends RepositoryInterface {
   @override

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
-import 'package:sixam_mart/features/rental_module/widgets/taxi_shimmer_view.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
+import 'package:moonjoin/features/rental_module/widgets/taxi_shimmer_view.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 import '../common/widgets/headers_title_widget.dart';
 import 'trip_history_card.dart';

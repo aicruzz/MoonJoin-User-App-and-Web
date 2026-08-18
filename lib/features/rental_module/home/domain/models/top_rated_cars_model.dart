@@ -1,4 +1,4 @@
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
 
 class TopRatedCarsModel {
   int? totalSize;

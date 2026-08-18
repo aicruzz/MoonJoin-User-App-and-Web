@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/features/item/screens/food_details_screen.dart';
-import 'package:sixam_mart/features/order/controllers/order_edit_controller.dart';
-import 'package:sixam_mart/features/order/domain/models/order_details_model.dart' hide AddOn;
-import 'package:sixam_mart/features/order/domain/models/order_model.dart';
-import 'package:sixam_mart/features/notification/domain/models/notification_body_model.dart';
-import 'package:sixam_mart/features/chat/domain/models/conversation_model.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/common/widgets/custom_text_field.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/features/item/screens/food_details_screen.dart';
+import 'package:moonjoin/features/order/controllers/order_edit_controller.dart';
+import 'package:moonjoin/features/order/domain/models/order_details_model.dart' hide AddOn;
+import 'package:moonjoin/features/order/domain/models/order_model.dart';
+import 'package:moonjoin/features/notification/domain/models/notification_body_model.dart';
+import 'package:moonjoin/features/chat/domain/models/conversation_model.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/features/cart/domain/models/cart_model.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/common/widgets/custom_text_field.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 
 
 

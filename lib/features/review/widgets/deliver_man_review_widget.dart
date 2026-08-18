@@ -1,13 +1,13 @@
-import 'package:sixam_mart/features/review/domain/models/review_body_model.dart';
-import 'package:sixam_mart/features/order/domain/models/order_model.dart';
-import 'package:sixam_mart/features/review/controllers/review_controller.dart';
-import 'package:sixam_mart/features/review/widgets/delivery_man_widget.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/custom_button.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/common/widgets/footer_view.dart';
-import 'package:sixam_mart/common/widgets/my_text_field.dart';
+import 'package:moonjoin/features/review/domain/models/review_body_model.dart';
+import 'package:moonjoin/features/order/domain/models/order_model.dart';
+import 'package:moonjoin/features/review/controllers/review_controller.dart';
+import 'package:moonjoin/features/review/widgets/delivery_man_widget.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_button.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/common/widgets/footer_view.dart';
+import 'package:moonjoin/common/widgets/my_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

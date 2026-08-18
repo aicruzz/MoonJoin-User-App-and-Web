@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_campaign_card.dart';
-import 'package:sixam_mart/features/item/controllers/campaign_controller.dart';
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_campaign_card.dart';
+import 'package:moonjoin/features/item/controllers/campaign_controller.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// MoonJoin Campaigns section — the item-campaign promotion as a premium MoonJoin
 /// promotional module (ui-designs/campaign.png): a pale-green organic surface with

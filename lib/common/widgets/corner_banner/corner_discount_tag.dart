@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' hide Banner;
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/corner_banner/banner.dart';
-import 'package:sixam_mart/common/widgets/corner_banner/positioned_banner.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/corner_banner/banner.dart';
+import 'package:moonjoin/common/widgets/corner_banner/positioned_banner.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// A [CornerBanner] that displays "Built with" and the Flutter logo, to
 /// let the world know that your product is built with Flutter.

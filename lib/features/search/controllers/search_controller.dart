@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/features/language/controllers/language_controller.dart';
-import 'package:sixam_mart/features/search/domain/models/popular_categories_model.dart';
-import 'package:sixam_mart/features/search/domain/models/search_scope.dart';
-import 'package:sixam_mart/features/search/domain/models/search_suggestion_model.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/features/language/controllers/language_controller.dart';
+import 'package:moonjoin/features/search/domain/models/popular_categories_model.dart';
+import 'package:moonjoin/features/search/domain/models/search_scope.dart';
+import 'package:moonjoin/features/search/domain/models/search_suggestion_model.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/search/domain/services/search_service_interface.dart';
+import 'package:moonjoin/features/search/domain/services/search_service_interface.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class SearchController extends GetxController implements GetxService {

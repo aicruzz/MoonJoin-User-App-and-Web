@@ -1,21 +1,21 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/menu_drawer.dart';
-import 'package:sixam_mart/features/parcel/controllers/parcel_controller.dart';
-import 'package:sixam_mart/features/payment/controllers/payment_controller.dart';
-import 'package:sixam_mart/features/payment/domain/models/offline_method_model.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
-import 'package:sixam_mart/common/widgets/custom_button.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/common/widgets/custom_text_field.dart';
-import 'package:sixam_mart/common/widgets/footer_view.dart';
+import 'package:moonjoin/common/widgets/menu_drawer.dart';
+import 'package:moonjoin/features/parcel/controllers/parcel_controller.dart';
+import 'package:moonjoin/features/payment/controllers/payment_controller.dart';
+import 'package:moonjoin/features/payment/domain/models/offline_method_model.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/images.dart';
+import 'package:moonjoin/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_app_bar.dart';
+import 'package:moonjoin/common/widgets/custom_button.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/common/widgets/custom_text_field.dart';
+import 'package:moonjoin/common/widgets/footer_view.dart';
 
 class OfflinePaymentScreen extends StatefulWidget {
   final int zoneId;

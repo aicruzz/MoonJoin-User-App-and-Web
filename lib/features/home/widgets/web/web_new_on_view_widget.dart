@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:sixam_mart/common/widgets/card_design/store_card_with_distance.dart';
-import 'package:sixam_mart/features/language/controllers/language_controller.dart';
-import 'package:sixam_mart/features/store/controllers/store_controller.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/title_widget.dart';
-import 'package:sixam_mart/features/home/widgets/web/widgets/arrow_icon_button.dart';
+import 'package:moonjoin/common/widgets/card_design/store_card_with_distance.dart';
+import 'package:moonjoin/features/language/controllers/language_controller.dart';
+import 'package:moonjoin/features/store/controllers/store_controller.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/title_widget.dart';
+import 'package:moonjoin/features/home/widgets/web/widgets/arrow_icon_button.dart';
 
 class WebNewOnViewWidget extends StatefulWidget {
   final bool isFood;

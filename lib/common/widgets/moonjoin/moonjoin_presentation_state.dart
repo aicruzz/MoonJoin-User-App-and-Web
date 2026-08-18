@@ -1,5 +1,5 @@
-import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_motion.dart';
-import 'package:sixam_mart/features/order/domain/models/order_model.dart';
+import 'package:moonjoin/common/widgets/moonjoin/motion/moonjoin_motion.dart';
+import 'package:moonjoin/features/order/domain/models/order_model.dart';
 
 /// THE single MoonJoin customer-facing order-status resolver.
 ///

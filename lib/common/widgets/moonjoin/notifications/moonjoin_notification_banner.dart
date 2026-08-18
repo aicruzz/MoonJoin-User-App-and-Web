@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_motion.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_status_animation.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/moonjoin/motion/moonjoin_motion.dart';
+import 'package:moonjoin/common/widgets/moonjoin/motion/moonjoin_status_animation.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Data for a single MoonJoin in-app notification.
 class MoonJoinNotificationData {

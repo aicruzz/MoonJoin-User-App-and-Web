@@ -1,16 +1,16 @@
 import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/api/local_client.dart';
-import 'package:sixam_mart/common/enums/data_source_enum.dart';
-import 'package:sixam_mart/features/parcel/domain/models/parcel_cancellation_reasons_model.dart';
-import 'package:sixam_mart/features/parcel/domain/models/parcel_category_model.dart';
-import 'package:sixam_mart/features/parcel/domain/models/parcel_instruction_model.dart';
-import 'package:sixam_mart/features/parcel/domain/models/video_content_model.dart';
-import 'package:sixam_mart/features/parcel/domain/models/why_choose_model.dart';
-import 'package:sixam_mart/features/parcel/domain/repositories/parcel_repository_interface.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/api/local_client.dart';
+import 'package:moonjoin/common/enums/data_source_enum.dart';
+import 'package:moonjoin/features/parcel/domain/models/parcel_cancellation_reasons_model.dart';
+import 'package:moonjoin/features/parcel/domain/models/parcel_category_model.dart';
+import 'package:moonjoin/features/parcel/domain/models/parcel_instruction_model.dart';
+import 'package:moonjoin/features/parcel/domain/models/video_content_model.dart';
+import 'package:moonjoin/features/parcel/domain/models/why_choose_model.dart';
+import 'package:moonjoin/features/parcel/domain/repositories/parcel_repository_interface.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 class ParcelRepository implements ParcelRepositoryInterface {
   final ApiClient apiClient;

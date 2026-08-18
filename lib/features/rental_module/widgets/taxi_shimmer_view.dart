@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/headers_title_widget.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/features/rental_module/common/widgets/headers_title_widget.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 class TopRatedVehicleShimmerView extends StatelessWidget {
 

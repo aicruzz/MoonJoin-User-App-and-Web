@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/enums/data_source_enum.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_campaign_card.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_campaign_section.dart';
-import 'package:sixam_mart/features/item/controllers/campaign_controller.dart';
-import 'package:sixam_mart/features/item/domain/models/basic_campaign_model.dart';
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/features/item/domain/services/campaign_service_interface.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/common/enums/data_source_enum.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_campaign_card.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_campaign_section.dart';
+import 'package:moonjoin/features/item/controllers/campaign_controller.dart';
+import 'package:moonjoin/features/item/domain/models/basic_campaign_model.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/features/item/domain/services/campaign_service_interface.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
 
 // Behavioural guards for the shared MoonJoin Campaign section: it self-hides when
 // there are no active campaign items and shows a loading state while the list is

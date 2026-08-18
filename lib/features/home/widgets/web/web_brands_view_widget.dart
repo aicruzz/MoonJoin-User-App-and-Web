@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/hover/text_hover.dart';
-import 'package:sixam_mart/common/widgets/title_widget.dart';
-import 'package:sixam_mart/features/brands/controllers/brands_controller.dart';
-import 'package:sixam_mart/features/language/controllers/language_controller.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/hover/text_hover.dart';
+import 'package:moonjoin/common/widgets/title_widget.dart';
+import 'package:moonjoin/features/brands/controllers/brands_controller.dart';
+import 'package:moonjoin/features/language/controllers/language_controller.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 class WebBrandsViewWidget extends StatelessWidget {
   const WebBrandsViewWidget({super.key});

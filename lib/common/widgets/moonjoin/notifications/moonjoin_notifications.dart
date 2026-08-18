@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_components.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/confirmation_dialog.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_components.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 /// # MoonJoin Notification System — platform façade (Phase A1)
 ///

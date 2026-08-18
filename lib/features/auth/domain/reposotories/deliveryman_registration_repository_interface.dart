@@ -1,6 +1,6 @@
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/features/auth/domain/models/delivery_man_body.dart';
-import 'package:sixam_mart/interfaces/repository_interface.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/features/auth/domain/models/delivery_man_body.dart';
+import 'package:moonjoin/interfaces/repository_interface.dart';
 
 abstract class DeliverymanRegistrationRepositoryInterface extends RepositoryInterface{
   @override

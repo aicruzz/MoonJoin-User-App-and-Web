@@ -5,7 +5,7 @@
 // Wallet History stuck on the loading shimmer).
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sixam_mart/common/models/transaction_model.dart';
+import 'package:moonjoin/common/models/transaction_model.dart';
 
 Map<String, dynamic> _row({dynamic created, dynamic updated}) => {
       "user_id": 14,

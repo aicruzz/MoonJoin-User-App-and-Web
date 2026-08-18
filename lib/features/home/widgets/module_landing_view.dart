@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/models/module_availability.dart';
-import 'package:sixam_mart/common/models/module_model.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_components.dart';
-import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
-import 'package:sixam_mart/features/home/widgets/module_view.dart' show ModuleShimmer;
-import 'package:sixam_mart/features/home/widgets/special_offers_view.dart';
-import 'package:sixam_mart/features/location/controllers/location_controller.dart';
-import 'package:sixam_mart/features/notification/controllers/notification_controller.dart';
-import 'package:sixam_mart/features/order/controllers/order_controller.dart';
-import 'package:sixam_mart/features/order/domain/models/order_model.dart';
-import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/helper/address_helper.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/models/module_availability.dart';
+import 'package:moonjoin/common/models/module_model.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_components.dart';
+import 'package:moonjoin/features/cart/controllers/cart_controller.dart';
+import 'package:moonjoin/features/home/widgets/module_view.dart' show ModuleShimmer;
+import 'package:moonjoin/features/home/widgets/special_offers_view.dart';
+import 'package:moonjoin/features/location/controllers/location_controller.dart';
+import 'package:moonjoin/features/notification/controllers/notification_controller.dart';
+import 'package:moonjoin/features/order/controllers/order_controller.dart';
+import 'package:moonjoin/features/order/domain/models/order_model.dart';
+import 'package:moonjoin/features/profile/controllers/profile_controller.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/helper/address_helper.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// MoonJoin module-landing Home — a faithful reproduction of
 /// `ui-designs/.../home.png`. Presentation only: every controller / repository /

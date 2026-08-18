@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
-import 'package:sixam_mart/features/address/controllers/address_controller.dart';
-import 'package:sixam_mart/features/address/domain/models/address_model.dart';
-import 'package:sixam_mart/features/home/widgets/module_view.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/headers_title_widget.dart';
-import 'package:sixam_mart/features/rental_module/rental_location_screen/taxi_location_suggestion_screen.dart';
-import 'package:sixam_mart/features/rental_module/widgets/add_address_widget_new.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_ink_well.dart';
+import 'package:moonjoin/features/address/controllers/address_controller.dart';
+import 'package:moonjoin/features/address/domain/models/address_model.dart';
+import 'package:moonjoin/features/home/widgets/module_view.dart';
+import 'package:moonjoin/features/rental_module/common/widgets/headers_title_widget.dart';
+import 'package:moonjoin/features/rental_module/rental_location_screen/taxi_location_suggestion_screen.dart';
+import 'package:moonjoin/features/rental_module/widgets/add_address_widget_new.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/images.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class MyAddressWidget extends StatelessWidget {
   const MyAddressWidget({super.key});

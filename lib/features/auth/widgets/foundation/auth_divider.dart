@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// MoonJoin Auth Foundation (Phase 9C-1) — an "or continue with" / "or"
 /// separator. The [label] is supplied (already translated) by the caller; when

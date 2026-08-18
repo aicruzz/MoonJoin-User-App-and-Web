@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/models/response_model.dart';
-import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
-import 'package:sixam_mart/features/verification/domein/models/verification_data_model.dart';
-import 'package:sixam_mart/features/verification/domein/services/verification_service_interface.dart';
+import 'package:moonjoin/common/models/response_model.dart';
+import 'package:moonjoin/features/profile/controllers/profile_controller.dart';
+import 'package:moonjoin/features/verification/domein/models/verification_data_model.dart';
+import 'package:moonjoin/features/verification/domein/services/verification_service_interface.dart';
 
 class VerificationController extends GetxController implements GetxService {
   final VerificationServiceInterface verificationServiceInterface;

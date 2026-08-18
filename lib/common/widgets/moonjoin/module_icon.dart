@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
 
 /// A single module/category glyph rendered inside the MoonJoin circular
 /// white face with a green ring. Provide exactly one of [imageUrl],

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
-import 'package:sixam_mart/features/rental_module/helper/string_limit_helper.dart';
-import 'package:sixam_mart/features/rental_module/select_vehicle_screen/search_vehicle_screen.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/vehicle_filter_widget.dart';
-import 'package:sixam_mart/features/rental_module/vendor/controllers/taxi_vendor_controller.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_ink_well.dart';
+import 'package:moonjoin/features/rental_module/helper/string_limit_helper.dart';
+import 'package:moonjoin/features/rental_module/select_vehicle_screen/search_vehicle_screen.dart';
+import 'package:moonjoin/features/rental_module/common/widgets/vehicle_filter_widget.dart';
+import 'package:moonjoin/features/rental_module/vendor/controllers/taxi_vendor_controller.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class SearchAndFilterWidget extends StatefulWidget {
   final TaxiVendorController taxiVendorController;

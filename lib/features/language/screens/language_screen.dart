@@ -1,19 +1,19 @@
-import 'package:sixam_mart/common/widgets/custom_asset_image_widget.dart';
-import 'package:sixam_mart/features/language/screens/web_language_screen.dart';
-import 'package:sixam_mart/features/language/widgets/language_card_widget.dart';
-import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/menu_drawer.dart';
-import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
+import 'package:moonjoin/common/widgets/custom_asset_image_widget.dart';
+import 'package:moonjoin/features/language/screens/web_language_screen.dart';
+import 'package:moonjoin/features/language/widgets/language_card_widget.dart';
+import 'package:moonjoin/features/profile/widgets/profile_page_header.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/styles.dart';
+import 'package:moonjoin/common/widgets/menu_drawer.dart';
+import 'package:moonjoin/common/widgets/web_menu_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/features/language/controllers/language_controller.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/common/widgets/custom_button.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/features/language/controllers/language_controller.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/images.dart';
+import 'package:moonjoin/common/widgets/custom_button.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
 import 'package:get/get.dart';
 
 class ChooseLanguageScreen extends StatefulWidget {

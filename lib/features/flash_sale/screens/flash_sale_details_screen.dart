@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
-import 'package:sixam_mart/common/widgets/footer_view.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
-import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
-import 'package:sixam_mart/features/flash_sale/controllers/flash_sale_controller.dart';
-import 'package:sixam_mart/features/flash_sale/domain/models/product_flash_sale.dart';
-import 'package:sixam_mart/features/item/controllers/item_controller.dart';
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_app_bar.dart';
+import 'package:moonjoin/common/widgets/footer_view.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
+import 'package:moonjoin/common/widgets/paginated_list_view.dart';
+import 'package:moonjoin/features/flash_sale/controllers/flash_sale_controller.dart';
+import 'package:moonjoin/features/flash_sale/domain/models/product_flash_sale.dart';
+import 'package:moonjoin/features/item/controllers/item_controller.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/features/profile/widgets/profile_page_header.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 /// View All Flash Sale page — redesigned to the MoonJoin Flash Deals design
 /// language (premium pale-green header with the shared ticking countdown + a

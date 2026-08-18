@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/custom_text_field.dart';
-import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
+import 'package:moonjoin/common/widgets/custom_text_field.dart';
+import 'package:moonjoin/features/auth/widgets/foundation/auth_foundation.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/images.dart';
 
 /// MoonJoin Auth Foundation (Phase 9C-1) — ISOLATED demonstration harness for
 /// the 10 foundation components. This file is intentionally NOT routed and NOT

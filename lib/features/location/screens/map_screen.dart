@@ -1,22 +1,22 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:sixam_mart/common/controllers/theme_controller.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/common/widgets/footer_view.dart';
-import 'package:sixam_mart/features/address/domain/models/address_model.dart';
-import 'package:sixam_mart/features/location/controllers/location_controller.dart';
-import 'package:sixam_mart/features/location/widgets/permission_dialog_widget.dart';
-import 'package:sixam_mart/helper/address_helper.dart';
-import 'package:sixam_mart/helper/marker_helper.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
+import 'package:moonjoin/common/controllers/theme_controller.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/common/widgets/footer_view.dart';
+import 'package:moonjoin/features/address/domain/models/address_model.dart';
+import 'package:moonjoin/features/location/controllers/location_controller.dart';
+import 'package:moonjoin/features/location/widgets/permission_dialog_widget.dart';
+import 'package:moonjoin/helper/address_helper.dart';
+import 'package:moonjoin/helper/marker_helper.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/images.dart';
+import 'package:moonjoin/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/menu_drawer.dart';
-import 'package:sixam_mart/features/order/widgets/address_details_widget.dart';
+import 'package:moonjoin/common/widgets/menu_drawer.dart';
+import 'package:moonjoin/features/order/widgets/address_details_widget.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class MapScreen extends StatefulWidget {

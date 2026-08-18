@@ -1,13 +1,13 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
-import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
-import 'package:sixam_mart/features/location/controllers/location_controller.dart';
-import 'package:sixam_mart/features/notification/domain/models/notification_body_model.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/helper/address_helper.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/features/auth/controllers/auth_controller.dart';
+import 'package:moonjoin/features/favourite/controllers/favourite_controller.dart';
+import 'package:moonjoin/features/location/controllers/location_controller.dart';
+import 'package:moonjoin/features/notification/domain/models/notification_body_model.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/helper/address_helper.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 // class SplashRouteHelper{
 

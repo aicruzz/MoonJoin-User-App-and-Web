@@ -1,8 +1,8 @@
-import 'package:sixam_mart/features/location/controllers/location_controller.dart';
-import 'package:sixam_mart/features/location/domain/models/prediction_model.dart';
-import 'package:sixam_mart/features/parcel/controllers/parcel_controller.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/features/location/controllers/location_controller.dart';
+import 'package:moonjoin/features/location/domain/models/prediction_model.dart';
+import 'package:moonjoin/features/parcel/controllers/parcel_controller.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:get/get.dart';

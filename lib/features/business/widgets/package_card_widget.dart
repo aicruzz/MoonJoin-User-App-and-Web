@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/auth/controllers/store_registration_controller.dart';
-import 'package:sixam_mart/features/business/domain/models/package_model.dart';
-import 'package:sixam_mart/features/business/widgets/curve_clipper_widget.dart';
-import 'package:sixam_mart/features/business/widgets/package_widget.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/features/auth/controllers/store_registration_controller.dart';
+import 'package:moonjoin/features/business/domain/models/package_model.dart';
+import 'package:moonjoin/features/business/widgets/curve_clipper_widget.dart';
+import 'package:moonjoin/features/business/widgets/package_widget.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class PackageCardWidget extends StatelessWidget {
   final bool canSelect;

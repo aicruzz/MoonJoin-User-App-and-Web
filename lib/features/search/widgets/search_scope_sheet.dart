@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/models/module_model.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_bottom_sheet.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/organic_module_icon.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/models/module_model.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_bottom_sheet.dart';
+import 'package:moonjoin/common/widgets/moonjoin/organic_module_icon.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// MoonJoin Module Scope Sheet — "Search in… / Recent / All Modules".
 ///

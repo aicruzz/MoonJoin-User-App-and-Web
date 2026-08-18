@@ -1,9 +1,9 @@
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_category_model.dart';
-import 'package:sixam_mart/features/rental_module/vendor/domain/models/vendor_vehicle_category_model.dart' as vendor_models;
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_category_model.dart';
+import 'package:moonjoin/features/rental_module/vendor/domain/models/vendor_vehicle_category_model.dart' as vendor_models;
 import 'dart:convert';
 
-import 'package:sixam_mart/features/rental_module/home/domain/models/taxi_banner_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/taxi_banner_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
 
 /// **Apartment Adapter (Temporary Production Adapter)** — same philosophy as
 /// [RentalProviderAdapter]: derive the apartment view from REAL backend data.

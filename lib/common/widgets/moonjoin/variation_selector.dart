@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Chip-style variation picker used on the grocery/others product details
 /// (e.g. Size: 80g / 400g, Type: Pack / Carton). Selected option is a solid

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/custom_asset_image_widget.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_asset_image_widget.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 class CustomIconLayout extends StatelessWidget {
   final double height;

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/address/domain/models/address_model.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_details_model.dart';
-import 'package:sixam_mart/features/rental_module/custom/custom_icon_layout.dart';
-import 'package:sixam_mart/features/rental_module/widgets/trip_from_to_card.dart';
-import 'package:sixam_mart/helper/date_converter.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/features/address/domain/models/address_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_details_model.dart';
+import 'package:moonjoin/features/rental_module/custom/custom_icon_layout.dart';
+import 'package:moonjoin/features/rental_module/widgets/trip_from_to_card.dart';
+import 'package:moonjoin/helper/date_converter.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 class TripDetailsWidget extends StatelessWidget {
   final TripDetailsModel tripDetailsModel;
   const TripDetailsWidget({super.key, required this.tripDetailsModel});

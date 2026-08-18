@@ -1,10 +1,10 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_details_model.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/domain/services/taxi_order_service_interface.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/screens/taxi_payment_screen.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
+import 'package:moonjoin/features/profile/controllers/profile_controller.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_details_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_model.dart';
+import 'package:moonjoin/features/rental_module/rental_order/domain/services/taxi_order_service_interface.dart';
+import 'package:moonjoin/features/rental_module/rental_order/screens/taxi_payment_screen.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
 
 class TaxiOrderController extends GetxController implements GetxService {
   final TaxiOrderServiceInterface taxiOrderServiceInterface;

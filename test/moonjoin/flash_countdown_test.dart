@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
 
 // Proves the home Flash Deals countdown (A) always shows a ticking seconds block
 // (so it can never LOOK static, the real device bug), rolls units correctly,

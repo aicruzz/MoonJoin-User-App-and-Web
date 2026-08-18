@@ -1,6 +1,6 @@
-import 'package:sixam_mart/features/rental_module/rental_favourite/controllers/taxi_favourite_controller.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/widgets/favourite_taxi_view.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/controllers/taxi_favourite_controller.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/widgets/favourite_taxi_view.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

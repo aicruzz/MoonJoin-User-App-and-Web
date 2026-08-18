@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
 
 /// MoonJoin module glyph as seen in `home.png`: a white **organic blob**
 /// (not a perfect circle) with a fixed-thickness green ring and a soft shadow.

@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/models/choose_us_model.dart';
-import 'package:sixam_mart/features/language/domain/models/language_model.dart';
-import 'package:sixam_mart/helper/delivery_man_tips_config.dart';
-import 'package:sixam_mart/util/images.dart';
+import 'package:moonjoin/common/models/choose_us_model.dart';
+import 'package:moonjoin/features/language/domain/models/language_model.dart';
+import 'package:moonjoin/helper/delivery_man_tips_config.dart';
+import 'package:moonjoin/util/images.dart';
 
 class AppConstants {
   static const String appName = 'MoonJoin';

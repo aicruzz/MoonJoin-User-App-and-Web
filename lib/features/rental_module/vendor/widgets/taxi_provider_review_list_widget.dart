@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/features/rental_module/vendor/controllers/taxi_vendor_controller.dart';
-import 'package:sixam_mart/features/rental_module/vendor/widgets/taxi_review_widget.dart';
+import 'package:moonjoin/features/rental_module/vendor/controllers/taxi_vendor_controller.dart';
+import 'package:moonjoin/features/rental_module/vendor/widgets/taxi_review_widget.dart';
 
 class TaxiProviderReviewListWidget extends StatelessWidget {
   final TaxiVendorController taxiVendorController;

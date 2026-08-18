@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
 
 /// Regression test for the Checkout "read error": the backend echoes
 /// `pickup_time` as ISO-8601 UTC on add-to-cart but as `yyyy-MM-dd HH:mm:ss`

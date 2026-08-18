@@ -1,4 +1,4 @@
-import 'package:sixam_mart/interfaces/repository_interface.dart';
+import 'package:moonjoin/interfaces/repository_interface.dart';
 
 abstract class WalletRepositoryInterface extends RepositoryInterface{
   Future<dynamic> addFundToWallet(double amount, String paymentMethod);

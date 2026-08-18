@@ -1,16 +1,16 @@
 import 'dart:convert';
 
 import 'package:get/get.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/api/local_client.dart';
-import 'package:sixam_mart/common/enums/data_source_enum.dart';
-import 'package:sixam_mart/features/banner/domain/models/banner_model.dart';
-import 'package:sixam_mart/features/banner/domain/models/others_banner_model.dart';
-import 'package:sixam_mart/features/banner/domain/models/promotional_banner_model.dart';
-import 'package:sixam_mart/features/banner/domain/repositories/banner_repository_interface.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/helper/header_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/api/local_client.dart';
+import 'package:moonjoin/common/enums/data_source_enum.dart';
+import 'package:moonjoin/features/banner/domain/models/banner_model.dart';
+import 'package:moonjoin/features/banner/domain/models/others_banner_model.dart';
+import 'package:moonjoin/features/banner/domain/models/promotional_banner_model.dart';
+import 'package:moonjoin/features/banner/domain/repositories/banner_repository_interface.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/helper/header_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 class BannerRepository implements BannerRepositoryInterface {
   final ApiClient apiClient;

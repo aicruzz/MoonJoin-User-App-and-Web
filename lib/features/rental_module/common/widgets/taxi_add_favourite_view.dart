@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/controllers/taxi_favourite_controller.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/controllers/taxi_favourite_controller.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
 
 class TaxiAddFavouriteView extends StatelessWidget {
   final VehicleModel? vehicle;

@@ -1,20 +1,20 @@
 import 'package:just_the_tooltip/just_the_tooltip.dart';
-import 'package:sixam_mart/features/coupon/controllers/coupon_controller.dart';
-import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/footer_view.dart';
-import 'package:sixam_mart/common/widgets/menu_drawer.dart';
-import 'package:sixam_mart/common/widgets/no_data_screen.dart';
-import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
-import 'package:sixam_mart/common/widgets/not_logged_in_screen.dart';
+import 'package:moonjoin/features/coupon/controllers/coupon_controller.dart';
+import 'package:moonjoin/features/profile/widgets/profile_page_header.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/footer_view.dart';
+import 'package:moonjoin/common/widgets/menu_drawer.dart';
+import 'package:moonjoin/common/widgets/no_data_screen.dart';
+import 'package:moonjoin/common/widgets/web_menu_bar.dart';
+import 'package:moonjoin/common/widgets/not_logged_in_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/web_page_title_widget.dart';
-import 'package:sixam_mart/features/coupon/widgets/coupon_card_widget.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/web_page_title_widget.dart';
+import 'package:moonjoin/features/coupon/widgets/coupon_card_widget.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class CouponScreen extends StatefulWidget {
   const CouponScreen({super.key});

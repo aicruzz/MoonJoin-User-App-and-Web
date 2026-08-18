@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/models/module_model.dart';
-import 'package:sixam_mart/common/widgets/confirmation_dialog.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/features/cart/controllers/cart_controller.dart';
-import 'package:sixam_mart/features/cart/domain/models/cart_model.dart';
-import 'package:sixam_mart/features/checkout/domain/models/place_order_body_model.dart';
-import 'package:sixam_mart/features/checkout/screens/checkout_screen.dart';
-import 'package:sixam_mart/features/item/controllers/item_controller.dart';
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/helper/date_converter.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/images.dart';
+import 'package:moonjoin/common/models/module_model.dart';
+import 'package:moonjoin/common/widgets/confirmation_dialog.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/features/cart/controllers/cart_controller.dart';
+import 'package:moonjoin/features/cart/domain/models/cart_model.dart';
+import 'package:moonjoin/features/checkout/domain/models/place_order_body_model.dart';
+import 'package:moonjoin/features/checkout/screens/checkout_screen.dart';
+import 'package:moonjoin/features/item/controllers/item_controller.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/helper/date_converter.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/images.dart';
 
 /// Derived pricing/selection values for an item, computed once from the live
 /// [Item] + [ItemController] state so the display and the add-to-cart action use

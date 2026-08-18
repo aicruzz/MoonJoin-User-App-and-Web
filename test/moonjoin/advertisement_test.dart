@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/enums/data_source_enum.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_advertisement_card.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_advertisement_section.dart';
-import 'package:sixam_mart/features/home/controllers/advertisement_controller.dart';
-import 'package:sixam_mart/features/home/domain/models/advertisement_model.dart';
-import 'package:sixam_mart/features/home/domain/services/advertisement_service_interface.dart';
+import 'package:moonjoin/common/enums/data_source_enum.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_advertisement_card.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_advertisement_section.dart';
+import 'package:moonjoin/features/home/controllers/advertisement_controller.dart';
+import 'package:moonjoin/features/home/domain/models/advertisement_model.dart';
+import 'package:moonjoin/features/home/domain/services/advertisement_service_interface.dart';
 
 // Focused tests for the MoonJoin Advertisement presentation. Uses video ads so
 // the FavouriteController/network image dependencies of the image card are not

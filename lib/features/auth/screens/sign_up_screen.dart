@@ -1,10 +1,10 @@
-import 'package:sixam_mart/features/auth/widgets/foundation/auth_foundation.dart';
-import 'package:sixam_mart/features/auth/widgets/sign_up_widget.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/util/styles.dart';
-import 'package:sixam_mart/common/widgets/menu_drawer.dart';
+import 'package:moonjoin/features/auth/widgets/foundation/auth_foundation.dart';
+import 'package:moonjoin/features/auth/widgets/sign_up_widget.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/images.dart';
+import 'package:moonjoin/util/styles.dart';
+import 'package:moonjoin/common/widgets/menu_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

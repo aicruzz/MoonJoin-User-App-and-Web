@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/filter_chip_widget.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/moonjoin/filter_chip_widget.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 /// # MoonJoin Sub-Category Bar — the ONE official sub-category navigation component
 ///

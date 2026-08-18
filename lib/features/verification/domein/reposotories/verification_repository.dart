@@ -1,13 +1,13 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sixam_mart/common/models/response_model.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
-import 'package:sixam_mart/features/auth/domain/models/auth_response_model.dart';
-import 'package:sixam_mart/features/verification/domein/models/verification_data_model.dart';
-import 'package:sixam_mart/features/verification/domein/reposotories/verification_repository_interface.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/common/models/response_model.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/features/auth/controllers/auth_controller.dart';
+import 'package:moonjoin/features/auth/domain/models/auth_response_model.dart';
+import 'package:moonjoin/features/verification/domein/models/verification_data_model.dart';
+import 'package:moonjoin/features/verification/domein/reposotories/verification_repository_interface.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 class VerificationRepository implements VerificationRepositoryInterface{
   final ApiClient apiClient;

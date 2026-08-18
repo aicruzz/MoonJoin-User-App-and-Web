@@ -1,7 +1,7 @@
 import 'package:get/get_connect.dart';
-import 'package:sixam_mart/features/rental_module/common/models/taxi_coupon_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart.dart';
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/taxi_coupon_model.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
 
 abstract class TaxiCartServiceInterface{
   Future<CarCartModel?> addToCart(CarCart cart);

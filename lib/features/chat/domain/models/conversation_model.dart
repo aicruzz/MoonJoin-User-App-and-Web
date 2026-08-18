@@ -1,4 +1,4 @@
-import 'package:sixam_mart/features/chat/domain/models/chat_model.dart';
+import 'package:moonjoin/features/chat/domain/models/chat_model.dart';
 
 class ConversationsModel {
   int? totalSize;

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/features/rental_module/provider_adapter/rental_provider_adapter.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/controllers/taxi_favourite_controller.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/features/rental_module/provider_adapter/rental_provider_adapter.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/controllers/taxi_favourite_controller.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// **Rental Provider banner — a visual clone of the approved `MoonjoinStoreCard`.**
 ///

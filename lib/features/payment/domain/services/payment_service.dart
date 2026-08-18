@@ -1,6 +1,6 @@
-import 'package:sixam_mart/features/payment/domain/models/offline_method_model.dart';
-import 'package:sixam_mart/features/payment/domain/repositories/payment_repository_interface.dart';
-import 'package:sixam_mart/features/payment/domain/services/payment_service_interface.dart';
+import 'package:moonjoin/features/payment/domain/models/offline_method_model.dart';
+import 'package:moonjoin/features/payment/domain/repositories/payment_repository_interface.dart';
+import 'package:moonjoin/features/payment/domain/services/payment_service_interface.dart';
 
 class PaymentService implements PaymentServiceInterface {
   final PaymentRepositoryInterface paymentRepositoryInterface;

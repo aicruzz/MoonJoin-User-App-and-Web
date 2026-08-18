@@ -1,4 +1,4 @@
-import 'package:sixam_mart/features/notification/domain/models/notification_model.dart';
+import 'package:moonjoin/features/notification/domain/models/notification_model.dart';
 
 abstract class NotificationServiceInterface {
   Future<List<NotificationModel>?> getNotificationList();

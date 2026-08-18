@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
-import 'package:sixam_mart/features/store/controllers/store_controller.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
-import 'package:sixam_mart/helper/date_converter.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/features/favourite/controllers/favourite_controller.dart';
+import 'package:moonjoin/features/store/controllers/store_controller.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/helper/date_converter.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// MoonJoin store / restaurant card (Figma ALL RESTAURANTS `1:1716`): a rounded
 /// card with a cover image (discount badge, logo, delivery-time pill overlaid)

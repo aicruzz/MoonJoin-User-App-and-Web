@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/util/dimensions.dart';
 import '../../../../../../util/styles.dart';
 import '../../domain/models/my_address_model_new.dart';
 

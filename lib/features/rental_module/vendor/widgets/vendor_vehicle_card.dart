@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
-import 'package:sixam_mart/common/widgets/discount_tag.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/new_tag.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/vehicle_details_screen/vehicle_details_screen.dart';
-import 'package:sixam_mart/features/rental_module/widgets/featured_item.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/helper/string_extension.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/images.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/custom_ink_well.dart';
+import 'package:moonjoin/common/widgets/discount_tag.dart';
+import 'package:moonjoin/features/rental_module/common/widgets/new_tag.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/vehicle_details_screen/vehicle_details_screen.dart';
+import 'package:moonjoin/features/rental_module/widgets/featured_item.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/helper/string_extension.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/images.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class VendorVehicleCard extends StatefulWidget {
   final VehicleModel vehicle;

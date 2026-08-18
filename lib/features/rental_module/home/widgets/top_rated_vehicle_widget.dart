@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
-import 'package:sixam_mart/features/rental_module/home/screens/all_vehicle_screen.dart';
-import 'package:sixam_mart/features/rental_module/home/widgets/horizontal_vehicle_card.dart';
-import 'package:sixam_mart/features/rental_module/widgets/taxi_shimmer_view.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/features/rental_module/home/controllers/taxi_home_controller.dart';
+import 'package:moonjoin/features/rental_module/home/screens/all_vehicle_screen.dart';
+import 'package:moonjoin/features/rental_module/home/widgets/horizontal_vehicle_card.dart';
+import 'package:moonjoin/features/rental_module/widgets/taxi_shimmer_view.dart';
+import 'package:moonjoin/util/dimensions.dart';
 import '../../common/widgets/headers_title_widget.dart';
 
 class TopRatedVehicleWidget extends StatelessWidget {

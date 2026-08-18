@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/controllers/theme_controller.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
-import 'package:sixam_mart/common/widgets/custom_debounce_widget.dart';
-import 'package:sixam_mart/common/widgets/custom_ink_well.dart';
-import 'package:sixam_mart/features/rental_module/helper/string_limit_helper.dart';
-import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
-import 'package:sixam_mart/features/rental_module/select_vehicle_screen/widgets/search_text_field.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/controllers/theme_controller.dart';
+import 'package:moonjoin/common/widgets/custom_app_bar.dart';
+import 'package:moonjoin/common/widgets/custom_debounce_widget.dart';
+import 'package:moonjoin/common/widgets/custom_ink_well.dart';
+import 'package:moonjoin/features/rental_module/helper/string_limit_helper.dart';
+import 'package:moonjoin/features/rental_module/home/controllers/taxi_home_controller.dart';
+import 'package:moonjoin/features/rental_module/select_vehicle_screen/widgets/search_text_field.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class SearchVehicleScreen extends StatefulWidget {
 

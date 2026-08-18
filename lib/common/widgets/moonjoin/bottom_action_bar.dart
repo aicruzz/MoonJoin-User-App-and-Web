@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 /// A fixed bottom container with the MoonJoin card surface, top shadow and
 /// safe-area padding — the standard pinned footer for a single primary action

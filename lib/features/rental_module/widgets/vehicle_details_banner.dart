@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:sixam_mart/common/widgets/custom_image.dart';
-import 'package:sixam_mart/common/widgets/discount_tag.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/new_tag.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/taxi_add_favourite_view.dart';
-import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/discount_tag.dart';
+import 'package:moonjoin/features/rental_module/common/widgets/new_tag.dart';
+import 'package:moonjoin/features/rental_module/common/widgets/taxi_add_favourite_view.dart';
+import 'package:moonjoin/features/rental_module/home/controllers/taxi_home_controller.dart';
+import 'package:moonjoin/util/dimensions.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class VehicleDetailsBanner extends StatefulWidget {

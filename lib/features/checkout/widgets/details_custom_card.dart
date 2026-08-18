@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 class DetailsCustomCard extends StatelessWidget {
   final Widget? child;

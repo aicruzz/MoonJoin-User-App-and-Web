@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/payment/domain/models/offline_method_model.dart';
-import 'package:sixam_mart/features/payment/domain/services/payment_service_interface.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
+import 'package:moonjoin/features/payment/domain/models/offline_method_model.dart';
+import 'package:moonjoin/features/payment/domain/services/payment_service_interface.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
 
 class PaymentController extends GetxController implements GetxService {
   final PaymentServiceInterface paymentServiceInterface;

@@ -1,11 +1,11 @@
-import 'package:sixam_mart/features/item/controllers/campaign_controller.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
-import 'package:sixam_mart/common/widgets/footer_view.dart';
-import 'package:sixam_mart/common/widgets/item_view.dart';
+import 'package:moonjoin/features/item/controllers/campaign_controller.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_app_bar.dart';
+import 'package:moonjoin/common/widgets/footer_view.dart';
+import 'package:moonjoin/common/widgets/item_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/menu_drawer.dart';
+import 'package:moonjoin/common/widgets/menu_drawer.dart';
 
 class ItemCampaignScreen extends StatefulWidget {
   final bool isJustForYou;

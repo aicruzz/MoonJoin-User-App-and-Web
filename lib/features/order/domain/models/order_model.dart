@@ -1,6 +1,6 @@
-import 'package:sixam_mart/features/address/domain/models/address_model.dart';
-import 'package:sixam_mart/features/parcel/domain/models/parcel_category_model.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/features/address/domain/models/address_model.dart';
+import 'package:moonjoin/features/parcel/domain/models/parcel_category_model.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
 
 class PaginatedOrderModel {
   int? totalSize;

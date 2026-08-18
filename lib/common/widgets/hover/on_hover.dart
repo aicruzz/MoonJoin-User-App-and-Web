@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/controllers/theme_controller.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/controllers/theme_controller.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 class OnHover extends StatefulWidget {
   final Widget child;

@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/app_constants.dart';
-import 'package:sixam_mart/util/images.dart';
+import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/images.dart';
 
 class CustomImage extends StatelessWidget {
   final String image;

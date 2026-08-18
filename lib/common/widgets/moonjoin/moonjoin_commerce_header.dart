@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// THE single MoonJoin **Commerce Header** — the approved flat green header of the
 /// frozen Your Cart page, extracted **verbatim** so every commerce screen (Cart,

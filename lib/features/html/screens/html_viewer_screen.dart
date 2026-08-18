@@ -1,17 +1,17 @@
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
-import 'package:sixam_mart/features/html/controllers/html_controller.dart';
-import 'package:sixam_mart/features/profile/widgets/profile_page_header.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/html_type.dart';
+import 'package:moonjoin/features/html/controllers/html_controller.dart';
+import 'package:moonjoin/features/profile/widgets/profile_page_header.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/html_type.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/footer_view.dart';
-import 'package:sixam_mart/common/widgets/menu_drawer.dart';
-import 'package:sixam_mart/common/widgets/no_data_screen.dart';
-import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
-import 'package:sixam_mart/common/widgets/web_page_title_widget.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/footer_view.dart';
+import 'package:moonjoin/common/widgets/menu_drawer.dart';
+import 'package:moonjoin/common/widgets/no_data_screen.dart';
+import 'package:moonjoin/common/widgets/web_menu_bar.dart';
+import 'package:moonjoin/common/widgets/web_page_title_widget.dart';
+import 'package:moonjoin/util/styles.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class HtmlViewerScreen extends StatefulWidget {

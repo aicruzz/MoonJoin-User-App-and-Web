@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_button.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_button.dart';
+import 'package:moonjoin/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 import '../../../util/images.dart';
 import '../../../util/styles.dart';

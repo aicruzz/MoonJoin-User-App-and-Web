@@ -1,15 +1,15 @@
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sixam_mart/api/api_client.dart';
-import 'package:sixam_mart/common/models/module_model.dart';
-import 'package:sixam_mart/features/location/domain/models/zone_data_model.dart';
-import 'package:sixam_mart/features/auth/domain/models/delivery_man_body.dart';
-import 'package:sixam_mart/features/auth/domain/models/delivery_man_vehicles_model.dart';
-import 'package:sixam_mart/features/auth/domain/reposotories/auth_repository_interface.dart';
-import 'package:sixam_mart/features/auth/domain/reposotories/deliveryman_registration_repository_interface.dart';
-import 'package:sixam_mart/features/auth/domain/services/deliveryman_registration_service_interface.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/api/api_client.dart';
+import 'package:moonjoin/common/models/module_model.dart';
+import 'package:moonjoin/features/location/domain/models/zone_data_model.dart';
+import 'package:moonjoin/features/auth/domain/models/delivery_man_body.dart';
+import 'package:moonjoin/features/auth/domain/models/delivery_man_vehicles_model.dart';
+import 'package:moonjoin/features/auth/domain/reposotories/auth_repository_interface.dart';
+import 'package:moonjoin/features/auth/domain/reposotories/deliveryman_registration_repository_interface.dart';
+import 'package:moonjoin/features/auth/domain/services/deliveryman_registration_service_interface.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
 
 class DeliverymanRegistrationService implements DeliverymanRegistrationServiceInterface{
   final DeliverymanRegistrationRepositoryInterface deliverymanRegistrationRepoInterface;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class CustomCheckBoxWidget extends StatelessWidget {
   final String title;

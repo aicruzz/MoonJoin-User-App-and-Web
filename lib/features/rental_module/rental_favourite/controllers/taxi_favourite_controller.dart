@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/models/response_model.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/domain/services/taxi_favourite_service_interface.dart';
-import 'package:sixam_mart/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
+import 'package:moonjoin/common/models/response_model.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/domain/services/taxi_favourite_service_interface.dart';
+import 'package:moonjoin/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
 
 class TaxiFavouriteController extends GetxController implements GetxService {
   final TaxiFavouriteServiceInterface taxiFavouriteServiceInterface;

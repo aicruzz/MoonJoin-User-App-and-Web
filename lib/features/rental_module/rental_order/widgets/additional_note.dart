@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/styles.dart';
 class AdditionalNote extends StatelessWidget {
   final String? note;
   const AdditionalNote({super.key, this.note});

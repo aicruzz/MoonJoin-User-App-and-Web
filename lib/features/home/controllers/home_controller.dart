@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/home/domain/models/cashback_model.dart';
-import 'package:sixam_mart/features/home/domain/services/home_service_interface.dart';
+import 'package:moonjoin/features/home/domain/models/cashback_model.dart';
+import 'package:moonjoin/features/home/domain/services/home_service_interface.dart';
 
 class HomeController extends GetxController implements GetxService {
   final HomeServiceInterface homeServiceInterface;

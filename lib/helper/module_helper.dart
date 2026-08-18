@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/common/models/module_model.dart';
-import 'package:sixam_mart/common/models/config_model.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/common/models/module_model.dart';
+import 'package:moonjoin/common/models/config_model.dart';
 
 class ModuleHelper {
 

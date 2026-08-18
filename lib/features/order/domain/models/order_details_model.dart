@@ -1,5 +1,5 @@
-import 'package:sixam_mart/features/item/domain/models/item_model.dart';
-import 'package:sixam_mart/features/order/domain/models/order_model.dart';
+import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/features/order/domain/models/order_model.dart';
 
 class OrderDetailsModel {
   int? id;

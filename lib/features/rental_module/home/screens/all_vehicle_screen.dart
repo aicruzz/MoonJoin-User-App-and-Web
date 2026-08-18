@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/loading_skeleton.dart';
-import 'package:sixam_mart/common/widgets/paginated_list_view.dart';
-import 'package:sixam_mart/features/rental_module/common/widgets/rant_cart_widget.dart';
-import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/home/widgets/banner_widget.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
-import 'package:sixam_mart/features/rental_module/vehicle_details_screen/vehicle_details_screen.dart';
-import 'package:sixam_mart/helper/price_converter.dart';
-import 'package:sixam_mart/features/rental_module/select_vehicle_screen/search_vehicle_screen.dart';
-import 'package:sixam_mart/common/widgets/no_data_screen.dart';
-import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
-import 'package:sixam_mart/features/rental_module/provider_adapter/rental_provider_adapter.dart';
-import 'package:sixam_mart/features/rental_module/provider_adapter/rental_provider_card.dart';
-import 'package:sixam_mart/features/rental_module/vendor/screens/vendor_detail_screen.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_top_brands_section.dart';
-import 'package:sixam_mart/features/store/widgets/all_restaurants_widgets.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/moonjoin/loading_skeleton.dart';
+import 'package:moonjoin/common/widgets/paginated_list_view.dart';
+import 'package:moonjoin/features/rental_module/common/widgets/rant_cart_widget.dart';
+import 'package:moonjoin/features/rental_module/home/controllers/taxi_home_controller.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/home/widgets/banner_widget.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
+import 'package:moonjoin/features/rental_module/vehicle_details_screen/vehicle_details_screen.dart';
+import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/features/rental_module/select_vehicle_screen/search_vehicle_screen.dart';
+import 'package:moonjoin/common/widgets/no_data_screen.dart';
+import 'package:moonjoin/features/rental_module/provider_adapter/rental_apartment_adapter.dart';
+import 'package:moonjoin/features/rental_module/provider_adapter/rental_provider_adapter.dart';
+import 'package:moonjoin/features/rental_module/provider_adapter/rental_provider_card.dart';
+import 'package:moonjoin/features/rental_module/vendor/screens/vendor_detail_screen.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_top_brands_section.dart';
+import 'package:moonjoin/features/store/widgets/all_restaurants_widgets.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Rental Screen 2 — **Car Rental Listing** (`ui-designs/Car_Rental/car_rental.png`).
 ///

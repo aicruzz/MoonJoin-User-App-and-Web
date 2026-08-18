@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_top_brands_section.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/store/controllers/store_controller.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_top_brands_section.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/store/controllers/store_controller.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 /// MoonJoin **Food** Top Brands adapter (ui-designs/Top_Brands.png): maps the existing
 /// featured Food stores onto the shared [MoonjoinTopBrandsSection] presentation.

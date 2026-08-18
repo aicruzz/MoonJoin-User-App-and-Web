@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/motion/moonjoin_motion.dart';
+import 'package:moonjoin/common/widgets/moonjoin/motion/moonjoin_motion.dart';
 
 /// Flutter-native renderer of the MoonJoin moon. Draws the state's moon phase and
 /// choreographs the **Arc-Light** reveal from a single [reveal] value (0..1):

@@ -1,9 +1,9 @@
 import 'package:get/get_connect/http/src/response/response.dart';
-import 'package:sixam_mart/common/models/response_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/domain/repositories/taxi_favourite_repository_interface.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/domain/services/taxi_favourite_service_interface.dart';
-import 'package:sixam_mart/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
+import 'package:moonjoin/common/models/response_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/domain/repositories/taxi_favourite_repository_interface.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/domain/services/taxi_favourite_service_interface.dart';
+import 'package:moonjoin/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
 
 class TaxiFavouriteService implements TaxiFavouriteServiceInterface {
   final TaxiFavouriteRepositoryInterface taxiFavouriteRepositoryInterface;

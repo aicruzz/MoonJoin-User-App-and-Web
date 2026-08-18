@@ -1,4 +1,4 @@
-import 'package:sixam_mart/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/models/car_cart_model.dart';
 
 class CartHelper{
   static Future<bool> checkTypeInCart(List<Carts> cartList, String rentalType) async{

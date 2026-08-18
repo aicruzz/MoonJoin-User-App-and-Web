@@ -1,7 +1,7 @@
-import 'package:sixam_mart/features/favourite/controllers/favourite_controller.dart';
-import 'package:sixam_mart/features/auth/controllers/auth_controller.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/common/widgets/custom_snackbar.dart';
+import 'package:moonjoin/features/favourite/controllers/favourite_controller.dart';
+import 'package:moonjoin/features/auth/controllers/auth_controller.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/common/widgets/custom_snackbar.dart';
 import 'package:get/get.dart';
 
 class ApiChecker {

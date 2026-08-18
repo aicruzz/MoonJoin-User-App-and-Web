@@ -1,11 +1,11 @@
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/widgets/favourite_vendor_card.dart';
-import 'package:sixam_mart/features/rental_module/rental_favourite/widgets/vehicle_shimmer.dart';
-import 'package:sixam_mart/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
-import 'package:sixam_mart/features/rental_module/widgets/vehicle_card.dart';
-import 'package:sixam_mart/helper/responsive_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/common/widgets/no_data_screen.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/widgets/favourite_vendor_card.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/widgets/vehicle_shimmer.dart';
+import 'package:moonjoin/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
+import 'package:moonjoin/features/rental_module/widgets/vehicle_card.dart';
+import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/no_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

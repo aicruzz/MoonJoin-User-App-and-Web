@@ -2,11 +2,11 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_advertisement_card.dart';
-import 'package:sixam_mart/features/home/controllers/advertisement_controller.dart';
-import 'package:sixam_mart/features/home/domain/models/advertisement_model.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_advertisement_card.dart';
+import 'package:moonjoin/features/home/controllers/advertisement_controller.dart';
+import 'package:moonjoin/features/home/domain/models/advertisement_model.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// MoonJoin Advertisement ("Highlights") section — the approved MoonJoin design
 /// language applied to the existing advertisement carousel: organic pale-green

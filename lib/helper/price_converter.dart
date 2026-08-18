@@ -1,9 +1,9 @@
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class PriceConverter {
   static String convertPrice(double? price, {double? discount, String? discountType, bool forDM = false, bool isFoodVariation = false, String? formatedStringPrice, bool forTaxi = false, bool forMenuWallet = false}) {

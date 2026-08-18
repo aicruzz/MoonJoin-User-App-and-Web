@@ -1,4 +1,4 @@
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
 
 class BasicCampaignModel {
   int? id;

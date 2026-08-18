@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/notification/controllers/notification_controller.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/widgets/taxi_guest_track_order_input_view_widget.dart';
-import 'package:sixam_mart/features/rental_module/rental_order/widgets/trip_order_view_widget.dart';
-import 'package:sixam_mart/helper/auth_helper.dart';
-import 'package:sixam_mart/helper/route_helper.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/features/notification/controllers/notification_controller.dart';
+import 'package:moonjoin/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
+import 'package:moonjoin/features/rental_module/rental_order/widgets/taxi_guest_track_order_input_view_widget.dart';
+import 'package:moonjoin/features/rental_module/rental_order/widgets/trip_order_view_widget.dart';
+import 'package:moonjoin/helper/auth_helper.dart';
+import 'package:moonjoin/helper/route_helper.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// Rental **Trips / Stay** list (Car design `my_trip.png`, Apartment
 /// `my_booking_history.png` — same page, wording differs). Presentation-only

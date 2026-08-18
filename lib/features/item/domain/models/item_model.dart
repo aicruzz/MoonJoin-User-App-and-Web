@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
-import 'package:sixam_mart/features/item/domain/models/basic_medicine_model.dart';
-import 'package:sixam_mart/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/item/domain/models/basic_medicine_model.dart';
+import 'package:moonjoin/features/store/domain/models/store_model.dart';
 
 class ItemModel {
   int? totalSize;

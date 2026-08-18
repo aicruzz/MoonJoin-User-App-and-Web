@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/custom_app_bar.dart';
-import 'package:sixam_mart/features/rental_module/vendor/controllers/taxi_vendor_controller.dart';
-import 'package:sixam_mart/features/rental_module/vendor/domain/models/taxi_provider_review_model.dart';
-import 'package:sixam_mart/features/rental_module/vendor/widgets/taxi_provider_rating_widget.dart';
-import 'package:sixam_mart/features/rental_module/vendor/widgets/taxi_provider_review_list_widget.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/common/widgets/custom_app_bar.dart';
+import 'package:moonjoin/features/rental_module/vendor/controllers/taxi_vendor_controller.dart';
+import 'package:moonjoin/features/rental_module/vendor/domain/models/taxi_provider_review_model.dart';
+import 'package:moonjoin/features/rental_module/vendor/widgets/taxi_provider_rating_widget.dart';
+import 'package:moonjoin/features/rental_module/vendor/widgets/taxi_provider_review_list_widget.dart';
+import 'package:moonjoin/util/dimensions.dart';
 
 class ReviewDetailsScreen extends StatefulWidget {
   final String? providerName;

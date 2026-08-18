@@ -1,4 +1,4 @@
-import 'package:sixam_mart/common/models/module_model.dart';
+import 'package:moonjoin/common/models/module_model.dart';
 
 /// The scope a search query targets — the module the CURRENT search searches.
 ///

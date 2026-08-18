@@ -1,7 +1,7 @@
 import 'package:get/get_connect/http/src/response/response.dart';
-import 'package:sixam_mart/common/models/response_model.dart';
-import 'package:sixam_mart/features/rental_module/home/domain/models/vehicle_details_model.dart';
-import 'package:sixam_mart/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
+import 'package:moonjoin/common/models/response_model.dart';
+import 'package:moonjoin/features/rental_module/home/domain/models/vehicle_details_model.dart';
+import 'package:moonjoin/features/rental_module/vendor/domain/models/taxi_vendor_model.dart';
 
 abstract class TaxiFavouriteServiceInterface {
   Future<ResponseModel> addVehicleFavouriteList(int id, bool isProvider);

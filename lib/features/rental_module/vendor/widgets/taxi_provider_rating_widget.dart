@@ -1,9 +1,9 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/review/widgets/rating_progress_widget.dart';
-import 'package:sixam_mart/features/rental_module/vendor/widgets/taxi_rating_bar.dart';
-import 'package:sixam_mart/util/dimensions.dart';
+import 'package:moonjoin/features/review/widgets/rating_progress_widget.dart';
+import 'package:moonjoin/features/rental_module/vendor/widgets/taxi_rating_bar.dart';
+import 'package:moonjoin/util/dimensions.dart';
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/styles.dart';
 
 class TaxiProviderRatingWidget extends StatelessWidget {
   final double? averageRating;

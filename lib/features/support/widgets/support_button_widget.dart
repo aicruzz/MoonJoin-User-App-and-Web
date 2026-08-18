@@ -1,8 +1,8 @@
 // ⚠️ OBSOLETE — Pending Final Legacy Cleanup. Superseded by the MoonJoin contact
 // cards in `support_screen.dart` (Phase 8B). Zero call sites; retained on disk per
 // the legacy-cleanup policy (no deletion until the final cleanup phase).
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 import 'package:flutter/material.dart';
 
 class SupportButtonWidget extends StatelessWidget {

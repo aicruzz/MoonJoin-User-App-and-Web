@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/models/module_model.dart';
-import 'package:sixam_mart/util/app_constants.dart';
+import 'package:moonjoin/common/models/module_model.dart';
+import 'package:moonjoin/util/app_constants.dart';
 
 /// THE single source of module-aware provider terminology for customer-facing
 /// headers (reuse-only — no per-screen hardcoding).

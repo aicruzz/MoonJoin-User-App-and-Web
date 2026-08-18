@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/features/rental_module/custom/custom_icon_layout.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/features/rental_module/custom/custom_icon_layout.dart';
+import 'package:moonjoin/util/styles.dart';
 import '../../../util/dimensions.dart';
 import '../domain/models/recent_address_model.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// A small pill used for statuses and tags (e.g. "In Stock", "Non-Veg",
 /// order status, rating chips). [filled] draws a solid [color] background with

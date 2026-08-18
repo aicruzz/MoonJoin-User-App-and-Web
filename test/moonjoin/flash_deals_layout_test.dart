@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
-import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_flash_deal_card.dart';
+import 'package:moonjoin/common/widgets/moonjoin/moonjoin_flash_deals_section.dart';
 
 // Layout guard for the MoonJoin Flash Deals presentation. Renders the section +
 // cards at a phone width and fails if the header, countdown, card, pricing, sold

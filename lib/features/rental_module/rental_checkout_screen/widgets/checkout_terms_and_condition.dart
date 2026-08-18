@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/html/controllers/html_controller.dart';
-import 'package:sixam_mart/util/dimensions.dart';
-import 'package:sixam_mart/util/html_type.dart';
+import 'package:moonjoin/features/html/controllers/html_controller.dart';
+import 'package:moonjoin/util/dimensions.dart';
+import 'package:moonjoin/util/html_type.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../../../util/styles.dart';

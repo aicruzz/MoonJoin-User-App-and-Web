@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sixam_mart/util/styles.dart';
+import 'package:moonjoin/util/styles.dart';
 
 /// MoonJoin bottom-nav item (reference: `ui-designs/.../home.png`): a filled/
 /// outlined [IconData] with a light-green rounded pill behind the active icon,

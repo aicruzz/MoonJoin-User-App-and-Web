@@ -1,6 +1,6 @@
-import 'package:sixam_mart/features/onboard/domain/models/onboarding_model.dart';
+import 'package:moonjoin/features/onboard/domain/models/onboarding_model.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/onboard/domain/service/onboard_service_interface.dart';
+import 'package:moonjoin/features/onboard/domain/service/onboard_service_interface.dart';
 
 class OnBoardingController extends GetxController implements GetxService {
   final OnboardServiceInterface onboardServiceInterface;

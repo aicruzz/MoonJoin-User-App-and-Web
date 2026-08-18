@@ -754,3 +754,9 @@ Test-only identity fix; checkpoint `ad09d76`. **No application functionality cha
 - **Change:** `ios/Runner.xcodeproj/project.pbxproj` — RunnerTests `PRODUCT_BUNDLE_IDENTIFIER` `com.sixamtech.sixammartUserApp.RunnerTests` → `com.moonjoin.com.RunnerTests` (3 configs; derived from production id). Production Runner target untouched.
 - **Production intact:** `com.moonjoin.com` + `CFBundleDisplayName = MoonJoin` (×3 each).
 - **Verified:** legacy ios id refs = 0; analyze 31 (0 errors, 0 new); 15 tests pass; iOS + web builds ✓.
+
+### Dart package identity `sixam_mart` → `moonjoin` (ATOMIC ownership migration, 2026-08-18, owner-approved)
+Checkpoint `bb00aee`. Renamed the Dart package name only. **No logic/API/UI/route/backend/storage/notification/Pusher/Firebase/platform-identity change.**
+- **Change (804 files, +6089/−6089):** `pubspec.yaml` `name: sixam_mart`→`moonjoin`; `package:sixam_mart/`→`package:moonjoin/` across 790 lib + 13 test files (proven: every changed line is an import token or the name).
+- **UNCHANGED (proven):** `6ammart_*` storage keys (27), `flutter.6ammart_theme`, notification channel `'6ammart'` (×3), Pusher key `'6ammart'`, `com.moonjoin.com` (android/ios/MainActivity), `CFBundleDisplayName MoonJoin`, Firebase, APIs, UI, controllers, models, routes. Android legacy dir left as-is.
+- **Verified:** 0 `package:sixam_mart` remain; analyze 31 (0 errors, 0 new); 15 tests pass; iOS install ✓ (21516); web ✓; Android APK ✓ (55.2MB).

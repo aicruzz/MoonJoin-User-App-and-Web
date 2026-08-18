@@ -1,7 +1,7 @@
 import 'package:get/get_connect/http/src/response/response.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_details_model.dart';
-import 'package:sixam_mart/features/rental_module/common/models/trip_model.dart';
-import 'package:sixam_mart/interfaces/repository_interface.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_details_model.dart';
+import 'package:moonjoin/features/rental_module/common/models/trip_model.dart';
+import 'package:moonjoin/interfaces/repository_interface.dart';
 
 abstract class TaxiOrderRepositoryInterface extends RepositoryInterface {
   Future<TripModel?> getTripList({required int offset, required String type});
