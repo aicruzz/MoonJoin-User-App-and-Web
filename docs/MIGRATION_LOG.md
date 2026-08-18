@@ -3782,3 +3782,15 @@ First **class-level** prune (not whole-file deletion): removed runtime-dead clas
 **`special_offers_view.dart` — stale doc-comment cleanup only:** removed the two stale `BannerView` references (class deleted in Batch 7) — dropped "from `BannerView`" from the class doc comment and removed the stale `_onBannerTap` doc line. **No executable code changed.**
 
 **Verification.** `flutter analyze` = 31 issues, **0 errors, 0 new**. Reference re-check: `HighlightWidget`/`_HighlightWidgetState`/`PromoCodeBannerView`/`_PromoCodeBannerViewState` = 0 references; the 5 preserved classes still referenced by their web widgets; no `BannerView` references remain. 15 deterministic moonjoin tests pass; `flash_countdown` flake unchanged. iOS release build + device install ✓ (`databaseSequenceNumber: 21492`); web release build ✓. Diff = **1 insertion / 233 deletions** across 3 files (the 1 insertion is the reworded comment). Baseline `80d268c` → commit recorded below.
+
+## Ownership Migration — Phase C: iOS RunnerTests identity → MoonJoin — STATUS: DONE (2026-08-18) · owner-approved
+Smallest-possible iOS identity fix: the **test-only** RunnerTests target's bundle id was still the legacy vendor id. Phase B rollback checkpoint `ad09d76eca1e6f341767c2e97435ee3fe2c61f80`. **No application functionality, UI, API, controller, model, route, or Dart source changed. No `sixam_mart` package identity, `6ammart_*` storage keys, notification channel id, or Pusher key touched.**
+
+**Exact change (`ios/Runner.xcodeproj/project.pbxproj`, 3 lines — Debug/Release/Profile of the RunnerTests target):**
+`PRODUCT_BUNDLE_IDENTIFIER` `com.sixamtech.sixammartUserApp.RunnerTests` → `com.moonjoin.com.RunnerTests` (derived from the existing production id `com.moonjoin.com` + Xcode's standard `<host-app-id>.RunnerTests` convention — not invented).
+
+**Why safe / test-only:** the 3 lines each live in a RunnerTests `PBXNativeTarget` build config paired with `BUNDLE_LOADER = "$(TEST_HOST)"` + `TEST_HOST = …/Runner.app/…/Runner` (test-target markers). The shipped **Runner** target is a separate block and was NOT modified. The legacy id existed nowhere else in `ios/` (no xcconfig/Info.plist/scheme).
+
+**Production identity confirmed intact:** `PRODUCT_BUNDLE_IDENTIFIER = com.moonjoin.com` (×3) and `CFBundleDisplayName = MoonJoin` (×3) unchanged.
+
+**Verification.** Reference scan: legacy `sixamtech`/`sixammartUserApp` in `ios/` = 0; `com.moonjoin.com.RunnerTests` = 3. `flutter analyze` = 31 issues, 0 errors, 0 new. 15 deterministic moonjoin tests pass. iOS release build + device install ✓ (`databaseSequenceNumber: 21508`); web release build ✓. Diff = only the 3 RunnerTests id lines (+ these docs). Checkpoint `ad09d76` → commit recorded below.

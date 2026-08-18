@@ -748,3 +748,9 @@ First class-level prune (not whole-file deletion), baseline `80d268c`. **No acti
 - **`views/promo_code_banner_view.dart`:** removed dead `PromoCodeBannerView` + `_PromoCodeBannerViewState` + 9 orphan imports. Preserved `PromoCodeShimmerView` (used by active `WebCouponBannerViewWidget`).
 - **`special_offers_view.dart`:** removed the two stale `BannerView` doc-comment references (Batch-7 deletion); no code changed.
 - **Verified:** analyze 31 (0 errors, 0 new); dead classes = 0 refs; 5 preserved classes still web-consumed; 15 tests pass; iOS + web builds ✓.
+
+### Phase C — iOS RunnerTests identity → MoonJoin (2026-08-18, owner-approved)
+Test-only identity fix; checkpoint `ad09d76`. **No application functionality changed; no `sixam_mart`/`6ammart_*`/notification/Pusher change.**
+- **Change:** `ios/Runner.xcodeproj/project.pbxproj` — RunnerTests `PRODUCT_BUNDLE_IDENTIFIER` `com.sixamtech.sixammartUserApp.RunnerTests` → `com.moonjoin.com.RunnerTests` (3 configs; derived from production id). Production Runner target untouched.
+- **Production intact:** `com.moonjoin.com` + `CFBundleDisplayName = MoonJoin` (×3 each).
+- **Verified:** legacy ios id refs = 0; analyze 31 (0 errors, 0 new); 15 tests pass; iOS + web builds ✓.
