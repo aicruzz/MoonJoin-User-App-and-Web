@@ -735,3 +735,9 @@ Evidence-based removal of home-view widgets orphaned by Batch 2 (baseline `ad757
 - **Retained:** `views/promo_code_banner_view.dart` — `PromoCodeShimmerView` used by active web coupon widget; `PromoCodeBannerView` is a future class-level prune (file kept).
 - **Active Special Offer / Most Popular Items UNTOUCHED:** rendered by `AllStoreScreen._discoveryContent` → `ItemController.discountedItemList`/`popularItemList` → frozen `ItemsView` — no dependency on the deleted files.
 - **Verified:** analyze 31 (0 errors, 0 new); 15 deterministic tests pass; iOS + web builds ✓. Top Brands/Campaign/Flash/module flows untouched.
+
+### Batch 7 — orphaned widgets/banner_view.dart removed (2026-08-18, owner-approved)
+Evidence-based removal of one runtime-dead file (baseline `31f1ff4`). **No active feature/UI/API/nav/backend changed; no `sixam_mart`/package-identity change.**
+- **Deleted (1):** `lib/features/home/widgets/banner_view.dart` (class `BannerView`). Orphaned by Batch 4's removal of `ModuleView` (its only prior consumer). Zero importers/constructors/exports/routes/DI; single class in file. Distinct from the already-deleted `views/banner_view.dart` (Batch 6).
+- **Not touched:** `highlight_widget.dart` (+ its 4 active classes + dead-but-retained `HighlightWidget`), `views/promo_code_banner_view.dart` (+ `PromoCodeShimmerView` + dead-but-retained `PromoCodeBannerView`), Special Offer / Most Popular Items, Top Brands, Campaign, Flash, all module flows.
+- **Verified:** analyze 31 (0 errors, 0 new); 15 deterministic tests pass; iOS + web builds ✓.

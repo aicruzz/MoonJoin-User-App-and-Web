@@ -3758,3 +3758,14 @@ Batch 5 was a READ-ONLY audit of the 15 files under `lib/features/home/widgets/v
 **Active "Special Offer" / "Most Popular Items" UNTOUCHED (explicitly verified).** The live UI is the discovery-chip path in `AllStoreScreen._discoveryContent`: Special Offer → `_itemDiscoveryList(ItemController.discountedItemList)`, Most Popular → `_itemDiscoveryList(ItemController.popularItemList)`, both via the frozen `ItemsView`/`ItemWidget`. Neither imports nor constructs the deleted legacy `SpecialOfferView`/`MostPopularItemView`.
 
 **Verification.** `flutter analyze` = 31 issues, **0 errors, 0 new** (unchanged from post-Batch-4). 15 deterministic moonjoin tests pass; `flash_countdown` flake unchanged. iOS release build + device install ✓ (`databaseSequenceNumber: 21476`); web release build ✓. No import references any deleted file. Net **14 files deleted**. Baseline `ad75729` → commit recorded below.
+
+## Legacy Cleanup — Batch 7: delete orphaned widgets/banner_view.dart — STATUS: DONE (2026-08-18) · owner-approved
+Removed the single runtime-dead file `lib/features/home/widgets/banner_view.dart` (class `BannerView`). Baseline `31f1ff4bd0e1028693fbd20fc52717ba2dab30dd`. **No active feature, UI, API, controller, model, route, navigation, or backend touched. No `sixam_mart`/package-identity change.**
+
+**Why dead.** `BannerView`'s only historical consumer was `ModuleView`, removed in Batch 4. Post-Batch-4 it was orphaned: zero importers (package + relative), `BannerView` never constructed/referenced in code, no `export`/`part`, not in `RouteHelper.routes`/`GetPage`/`Bind`, no dynamic ref. Single class in the file (no active shimmer/helper inside). NOT to be confused with `views/banner_view.dart` (a different file already deleted in Batch 6). The only remaining mention was a comment in the active `special_offers_view.dart` ("Mirrors BannerView's tap dispatch") — not a dependency.
+
+**Deleted (1):** `lib/features/home/widgets/banner_view.dart`.
+
+**Explicitly NOT touched:** `highlight_widget.dart` (+ `HighlightVideoWidget`/`HighlightStoreWidget`/`AdvertisementIndicator`/`AdvertisementShimmer` + the dead-but-retained `HighlightWidget`), `views/promo_code_banner_view.dart` (+ `PromoCodeShimmerView` + the dead-but-retained `PromoCodeBannerView`), Special Offer / Most Popular Items, Top Brands, Campaign, Flash Sale, `AllStoreScreen`, `WebNewHomeScreen`, controllers/models/APIs/navigation/module flows.
+
+**Verification.** `flutter analyze` = 31 issues, **0 errors, 0 new**. 15 deterministic moonjoin tests pass; `flash_countdown` flake unchanged. iOS release build + device install ✓ (`databaseSequenceNumber: 21484`); web release build ✓. No reference to `banner_view.dart`/`BannerView` remains. Net **1 file deleted**. Baseline `31f1ff4` → commit recorded below.
