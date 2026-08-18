@@ -709,3 +709,15 @@ references. May be removed ONLY in the final cleanup phase, after a dead-code au
 7. **Frontend Ownership.** The MoonJoin frontend is the primary product. Future effort targets UX,
    architecture quality, component reuse, scalability, maintainability — NOT redesigning legacy backend
    architecture that MoonJoin World will replace.
+
+---
+
+## LEGACY CLEANUP LOG
+
+### Batch 2 — proven runtime-dead legacy home code removed (2026-08-18, owner-approved)
+Evidence-based removal only (Phase-4 control-flow audit; baseline `013994f`). **No active feature/UI/API/nav/backend changed.**
+- **Deleted (6):** `home/widgets/item_campaign_view.dart`; `home/screens/modules/{food,grocery,shop,pharmacy}_home_screen.dart`; `home/widgets/brands_view_widget.dart` (mobile). **Modified:** `home_screen.dart` (removed 5 dead imports + simplified the dead ternary to the active `isTaxi`/`SizedBox` leaves).
+- **Why dead:** legacy per-module homes were reachable only in a `CustomScrollView` branch whose entry requires `isFood/isGrocery/isPharmacy/isShop` all false → their guards never fire (mobile storefronts use `AllStoreScreen`, desktop uses `WebNewHomeScreen`). `ItemCampaignView` had zero instantiation sites (superseded by `MoonjoinCampaignSection`). `BrandsViewWidget` (mobile)'s only consumer was the dead `shop_home_screen`.
+- **KEPT (correction mid-batch):** `module_view.dart` and `highlight_widget.dart` — analyzer proved they ALSO define classes used by ACTIVE code (`AddressShimmer`/`ModuleShimmer`; `HighlightVideoWidget`/`HighlightStoreWidget`/`AdvertisementIndicator`/`AdvertisementShimmer`). Restored. **Rule reinforced: audit EVERY class in a file, not just its headline class.**
+- **Deferred:** dead-but-retained `ModuleView` + mobile `HighlightWidget` classes (inside kept files); UNRESOLVED sub-views (`CategoryView`/`PopularStoreView`/`NewOnMartView`/`RecommendedStoreView`/`BestStoreNearbyView`/`TopOffersNearMe` — duplicate filenames need disambiguation).
+- **Verified:** analyze back to pre-existing 35 (0 errors, none in changed files); 15 deterministic tests pass; iOS + web builds ✓.

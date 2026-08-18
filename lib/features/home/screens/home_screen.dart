@@ -21,10 +21,6 @@ import 'package:sixam_mart/features/store/controllers/store_controller.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/profile/controllers/profile_controller.dart';
 import 'package:sixam_mart/features/address/controllers/address_controller.dart';
-import 'package:sixam_mart/features/home/screens/modules/food_home_screen.dart';
-import 'package:sixam_mart/features/home/screens/modules/grocery_home_screen.dart';
-import 'package:sixam_mart/features/home/screens/modules/pharmacy_home_screen.dart';
-import 'package:sixam_mart/features/home/screens/modules/shop_home_screen.dart';
 import 'package:sixam_mart/features/parcel/controllers/parcel_controller.dart';
 import 'package:sixam_mart/features/store/screens/all_store_screen.dart';
 import 'package:sixam_mart/features/rental_module/home/controllers/taxi_home_controller.dart';
@@ -49,7 +45,6 @@ import 'package:sixam_mart/common/widgets/web_menu_bar.dart';
 import 'package:sixam_mart/features/home/screens/web_new_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sixam_mart/features/home/widgets/module_view.dart';
 import 'package:sixam_mart/features/home/widgets/module_landing_view.dart';
 import 'package:sixam_mart/features/parcel/screens/parcel_category_screen.dart';
 
@@ -479,16 +474,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverToBoxAdapter(
                     child: Center(child: SizedBox(
                       width: Dimensions.webMaxWidth,
-                      child: !showMobileModule ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                        isGrocery ? const GroceryHomeScreen()
-                            : isPharmacy ? const PharmacyHomeScreen()
-                            : isFood ? const FoodHomeScreen()
-                            : isShop ? const ShopHomeScreen()
-                            : isTaxi ? const TaxiHomeScreen()
-                            : const SizedBox(),
-
-                      ]) : ModuleView(splashController: splashController),
+                      // Only Taxi (Rental) is reachable in this branch: mobile Food/
+                      // Grocery/Pharmacy/Ecommerce enter AllStoreScreen, desktop enters
+                      // WebNewHomeScreen, and no-module-selected enters ModuleLandingView,
+                      // so this CustomScrollView branch is only taken with
+                      // `!showMobileModule` and a non-storefront module. The legacy
+                      // per-module homes (Food/Grocery/Shop/Pharmacy) were proven
+                      // runtime-dead and removed in Legacy Cleanup Batch 2, and the dead
+                      // `!showMobileModule` ternary (always true here) + its unused
+                      // `ModuleView` else-branch were dropped. (module_view.dart is
+                      // retained for its still-active AddressShimmer/ModuleShimmer.)
+                      child: isTaxi ? const TaxiHomeScreen() : const SizedBox(),
                     )),
                   ),
 
