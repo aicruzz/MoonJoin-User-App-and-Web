@@ -16,6 +16,7 @@ import 'package:sixam_mart/features/rental_module/provider_adapter/rental_apartm
 import 'package:sixam_mart/features/rental_module/provider_adapter/rental_provider_adapter.dart';
 import 'package:sixam_mart/features/rental_module/provider_adapter/rental_provider_card.dart';
 import 'package:sixam_mart/features/rental_module/vendor/screens/vendor_detail_screen.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_top_brands_section.dart';
 import 'package:sixam_mart/features/store/widgets/all_restaurants_widgets.dart';
 import 'package:sixam_mart/util/dimensions.dart';
 import 'package:sixam_mart/util/styles.dart';
@@ -268,36 +269,17 @@ class _AllVehicleScreenState extends State<AllVehicleScreen> {
     );
   }
 
-  // ── Top Brands — approved section + TopBrandCard, REAL Rental brand backend.
-  // showCount:false because the Rental brand API has no vehicles_count yet (documented
-  // in docs/BACKEND_INTEGRATION_QUEUE.md) — never show a fabricated "0+". ──
+  // ── Top Brands — the approved shared MoonJoin presentation, REAL Rental brand
+  // backend. No "See all" and no card tap: brand filtering has no browse endpoint
+  // yet (inert — never routed to an unrelated screen; see BACKEND_INTEGRATION_QUEUE.md)
+  // and the brand API has no vehicles_count, so no count is shown (the approved
+  // presentation has none anyway — never a fabricated "0+"). ──
   Widget _topBrands(BuildContext context, TaxiHomeController taxiHomeController) {
     final brands = taxiHomeController.taxiBrandModel?.brands;
-    if (brands == null || brands.isEmpty) return const SizedBox();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
-        child: Text('top_brands'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-      ),
-      SizedBox(
-        height: 116,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-          itemCount: brands.length,
-          separatorBuilder: (context, index) => const SizedBox(width: Dimensions.paddingSizeSmall),
-          itemBuilder: (context, index) {
-            final b = brands[index];
-            return TopBrandCard(
-              name: b.name ?? '', imageUrl: b.imageFullUrl,
-              showCount: false, // TODO(BACKEND): pass vehicles_count once the API supplies it.
-              // TODO(BACKEND): brand filtering has no browse endpoint — inert, never
-              // routed to an unrelated screen. See BACKEND_INTEGRATION_QUEUE.md.
-            );
-          },
-        ),
-      ),
-    ]);
+    final items = brands
+        ?.map((b) => MoonjoinTopBrandItem(name: b.name ?? '', imageUrl: b.imageFullUrl))
+        .toList();
+    return MoonjoinTopBrandsSection(title: 'top_brands'.tr, items: items, onSeeAll: null);
   }
 
   // ── Vehicle list — existing shared VehicleCard + approved PaginatedListView ──

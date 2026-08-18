@@ -1,6 +1,5 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:sixam_mart/common/widgets/custom_image.dart';
 import 'package:sixam_mart/features/store/domain/models/store_model.dart';
 import 'package:sixam_mart/util/dimensions.dart';
@@ -208,51 +207,7 @@ class _PromotionalBannerCarouselState extends State<PromotionalBannerCarousel> {
   }
 }
 
-/// Top-Brands card (Figma `1:1810`): rounded card with the brand logo, name and
-/// item count. Pure presentation.
-class TopBrandCard extends StatelessWidget {
-  final String name;
-  final String? imageUrl;
-  final int itemCount;
-  final VoidCallback? onTap;
-
-  /// Whether to render the "N+ items" line. Defaults to `true`, so every existing
-  /// caller behaves exactly as before. Modules whose backend does not yet supply a
-  /// count pass `false` rather than displaying a misleading `0+` (e.g. Rental brands,
-  /// pending `vehicles_count` — see docs/BACKEND_INTEGRATION_QUEUE.md).
-  final bool showCount;
-
-  const TopBrandCard({super.key, required this.name, this.imageUrl, this.itemCount = 0, this.onTap, this.showCount = true});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-      child: Container(
-        width: 120,
-        padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
-        ),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
-          SizedBox(
-            height: 46, width: 46,
-            child: (imageUrl != null && imageUrl!.isNotEmpty)
-                ? CustomImage(image: imageUrl!, fit: BoxFit.contain)
-                : Icon(Icons.storefront, color: Theme.of(context).primaryColor),
-          ),
-          const SizedBox(height: Dimensions.paddingSizeSmall),
-          Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-              style: robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall)),
-          if (showCount) ...[
-            const SizedBox(height: 2),
-            Text('$itemCount+ ${'items'.tr}', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).hintColor)),
-          ],
-        ]),
-      ),
-    );
-  }
-}
+// NOTE: the legacy `TopBrandCard` was removed in Phase 2 — every Top Brands section
+// (Food · Ecommerce/Fashion · Rental) now shares the approved MoonJoin presentation
+// `MoonjoinTopBrandsSection` (+ `MoonjoinTopBrandCard`) in
+// `lib/common/widgets/moonjoin/`. Do not reintroduce a second Top Brands card here.

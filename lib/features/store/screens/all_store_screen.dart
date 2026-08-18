@@ -12,6 +12,7 @@ import 'package:sixam_mart/features/flash_sale/controllers/flash_sale_controller
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_advertisement_section.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_campaign_section.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_food_top_brands.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_top_brands_section.dart';
 import 'package:sixam_mart/features/flash_sale/widgets/flash_sale_view_widget.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
@@ -407,40 +408,23 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     if (Get.find<SplashController>().module?.moduleType != AppConstants.ecommerce) {
       return const SizedBox();
     }
+    // Presentation: the approved shared MoonJoin Top Brands (same as Food). Data,
+    // navigation and the "See all" target stay the existing Ecommerce/Fashion ones
+    // (BrandsController product brands → getBrandsItemScreen / getBrandsScreen).
     return GetBuilder<BrandsController>(builder: (brandsController) {
       final brands = brandsController.brandList;
-      if (brands == null || brands.isEmpty) return const SizedBox();
-      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('top_brands'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-            InkWell(
-              onTap: () => Get.toNamed(RouteHelper.getBrandsScreen()),
-              child: Row(children: [
-                Text('see_all'.tr, style: robotoMedium.copyWith(color: Theme.of(context).hintColor, fontSize: Dimensions.fontSizeSmall)),
-                Icon(Icons.chevron_right, size: 18, color: Theme.of(context).hintColor),
-              ]),
-            ),
-          ]),
-        ),
-        SizedBox(
-          height: 130,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
-            itemCount: brands.length,
-            separatorBuilder: (context, index) => const SizedBox(width: Dimensions.paddingSizeSmall),
-            itemBuilder: (context, index) {
-              final b = brands[index];
-              return TopBrandCard(
-                name: b.name ?? '', imageUrl: b.imageFullUrl, itemCount: b.itemsCount ?? 0,
+      final items = brands
+          ?.map((b) => MoonjoinTopBrandItem(
+                name: b.name ?? '',
+                imageUrl: b.imageFullUrl,
                 onTap: () => Get.toNamed(RouteHelper.getBrandsItemScreen(b.id ?? 0, b.name ?? '')),
-              );
-            },
-          ),
-        ),
-      ]);
+              ))
+          .toList();
+      return MoonjoinTopBrandsSection(
+        title: 'top_brands'.tr,
+        items: items,
+        onSeeAll: () => Get.toNamed(RouteHelper.getBrandsScreen()),
+      );
     });
   }
 
