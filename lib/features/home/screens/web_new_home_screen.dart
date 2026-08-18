@@ -1,3 +1,5 @@
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_campaign_section.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_food_top_brands.dart';
 import 'package:sixam_mart/features/banner/controllers/banner_controller.dart';
 import 'package:sixam_mart/features/home/widgets/all_store_filter_widget.dart';
 import 'package:sixam_mart/features/home/widgets/web/web_brands_view_widget.dart';
@@ -122,6 +124,10 @@ class _WebNewHomeScreenState extends State<WebNewHomeScreen> {
                       : categoryController.categoryList!.isEmpty ? const SizedBox() : WebCategoryViewWidget(categoryController: categoryController);
                 }),
 
+                // Food Top Brands — featured Food stores in the MoonJoin Top Brands
+                // language (module-gated, self-hides). Shared with the mobile home.
+                const MoonjoinFoodTopBrands(),
+
                 _isLogin ?  WebVisitAgainView(fromFood: isFood) : const SizedBox(),
 
                 isPharmacy ? const WebBasicMedicineNearbyViewWidget()
@@ -129,6 +135,12 @@ class _WebNewHomeScreenState extends State<WebNewHomeScreen> {
                     : const WebSpecialOfferView(isFood: false, isShop: false),
 
                 const WebHighlightWidget(),
+
+                // Campaigns (item-campaign) — the SAME shared MoonJoin section used
+                // by the mobile home (AllStoreScreen), rendering the existing
+                // CampaignController.itemCampaignList in the new MoonJoin design.
+                // Self-hides when there are no active campaign items.
+                const MoonjoinCampaignSection(),
 
                 (isPharmacy || isShop) ? const MiddleSectionMultipleBannerViewWidget()
                     : isFood ? const WebBestReviewItemViewWidget()

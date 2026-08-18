@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:sixam_mart/features/splash/controllers/splash_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/basic_medicine_model.dart';
+import 'package:sixam_mart/features/store/domain/models/store_model.dart';
 
 class ItemModel {
   int? totalSize;
@@ -76,6 +77,10 @@ class Item {
   String? availableTimeEnds;
   int? storeId;
   String? storeName;
+  // Nested store — supplied by the item-campaign endpoint's `with('store')` relation
+  // (campaign.store). Optional/defensive: null on responses that do not include it,
+  // so existing item parsing is never affected. Used for the campaign store logo.
+  Store? store;
   int? zoneId;
   bool? scheduleOrder;
   double? avgRating;
@@ -116,6 +121,7 @@ class Item {
     this.availableTimeEnds,
     this.storeId,
     this.storeName,
+    this.store,
     this.zoneId,
     this.scheduleOrder,
     this.avgRating,
@@ -194,6 +200,13 @@ class Item {
     availableTimeEnds = json['available_time_ends'];
     storeId = json['store_id'];
     storeName = json['store_name'];
+    // Defensive: a partial `campaign.store` (e.g. missing `featured`) must NEVER
+    // break item/campaign parsing — Store.fromJson force-parses some fields.
+    try {
+      store = json['store'] != null ? Store.fromJson(json['store']) : null;
+    } catch (_) {
+      store = null;
+    }
     zoneId = json['zone_id'];
     scheduleOrder = json['schedule_order'];
     avgRating = json['avg_rating']?.toDouble();
@@ -246,6 +259,9 @@ class Item {
     data['available_time_ends'] = availableTimeEnds;
     data['store_id'] = storeId;
     data['store_name'] = storeName;
+    if (store != null) {
+      data['store'] = store!.toJson();
+    }
     data['zone_id'] = zoneId;
     data['schedule_order'] = scheduleOrder;
     data['avg_rating'] = avgRating;

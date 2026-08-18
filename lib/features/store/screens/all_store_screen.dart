@@ -10,6 +10,8 @@ import 'package:sixam_mart/features/brands/controllers/brands_controller.dart';
 import 'package:sixam_mart/features/category/controllers/category_controller.dart';
 import 'package:sixam_mart/features/flash_sale/controllers/flash_sale_controller.dart';
 import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_advertisement_section.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_campaign_section.dart';
+import 'package:sixam_mart/common/widgets/moonjoin/moonjoin_food_top_brands.dart';
 import 'package:sixam_mart/features/flash_sale/widgets/flash_sale_view_widget.dart';
 import 'package:sixam_mart/features/item/controllers/item_controller.dart';
 import 'package:sixam_mart/features/item/domain/models/item_model.dart';
@@ -457,6 +459,10 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
     // when it does NOT, Top Brands is the top element — the first store is NOT
     // promoted to a hero card (no fallback hero).
     return Column(children: [
+      // Food Top Brands — featured Food restaurants/stores (module-gated, self-hides).
+      // Sits at the established Top Brands position; _topBrands() below stays the
+      // Ecommerce/Fashion product-brands section (only one renders per module).
+      if (_activeFilter == -1 && _discovery == -1) const MoonjoinFoodTopBrands(),
       _topBrands(),
       // Flash Deals — reuse the approved FlashSaleViewWidget (which renders the
       // approved FlashProductCard). Gated to the clean home state exactly like the
@@ -471,6 +477,12 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
       // there are no advertisements. Data is loaded by the home lifecycle (no
       // duplicate request). Order: Top Brands → Flash → Advertisement → stores.
       if (_activeFilter == -1 && _discovery == -1) const MoonjoinAdvertisementSection(),
+      // Campaigns (item-campaign) — the existing CampaignController.itemCampaignList
+      // rendered via the shared MoonjoinCampaignSection. Placed after Advertisement,
+      // before the store list; gated to the clean home state; self-hides when there
+      // are no active campaign items. Data is loaded by the home lifecycle (no
+      // duplicate request). Order: Top Brands → Flash → Advertisement → Campaigns → stores.
+      if (_activeFilter == -1 && _discovery == -1) const MoonjoinCampaignSection(),
       ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
