@@ -741,3 +741,10 @@ Evidence-based removal of one runtime-dead file (baseline `31f1ff4`). **No activ
 - **Deleted (1):** `lib/features/home/widgets/banner_view.dart` (class `BannerView`). Orphaned by Batch 4's removal of `ModuleView` (its only prior consumer). Zero importers/constructors/exports/routes/DI; single class in file. Distinct from the already-deleted `views/banner_view.dart` (Batch 6).
 - **Not touched:** `highlight_widget.dart` (+ its 4 active classes + dead-but-retained `HighlightWidget`), `views/promo_code_banner_view.dart` (+ `PromoCodeShimmerView` + dead-but-retained `PromoCodeBannerView`), Special Offer / Most Popular Items, Top Brands, Campaign, Flash, all module flows.
 - **Verified:** analyze 31 (0 errors, 0 new); 15 deterministic tests pass; iOS + web builds ✓.
+
+### Batch 8 — class-level prune of dead classes inside live files (2026-08-18, owner-approved)
+First class-level prune (not whole-file deletion), baseline `80d268c`. **No active feature/UI/API/nav/backend changed; no `sixam_mart`/package-identity change.** Batch-4 lesson: a file with both dead and active classes is pruned at class level, active classes preserved byte-for-byte.
+- **`highlight_widget.dart`:** removed dead `HighlightWidget` + `_HighlightWidgetState` + 3 orphan imports. Preserved `HighlightStoreWidget`/`HighlightVideoWidget`(+state)/`AdvertisementIndicator`/`AdvertisementShimmer` (used by active `WebHighlightWidget`).
+- **`views/promo_code_banner_view.dart`:** removed dead `PromoCodeBannerView` + `_PromoCodeBannerViewState` + 9 orphan imports. Preserved `PromoCodeShimmerView` (used by active `WebCouponBannerViewWidget`).
+- **`special_offers_view.dart`:** removed the two stale `BannerView` doc-comment references (Batch-7 deletion); no code changed.
+- **Verified:** analyze 31 (0 errors, 0 new); dead classes = 0 refs; 5 preserved classes still web-consumed; 15 tests pass; iOS + web builds ✓.

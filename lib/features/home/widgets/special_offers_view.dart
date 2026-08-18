@@ -20,7 +20,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 /// "Special Offers for You" — a horizontal list of the featured promo banners
 /// rendered as rounded cards, matching `home.png`. Presentation only: it reads
 /// the existing [BannerController] data and reuses the exact banner navigation
-/// behaviour from `BannerView` (Item / Store / Campaign / external URL).
+/// behaviour (Item / Store / Campaign / external URL).
 class SpecialOffersView extends StatelessWidget {
   const SpecialOffersView({super.key});
 
@@ -71,7 +71,6 @@ class SpecialOffersView extends StatelessWidget {
     });
   }
 
-  /// Mirrors `BannerView`'s tap dispatch so navigation behaviour is identical.
   Future<void> _onBannerTap(BuildContext context, dynamic data) async {
     if (data is Item) {
       Get.find<ItemController>().navigateToItemPage(data, context);
