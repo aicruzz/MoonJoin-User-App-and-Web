@@ -172,7 +172,7 @@ class ChatController extends GetxController implements GetxService {
           imageFullUrl: Get.find<SplashController>().configModel!.logoFullUrl,
         ),
         lastMessage: Message(
-          id: 0, conversationId: 0, senderId: 0, message: 'Welcome to Sixam Mart',
+          id: 0, conversationId: 0, senderId: 0, message: 'Welcome to MoonJoin',
           createdAt: '2024-07-14T05:05:20.000000Z', updatedAt: '2024-07-14T05:05:20.000000Z',
         ),
       ));

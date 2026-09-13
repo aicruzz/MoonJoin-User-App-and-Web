@@ -88,21 +88,29 @@ class ModuleLandingView extends StatelessWidget {
               /// Remaining modules in the design's 3·2·3… grouping
               ..._buildRestRows(context, rest, restShapes, normalSize, width, splashController),
 
-              const SizedBox(height: Dimensions.paddingSizeLarge),
+              /// Lower content — the running-order "some items unavailable" notice
+              /// and the "Special Offers for You" section — renders ONLY once the
+              /// modules have loaded. While `modules` is still empty the page stays a
+              /// clean All Modules loading state (green header + skeleton tiles)
+              /// instead of a half-formed layout. The loaded content below is
+              /// unchanged (same widgets, order, spacing, typography, See-all).
+              if (modules.isNotEmpty) ...[
+                const SizedBox(height: Dimensions.paddingSizeLarge),
 
-              /// "Some items are unavailable" — real running-order flag only
-              _unavailableCard(),
+                /// "Some items are unavailable" — real running-order flag only
+                _unavailableCard(),
 
-              /// Special Offers
-              Padding(
-                padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
-                child: SectionHeader(
-                  title: 'special_offers_for_you'.tr,
-                  actionText: 'see_all'.tr,
-                  onActionTap: () => Get.toNamed(RouteHelper.getCouponRoute()),
+                /// Special Offers
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Dimensions.paddingSizeDefault, Dimensions.paddingSizeSmall, Dimensions.paddingSizeDefault, Dimensions.paddingSizeDefault),
+                  child: SectionHeader(
+                    title: 'special_offers_for_you'.tr,
+                    actionText: 'see_all'.tr,
+                    onActionTap: () => Get.toNamed(RouteHelper.getCouponRoute()),
+                  ),
                 ),
-              ),
-              const SpecialOffersView(),
+                const SpecialOffersView(),
+              ],
 
               const SizedBox(height: 110),
             ]),
