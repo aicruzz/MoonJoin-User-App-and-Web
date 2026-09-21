@@ -1,7 +1,7 @@
 name: moonjoin
 description: A Multi-vendor Food. Grocery, eCommerce, Pharmacy & Parcel service.
 publish_to: 'none' #
-version: 1.0.22+33
+version: 1.0.23+34
 
 environment:
   sdk: ^3.10.0

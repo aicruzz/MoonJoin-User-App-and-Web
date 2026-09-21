@@ -209,32 +209,36 @@ class SocialLoginWidget extends StatelessWidget {
   }
 
   void _appleLogin() async {
-    String clientID = Get.find<SplashController>().configModel!.appleLogin![0].clientId!;
-    String redirectURL = Get.find<SplashController>().configModel!.appleLogin![0].redirectUrl!;
+    try {
+      String clientID = Get.find<SplashController>().configModel!.appleLogin![0].clientId!;
+      String redirectURL = Get.find<SplashController>().configModel!.appleLogin![0].redirectUrl!;
 
-    final credential = await SignInWithApple.getAppleIDCredential(
-      scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName,
-      ],
-      webAuthenticationOptions: GetPlatform.isIOS ? null : WebAuthenticationOptions(
-        clientId: clientID,
-        redirectUri: Uri.parse(redirectURL),
-      ),
-    );
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        webAuthenticationOptions: GetPlatform.isIOS ? null : WebAuthenticationOptions(
+          clientId: clientID,
+          redirectUri: Uri.parse(redirectURL),
+        ),
+      );
 
-    SocialLogInBody appleBodyModel = SocialLogInBody(
-      email: credential.email, token: credential.authorizationCode, uniqueId: credential.authorizationCode,
-      medium: 'apple', loginType: CentralizeLoginType.social.name, platform: GetPlatform.isIOS ? 'flutter_app' : 'flutter_web',
-    );
+      SocialLogInBody appleBodyModel = SocialLogInBody(
+        email: credential.email, token: credential.authorizationCode, uniqueId: credential.authorizationCode,
+        medium: 'apple', loginType: CentralizeLoginType.social.name, platform: GetPlatform.isIOS ? 'flutter_app' : 'flutter_web',
+      );
 
-    Get.find<AuthController>().loginWithSocialMedia(appleBodyModel).then((response) {
-      if (response.isSuccess) {
-        _processSocialSuccessSetup(response, null, appleBodyModel, null);
-      } else {
-        showCustomSnackBar(response.message);
-      }
-    });
+      Get.find<AuthController>().loginWithSocialMedia(appleBodyModel).then((response) {
+        if (response.isSuccess) {
+          _processSocialSuccessSetup(response, null, appleBodyModel, null);
+        } else {
+          showCustomSnackBar(response.message);
+        }
+      });
+    } catch (e) {
+      showCustomSnackBar(e.toString());
+    }
   }
 
   Future<void> _processSocialSuccessSetup(ResponseModel response, SocialLogInBody? googleBodyModel, SocialLogInBody? appleBodyModel, SocialLogInBody? facebookBodyModel) async {
