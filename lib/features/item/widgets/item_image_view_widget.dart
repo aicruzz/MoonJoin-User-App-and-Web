@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/features/item/controllers/item_controller.dart';
 import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
 import 'package:moonjoin/helper/route_helper.dart';
 import 'package:moonjoin/util/dimensions.dart';
@@ -19,6 +20,12 @@ class ItemImageViewWidget extends StatelessWidget {
 
     List<String?> imageList = [];
     List<String?> imageListForCampaign = [];
+
+    /// Rendered box of the primary image below (unchanged values), used only to
+    /// pick an appropriately sized variant when the backend provides them.
+    final double imageLogicalWidth = MediaQuery.of(context).size.width;
+    const double imageLogicalHeight = 200;
+    final double devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
 
     if(isCampaign){
       imageListForCampaign.add(item!.imageFullUrl);
@@ -44,12 +51,28 @@ class ItemImageViewWidget extends StatelessWidget {
                   controller: _controller,
                   itemCount: isCampaign ? imageListForCampaign.length : imageList.length,
                   itemBuilder: (context, index) {
+                    final String originalUrl = '${isCampaign ? imageListForCampaign[index] : imageList[index]}';
+
+                    /// Index 0 is the item's primary `image`; the remaining
+                    /// entries are gallery images from `images_full_url`, which
+                    /// the backend pilot does not generate variants for and which
+                    /// therefore keep their current URLs unchanged.
+                    final String imageUrl = index == 0
+                        ? (pickImageUrl(
+                            original: originalUrl,
+                            variants: item!.imageVariants,
+                            logicalWidth: imageLogicalWidth,
+                            logicalHeight: imageLogicalHeight,
+                            devicePixelRatio: devicePixelRatio,
+                          ) ?? originalUrl)
+                        : originalUrl;
+
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: CustomImage(
-                        image: '${isCampaign ? imageListForCampaign[index] : imageList[index]}',
-                        height: 200,
-                        width: MediaQuery.of(context).size.width,
+                        image: imageUrl,
+                        height: imageLogicalHeight,
+                        width: imageLogicalWidth,
                       ),
                     );
                   },

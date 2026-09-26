@@ -63,6 +63,7 @@ class Item {
   String? description;
   String? imageFullUrl;
   List<String>? imagesFullUrl;
+  Map<String, String>? imageVariants;
   int? categoryId;
   List<CategoryIds>? categoryIds;
   List<Variation>? variations;
@@ -107,6 +108,7 @@ class Item {
     this.description,
     this.imageFullUrl,
     this.imagesFullUrl,
+    this.imageVariants,
     this.categoryId,
     this.categoryIds,
     this.variations,
@@ -154,6 +156,19 @@ class Item {
           imagesFullUrl!.add(v.toString());
         }
       });
+    }
+    /// Additive backend field (Media 6G pilot, product-detail endpoint only).
+    /// Absent / null / {} / non-map / unusable values all collapse to null so the
+    /// existing image_full_url behaviour stays the fallback everywhere else.
+    final dynamic rawImageVariants = json['image_variants'];
+    if (rawImageVariants is Map) {
+      final Map<String, String> variants = <String, String>{};
+      rawImageVariants.forEach((key, value) {
+        if (value is String && value.isNotEmpty) {
+          variants['$key'] = value;
+        }
+      });
+      imageVariants = variants.isNotEmpty ? variants : null;
     }
     categoryId = json['category_id'];
     if (json['category_ids'] != null) {
