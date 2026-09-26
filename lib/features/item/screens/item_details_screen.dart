@@ -11,6 +11,7 @@ import 'package:moonjoin/features/item/domain/models/item_model.dart';
 import 'package:moonjoin/helper/auth_helper.dart';
 import 'package:moonjoin/helper/price_converter.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/helper/route_helper.dart';
 import 'package:moonjoin/util/dimensions.dart';
 import 'package:moonjoin/util/images.dart';
@@ -222,6 +223,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       images.addAll(item.imagesFullUrl ?? []);
     }
 
+    /// index 0 is the primary product image, which is the only one the backend
+    /// generates variants for; gallery entries keep their original URLs.
+    final double devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+
     return SizedBox(
       height: 384,
       child: Stack(clipBehavior: Clip.none, children: [
@@ -237,13 +242,26 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               controller: _imageController,
               itemCount: images.length,
               onPageChanged: (i) => itemController.setImageSliderIndex(i),
-              itemBuilder: (_, i) => Center(child: InkWell(
-                onTap: widget.isCampaign ? null : () => Get.toNamed(RouteHelper.getItemImagesRoute(item)),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
-                  child: CustomImage(image: images[i] ?? '', width: 230, height: 200, fit: BoxFit.cover),
-                ),
-              )),
+              itemBuilder: (_, i) {
+                final String originalUrl = images[i] ?? '';
+                final String imageUrl = i == 0
+                    ? (pickImageUrl(
+                          original: originalUrl,
+                          variants: item.imageVariants,
+                          logicalWidth: 230,
+                          logicalHeight: 200,
+                          devicePixelRatio: devicePixelRatio,
+                        ) ??
+                        originalUrl)
+                    : originalUrl;
+                return Center(child: InkWell(
+                  onTap: widget.isCampaign ? null : () => Get.toNamed(RouteHelper.getItemImagesRoute(item)),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
+                    child: CustomImage(image: imageUrl, width: 230, height: 200, fit: BoxFit.cover),
+                  ),
+                ));
+              },
             ),
           ),
         ),

@@ -17,6 +17,7 @@ import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/helper/auth_helper.dart';
 import 'package:moonjoin/helper/item_cart_helper.dart';
 import 'package:moonjoin/helper/price_converter.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/helper/route_helper.dart';
 import 'package:moonjoin/util/dimensions.dart';
 import 'package:moonjoin/util/images.dart';
@@ -139,6 +140,18 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   /// the wave below it.
   Widget _header(BuildContext context, Item item) {
     final Color green = Theme.of(context).primaryColor;
+
+    /// Primary product image: use the backend variant that fits this 210x210 box
+    /// when one exists (Media 6G `image_variants`); otherwise the original URL,
+    /// exactly as before.
+    final String heroImage = pickImageUrl(
+          original: item.imageFullUrl ?? '',
+          variants: item.imageVariants,
+          logicalWidth: 210,
+          logicalHeight: 210,
+          devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+        ) ??
+        (item.imageFullUrl ?? '');
     return SizedBox(
       height: 370,
       child: Stack(clipBehavior: Clip.none, children: [
@@ -155,7 +168,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             onTap: widget.isCampaign ? null : () => Get.toNamed(RouteHelper.getItemImagesRoute(item)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(Dimensions.radiusExtraLarge),
-              child: CustomImage(image: item.imageFullUrl ?? '', width: 210, height: 210, fit: BoxFit.cover),
+              child: CustomImage(image: heroImage, width: 210, height: 210, fit: BoxFit.cover),
             ),
           )),
         ),

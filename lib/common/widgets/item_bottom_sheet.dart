@@ -12,6 +12,7 @@ import 'package:moonjoin/helper/date_converter.dart';
 import 'package:moonjoin/helper/item_cart_helper.dart';
 import 'package:moonjoin/helper/price_converter.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/helper/route_helper.dart';
 import 'package:moonjoin/util/dimensions.dart';
 import 'package:moonjoin/util/images.dart';
@@ -124,7 +125,16 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
                                   child: CustomImage(
-                                    image: item.imageFullUrl ?? '',
+                                    /// Primary product image: backend variant sized for this
+                                    /// box when available, original URL otherwise.
+                                    image: pickImageUrl(
+                                          original: item.imageFullUrl ?? '',
+                                          variants: item.imageVariants,
+                                          logicalWidth: ResponsiveHelper.isMobile(context) ? 100 : 140,
+                                          logicalHeight: ResponsiveHelper.isMobile(context) ? 100 : 140,
+                                          devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                                        ) ??
+                                        (item.imageFullUrl ?? ''),
                                     width: ResponsiveHelper.isMobile(context) ? 100 : 140,
                                     height: ResponsiveHelper.isMobile(context) ? 100 : 140,
                                     fit: BoxFit.cover,
