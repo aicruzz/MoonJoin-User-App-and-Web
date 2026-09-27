@@ -15,7 +15,6 @@
 // missing variants, an absent tier, and unbounded constraints.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moonjoin/features/item/domain/models/item_model.dart';
 import 'package:moonjoin/helper/image_variant_helper.dart';
 
 const String kOriginal =
