@@ -9,6 +9,7 @@ import 'package:moonjoin/features/item/domain/models/item_model.dart';
 import 'package:moonjoin/common/models/module_model.dart';
 import 'package:moonjoin/features/store/domain/models/store_model.dart';
 import 'package:moonjoin/helper/date_converter.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/helper/price_converter.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
 import 'package:moonjoin/helper/route_helper.dart';
@@ -50,6 +51,18 @@ class WebItemWidget extends StatelessWidget {
         genericName += name;
       }
     }
+    /// Media 6V. Resolve the card's image box ONCE so the selected variant and the
+    /// rendered size always agree. Products only: a Store has no `imageVariants`,
+    /// so the store-logo branch keeps exactly its existing URL.
+    final double resolvedImageHeight = desktop ? 140 : length == null ? 100 : 65;
+    final double resolvedImageWidth = desktop ? isStore ? 275 : 300 : 80;
+    final String cardImage = isStore ? '${store != null ? store!.logoFullUrl : ''}'
+        : (pickImageUrl(
+            original: item!.imageFullUrl, variants: item!.imageVariants,
+            logicalWidth: resolvedImageWidth, logicalHeight: resolvedImageHeight,
+            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+          ) ?? '${item!.imageFullUrl}');
+
     if(isStore) {
       discount = store!.discount != null ? store!.discount!.discount : 0;
       discountType = store!.discount != null ? store!.discount!.discountType : 'percent';
@@ -112,8 +125,8 @@ class WebItemWidget extends StatelessWidget {
                           borderRadius: const BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusSmall), topRight: Radius.circular(Dimensions.radiusSmall)),
                           child: CustomImage(
                             isHovered: hovered,
-                            image: '${isStore ? store != null ? store!.logoFullUrl : '' : item!.imageFullUrl}',
-                            height: desktop ? 140 : length == null ? 100 : 65, width: desktop ? isStore ? 275 : 300 : 80, fit: BoxFit.cover,
+                            image: cardImage,
+                            height: resolvedImageHeight, width: resolvedImageWidth, fit: BoxFit.cover,
                           ),
                         ),
 

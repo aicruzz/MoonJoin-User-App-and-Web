@@ -6,6 +6,7 @@ import 'package:moonjoin/common/widgets/hover/text_hover.dart';
 import 'package:moonjoin/features/item/controllers/item_controller.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/helper/price_converter.dart';
 import 'package:moonjoin/util/app_constants.dart';
 import 'package:moonjoin/util/dimensions.dart';
@@ -52,15 +53,24 @@ class ReviewItemCard extends StatelessWidget {
                   child: Stack(children: [
                     Padding(
                       padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall, left: Dimensions.paddingSizeSmall, right: Dimensions.paddingSizeSmall),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-                        child: CustomImage(
-                          isHovered: hovered,
-                          placeholder: Images.placeholder,
-                          image: '${item!.imageFullUrl}',
-                          fit: BoxFit.cover, width: double.infinity, height: double.infinity,
-                        ),
-                      ),
+                      /// Media 6V. Ecommerce branch: card width is fixed (180) but the image
+                      /// height comes from the parent carousel, so the slot's own constraints
+                      /// are the only exact box. Dimensions feed the frozen selector ONLY.
+                      child: LayoutBuilder(builder: (context, constraints) {
+                        return ClipRRect(
+                          borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
+                          child: CustomImage(
+                            isHovered: hovered,
+                            placeholder: Images.placeholder,
+                            image: pickImageUrl(
+                              original: item!.imageFullUrl, variants: item!.imageVariants,
+                              logicalWidth: constraints.maxWidth, logicalHeight: constraints.maxHeight,
+                              devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                            ) ?? '${item!.imageFullUrl}',
+                            fit: BoxFit.cover, width: double.infinity, height: double.infinity,
+                          ),
+                        );
+                      }),
                     ),
 
                     AddFavouriteView(
@@ -134,15 +144,23 @@ class ReviewItemCard extends StatelessWidget {
                 child: Stack(children: [
                   Padding(
                     padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-                      child: CustomImage(
-                        isHovered: hovered,
-                        placeholder: Images.placeholder,
-                        image: '${item!.imageFullUrl}',
-                        fit: BoxFit.cover, width: double.infinity, height: double.infinity,
-                      ),
-                    ),
+                    /// Media 6V. Food/other branch: 210x285 card, image slot sized by the
+                    /// surrounding Expanded. Same scoped-constraints approach; selector only.
+                    child: LayoutBuilder(builder: (context, constraints) {
+                      return ClipRRect(
+                        borderRadius: const BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
+                        child: CustomImage(
+                          isHovered: hovered,
+                          placeholder: Images.placeholder,
+                          image: pickImageUrl(
+                            original: item!.imageFullUrl, variants: item!.imageVariants,
+                            logicalWidth: constraints.maxWidth, logicalHeight: constraints.maxHeight,
+                            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                          ) ?? '${item!.imageFullUrl}',
+                          fit: BoxFit.cover, width: double.infinity, height: double.infinity,
+                        ),
+                      );
+                    }),
                   ),
 
                   AddFavouriteView(

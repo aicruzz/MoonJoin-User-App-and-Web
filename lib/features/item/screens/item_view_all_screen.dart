@@ -13,6 +13,7 @@ import 'package:moonjoin/common/widgets/hover/on_hover.dart';
 import 'package:moonjoin/features/item/widgets/item_view_all_filter_bottom_sheet.dart';
 import 'package:moonjoin/features/item/widgets/item_view_all_sort_bottom_sheet.dart';
 import 'package:moonjoin/features/search/widgets/search_field_widget.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/util/app_constants.dart';
 import 'package:moonjoin/util/dimensions.dart';
 import 'package:moonjoin/util/styles.dart';
@@ -307,13 +308,24 @@ class ItemCardWidget extends StatelessWidget {
             Expanded(
               flex: 6,
               child: Stack(children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                  child: CustomImage(
-                    image: '${item.imageFullUrl}',
-                    fit: BoxFit.cover, width: double.infinity, height: double.infinity,
-                  ),
-                ),
+                /// Media 6V. This card is grid-sized (2 columns, aspect 0.60), so the only
+                /// reliable image box is the one the layout actually hands it. The
+                /// LayoutBuilder is scoped to this image slot and supplies dimensions to the
+                /// frozen selector ONLY — the child keeps its existing infinity sizing, so
+                /// the rendered layout is byte-for-byte what it was.
+                LayoutBuilder(builder: (context, constraints) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                    child: CustomImage(
+                      image: pickImageUrl(
+                        original: item.imageFullUrl, variants: item.imageVariants,
+                        logicalWidth: constraints.maxWidth, logicalHeight: constraints.maxHeight,
+                        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                      ) ?? '${item.imageFullUrl}',
+                      fit: BoxFit.cover, width: double.infinity, height: double.infinity,
+                    ),
+                  );
+                }),
 
                 AddFavouriteView(
                   top: 5, right: 5,

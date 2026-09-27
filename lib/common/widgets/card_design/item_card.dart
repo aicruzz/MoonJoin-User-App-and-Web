@@ -6,6 +6,7 @@ import 'package:moonjoin/common/widgets/hover/text_hover.dart';
 import 'package:moonjoin/features/item/controllers/item_controller.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/features/item/domain/models/item_model.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/helper/price_converter.dart';
 import 'package:moonjoin/util/dimensions.dart';
 import 'package:moonjoin/util/images.dart';
@@ -52,20 +53,30 @@ class ItemCard extends StatelessWidget {
                     child: Stack(children: [
                       Padding(
                         padding: EdgeInsets.only(top: isPopularItem ? Dimensions.paddingSizeExtraSmall : 0, left: isPopularItem ? Dimensions.paddingSizeExtraSmall : 0, right: isPopularItem ? Dimensions.paddingSizeExtraSmall : 0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(Dimensions.radiusLarge),
-                            topRight: const Radius.circular(Dimensions.radiusLarge),
-                            bottomLeft: Radius.circular(isPopularItem ? Dimensions.radiusLarge : 0),
-                            bottomRight: Radius.circular(isPopularItem ? Dimensions.radiusLarge : 0),
-                          ),
-                          child: CustomImage(
-                            isHovered: isHovered,
-                            placeholder: Images.placeholder,
-                            image: '${item.imageFullUrl}',
-                            fit: BoxFit.cover, width: double.infinity, height: double.infinity,
-                          ),
-                        ),
+                        /// Media 6V. The card's own width is fixed (200) but its image height
+                        /// comes from the parent carousel, so the constraints handed to this
+                        /// slot are the only exact box. LayoutBuilder feeds the frozen selector
+                        /// ONLY; the child keeps its infinity sizing, so layout is unchanged.
+                        child: LayoutBuilder(builder: (context, constraints) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(Dimensions.radiusLarge),
+                              topRight: const Radius.circular(Dimensions.radiusLarge),
+                              bottomLeft: Radius.circular(isPopularItem ? Dimensions.radiusLarge : 0),
+                              bottomRight: Radius.circular(isPopularItem ? Dimensions.radiusLarge : 0),
+                            ),
+                            child: CustomImage(
+                              isHovered: isHovered,
+                              placeholder: Images.placeholder,
+                              image: pickImageUrl(
+                                original: item.imageFullUrl, variants: item.imageVariants,
+                                logicalWidth: constraints.maxWidth, logicalHeight: constraints.maxHeight,
+                                devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                              ) ?? '${item.imageFullUrl}',
+                              fit: BoxFit.cover, width: double.infinity, height: double.infinity,
+                            ),
+                          );
+                        }),
                       ),
 
                       AddFavouriteView(

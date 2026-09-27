@@ -15,6 +15,7 @@ import 'package:moonjoin/features/item/domain/models/item_model.dart';
 import 'package:moonjoin/common/models/module_model.dart';
 import 'package:moonjoin/features/store/domain/models/store_model.dart';
 import 'package:moonjoin/helper/date_converter.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/helper/price_converter.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
 import 'package:moonjoin/helper/route_helper.dart';
@@ -71,6 +72,19 @@ class ItemWidget extends StatelessWidget {
         genericName += name;
       }
     }
+    /// Media 6V. Resolve the card's image box ONCE so the variant that gets
+    /// selected and the size that gets rendered can never disagree, honouring the
+    /// caller's [imageHeight]/[imageWidth] overrides. Products only: a Store has no
+    /// `imageVariants`, so the store-logo branch keeps exactly its existing URL.
+    final double resolvedImageHeight = imageHeight ?? (desktop ? 120 : length == null ? 100 : 90);
+    final double resolvedImageWidth = imageWidth ?? (desktop ? 120 : 90);
+    final String cardImage = isStore ? '${store != null ? store!.logoFullUrl : ''}'
+        : (pickImageUrl(
+            original: item!.imageFullUrl, variants: item!.imageVariants,
+            logicalWidth: resolvedImageWidth, logicalHeight: resolvedImageHeight,
+            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+          ) ?? '${item!.imageFullUrl}');
+
     if(isStore) {
       discount = store!.discount != null ? store!.discount!.discount : 0;
       discountType = store!.discount != null ? store!.discount!.discountType : 'percent';
@@ -138,8 +152,8 @@ class ItemWidget extends StatelessWidget {
                           borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                           child: CustomImage(
                             isHovered: hovered,
-                            image: '${isStore ? store != null ? store!.logoFullUrl : '' : item!.imageFullUrl}',
-                            height: imageHeight ?? (desktop ? 120 : length == null ? 100 : 90), width: imageWidth ?? (desktop ? 120 : 90), fit: BoxFit.cover,
+                            image: cardImage,
+                            height: resolvedImageHeight, width: resolvedImageWidth, fit: BoxFit.cover,
                           ),
                         ),
 
@@ -321,6 +335,13 @@ class ItemWidget extends StatelessWidget {
     final bool showVeg = Get.find<SplashController>().configModel!.moduleConfig!.module!.vegNonVeg! && Get.find<SplashController>().configModel!.toggleVegNonVeg!;
     final bool showUnit = Get.find<SplashController>().configModel!.moduleConfig!.module!.unit! && item!.unitType != null && item!.unitType!.isNotEmpty;
     final Color primary = Theme.of(context).primaryColor;
+    /// Media 6V. The dish thumbnail always fills the fixed 122x122 area below, so
+    /// that is the exact box handed to the frozen selector; original URL on fallback.
+    final String dishImage = pickImageUrl(
+      original: item!.imageFullUrl, variants: item!.imageVariants,
+      logicalWidth: 122, logicalHeight: 122,
+      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+    ) ?? '${item!.imageFullUrl}';
 
     return Container(
       height: 122,
@@ -341,7 +362,7 @@ class ItemWidget extends StatelessWidget {
           SizedBox(
             width: 122,
             child: Stack(fit: StackFit.expand, children: [
-              CustomImage(image: '${item!.imageFullUrl}', fit: BoxFit.cover),
+              CustomImage(image: dishImage, fit: BoxFit.cover),
               DiscountTag(discount: discount, discountType: discountType, freeDelivery: false),
               OrganicTag(item: item!, placeInImage: true),
               isAvailable ? const SizedBox() : NotAvailableWidget(isStore: false, isAllSideRound: false),
