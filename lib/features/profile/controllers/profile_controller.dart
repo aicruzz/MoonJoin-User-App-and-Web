@@ -186,9 +186,22 @@ class ProfileController extends GetxController implements GetxService {
     _isGeneratingAccount = true;
     update();
     Response response = await profileServiceInterface.generateVirtualAccount();
-    if (response.statusCode == 200) {
-      _virtualAccountData = response.body;
+    final int statusCode = response.statusCode ?? 0;
+    /// The backend answers 201 when it creates the virtual account and 200 when one
+    /// already exists, so every 2xx is a success. The account itself lives under the
+    /// `data` key of the existing {message, data} envelope — storing the envelope
+    /// left the details card rendering 'N/A' for bank/account number/account name.
+    if (statusCode >= 200 && statusCode < 300) {
+      final dynamic accountPayload = response.body is Map ? response.body['data'] : null;
       showCustomSnackBar('virtual_account_generated_successfully'.tr, isError: false);
+      /// Existing refresh mechanism, so userInfoModel and everything reading it stay
+      /// in sync. It re-derives _virtualAccountData from the profile, so the account
+      /// the backend just returned is applied after it, in case the profile response
+      /// has not caught up with the newly created account yet.
+      await getUserInfo();
+      if (accountPayload is Map && accountPayload.isNotEmpty) {
+        _virtualAccountData = Map<String, dynamic>.from(accountPayload);
+      }
     } else {
       showCustomSnackBar(response.statusText ?? 'failed_to_generate_virtual_account'.tr);
     }

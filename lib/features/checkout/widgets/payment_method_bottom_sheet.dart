@@ -6,6 +6,7 @@ import 'package:moonjoin/common/widgets/custom_snackbar.dart';
 import 'package:moonjoin/common/widgets/custom_text_field.dart';
 import 'package:moonjoin/features/checkout/domain/models/payment_model.dart';
 import 'package:moonjoin/features/checkout/widgets/virtual_account_details_widget.dart';
+import 'package:moonjoin/helper/payment_gateway_helper.dart';
 import 'package:moonjoin/features/order/controllers/order_controller.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/features/profile/controllers/profile_controller.dart';
@@ -87,12 +88,10 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
     super.dispose();
   }
 
-  /// Returns true if 9PSB is in the active payment methods list
-  bool get _is9PSBActive {
-    final list = Get.find<SplashController>().configModel!.activePaymentMethodList;
-    if (list == null) return false;
-    return list.any((m) => m.getWay?.toLowerCase() == '9psb');
-  }
+  /// Returns true if 9PSB is in the active payment methods list.
+  /// Delegates to the shared gateway helper so Menu, Profile and Checkout all
+  /// read the same existing `activePaymentMethodList`.
+  bool get _is9PSBActive => is9PSBActive();
 
   @override
   Widget build(BuildContext context) {
@@ -410,17 +409,30 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
   Widget walletView(CheckoutController checkoutController) {
     double walletBalance = Get.find<ProfileController>().userInfoModel?.walletBalance??0;
     double balance = 0;
-    if(walletBalance <= 0 || (widget.paymentModel != null && walletBalance < widget.totalPrice)) {
-      return const SizedBox();
-    }
     if(walletBalance > widget.totalPrice && checkoutController.paymentMethodIndex == 1) {
       balance = walletBalance - widget.totalPrice;
     }
     bool isWalletSelected = checkoutController.paymentMethodIndex == 1 || checkoutController.isPartialPay;
 
-    return Get.find<SplashController>().configModel!.customerWalletStatus == 1
+    /// Existing wallet-payment conditions, unchanged — only their SCOPE changes:
+    /// they now govern the wallet UI alone instead of also short-circuiting the
+    /// 9PSB card nested below it.
+    final bool showWalletUi = !(walletBalance <= 0 || (widget.paymentModel != null && walletBalance < widget.totalPrice))
+        && Get.find<SplashController>().configModel!.customerWalletStatus == 1
         && Get.find<ProfileController>().userInfoModel != null && (checkoutController.distance != -1)
-        && Get.find<ProfileController>().userInfoModel!.walletBalance! > 0 ? Column(children: [
+        && Get.find<ProfileController>().userInfoModel!.walletBalance! > 0;
+
+    /// The virtual account is what FUNDS the wallet, so a zero or insufficient
+    /// balance must never hide it. Visibility follows the existing 9PSB gateway
+    /// configuration and sign-in state only.
+    final bool showVirtualAccount = _is9PSBActive && Get.find<ProfileController>().userInfoModel != null;
+
+    if(!showWalletUi && !showVirtualAccount) {
+      return const SizedBox();
+    }
+
+    return Column(children: [
+      if(showWalletUi) ...[
       // MoonJoin Wallet Balance card (Figma Virtual Account Payment): green card + white "Use Wallet" button.
       Container(
         margin: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
@@ -531,18 +543,19 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
             Text('* ${'please_select_a_option_to_pay_remain_billing_amount'.tr}', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: const Color(0xFFE74B4B))),
           const SizedBox(height: Dimensions.paddingSizeSmall),
         ]),
+      ],
 
       // ── Virtual Account details section (9PSB wallet funding) ──
       // Reuses the single master component (extracted from this card). detailsOnly
       // preserves the approved null-state placeholder behavior on this surface.
-      if(_is9PSBActive) ...[
+      if(showVirtualAccount) ...[
         const SizedBox(height: Dimensions.paddingSizeDefault),
         const VirtualAccountDetailsWidget(detailsOnly: true),
       ],
 
       const SizedBox(height: Dimensions.paddingSizeDefault),
 
-    ]) : const SizedBox();
+    ]);
   }
 
 }

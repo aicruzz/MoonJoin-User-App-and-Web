@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:moonjoin/features/checkout/widgets/virtual_account_details_widget.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/features/profile/widgets/web_profile_widget.dart';
+import 'package:moonjoin/helper/payment_gateway_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -195,9 +196,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ]) : const SizedBox(),
                 const SizedBox(height: Dimensions.paddingSizeDefault),
 
-                // Virtual Account Section
-                isLoggedIn ? const VirtualAccountDetailsWidget(showInstructions: false) : const SizedBox(),
-                SizedBox(height: isLoggedIn ? Dimensions.paddingSizeDefault : 0),
+                // Virtual Account Section — visible only while the 9PSB gateway is
+                // active, matching Menu / Wallet / Checkout. Disabling the gateway hides
+                // the card; the customer's stored account data is untouched.
+                (isLoggedIn && is9PSBActive()) ? const VirtualAccountDetailsWidget(showInstructions: false) : const SizedBox(),
+                SizedBox(height: (isLoggedIn && is9PSBActive()) ? Dimensions.paddingSizeDefault : 0),
 
                 ProfileButtonWidget(icon: Icons.tonality_outlined, title: 'dark_mode'.tr, isButtonActive: Get.isDarkMode, onTap: () {
                   Get.find<ThemeController>().toggleTheme();

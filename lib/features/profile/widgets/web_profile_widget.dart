@@ -20,6 +20,7 @@ import 'package:moonjoin/common/widgets/confirmation_dialog.dart';
 import 'package:moonjoin/common/widgets/custom_image.dart';
 import 'package:moonjoin/features/profile/widgets/profile_button_widget.dart';
 import 'package:moonjoin/features/profile/widgets/profile_card_widget.dart';
+import 'package:moonjoin/helper/payment_gateway_helper.dart';
 
 class WebProfileWidget extends StatelessWidget {
   const WebProfileWidget({super.key});
@@ -235,7 +236,8 @@ class WebProfileWidget extends StatelessWidget {
                 Get.dialog(const NewPassScreen(fromPasswordChange: true, fromDialog: true, resetToken: '', number: ''));
               }) : const SizedBox(),
 
-              isLoggedIn ? const VirtualAccountDetailsWidget(showInstructions: false) : const SizedBox(),
+              // Same 9PSB gateway gate as Menu / Wallet / Checkout.
+              (isLoggedIn && is9PSBActive()) ? const VirtualAccountDetailsWidget(showInstructions: false) : const SizedBox(),
 
               isLoggedIn ? ProfileButtonWidget(icon: Icons.edit, title: 'edit_profile'.tr, onTap: () {
                 Get.toNamed(RouteHelper.getUpdateProfileRoute());

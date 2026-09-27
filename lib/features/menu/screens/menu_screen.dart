@@ -23,6 +23,7 @@ import 'package:moonjoin/util/styles.dart';
 import 'package:moonjoin/common/widgets/confirmation_dialog.dart';
 import 'package:moonjoin/common/widgets/custom_image.dart';
 import 'package:moonjoin/features/menu/widgets/portion_widget.dart';
+import 'package:moonjoin/helper/payment_gateway_helper.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -33,12 +34,10 @@ class MenuScreen extends StatefulWidget {
 
 class _MenuScreenState extends State<MenuScreen> {
 
-  /// Returns true if 9PSB is in the active payment methods list
-  bool get _is9PSBActive {
-    final list = Get.find<SplashController>().configModel!.activePaymentMethodList;
-    if (list == null) return false;
-    return list.any((m) => m.getWay?.toLowerCase() == '9psb');
-  }
+  /// Returns true if 9PSB is in the active payment methods list.
+  /// Delegates to the shared gateway helper so every 9PSB surface reads the
+  /// same existing `activePaymentMethodList`.
+  bool get _is9PSBActive => is9PSBActive();
 
   @override
   Widget build(BuildContext context) {
