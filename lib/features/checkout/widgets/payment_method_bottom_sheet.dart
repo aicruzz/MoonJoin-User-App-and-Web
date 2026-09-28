@@ -550,7 +550,7 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
       // preserves the approved null-state placeholder behavior on this surface.
       if(showVirtualAccount) ...[
         const SizedBox(height: Dimensions.paddingSizeDefault),
-        const VirtualAccountDetailsWidget(detailsOnly: true),
+        const VirtualAccountDetailsWidget(detailsOnly: true, allowGenerate: true),
       ],
 
       const SizedBox(height: Dimensions.paddingSizeDefault),

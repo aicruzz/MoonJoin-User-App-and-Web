@@ -34,6 +34,14 @@ class VirtualAccountDetailsWidget extends StatelessWidget {
   /// and Wallet keep the approved instructions.
   final bool showInstructions;
 
+  /// Opt-in for a [detailsOnly] surface that should still offer the EXISTING
+  /// "Generate Virtual Account" affordance in its null-account state, so the
+  /// customer does not have to leave the screen to create one. Checkout sets it;
+  /// Wallet "+" keeps the placeholder, and Profile/Menu are unaffected because
+  /// they already show the button via [detailsOnly] == false. Default false, so
+  /// every existing call site renders exactly as before.
+  final bool allowGenerate;
+
   final EdgeInsetsGeometry? margin;
 
   const VirtualAccountDetailsWidget({
@@ -41,6 +49,7 @@ class VirtualAccountDetailsWidget extends StatelessWidget {
     this.detailsOnly = false,
     this.showTitle = true,
     this.showInstructions = true,
+    this.allowGenerate = false,
     this.margin,
   });
 
@@ -67,7 +76,7 @@ class VirtualAccountDetailsWidget extends StatelessWidget {
             ],
           ] else if(isLoading) ...[
             _loadingShell(context),
-          ] else if(detailsOnly) ...[
+          ] else if(detailsOnly && !allowGenerate) ...[
             Text(
               'transfer_to_virtual_account_to_top_up_wallet'.tr,
               style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),

@@ -19,6 +19,7 @@
 // Faking all four would be brittle and would not test the real wiring, so the
 // balance-independence of the 9PSB gate is covered by a structural guard below.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -60,6 +61,19 @@ class StubProfileService implements ProfileServiceInterface {
 
   @override
   Future<XFile?> pickImageFromGallery() async => null;
+}
+
+/// Holds generation open so the loading state can be observed.
+class SlowProfileService extends StubProfileService {
+  SlowProfileService() : super(UserInfoModel(id: 1, walletBalance: 0));
+  final Completer<void> _gate = Completer<void>();
+  void release() => _gate.complete();
+
+  @override
+  Future<Response> generateVirtualAccount() async {
+    await _gate.future;
+    return const Response(statusCode: 500, statusText: 'unavailable', body: <String, dynamic>{});
+  }
 }
 
 void main() {
@@ -135,6 +149,81 @@ void main() {
     });
   });
 
+  group('Checkout entry point: generate without leaving Checkout', () {
+    Future<void> pumpCard(WidgetTester tester, UserInfoModel? profile, {required bool allowGenerate}) async {
+      Get.reset();
+      Get.put(ProfileController(profileServiceInterface: StubProfileService(profile)));
+      if (profile?.virtualAccountNumber != null) {
+        await Get.find<ProfileController>().getUserInfo();
+      }
+      await tester.pumpWidget(GetMaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: VirtualAccountDetailsWidget(detailsOnly: true, allowGenerate: allowGenerate),
+          ),
+        ),
+      ));
+      await tester.pump();
+      while (tester.takeException() != null) {}
+    }
+
+    testWidgets('no account + allowGenerate -> the EXISTING generate affordance is offered',
+        (WidgetTester tester) async {
+      await pumpCard(tester, UserInfoModel(id: 1, walletBalance: 0), allowGenerate: true);
+      expect(find.text('generate_virtual_account'), findsOneWidget);
+      // The funding placeholder is replaced, not shown alongside.
+      expect(find.text('transfer_to_virtual_account_to_top_up_wallet'), findsNothing);
+    });
+
+    testWidgets('no account WITHOUT allowGenerate keeps the existing placeholder (Wallet "+")',
+        (WidgetTester tester) async {
+      await pumpCard(tester, UserInfoModel(id: 1, walletBalance: 0), allowGenerate: false);
+      expect(find.text('transfer_to_virtual_account_to_top_up_wallet'), findsOneWidget);
+      expect(find.text('generate_virtual_account'), findsNothing);
+    });
+
+    testWidgets('an existing account shows the details card, never a redundant generate action',
+        (WidgetTester tester) async {
+      await pumpCard(
+        tester,
+        UserInfoModel(id: 1, walletBalance: 0,
+            virtualAccountNumber: '1100123456', virtualAccountName: 'MOONJOIN FRANCIS', bankName: '9PSB'),
+        allowGenerate: true,
+      );
+      expect(find.text('1100123456'), findsOneWidget);
+      expect(find.text('generate_virtual_account'), findsNothing);
+      expect(find.text('N/A'), findsNothing);
+    });
+
+    testWidgets('while generating, the loading shell replaces the button so a second tap is impossible',
+        (WidgetTester tester) async {
+      Get.reset();
+      final SlowProfileService slow = SlowProfileService();
+      Get.put(ProfileController(profileServiceInterface: slow));
+      await tester.pumpWidget(const GetMaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: VirtualAccountDetailsWidget(detailsOnly: true, allowGenerate: true),
+          ),
+        ),
+      ));
+      await tester.pump();
+      expect(find.text('generate_virtual_account'), findsOneWidget);
+
+      unawaited(Get.find<ProfileController>().generateVirtualAccount());
+      await tester.pump();
+      while (tester.takeException() != null) {}
+
+      // Button gone, spinner shown -> the affordance cannot be tapped twice.
+      expect(find.text('generate_virtual_account'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      slow.release();
+      await tester.pumpAndSettle();
+      while (tester.takeException() != null) {}
+    });
+  });
+
   group('structural guards for the regression (see header note)', () {
     String source(String path) => File(path).readAsStringSync();
 
@@ -158,7 +247,7 @@ void main() {
 
       // The card is rendered by the shared widget under the 9PSB flag.
       expect(s.contains('if(showVirtualAccount) ...['), isTrue);
-      expect(s.contains('VirtualAccountDetailsWidget(detailsOnly: true)'), isTrue);
+      expect(s.contains('VirtualAccountDetailsWidget(detailsOnly: true'), isTrue);
     });
 
     test('Checkout: 9PSB is still excluded from the normal selectable gateway rows', () {
