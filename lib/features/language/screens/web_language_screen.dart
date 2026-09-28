@@ -84,11 +84,13 @@ class WebLanguageScreen extends StatelessWidget {
                        CustomButton(
                          buttonText: 'update'.tr,
                          width: 200,
-                         onPressed: () {
+                         onPressed: () async {
 
                            int index = localizationController.selectedLanguageIndex;
 
-                           localizationController.setLanguage(Locale(
+                           // Awaited so the confirmation below renders in the
+                           // language that was just applied.
+                           await localizationController.setLanguage(Locale(
                              AppConstants.languages[index].languageCode!,
                              AppConstants.languages[index].countryCode,
                            ));

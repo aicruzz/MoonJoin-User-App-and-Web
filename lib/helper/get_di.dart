@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:moonjoin/features/brands/controllers/brands_controller.dart';
 import 'package:moonjoin/features/brands/domain/repositories/brands_repository.dart';
 import 'package:moonjoin/features/brands/domain/repositories/brands_repository_interface.dart';
@@ -202,8 +201,8 @@ import 'package:moonjoin/features/wallet/domain/repositories/wallet_repository_i
 import 'package:moonjoin/features/wallet/domain/services/wallet_service.dart';
 import 'package:moonjoin/features/wallet/domain/services/wallet_service_interface.dart';
 import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/messages.dart';
 import 'package:moonjoin/features/language/domain/models/language_model.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/features/order/controllers/order_edit_controller.dart';
@@ -507,15 +506,29 @@ Future<Map<String, Map<String, String>>> init() async {
   Get.lazyPut(() => TaxiFavouriteController(taxiFavouriteServiceInterface: Get.find()));
 
   /// Retrieving localized data
+  ///
+  /// Only what this session needs is read before the first frame. English is
+  /// always loaded because `en_US` is the GetX `fallbackLocale`, and the saved
+  /// language is added when it differs. Every other bundled language is loaded
+  /// on demand by `LocalizationController.setLanguage`, so all of them stay
+  /// selectable while none is decoded needlessly at startup.
+  ///
+  /// The saved code is resolved against the supported list, so an unknown,
+  /// empty or malformed value falls back to English rather than blocking start.
   Map<String, Map<String, String>> languages = {};
-  for(LanguageModel languageModel in AppConstants.languages) {
-    String jsonStringValues =  await rootBundle.loadString('assets/language/${languageModel.languageCode}.json');
-    Map<String, dynamic> mappedJson = jsonDecode(jsonStringValues);
-    Map<String, String> json = {};
-    mappedJson.forEach((key, value) {
-      json[key] = value.toString();
-    });
-    languages['${languageModel.languageCode}_${languageModel.countryCode}'] = json;
+  final LanguageModel fallbackLanguage = AppConstants.languages[0];
+  final String savedLanguageCode = sharedPreferences.getString(AppConstants.languageCode) ?? fallbackLanguage.languageCode!;
+  final LanguageModel activeLanguage = AppConstants.languages.firstWhere(
+    (LanguageModel language) => language.languageCode == savedLanguageCode,
+    orElse: () => fallbackLanguage,
+  );
+
+  /// A set, so English is never loaded twice when it is also the active language.
+  for(LanguageModel languageModel in <LanguageModel>{fallbackLanguage, activeLanguage}) {
+    final Map<String, String>? translations = await loadLanguageTranslations(languageModel.languageCode!);
+    if(translations != null) {
+      languages[localeTranslationKey(languageModel.languageCode!, languageModel.countryCode)] = translations;
+    }
   }
   return languages;
 }

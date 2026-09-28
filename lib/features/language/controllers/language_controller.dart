@@ -3,6 +3,7 @@ import 'package:moonjoin/features/language/domain/models/language_model.dart';
 import 'package:moonjoin/helper/address_helper.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
 import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/util/messages.dart';
 import 'package:moonjoin/features/home/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -26,7 +27,18 @@ class LocalizationController extends GetxController implements GetxService {
   int _selectedLanguageIndex = 0;
   int get selectedLanguageIndex => _selectedLanguageIndex;
 
-  void setLanguage(Locale locale, {bool fromBottomSheet = false}) {
+  Future<void> setLanguage(Locale locale, {bool fromBottomSheet = false}) async {
+    /// Startup loads only English and the saved language, so the language being
+    /// selected here may not be in memory yet. Load and append it BEFORE the
+    /// locale changes — updating first would render raw keys for a frame.
+    ///
+    /// If it cannot be loaded, the switch is abandoned rather than half-applied:
+    /// the locale is not changed, the failed language is not persisted (so it
+    /// cannot survive a restart) and no post-switch side effect runs. The user
+    /// simply stays on the language they already had.
+    if(!await _ensureTranslationsLoaded(locale)) {
+      return;
+    }
     Get.updateLocale(locale);
     _locale = locale;
     _isLtr = languageServiceInterface.setLTR(_locale);
@@ -47,6 +59,27 @@ class LocalizationController extends GetxController implements GetxService {
     }
 
     update();
+  }
+
+  /// Adds a language's translations to the live GetX map if it is not already
+  /// there, using the existing `Get.appendTranslations` API — no new cache and
+  /// no new localization architecture. A language stays loaded for the rest of
+  /// the session.
+  ///
+  /// Returns whether the language is usable: true when it was already loaded or
+  /// has just been appended, false when the asset is missing or malformed. The
+  /// caller must not switch to a language this reports false for.
+  Future<bool> _ensureTranslationsLoaded(Locale locale) async {
+    final String key = localeTranslationKey(locale.languageCode, locale.countryCode);
+    if(Get.translations.containsKey(key)) {
+      return true;
+    }
+    final Map<String, String>? translations = await loadLanguageTranslations(locale.languageCode);
+    if(translations == null) {
+      return false;
+    }
+    Get.appendTranslations(<String, Map<String, String>>{key: translations});
+    return true;
   }
 
   void loadCurrentLanguage() async {

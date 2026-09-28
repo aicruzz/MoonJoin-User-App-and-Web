@@ -28,12 +28,17 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
 
   // Preserved exactly: apply + persist the selected language, then navigate
   // (menu → pop, first-run → onboarding). No logic change.
-  void _onNext(LocalizationController localizationController) {
+  Future<void> _onNext(LocalizationController localizationController) async {
     if(localizationController.languages.isNotEmpty && localizationController.selectedLanguageIndex != -1) {
-      localizationController.setLanguage(Locale(
+      // Awaited so the destination never renders before the selected language's
+      // translations are in memory. Navigation targets are unchanged.
+      await localizationController.setLanguage(Locale(
         AppConstants.languages[localizationController.selectedLanguageIndex].languageCode!,
         AppConstants.languages[localizationController.selectedLanguageIndex].countryCode,
       ));
+      if (!mounted) {
+        return;
+      }
       if (widget.fromMenu) {
         Navigator.pop(context);
       } else {
