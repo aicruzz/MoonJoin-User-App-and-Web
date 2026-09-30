@@ -334,6 +334,7 @@ class SplashController extends GetxController implements GetxService {
         Get.find<CategoryController>().clearCategoryList();
         Get.find<CampaignController>().itemAndBasicCampaignNull();
         Get.find<FlashSaleController>().setEmptyFlashSale(fromModule: true);
+        Get.find<StoreController>().clearLatestStoreList();
 
         if(AuthHelper.isLoggedIn()) {
           Get.find<HomeController>().getCashBackOfferList();

@@ -25,6 +25,7 @@ import 'package:moonjoin/features/store/domain/services/store_service_interface.
 import 'package:moonjoin/helper/module_helper.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
 import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 
 class StoreController extends GetxController implements GetxService {
   final StoreServiceInterface storeServiceInterface;
@@ -250,6 +251,13 @@ class StoreController extends GetxController implements GetxService {
     _storeType = 'all';
   }
 
+  /// Drops the in-memory latest-store list on a module switch so the new
+  /// module's storefront never renders the previous module's stores. The
+  /// persistent (module-scoped) cache is untouched.
+  void clearLatestStoreList() {
+    _latestStoreList = null;
+  }
+
   Future<void> getPopularStoreList(bool reload, String type, bool notify, {DataSourceEnum dataSource = DataSourceEnum.local, bool fromRecall = false}) async {
     _type = type;
     if(reload) {
@@ -289,9 +297,17 @@ class StoreController extends GetxController implements GetxService {
       update();
     }
     if(_latestStoreList == null || reload || fromRecall) {
+      // The list is shared by every module's storefront. A load that finishes
+      // after the user has switched module belongs to the previous module, so it
+      // must not replace (or repaint) the new module's list. The repository has
+      // already cached it under its own module, so nothing is lost.
+      final int? moduleId = Get.find<SplashController>().module?.id;
       List<Store>? latestStoreList;
       if(dataSource == DataSourceEnum.local) {
         latestStoreList = await storeServiceInterface.getLatestStoreList(type, source: DataSourceEnum.local);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         if (latestStoreList != null) {
           _latestStoreList = [];
           _latestStoreList!.addAll(latestStoreList);
@@ -300,6 +316,9 @@ class StoreController extends GetxController implements GetxService {
         getLatestStoreList(false, type, notify, fromRecall: true, dataSource: DataSourceEnum.client);
       } else {
         latestStoreList = await storeServiceInterface.getLatestStoreList(type, source: DataSourceEnum.client);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         if (latestStoreList != null) {
           _latestStoreList = [];
           _latestStoreList!.addAll(latestStoreList);
