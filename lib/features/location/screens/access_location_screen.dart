@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:moonjoin/common/widgets/address_widget.dart';
 import 'package:moonjoin/common/widgets/no_internet_screen.dart';
 import 'package:moonjoin/features/location/controllers/location_controller.dart';
+import 'package:moonjoin/features/location/helpers/access_location_connectivity.dart';
 import 'package:moonjoin/features/address/controllers/address_controller.dart';
 import 'package:moonjoin/features/address/domain/models/address_model.dart';
 import 'package:moonjoin/features/location/domain/models/zone_response_model.dart';
@@ -51,10 +52,16 @@ class _AccessLocationScreenState extends State<AccessLocationScreen> {
     checkInternet();
   }
 
+  bool _sentToNoInternet = false;
+
   void checkInternet() async {
-    final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
-    bool isConnected = connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile);
-    if(!isConnected) {
+    // A first "offline" read on iOS can be a false negative (see
+    // isOnlineForAddressSelection), so it is confirmed once before redirecting.
+    final bool isConnected = await isOnlineForAddressSelection(() => Connectivity().checkConnectivity());
+    // Redirect only while this screen is still the one on top: a popped route
+    // stays mounted during its exit animation, so `mounted` alone is not enough.
+    if(!isConnected && mounted && (ModalRoute.of(context)?.isCurrent ?? true) && !_sentToNoInternet) {
+      _sentToNoInternet = true;
       Get.offAll(()=> const NoInternetScreen());
     }
   }
