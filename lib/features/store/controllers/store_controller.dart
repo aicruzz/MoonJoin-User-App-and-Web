@@ -366,14 +366,33 @@ class StoreController extends GetxController implements GetxService {
     getTopOfferStoreList(true, false);
   }
 
+  /// Drops the in-memory featured-store list on a module switch, so Food Top
+  /// Brands loads the active module's own list instead of reusing the one the
+  /// previous context (All Module landing, Pharmacy, …) left behind. The
+  /// persistent (module-scoped) cache is untouched.
+  void clearFeaturedStoreList() {
+    _featuredStoreList = null;
+  }
+
   Future<void> getFeaturedStoreList({DataSourceEnum dataSource = DataSourceEnum.local}) async {
+    // A load that finishes after the active module changed (including to or from
+    // the All Module landing, where the module is null) belongs to the previous
+    // context: it is not applied. The repository already cached it under that
+    // context's own key, so nothing is lost.
+    final int? moduleId = Get.find<SplashController>().module?.id;
     List<Store>? stores;
     if(dataSource == DataSourceEnum.local) {
       stores = await storeServiceInterface.getFeaturedStoreList(source: dataSource);
+      if (Get.find<SplashController>().module?.id != moduleId) {
+        return;
+      }
       _prepareFeaturedStore(stores);
       getFeaturedStoreList(dataSource: DataSourceEnum.client);
     } else {
       stores = await storeServiceInterface.getFeaturedStoreList(source: dataSource);
+      if (Get.find<SplashController>().module?.id != moduleId) {
+        return;
+      }
       _prepareFeaturedStore(stores);
     }
 
