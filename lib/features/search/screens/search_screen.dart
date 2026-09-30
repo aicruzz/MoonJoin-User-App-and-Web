@@ -27,6 +27,7 @@ import 'package:moonjoin/common/widgets/menu_drawer.dart';
 import 'package:moonjoin/common/widgets/web_menu_bar.dart';
 import 'package:moonjoin/features/search/widgets/filter_widget.dart';
 import 'package:moonjoin/features/search/widgets/search_field_widget.dart';
+import 'package:moonjoin/helper/search_suggestion_scheduler.dart';
 import 'package:moonjoin/features/search/widgets/search_result_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -48,6 +49,30 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
 
   List<String> _itemsAndStors = <String>[];
   bool _showSuggestion = false;
+
+  /// Live autocomplete gate. Every search field on this screen (mobile, desktop
+  /// and the MoonjoinSearchBar) feeds this ONE instance, so there is exactly one
+  /// 300 ms debounce and one stale-answer guard for the whole screen.
+  late final SearchSuggestionScheduler _suggestionScheduler = SearchSuggestionScheduler(
+    fetch: (query) => Get.find<search.SearchController>().getSearchSuggestions(query),
+    currentText: () => _searchController.text,
+    onResult: (suggestions) {
+      if (!mounted) return;
+      setState(() {
+        _showSuggestion = true;
+        _itemsAndStors = suggestions;
+      });
+    },
+    onClear: () {
+      if (!mounted) return;
+      if (_showSuggestion || _itemsAndStors.isNotEmpty) {
+        setState(() {
+          _showSuggestion = false;
+          _itemsAndStors = <String>[];
+        });
+      }
+    },
+  );
 
   @override
   void initState() {
@@ -105,17 +130,15 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
     );
   }
 
-  Future<void> _searchSuggestions(String query) async {
-    _itemsAndStors = [];
-    if (query == '') {
-      _showSuggestion = false;
-      _itemsAndStors = [];
-    } else {
-      _showSuggestion = true;
-      _itemsAndStors = await Get.find<search.SearchController>().getSearchSuggestions(query);
-    }
-    setState(() {});
+  @override
+  void dispose() {
+    _suggestionScheduler.dispose();
+    _tabController?.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
+
+  void _onSearchTextChanged(String text) => _suggestionScheduler.onTextChanged(text);
 
   @override
   Widget build(BuildContext context) {
@@ -159,8 +182,8 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                           iconColor: Theme.of(context).disabledColor,
                           filledColor: Theme.of(context).colorScheme.surface,
                           onChanged: (text) {
-                            _searchSuggestions(text);
                             searchController.setSearchText(text);
+                            _onSearchTextChanged(text);
                           },
                           iconPressed: () async {
                             if(searchController.searchHomeText!.isNotEmpty) {
@@ -287,7 +310,7 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
                         },
                         onChanged: (text) {
                           searchController.setSearchText(text);
-                          _searchSuggestions(text);
+                          _onSearchTextChanged(text);
                           // _searchController.text = searchController.searchText!;
                         },
                         onSubmit: (text) => _actionSearch(true, _searchController.text.trim(), false),
@@ -545,7 +568,7 @@ class SearchScreenState extends State<SearchScreen> with TickerProviderStateMixi
           MoonjoinSearchBar(
             controller: _searchController,
             hintText: showRestaurant ? 'search_food_or_restaurant'.tr : 'search_item_or_store'.tr,
-            onChanged: (text) { searchController.setSearchText(text); _searchSuggestions(text); },
+            onChanged: (text) { searchController.setSearchText(text); _onSearchTextChanged(text); },
             onSubmitted: (text) => _actionSearch(true, _searchController.text.trim(), false),
             onFilterTap: () => _actionSearch(false, _searchController.text.trim(), false),
           ),
