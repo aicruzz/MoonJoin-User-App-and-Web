@@ -11,9 +11,15 @@ import 'package:moonjoin/features/language/controllers/language_controller.dart'
 import 'package:moonjoin/api/api_client.dart';
 import 'package:moonjoin/util/app_constants.dart';
 import 'package:moonjoin/features/category/domain/reposotories/category_repository_interface.dart';
+import 'package:moonjoin/helper/in_flight_requests.dart';
 
 class CategoryRepository implements CategoryRepositoryInterface {
   final ApiClient apiClient;
+  /// Shares one in-flight load (request + parse + ONE cache write) between
+  /// callers that ask for the same list at the same time, e.g. HomeScreen and
+  /// AllStoreScreen in the same frame.
+  static final InFlightRequests _inFlight = InFlightRequests();
+
   CategoryRepository({required this.apiClient});
 
   @override
@@ -43,15 +49,18 @@ class CategoryRepository implements CategoryRepositoryInterface {
 
     switch(source) {
       case DataSourceEnum.client:
-        Response response = await apiClient.getData(AppConstants.categoryUri, headers: header);
-        if (response.statusCode == 200) {
-          categoryList = [];
-          response.body.forEach((category) {
-            categoryList!.add(CategoryModel.fromJson(category));
-          });
-          LocalClient.organize(DataSourceEnum.client, cacheId, jsonEncode(response.body), cacheHeader);
-
-        }
+        categoryList = await _inFlight.run(InFlightRequests.keyFor(AppConstants.categoryUri, cacheHeader), () async {
+          List<CategoryModel>? categories;
+          Response response = await apiClient.getData(AppConstants.categoryUri, headers: header);
+          if (response.statusCode == 200) {
+            categories = [];
+            response.body.forEach((category) {
+              categories!.add(CategoryModel.fromJson(category));
+            });
+            LocalClient.organize(DataSourceEnum.client, cacheId, jsonEncode(response.body), cacheHeader);
+          }
+          return categories;
+        });
 
       case DataSourceEnum.local:
         String? cacheResponseData = await LocalClient.organize(DataSourceEnum.local, cacheId, null, null);

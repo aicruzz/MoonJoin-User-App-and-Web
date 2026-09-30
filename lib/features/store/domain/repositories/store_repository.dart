@@ -17,10 +17,16 @@ import 'package:moonjoin/features/store/domain/repositories/store_repository_int
 import 'package:moonjoin/helper/address_helper.dart';
 import 'package:moonjoin/helper/header_helper.dart';
 import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/helper/in_flight_requests.dart';
 
 class StoreRepository implements StoreRepositoryInterface {
   final ApiClient apiClient;
   final SharedPreferences sharedPreferences;
+  /// Shares one in-flight load (request + parse + ONE cache write) between
+  /// callers that ask for the same list at the same time, e.g. HomeScreen and
+  /// AllStoreScreen in the same frame.
+  static final InFlightRequests _inFlight = InFlightRequests();
+
   StoreRepository({required this.apiClient, required this.sharedPreferences});
 
   @override
@@ -100,12 +106,17 @@ class StoreRepository implements StoreRepositoryInterface {
 
     switch(source) {
       case DataSourceEnum.client:
-        Response response = await apiClient.getData('${AppConstants.latestStoreUri}?type=$type');
-        if (response.statusCode == 200) {
-          latestStoreList = [];
-          response.body['stores'].forEach((store) => latestStoreList!.add(Store.fromJson(store)));
-          LocalClient.organize(DataSourceEnum.client, cacheId, jsonEncode(response.body['stores']), apiClient.getHeader());
-        }
+        final String uri = '${AppConstants.latestStoreUri}?type=$type';
+        latestStoreList = await _inFlight.run(InFlightRequests.keyFor(uri, apiClient.getHeader()), () async {
+          List<Store>? stores;
+          Response response = await apiClient.getData(uri);
+          if (response.statusCode == 200) {
+            stores = [];
+            response.body['stores'].forEach((store) => stores!.add(Store.fromJson(store)));
+            LocalClient.organize(DataSourceEnum.client, cacheId, jsonEncode(response.body['stores']), apiClient.getHeader());
+          }
+          return stores;
+        });
 
       case DataSourceEnum.local:
         String? cacheResponseData = await LocalClient.organize(DataSourceEnum.local, cacheId, null, null);

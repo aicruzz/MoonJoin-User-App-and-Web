@@ -9,9 +9,15 @@ import 'package:moonjoin/features/flash_sale/domain/models/product_flash_sale.da
 import 'package:moonjoin/features/flash_sale/domain/repositories/flash_sale_repository_interface.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/helper/in_flight_requests.dart';
 
 class FlashSaleRepository implements FlashSaleRepositoryInterface {
   final ApiClient apiClient;
+  /// Shares one in-flight load (request + parse + ONE cache write) between
+  /// callers that ask for the same list at the same time, e.g. HomeScreen and
+  /// AllStoreScreen in the same frame.
+  static final InFlightRequests _inFlight = InFlightRequests();
+
   FlashSaleRepository({required this.apiClient});
 
   @override
@@ -21,11 +27,15 @@ class FlashSaleRepository implements FlashSaleRepositoryInterface {
 
     switch(source) {
       case DataSourceEnum.client:
-        Response response = await apiClient.getData(AppConstants.flashSaleUri);
-        if(response.statusCode == 200) {
-          flashSaleModel = FlashSaleModel.fromJson(response.body);
-          LocalClient.organize(source, cacheId, jsonEncode(response.body), apiClient.getHeader());
-        }
+        flashSaleModel = await _inFlight.run(InFlightRequests.keyFor(AppConstants.flashSaleUri, apiClient.getHeader()), () async {
+          FlashSaleModel? model;
+          Response response = await apiClient.getData(AppConstants.flashSaleUri);
+          if(response.statusCode == 200) {
+            model = FlashSaleModel.fromJson(response.body);
+            LocalClient.organize(source, cacheId, jsonEncode(response.body), apiClient.getHeader());
+          }
+          return model;
+        });
 
       case DataSourceEnum.local:
         String? cacheResponseData = await LocalClient.organize(source, cacheId, null, null);

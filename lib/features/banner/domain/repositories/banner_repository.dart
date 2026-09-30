@@ -11,9 +11,15 @@ import 'package:moonjoin/features/banner/domain/repositories/banner_repository_i
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/helper/header_helper.dart';
 import 'package:moonjoin/util/app_constants.dart';
+import 'package:moonjoin/helper/in_flight_requests.dart';
 
 class BannerRepository implements BannerRepositoryInterface {
   final ApiClient apiClient;
+  /// Shares one in-flight load (request + parse + ONE cache write) between
+  /// callers that ask for the same list at the same time, e.g. HomeScreen and
+  /// AllStoreScreen in the same frame.
+  static final InFlightRequests _inFlight = InFlightRequests();
+
   BannerRepository({required this.apiClient});
 
   @override
@@ -37,12 +43,15 @@ class BannerRepository implements BannerRepositoryInterface {
 
     switch(source) {
       case DataSourceEnum.client:
-        Response response = await apiClient.getData(AppConstants.bannerUri);
-        if (response.statusCode == 200) {
-          bannerModel = BannerModel.fromJson(response.body);
-          LocalClient.organize(source, cacheId, jsonEncode(response.body), apiClient.getHeader());
-
-        }
+        bannerModel = await _inFlight.run(InFlightRequests.keyFor(AppConstants.bannerUri, apiClient.getHeader()), () async {
+          BannerModel? model;
+          Response response = await apiClient.getData(AppConstants.bannerUri);
+          if (response.statusCode == 200) {
+            model = BannerModel.fromJson(response.body);
+            LocalClient.organize(source, cacheId, jsonEncode(response.body), apiClient.getHeader());
+          }
+          return model;
+        });
       case DataSourceEnum.local:
 
         String? cacheResponseData = await LocalClient.organize(source, cacheId, null, null);
