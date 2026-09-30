@@ -345,10 +345,12 @@ class _AllStoreScreenState extends State<AllStoreScreen> {
   /// discounted/popular ITEM lists (no invented ranking); Nearby reuses the loaded
   /// store list sorted by real distance (existing location logic). No new backend.
   Widget _discoveryContent(BuildContext context, StoreController storeController) {
+    // The item lists live in ItemController; listen to it so a chip opened
+    // before its list arrived repaints when the cache/network result lands.
     if (_discovery == 0) {
-      return _itemDiscoveryList(context, Get.find<ItemController>().discountedItemList);
+      return GetBuilder<ItemController>(builder: (itemController) => _itemDiscoveryList(context, itemController.discountedItemList));
     } else if (_discovery == 1) {
-      return _itemDiscoveryList(context, Get.find<ItemController>().popularItemList);
+      return GetBuilder<ItemController>(builder: (itemController) => _itemDiscoveryList(context, itemController.popularItemList));
     } else {
       final source = _sourceList(storeController);
       if (source == null) {

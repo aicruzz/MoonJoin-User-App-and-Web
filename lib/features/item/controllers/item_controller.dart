@@ -404,11 +404,18 @@ class ItemController extends GetxController implements GetxService {
     if (!_offsetList.contains(offset)) {
       _offsetList.add(offset);
 
+      // A load that finishes after the user switched module belongs to the
+      // previous module: it is not applied (the repository already cached it
+      // under that module's own key), so the new module never shows it.
+      final int? moduleId = Get.find<SplashController>().module?.id;
       ItemModel? itemModel = await itemServiceInterface.getPopularItemList(
         type: _popularType, source: dataSource, offset: _offset, search: _searchController.text, categoryIds: _selectedCategoryIds, filter: _filter,
         rating: _rating, minPrice: _selectedMinPrice, maxPrice: _selectedMaxPrice,
       );
 
+      if (Get.find<SplashController>().module?.id != moduleId) {
+        return;
+      }
       _preparePopularItems(itemModel, offset, firstTimeCategoryLoad);
 
       if(dataSource == DataSourceEnum.local) {
@@ -513,11 +520,18 @@ class ItemController extends GetxController implements GetxService {
     if (!_offsetList.contains(offset)) {
       _offsetList.add(offset);
 
+      // A load that finishes after the user switched module belongs to the
+      // previous module: it is not applied (the repository already cached it
+      // under that module's own key), so the new module never shows it.
+      final int? moduleId = Get.find<SplashController>().module?.id;
       ItemModel? itemModel = await itemServiceInterface.getDiscountedItemList(
         type: _discountedType, source: dataSource, offset: _offset, search: _searchController.text, categoryIds: _selectedCategoryIds, filter: _filter,
         rating: _rating, minPrice: _selectedMinPrice, maxPrice: _selectedMaxPrice,
       );
 
+      if (Get.find<SplashController>().module?.id != moduleId) {
+        return;
+      }
       _prepareDiscountedItems(itemModel, offset, firstTimeCategoryLoad);
 
       if(dataSource == DataSourceEnum.local) {
