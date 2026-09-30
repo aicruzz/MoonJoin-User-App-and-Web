@@ -5,6 +5,7 @@ import 'package:moonjoin/features/banner/domain/models/promotional_banner_model.
 import 'package:get/get.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
 import 'package:moonjoin/features/banner/domain/services/banner_service_interface.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 
 class BannerController extends GetxController implements GetxService {
   final BannerServiceInterface bannerServiceInterface;
@@ -82,14 +83,24 @@ class BannerController extends GetxController implements GetxService {
       if(reload) {
         _bannerImageList = null;
       }
+      // A load that finishes after the user switched module belongs to the
+      // previous module: it is not applied (the repository already cached it
+      // under that module's own key), so the new module never shows it.
+      final int? moduleId = Get.find<SplashController>().module?.id;
       BannerModel? bannerModel;
       if(dataSource == DataSourceEnum.local) {
         bannerModel = await bannerServiceInterface.getBannerList(source: DataSourceEnum.local);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         await _prepareBanner(bannerModel);
 
         getBannerList(false, dataSource: DataSourceEnum.client, fromRecall: true);
       } else {
         bannerModel = await bannerServiceInterface.getBannerList(source: DataSourceEnum.client);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         _prepareBanner(bannerModel);
       }
 

@@ -12,6 +12,7 @@ import 'package:moonjoin/features/item/controllers/item_controller.dart';
 import 'package:moonjoin/features/notification/domain/models/notification_body_model.dart';
 import 'package:moonjoin/features/profile/controllers/profile_controller.dart';
 import 'package:moonjoin/features/store/controllers/store_controller.dart';
+import 'package:moonjoin/features/home/controllers/advertisement_controller.dart';
 import 'package:moonjoin/features/favourite/controllers/favourite_controller.dart';
 import 'package:moonjoin/api/api_client.dart';
 import 'package:moonjoin/features/splash/domain/models/landing_model.dart';
@@ -335,6 +336,7 @@ class SplashController extends GetxController implements GetxService {
         Get.find<CampaignController>().itemAndBasicCampaignNull();
         Get.find<FlashSaleController>().setEmptyFlashSale(fromModule: true);
         Get.find<StoreController>().clearLatestStoreList();
+        Get.find<AdvertisementController>().clearAdvertisementList();
 
         if(AuthHelper.isLoggedIn()) {
           Get.find<HomeController>().getCashBackOfferList();

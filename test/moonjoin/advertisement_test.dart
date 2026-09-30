@@ -8,6 +8,8 @@ import 'package:moonjoin/common/widgets/moonjoin/moonjoin_advertisement_section.
 import 'package:moonjoin/features/home/controllers/advertisement_controller.dart';
 import 'package:moonjoin/features/home/domain/models/advertisement_model.dart';
 import 'package:moonjoin/features/home/domain/services/advertisement_service_interface.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/splash/domain/services/splash_service_interface.dart';
 
 // Focused tests for the MoonJoin Advertisement presentation. Uses video ads so
 // the FavouriteController/network image dependencies of the image card are not
@@ -44,7 +46,15 @@ List<String> _drain(WidgetTester tester) {
   return ex;
 }
 
+/// The app registers SplashController at startup; the controllers read the active
+/// module from it, so the tests register one too.
+class _FakeSplashService implements SplashServiceInterface {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
+  setUp(() => Get.put<SplashController>(SplashController(splashServiceInterface: _FakeSplashService())));
   tearDown(Get.reset);
 
   Widget wrap(Widget child) => GetMaterialApp(

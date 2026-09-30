@@ -67,13 +67,23 @@ class CampaignController extends GetxController implements GetxService {
 
   Future<void> getItemCampaignList(bool reload, {DataSourceEnum dataSource = DataSourceEnum.local, bool fromRecall = false}) async {
     if(_itemCampaignList == null || reload || fromRecall) {
+      // A load that finishes after the user switched module belongs to the
+      // previous module: it is not applied (the repository already cached it
+      // under that module's own key), so the new module never shows it.
+      final int? moduleId = Get.find<SplashController>().module?.id;
       List<Item>? itemCampaignList;
       if(dataSource == DataSourceEnum.local) {
         itemCampaignList = await campaignServiceInterface.getItemCampaignList(DataSourceEnum.local);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         _prepareItemCampaign(itemCampaignList);
         getItemCampaignList(false, dataSource: DataSourceEnum.client, fromRecall: true);
       } else {
         itemCampaignList = await campaignServiceInterface.getItemCampaignList(DataSourceEnum.client);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         _prepareItemCampaign(itemCampaignList);
       }
 

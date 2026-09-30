@@ -5,6 +5,7 @@ import 'package:moonjoin/common/enums/data_source_enum.dart';
 import 'package:moonjoin/features/flash_sale/domain/models/flash_sale_model.dart';
 import 'package:moonjoin/features/flash_sale/domain/models/product_flash_sale.dart';
 import 'package:moonjoin/features/flash_sale/domain/services/flash_sale_service_interface.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 
 class FlashSaleController extends GetxController implements GetxService {
   final FlashSaleServiceInterface flashSaleServiceInterface;
@@ -43,13 +44,23 @@ class FlashSaleController extends GetxController implements GetxService {
       update();
     }
     if(_flashSaleModel == null || reload || fromRecall) {
+      // A load that finishes after the user switched module belongs to the
+      // previous module: it is not applied (the repository already cached it
+      // under that module's own key), so the new module never shows it.
+      final int? moduleId = Get.find<SplashController>().module?.id;
       FlashSaleModel? flashSaleModel;
       if(dataSource == DataSourceEnum.local) {
         flashSaleModel = await flashSaleServiceInterface.getFlashSale(DataSourceEnum.local);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         _prepareFlashModel(flashSaleModel);
         getFlashSale(false, notify, dataSource: DataSourceEnum.client, fromRecall: true);
       } else {
         flashSaleModel = await flashSaleServiceInterface.getFlashSale(DataSourceEnum.client);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         _prepareFlashModel(flashSaleModel);
       }
 

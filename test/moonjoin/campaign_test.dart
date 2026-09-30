@@ -9,6 +9,8 @@ import 'package:moonjoin/features/item/domain/models/basic_campaign_model.dart';
 import 'package:moonjoin/features/item/domain/models/item_model.dart';
 import 'package:moonjoin/features/item/domain/services/campaign_service_interface.dart';
 import 'package:moonjoin/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
+import 'package:moonjoin/features/splash/domain/services/splash_service_interface.dart';
 
 // Behavioural guards for the shared MoonJoin Campaign section: it self-hides when
 // there are no active campaign items and shows a loading state while the list is
@@ -26,7 +28,15 @@ class _FakeCampaignService implements CampaignServiceInterface {
   Future<BasicCampaignModel?> getCampaignDetails(String campaignID) async => null;
 }
 
+/// The app registers SplashController at startup; the controllers read the active
+/// module from it, so the tests register one too.
+class _FakeSplashService implements SplashServiceInterface {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
+  setUp(() => Get.put<SplashController>(SplashController(splashServiceInterface: _FakeSplashService())));
   tearDown(Get.reset);
 
   group('Item campaign.store parsing (backend with(store) contract)', () {

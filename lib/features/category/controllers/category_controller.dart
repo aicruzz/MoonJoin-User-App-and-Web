@@ -4,6 +4,7 @@ import 'package:moonjoin/features/item/domain/models/item_model.dart';
 import 'package:moonjoin/features/store/domain/models/store_model.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/features/category/domain/services/category_service_interface.dart';
+import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 
 class CategoryController extends GetxController implements GetxService {
   final CategoryServiceInterface categoryServiceInterface;
@@ -66,13 +67,23 @@ class CategoryController extends GetxController implements GetxService {
       if(reload) {
         _categoryList = null;
       }
+      // A load that finishes after the user switched module belongs to the
+      // previous module: it is not applied (the repository already cached it
+      // under that module's own key), so the new module never shows it.
+      final int? moduleId = Get.find<SplashController>().module?.id;
       List<CategoryModel>? categoryList;
       if(dataSource == DataSourceEnum.local) {
         categoryList = await categoryServiceInterface.getCategoryList(allCategory, source: DataSourceEnum.local);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         _prepareCategoryList(categoryList);
         getCategoryList(false, fromRecall: true, allCategory: allCategory, dataSource: DataSourceEnum.client);
       } else {
         categoryList = await categoryServiceInterface.getCategoryList(allCategory, source: DataSourceEnum.client);
+        if (Get.find<SplashController>().module?.id != moduleId) {
+          return;
+        }
         _prepareCategoryList(categoryList);
       }
 
