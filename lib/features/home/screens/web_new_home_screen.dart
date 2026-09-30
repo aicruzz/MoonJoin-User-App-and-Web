@@ -43,6 +43,7 @@ import 'package:moonjoin/common/widgets/paginated_list_view.dart';
 import 'package:moonjoin/features/dashboard/widgets/address_bottom_sheet_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:moonjoin/features/home/helpers/desktop_home_sections.dart';
 
 class WebNewHomeScreen extends StatefulWidget {
   final ScrollController scrollController;
@@ -60,6 +61,9 @@ class _WebNewHomeScreenState extends State<WebNewHomeScreen> {
   @override
   void initState() {
     super.initState();
+    // D3a: if the last Home load was for the mobile storefront, the desktop-only
+    // lists were skipped — load them now (resize / rotation into this layout).
+    DesktopHomeSections.loadIfSkipped();
     _isLogin = AuthHelper.isLoggedIn();
     Get.find<SplashController>().getWebSuggestedLocationStatus();
 

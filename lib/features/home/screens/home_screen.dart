@@ -47,20 +47,34 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/features/home/widgets/module_landing_view.dart';
 import 'package:moonjoin/features/parcel/screens/parcel_category_screen.dart';
+import 'package:moonjoin/features/home/helpers/desktop_home_sections.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
 
   static Future<void> loadData(bool reload, {bool fromModule = false}) async {
+    // D3a: lists only the desktop layout (WebNewHomeScreen) renders are skipped
+    // when this load renders the mobile storefront (AllStoreScreen). If the
+    // desktop layout appears later (resize / rotation), it loads them itself.
+    // Without a context yet, keep loading everything (previous behaviour).
+    final BuildContext? layoutContext = Get.context;
+    final bool loadDesktopSections = layoutContext == null || shouldLoadDesktopOnlyHomeSections(
+      isDesktop: ResponsiveHelper.isDesktop(layoutContext),
+      moduleType: Get.find<SplashController>().module?.moduleType?.toString(),
+    );
+    DesktopHomeSections.recordHomeLoad(loadedDesktopSections: loadDesktopSections, moduleId: Get.find<SplashController>().module?.id);
+
     Get.find<LocationController>().syncZoneData();
     Get.find<FlashSaleController>().setEmptyFlashSale(fromModule: fromModule);
-    if(AuthHelper.isLoggedIn()) {
+    if(AuthHelper.isLoggedIn() && loadDesktopSections) {
       Get.find<StoreController>().getVisitAgainStoreList(fromModule: fromModule);
     }
     if(Get.find<SplashController>().module != null && !Get.find<SplashController>().configModel!.moduleConfig!.module!.isParcel! && !Get.find<SplashController>().configModel!.moduleConfig!.module!.isTaxi!) {
       Get.find<BannerController>().getBannerList(reload);
-      Get.find<StoreController>().getRecommendedStoreList();
+      if(loadDesktopSections) {
+        Get.find<StoreController>().getRecommendedStoreList();
+      }
       final String moduleType = Get.find<SplashController>().module!.moduleType.toString();
       // Flash Sale is shown on the shared storefront home (AllStoreScreen) for
       // Food/Grocery/Pharmacy/Ecommerce. Refresh it for ALL of them on every
@@ -73,21 +87,31 @@ class HomeScreen extends StatefulWidget {
         Get.find<FlashSaleController>().getFlashSale(reload, false);
       }
       if(moduleType == AppConstants.ecommerce) {
-        Get.find<ItemController>().getFeaturedCategoriesItemList(false, false);
+        if(loadDesktopSections) {
+          Get.find<ItemController>().getFeaturedCategoriesItemList(false, false);
+        }
         Get.find<BrandsController>().getBrandList();
       }
-      Get.find<BannerController>().getPromotionalBannerList(reload);
+      if(loadDesktopSections) {
+        Get.find<BannerController>().getPromotionalBannerList(reload);
+      }
       Get.find<ItemController>().getDiscountedItemList(offset: '1', firstTimeCategoryLoad: true);
       Get.find<ItemController>().getPopularItemList(offset: '1', firstTimeCategoryLoad: true);
-      Get.find<ItemController>().getReviewedItemList(offset: '1', firstTimeCategoryLoad: true);
+      if(loadDesktopSections) {
+        Get.find<ItemController>().getReviewedItemList(offset: '1', firstTimeCategoryLoad: true);
+      }
       Get.find<CategoryController>().getCategoryList(reload);
-      Get.find<StoreController>().getPopularStoreList(reload, 'all', false);
-      Get.find<CampaignController>().getBasicCampaignList(reload);
+      if(loadDesktopSections) {
+        Get.find<StoreController>().getPopularStoreList(reload, 'all', false);
+        Get.find<CampaignController>().getBasicCampaignList(reload);
+      }
       Get.find<CampaignController>().getItemCampaignList(reload);
       Get.find<StoreController>().getLatestStoreList(reload, 'all', false);
-      Get.find<StoreController>().getTopOfferStoreList(reload, false);
-      Get.find<ItemController>().getRecommendedItemList(reload, 'all', false);
-      Get.find<StoreController>().getStoreList(1, reload);
+      if(loadDesktopSections) {
+        Get.find<StoreController>().getTopOfferStoreList(reload, false);
+        Get.find<ItemController>().getRecommendedItemList(reload, 'all', false);
+        Get.find<StoreController>().getStoreList(1, reload);
+      }
       Get.find<AdvertisementController>().getAdvertisementList();
     }
     if(AuthHelper.isLoggedIn()) {
