@@ -192,6 +192,21 @@ class LocationController extends GetxController implements GetxService {
     }
 
     ZoneResponseModel response = await getZone(AddressHelper.getUserAddressFromSharedPref()!.latitude, AddressHelper.getUserAddressFromSharedPref()!.longitude, false, updateInAddress: true);
+
+    // A zone lookup that got no definitive answer (no network, timeout, 5xx) says
+    // nothing about the address, so the saved address, coordinates and headers are
+    // kept and Home continues from cache. Only a real answer — a successful lookup
+    // or the backend's "not in this area" (404) — may clear the address and send the
+    // user to Set Location, exactly as before. On iOS checkInternet() lets offline
+    // requests through, so this used to wipe a valid address on offline launch.
+    final int? status = response.statusCode;
+    final bool noDefinitiveAnswer = !response.isSuccess
+        && (status == null || status == 0 || status == 1 || status == 408 || status >= 500);
+    if(noDefinitiveAnswer) {
+      update();
+      return;
+    }
+
     if(response.zoneIds.isEmpty) {
       await AddressHelper.saveUserAddressInSharedPref(AddressModel());
       Get.toNamed(RouteHelper.getAccessLocationRoute(RouteHelper.splash));
