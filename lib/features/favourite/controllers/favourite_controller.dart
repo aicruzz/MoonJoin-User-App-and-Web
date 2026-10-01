@@ -29,10 +29,13 @@ class FavouriteController extends GetxController implements GetxService {
   void addToFavouriteList(Item? product, int? storeID, bool isStore, {bool getXSnackBar = false}) async {
     _isRemoving = true;
     update();
+    // The exact optimistic placeholder, so a failed add removes this one entry
+    // and never an unrelated store that was already in the list.
+    final Store placeholder = Store();
     if(isStore) {
       _wishStoreList ??= [];
       _wishStoreIdList.add(storeID);
-      _wishStoreList!.add(Store());
+      _wishStoreList!.add(placeholder);
     }else{
       _wishItemList ??= [];
       _wishItemList!.add(product);
@@ -42,18 +45,15 @@ class FavouriteController extends GetxController implements GetxService {
     if (responseModel.isSuccess) {
       showCustomSnackBar(responseModel.message, isError: false, getXSnackBar: getXSnackBar);
     } else {
+      // Undo exactly the optimistic entries added above. (Removing inside a
+      // for-in over the same list threw ConcurrentModificationError, which
+      // skipped the error snackbar and left _isRemoving stuck.)
       if(isStore) {
-        for (var storeId in _wishStoreIdList) {
-          if (storeId == storeID) {
-            _wishStoreIdList.removeAt(_wishStoreIdList.indexOf(storeId));
-          }
-        }
+        _wishStoreIdList.remove(storeID);
+        _wishStoreList?.removeWhere((store) => identical(store, placeholder));
       }else{
-        for (var productId in _wishItemIdList) {
-          if(productId == product!.id){
-            _wishItemIdList.removeAt(_wishItemIdList.indexOf(productId));
-          }
-        }
+        _wishItemIdList.remove(product!.id);
+        _wishItemList?.removeWhere((item) => identical(item, product));
       }
       showCustomSnackBar(responseModel.message, isError: true, getXSnackBar: getXSnackBar);
     }
@@ -107,7 +107,14 @@ class FavouriteController extends GetxController implements GetxService {
   Future<void> getFavouriteList() async {
     _wishItemList = null;
     _wishStoreList = null;
+    // The wish list is requested and filtered for the active module. A response
+    // that arrives after the user switched module belongs to the previous one:
+    // it is not applied, and the newer request fills the lists.
+    final int? moduleId = Get.find<SplashController>().module?.id;
     Response response = await favouriteServiceInterface.getFavouriteList();
+    if (Get.find<SplashController>().module?.id != moduleId) {
+      return;
+    }
     if (response.statusCode == 200) {
       update();
       _wishItemList = [];
@@ -156,6 +163,8 @@ class FavouriteController extends GetxController implements GetxService {
   void removeFavourite() {
     _wishItemIdList = [];
     _wishStoreIdList = [];
+    _wishItemList = null;
+    _wishStoreList = null;
   }
 
 }
