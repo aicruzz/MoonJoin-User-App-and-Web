@@ -59,7 +59,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   void initState() {
     super.initState();
 
-    Get.find<ItemController>().getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null);
+    Get.find<ItemController>().getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null, moduleId: widget.item?.moduleId);
     Get.find<ItemController>().setSelect(0, false);
   }
 

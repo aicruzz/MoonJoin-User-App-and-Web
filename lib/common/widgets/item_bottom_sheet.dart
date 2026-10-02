@@ -56,7 +56,7 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
       }
     }
 
-    itemController.getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null).then((_) {
+    itemController.getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null, moduleId: widget.item?.moduleId).then((_) {
       _newVariation = splashController.getModuleConfig(itemController.item!.moduleType).newVariation ?? false;
     });
     

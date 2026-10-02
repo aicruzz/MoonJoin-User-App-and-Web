@@ -39,17 +39,26 @@ class ItemRepository implements ItemRepositoryInterface {
   }
 
   @override
-  Future get(String? id, {bool isConditionWiseItem = false}) async {
+  Future get(String? id, {bool isConditionWiseItem = false, int? moduleId}) async {
     if(isConditionWiseItem) {
       return await _getConditionsWiseItems(int.parse(id!));
     } else {
-      return await _getItemDetails(int.parse(id!));
+      return await _getItemDetails(int.parse(id!), moduleId: moduleId);
     }
   }
 
-  Future<Item?> _getItemDetails(int? itemID) async {
+  /// [moduleId]: the module the item belongs to. An item opened from a search
+  /// scoped to another module is only found under its own module, so this request
+  /// (a copy of the current headers) carries it — the shared headers and the active
+  /// module are never changed. Null or the active module: the usual headers.
+  Future<Item?> _getItemDetails(int? itemID, {int? moduleId}) async {
     Item? item;
-    Response response = await apiClient.getData('${AppConstants.itemDetailsUri}$itemID');
+    Map<String, String>? itemHeaders;
+    if(moduleId != null && apiClient.getHeader()[AppConstants.moduleId] != '$moduleId') {
+      itemHeaders = Map<String, String>.from(apiClient.getHeader());
+      itemHeaders[AppConstants.moduleId] = '$moduleId';
+    }
+    Response response = await apiClient.getData('${AppConstants.itemDetailsUri}$itemID', headers: itemHeaders);
     if (response.statusCode == 200) {
       item = Item.fromJson(response.body);
     }

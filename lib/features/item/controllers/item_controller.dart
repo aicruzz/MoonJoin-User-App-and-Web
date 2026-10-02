@@ -657,13 +657,14 @@ class ItemController extends GetxController implements GetxService {
     update();
   }
 
-  Future<void> getItemDetails({required int itemId, CartModel? cart, Item? item}) async {
+  /// [moduleId]: the module the item belongs to (see ItemRepository._getItemDetails).
+  Future<void> getItemDetails({required int itemId, CartModel? cart, Item? item, int? moduleId}) async {
     _item = null;
     if(item?.name != null) {
       _item = item;
     }else {
       _item = null;
-      _item = await itemServiceInterface.getItemDetails(itemId);
+      _item = await itemServiceInterface.getItemDetails(itemId, moduleId: moduleId);
     }
 
     if(_item != null) {

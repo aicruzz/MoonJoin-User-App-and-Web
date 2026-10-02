@@ -39,8 +39,8 @@ class ItemService implements ItemServiceInterface {
   }
 
   @override
-  Future<Item?> getItemDetails(int? itemID) async {
-    return await itemRepositoryInterface.get(itemID.toString());
+  Future<Item?> getItemDetails(int? itemID, {int? moduleId}) async {
+    return await itemRepositoryInterface.get(itemID.toString(), moduleId: moduleId);
   }
 
   @override

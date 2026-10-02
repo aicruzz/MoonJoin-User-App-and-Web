@@ -10,5 +10,5 @@ abstract class ItemRepositoryInterface implements RepositoryInterface {
   });
   Future<BasicMedicineModel?> getBasicMedicine(DataSourceEnum source);
   @override
-  Future get(String? id, {bool isConditionWiseItem = false});
+  Future get(String? id, {bool isConditionWiseItem = false, int? moduleId});
 }
