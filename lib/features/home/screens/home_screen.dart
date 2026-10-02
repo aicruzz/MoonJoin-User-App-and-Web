@@ -114,12 +114,16 @@ class HomeScreen extends StatefulWidget {
       }
       Get.find<AdvertisementController>().getAdvertisementList();
     }
-    if(AuthHelper.isLoggedIn()) {
-      await Get.find<ProfileController>().getUserInfo();
+    // customer/info runs alongside the requests below, none of which read the
+    // profile. getModules() still starts only after it: the module tiles lead to
+    // switchModule → _showInterestPage, which reads userInfoModel!.
+    final Future<void>? userInfo = AuthHelper.isLoggedIn() ? Get.find<ProfileController>().getUserInfo() : null;
+    if(userInfo != null) {
       Get.find<NotificationController>().getNotificationList(reload);
       Get.find<CouponController>().getCouponList();
+    } else {
+      Get.find<SplashController>().getModules();
     }
-    Get.find<SplashController>().getModules();
     if(Get.find<SplashController>().module == null && Get.find<SplashController>().configModel!.module == null) {
       Get.find<BannerController>().getFeaturedBanner();
       Get.find<StoreController>().getFeaturedStoreList();
@@ -130,13 +134,25 @@ class HomeScreen extends StatefulWidget {
     if(Get.find<SplashController>().module != null && Get.find<SplashController>().configModel!.moduleConfig!.module!.isParcel!) {
       Get.find<ParcelController>().getParcelCategoryList();
     }
+    Future<void>? pharmacyConditions;
     if(Get.find<SplashController>().module != null && Get.find<SplashController>().module!.moduleType.toString() == AppConstants.pharmacy) {
       Get.find<ItemController>().getBasicMedicine(reload, false);
       Get.find<StoreController>().getFeaturedStoreList();
-      await Get.find<ItemController>().getCommonConditions(false);
-      if(Get.find<ItemController>().commonConditions!.isNotEmpty) {
-        Get.find<ItemController>().getConditionsWiseItem(Get.find<ItemController>().commonConditions![0].id!, false);
-      }
+      pharmacyConditions = _loadCommonConditions();
+    }
+    // Completes only after customer/info and the pharmacy chain, as before.
+    await Future.wait(<Future<void>>[
+      if(userInfo != null) userInfo.then((_) {
+        Get.find<SplashController>().getModules();
+      }),
+      ?pharmacyConditions,
+    ]);
+  }
+
+  static Future<void> _loadCommonConditions() async {
+    await Get.find<ItemController>().getCommonConditions(false);
+    if(Get.find<ItemController>().commonConditions!.isNotEmpty) {
+      Get.find<ItemController>().getConditionsWiseItem(Get.find<ItemController>().commonConditions![0].id!, false);
     }
   }
 
