@@ -42,6 +42,36 @@ class StoreScreen extends StatefulWidget {
   final String slug;
   const StoreScreen({super.key, required this.store, required this.fromModule, this.slug = ''});
 
+  /// Loads the store page. With a known store ID (banner, store card) the
+  /// first-page banners, recommended items and products start together with the
+  /// store details — none of them reads the details. A slug link still waits:
+  /// the details resolve the ID and move the user's address to the store first.
+  static Future<void> loadStoreData(int? storeId, {required bool fromModule, String slug = ''}) async {
+    final StoreController storeController = Get.find<StoreController>();
+    // Runs synchronously up to its first request: resets the category index and
+    // the previous store, so page 1 below still asks for category 0.
+    final Future<Store?> details = storeController.getStoreDetails(Store(id: storeId), fromModule, slug: slug);
+    final bool knownStore = storeId != null && slug.isEmpty;
+    if(knownStore) {
+      _loadStoreContent(storeId);
+    }
+    await details.then((value) {
+      storeController.showButtonAnimation();
+    });
+    if(Get.find<CategoryController>().categoryList == null) {
+      Get.find<CategoryController>().getCategoryList(true);
+    }
+    if(!knownStore) {
+      _loadStoreContent(storeId ?? storeController.store!.id);
+    }
+  }
+
+  static void _loadStoreContent(int? storeId) {
+    Get.find<StoreController>().getStoreBannerList(storeId);
+    Get.find<StoreController>().getRestaurantRecommendedItemList(storeId, false);
+    Get.find<StoreController>().getStoreItemList(storeId, 1, 'all', false);
+  }
+
   @override
   State<StoreScreen> createState() => _StoreScreenState();
 }
@@ -70,15 +100,7 @@ class _StoreScreenState extends State<StoreScreen> {
       Get.find<StoreController>().changeSearchStatus(isUpdate: false);
     }
     Get.find<StoreController>().hideAnimation();
-    await Get.find<StoreController>().getStoreDetails(Store(id: widget.store!.id), widget.fromModule, slug: widget.slug).then((value) {
-      Get.find<StoreController>().showButtonAnimation();
-    });
-    if(Get.find<CategoryController>().categoryList == null) {
-      Get.find<CategoryController>().getCategoryList(true);
-    }
-    Get.find<StoreController>().getStoreBannerList(widget.store!.id ?? Get.find<StoreController>().store!.id);
-    Get.find<StoreController>().getRestaurantRecommendedItemList(widget.store!.id ?? Get.find<StoreController>().store!.id, false);
-    Get.find<StoreController>().getStoreItemList(widget.store!.id ?? Get.find<StoreController>().store!.id, 1, 'all', false);
+    await StoreScreen.loadStoreData(widget.store!.id, fromModule: widget.fromModule, slug: widget.slug);
 
     scrollController.addListener(() {
       if(scrollController.position.userScrollDirection == ScrollDirection.reverse){
