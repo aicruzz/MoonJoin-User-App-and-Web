@@ -340,10 +340,11 @@ class SplashController extends GetxController implements GetxService {
 
   Future<void> switchModule(int index, bool fromPhone) async {
     if(_module == null || _module!.id != _moduleList![index].id) {
+      // setModule already refreshes the cart and the cashback offers for the new
+      // module; they are not requested a second time here.
       await Get.find<SplashController>().setModule(_moduleList![index]);
 
       if(_module!.moduleType.toString() != AppConstants.taxi) {
-        Get.find<CartController>().getCartDataOnline();
         Get.find<ItemController>().clearItemLists();
         Get.find<BannerController>().clearBanner();
         Get.find<CategoryController>().clearCategoryList();
@@ -354,14 +355,10 @@ class SplashController extends GetxController implements GetxService {
         Get.find<StoreController>().clearFeaturedStoreList();
 
         if(AuthHelper.isLoggedIn()) {
-          Get.find<HomeController>().getCashBackOfferList();
           await _showInterestPage();
         }
         HomeScreen.loadData(true, fromModule: true);
       } else {
-        if(AuthHelper.isLoggedIn()) {
-          Get.find<HomeController>().getCashBackOfferList();
-        }
         Get.find<TaxiCartController>().getCarCartList();
       }
     }

@@ -52,6 +52,10 @@ import 'package:moonjoin/features/parcel/domain/services/parcel_service_interfac
 import 'package:moonjoin/features/profile/controllers/profile_controller.dart';
 import 'package:moonjoin/features/profile/domain/models/userinfo_model.dart';
 import 'package:moonjoin/features/profile/domain/services/profile_service_interface.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/controllers/taxi_cart_controller.dart';
+import 'package:moonjoin/features/rental_module/rental_cart_screen/domain/services/taxi_cart_service_interface.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/controllers/taxi_favourite_controller.dart';
+import 'package:moonjoin/features/rental_module/rental_favourite/domain/services/taxi_favourite_service_interface.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/features/splash/domain/services/splash_service_interface.dart';
 import 'package:moonjoin/features/store/controllers/store_controller.dart';
@@ -80,6 +84,8 @@ class _ParcelService extends _NoSuch implements ParcelServiceInterface {}
 class _FavouriteService extends _NoSuch implements FavouriteServiceInterface {}
 class _CartService extends _NoSuch implements CartServiceInterface {}
 class _HomeService extends _NoSuch implements HomeServiceInterface {}
+class _TaxiCartService extends _NoSuch implements TaxiCartServiceInterface {}
+class _TaxiFavouriteService extends _NoSuch implements TaxiFavouriteServiceInterface {}
 class _AuthService extends _NoSuch implements AuthServiceInterface {
   @override
   bool isSharedPrefNotificationActive() => false;
@@ -117,10 +123,13 @@ class _Splash extends SplashController {
 class _Auth extends AuthController {
   _Auth() : super(authServiceInterface: _AuthService());
   bool loggedIn = true;
+  bool guest = false;
   int clears = 0;
   int guestLogins = 0;
   @override
   bool isLoggedIn() => loggedIn;
+  @override
+  bool isGuestLoggedIn() => guest && !loggedIn;
   @override
   Future<bool> clearSharedData({bool removeToken = true}) async {
     clears++;
@@ -291,7 +300,23 @@ class _HomeCtl extends HomeController {
 final List<ModuleModel> _allModules = <ModuleModel>[
   ModuleModel(id: 3, moduleType: AppConstants.food), ModuleModel(id: 5, moduleType: AppConstants.grocery),
   ModuleModel(id: 12, moduleType: AppConstants.parcel), ModuleModel(id: 9, moduleType: AppConstants.pharmacy),
+  ModuleModel(id: 14, moduleType: AppConstants.taxi),
 ];
+
+class _TaxiCart extends TaxiCartController {
+  _TaxiCart() : super(taxiCartServiceInterface: _TaxiCartService());
+  @override
+  Future<bool> getCarCartList() async {
+    _started.add('taxiCart');
+    return true;
+  }
+}
+
+class _TaxiFavourite extends TaxiFavouriteController {
+  _TaxiFavourite() : super(taxiFavouriteServiceInterface: _TaxiFavouriteService());
+  @override
+  Future<void> getFavouriteTaxiList() async => _started.add('taxiFavourites');
+}
 
 /// The module list from the local cache (and later the network), as the
 /// real repository serves it.
@@ -591,6 +616,95 @@ void main() {
       expect(interestEvaluated(), isFalse);
       expect(count('zoneSync'), 2);
       expect(count('customer/info'), 2, reason: 'only the switch\'s own Home load requests it, as before');
+    });
+  });
+
+  group('module switch refreshes cart/cashback once (setModule only)', () {
+    late _SwitchSplash switchSplash;
+
+    setUp(() async {
+      Get.delete<SplashController>(force: true);
+      switchSplash = _SwitchSplash();
+      Get.put<SplashController>(switchSplash);
+      Get.put<CartController>(_Cart());
+      Get.put<HomeController>(_HomeCtl());
+      Get.put<TaxiCartController>(_TaxiCart());
+      Get.put<TaxiFavouriteController>(_TaxiFavourite());
+      // Profile already loaded, Food and Grocery already chosen: no interest page.
+      profile.loaded = UserInfoModel(selectedModuleForInterest: <int>[3, 5]);
+      await switchSplash.getModules();
+      await pumpEventQueue();
+      _started.clear();
+    });
+
+    test('logged in: switching module requests cart, cashback and favourites once each; Home loads', () async {
+      await switchSplash.switchModule(0, true); // Food
+      await pumpEventQueue();
+      expect(switchSplash.module?.id, 3);
+      expect(count('cart'), 1, reason: 'switchModule used to request the cart again');
+      expect(count('cashback'), 1, reason: 'switchModule used to request the cashback offers again');
+      expect(count('favourites'), 1);
+      expect(count('zoneSync'), 1, reason: 'the switch still loads Home for the new module');
+    });
+
+    test('switching away and back: one refresh per switch, both directions', () async {
+      await switchSplash.switchModule(0, true); // Food
+      await switchSplash.switchModule(1, true); // Grocery
+      await switchSplash.switchModule(0, true); // Food again
+      await pumpEventQueue();
+      expect(switchSplash.module?.id, 3);
+      expect(count('cart'), 3);
+      expect(count('cashback'), 3);
+      expect(count('favourites'), 3);
+      expect(count('zoneSync'), 3);
+    });
+
+    test('guest: cart refreshed once; no cashback or favourites', () async {
+      auth.loggedIn = false;
+      auth.guest = true;
+      await switchSplash.switchModule(1, true); // Grocery
+      await pumpEventQueue();
+      expect(count('cart'), 1);
+      expect(count('cashback'), 0);
+      expect(count('favourites'), 0);
+      expect(count('zoneSync'), 1);
+    });
+
+    test('neither logged in nor guest: no cart request (it had no guest id to send)', () async {
+      auth.loggedIn = false;
+      await switchSplash.switchModule(1, true);
+      await pumpEventQueue();
+      expect(count('cart'), 0);
+      expect(count('cashback'), 0);
+      expect(count('zoneSync'), 1);
+    });
+
+    test('rental (taxi): cashback once; taxi cart and favourites unchanged', () async {
+      await switchSplash.switchModule(4, true);
+      await pumpEventQueue();
+      expect(switchSplash.module?.id, 14);
+      expect(count('cashback'), 1, reason: 'the taxi branch used to request it again');
+      expect(count('cart'), 1);
+      expect(count('taxiFavourites'), 1);
+      expect(count('taxiCart'), 2, reason: 'out of scope: setModule and switchModule each still load the taxi cart');
+      expect(count('zoneSync'), 0, reason: 'taxi does not reload Home here, as before');
+    });
+
+    test('setModule on its own is unchanged: cart, cashback and favourites', () async {
+      await switchSplash.setModule(_allModules[1]);
+      await pumpEventQueue();
+      expect(count('cart'), 1);
+      expect(count('cashback'), 1);
+      expect(count('favourites'), 1);
+    });
+
+    test('tapping the active module again does nothing, as before', () async {
+      await switchSplash.switchModule(0, true);
+      await pumpEventQueue();
+      _started.clear();
+      await switchSplash.switchModule(0, true);
+      await pumpEventQueue();
+      expect(_started, isEmpty);
     });
   });
 }
