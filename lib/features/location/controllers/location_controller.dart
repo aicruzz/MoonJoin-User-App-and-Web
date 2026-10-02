@@ -66,6 +66,12 @@ class LocationController extends GetxController implements GetxService {
   bool _buttonDisabled = true;
   bool get buttonDisabled => _buttonDisabled;
 
+  ZoneResponseModel? _currentLocationZone;
+  /// The zone lookup the latest getCurrentLocation made for the device position.
+  /// "Use current location" passes a successful one on to saveAddressAndNavigate,
+  /// so the same position is not looked up again.
+  ZoneResponseModel? get currentLocationZone => _currentLocationZone;
+
   bool _showLocationSuggestion = true;
   bool get showLocationSuggestion => _showLocationSuggestion;
 
@@ -127,6 +133,7 @@ class LocationController extends GetxController implements GetxService {
   }
 
   Future<AddressModel> getCurrentLocation(bool fromAddress, {GoogleMapController? mapController, LatLng? defaultLatLng, bool notify = true}) async {
+    _currentLocationZone = null;
     _loading = true;
     if(notify) {
       update();
@@ -142,6 +149,7 @@ class LocationController extends GetxController implements GetxService {
     String addressFromGeocode = await getAddressFromGeocode(LatLng(myPosition.latitude, myPosition.longitude));
     fromAddress ? _address = addressFromGeocode : _pickAddress = addressFromGeocode;
     ZoneResponseModel responseModel = await getZone(myPosition.latitude.toString(), myPosition.longitude.toString(), true);
+    _currentLocationZone = responseModel;
     _buttonDisabled = !responseModel.isSuccess;
 
     addressModel = AddressModel(
@@ -256,18 +264,29 @@ class LocationController extends GetxController implements GetxService {
     }
   }
 
-  void saveAddressAndNavigate(AddressModel? address, bool fromSignUp, String? route, bool canRoute, bool isDesktop) {
-    _prepareZoneData(address!, fromSignUp, route, canRoute, isDesktop);
+  /// [verifiedZone]: a successful zone lookup already made for exactly these
+  /// coordinates ("Use current location"); it is used instead of looking them up
+  /// again. Every other caller leaves it null and keeps the lookup.
+  void saveAddressAndNavigate(AddressModel? address, bool fromSignUp, String? route, bool canRoute, bool isDesktop, {ZoneResponseModel? verifiedZone}) {
+    _prepareZoneData(address!, fromSignUp, route, canRoute, isDesktop, verifiedZone);
   }
 
-  void _prepareZoneData(AddressModel address, bool fromSignUp, String? route, bool canRoute, bool isDesktop) async {
+  void _prepareZoneData(AddressModel address, bool fromSignUp, String? route, bool canRoute, bool isDesktop, ZoneResponseModel? verifiedZone) async {
 
     bool hasInternet = await checkInternet();
     if (!hasInternet) {
       return;
     }
 
-    getZone(address.latitude, address.longitude, false).then((response) async {
+    final Future<ZoneResponseModel> zoneLookup;
+    if(verifiedZone != null && verifiedZone.isSuccess) {
+      _inZone = true;
+      _zoneID = verifiedZone.zoneIds.isNotEmpty ? verifiedZone.zoneIds[0] : 0;
+      zoneLookup = Future<ZoneResponseModel>.value(verifiedZone);
+    } else {
+      zoneLookup = getZone(address.latitude, address.longitude, false);
+    }
+    zoneLookup.then((response) async {
       if (response.isSuccess) {
         Get.find<CartController>().getCartDataOnline();
         address.zoneId = response.zoneIds[0];

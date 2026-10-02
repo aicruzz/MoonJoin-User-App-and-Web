@@ -20,6 +20,41 @@ class AddressBottomSheetWidget extends StatelessWidget {
   final bool fromDialog;
   const AddressBottomSheetWidget({super.key, this.fromDialog = false});
 
+  /// "Use current location". getCurrentLocation already looks up the zone of the
+  /// device position; a successful answer is reused here and in
+  /// saveAddressAndNavigate instead of being requested twice more. If that
+  /// lookup failed, it is retried and handled exactly as before.
+  static Future<void> useCurrentLocation() async {
+    Get.dialog(const CustomLoaderWidget(), barrierDismissible: false);
+    AddressModel address = await Get.find<LocationController>().getCurrentLocation(true);
+    final ZoneResponseModel? firstLookup = Get.find<LocationController>().currentLocationZone;
+    final ZoneResponseModel? verifiedZone = (firstLookup != null && firstLookup.isSuccess) ? firstLookup : null;
+    ZoneResponseModel response = verifiedZone ?? await Get.find<LocationController>().getZone(address.latitude, address.longitude, false);
+    if(response.isSuccess) {
+      if(ResponsiveHelper.isDesktop(Get.context)) {
+        Get.find<SplashController>().saveWebSuggestedLocationStatus(true);
+      }
+      Get.find<LocationController>().saveAddressAndNavigate(
+        address, false, '', false, ResponsiveHelper.isDesktop(Get.context), verifiedZone: verifiedZone,
+      );
+      Get.find<LocationController>().showSuggestedLocation(false);
+    }else {
+      Get.back();
+      if(ResponsiveHelper.isDesktop(Get.context)) {
+        Get.find<SplashController>().saveWebSuggestedLocationStatus(true);
+        showGeneralDialog(context: Get.context!, pageBuilder: (_,__,___) {
+          return const SizedBox(
+              height: 300, width: 300,
+              child: PickMapScreen(fromSignUp: false, canRoute: false, fromAddAddress: true, route: null),
+          );
+        });
+      }else {
+        Get.toNamed(RouteHelper.getPickMapRoute(RouteHelper.accessLocation, false));
+      }
+      showCustomSnackBar('service_not_available_in_current_location'.tr);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if(Get.find<AddressController>().addressList == null){
@@ -96,34 +131,7 @@ class AddressBottomSheetWidget extends StatelessWidget {
                     alignment: addressController.addressList != null && addressController.addressList!.isEmpty && !fromDialog ? Alignment.center : Alignment.topCenter,
                     child: TextButton.icon(
                       onPressed: (){
-                        Get.find<LocationController>().checkPermission(() async {
-                          Get.dialog(const CustomLoaderWidget(), barrierDismissible: false);
-                          AddressModel address = await Get.find<LocationController>().getCurrentLocation(true);
-                          ZoneResponseModel response = await Get.find<LocationController>().getZone(address.latitude, address.longitude, false);
-                          if(response.isSuccess) {
-                            if(ResponsiveHelper.isDesktop(Get.context)) {
-                              Get.find<SplashController>().saveWebSuggestedLocationStatus(true);
-                            }
-                            Get.find<LocationController>().saveAddressAndNavigate(
-                              address, false, '', false, ResponsiveHelper.isDesktop(Get.context),
-                            );
-                            Get.find<LocationController>().showSuggestedLocation(false);
-                          }else {
-                            Get.back();
-                            if(ResponsiveHelper.isDesktop(Get.context)) {
-                              Get.find<SplashController>().saveWebSuggestedLocationStatus(true);
-                              showGeneralDialog(context: Get.context!, pageBuilder: (_,__,___) {
-                                return const SizedBox(
-                                    height: 300, width: 300,
-                                    child: PickMapScreen(fromSignUp: false, canRoute: false, fromAddAddress: true, route: null),
-                                );
-                              });
-                            }else {
-                              Get.toNamed(RouteHelper.getPickMapRoute(RouteHelper.accessLocation, false));
-                            }
-                            showCustomSnackBar('service_not_available_in_current_location'.tr);
-                          }
-                        });
+                        Get.find<LocationController>().checkPermission(() => useCurrentLocation());
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
