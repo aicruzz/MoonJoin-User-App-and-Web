@@ -311,6 +311,20 @@ class SplashController extends GetxController implements GetxService {
   }
 
   Future<void> _showInterestPage() async {
+    // The interest page only exists for these module types; the others never
+    // need the profile, so they never wait for it.
+    final String? moduleType = Get.find<SplashController>().module!.moduleType;
+    if(moduleType != 'food' && moduleType != 'grocery' && moduleType != 'ecommerce') {
+      return;
+    }
+    // Module tiles no longer wait for customer/info. A tap that beats it joins
+    // the request Home already started; without a profile the decision is skipped.
+    if(Get.find<ProfileController>().userInfoModel == null) {
+      await HomeScreen.profileLoad;
+      if(Get.find<ProfileController>().userInfoModel == null) {
+        return;
+      }
+    }
     if(!Get.find<ProfileController>().userInfoModel!.selectedModuleForInterest!.contains(Get.find<SplashController>().module!.id)
         && (Get.find<SplashController>().module!.moduleType == 'food' || Get.find<SplashController>().module!.moduleType == 'grocery' || Get.find<SplashController>().module!.moduleType == 'ecommerce')
     ) {

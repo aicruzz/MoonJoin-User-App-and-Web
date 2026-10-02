@@ -1,8 +1,11 @@
 // customer/info startup waterfall. HomeScreen.loadData used to await
 // getUserInfo() before starting Home requests that never read the profile.
-// They now start alongside customer/info; getModules() still waits for it
-// (module tiles → switchModule → _showInterestPage reads userInfoModel!), and
-// loadData still completes only after customer/info and the pharmacy chain.
+// They now start alongside customer/info — getModules() included, so the All
+// Module landing (the cold-start screen on mobile) renders without waiting for
+// the profile. loadData still completes only after customer/info and the
+// pharmacy chain. A module tapped before the profile arrives joins the request
+// Home started (no second customer/info) and evaluates the interest page once
+// it answers; with no profile the decision is skipped instead of throwing.
 
 import 'dart:async';
 
@@ -13,6 +16,7 @@ import 'package:moonjoin/api/api_checker.dart';
 import 'package:moonjoin/common/models/config_model.dart';
 import 'package:moonjoin/common/models/module_model.dart';
 import 'package:moonjoin/common/models/response_model.dart';
+import 'package:moonjoin/common/enums/data_source_enum.dart';
 import 'package:moonjoin/features/address/controllers/address_controller.dart';
 import 'package:moonjoin/features/address/domain/services/address_service_interface.dart';
 import 'package:moonjoin/features/auth/controllers/auth_controller.dart';
@@ -20,6 +24,8 @@ import 'package:moonjoin/features/auth/domain/services/auth_service_interface.da
 import 'package:moonjoin/features/banner/controllers/banner_controller.dart';
 import 'package:moonjoin/features/banner/domain/services/banner_service_interface.dart';
 import 'package:moonjoin/features/category/controllers/category_controller.dart';
+import 'package:moonjoin/features/cart/controllers/cart_controller.dart';
+import 'package:moonjoin/features/cart/domain/services/cart_service_interface.dart';
 import 'package:moonjoin/features/category/domain/services/category_service_interface.dart';
 import 'package:moonjoin/features/coupon/controllers/coupon_controller.dart';
 import 'package:moonjoin/features/coupon/domain/services/coupon_service_interface.dart';
@@ -28,7 +34,9 @@ import 'package:moonjoin/features/favourite/domain/services/favourite_service_in
 import 'package:moonjoin/features/flash_sale/controllers/flash_sale_controller.dart';
 import 'package:moonjoin/features/flash_sale/domain/services/flash_sale_service_interface.dart';
 import 'package:moonjoin/features/home/controllers/advertisement_controller.dart';
+import 'package:moonjoin/features/home/controllers/home_controller.dart';
 import 'package:moonjoin/features/home/domain/services/advertisement_service_interface.dart';
+import 'package:moonjoin/features/home/domain/services/home_service_interface.dart';
 import 'package:moonjoin/features/home/screens/home_screen.dart';
 import 'package:moonjoin/features/item/controllers/campaign_controller.dart';
 import 'package:moonjoin/features/item/controllers/item_controller.dart';
@@ -42,6 +50,7 @@ import 'package:moonjoin/features/notification/domain/service/notification_servi
 import 'package:moonjoin/features/parcel/controllers/parcel_controller.dart';
 import 'package:moonjoin/features/parcel/domain/services/parcel_service_interface.dart';
 import 'package:moonjoin/features/profile/controllers/profile_controller.dart';
+import 'package:moonjoin/features/profile/domain/models/userinfo_model.dart';
 import 'package:moonjoin/features/profile/domain/services/profile_service_interface.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/features/splash/domain/services/splash_service_interface.dart';
@@ -69,6 +78,8 @@ class _CouponService extends _NoSuch implements CouponServiceInterface {}
 class _AddressService extends _NoSuch implements AddressServiceInterface {}
 class _ParcelService extends _NoSuch implements ParcelServiceInterface {}
 class _FavouriteService extends _NoSuch implements FavouriteServiceInterface {}
+class _CartService extends _NoSuch implements CartServiceInterface {}
+class _HomeService extends _NoSuch implements HomeServiceInterface {}
 class _AuthService extends _NoSuch implements AuthServiceInterface {
   @override
   bool isSharedPrefNotificationActive() => false;
@@ -129,14 +140,22 @@ class _Favourite extends FavouriteController {
   int removes = 0;
   @override
   void removeFavourite() => removes++;
+  @override
+  Future<void> getFavouriteList() async => _started.add('favourites');
 }
 
 class _Profile extends ProfileController {
   _Profile() : super(profileServiceInterface: _ProfileService());
+  /// What customer/info yields once its gate is answered (null = failed).
+  UserInfoModel? answer;
+  UserInfoModel? loaded;
+  @override
+  UserInfoModel? get userInfoModel => loaded;
   @override
   Future<void> getUserInfo() async {
     _started.add('customer/info');
     await _gate('customer/info');
+    loaded = answer ?? loaded;
     if (_unauthorized.contains('customer/info')) {
       ApiChecker.checkApi(const Response(statusCode: 401, statusText: 'Unauthenticated.'));
     }
@@ -240,7 +259,7 @@ class _Item extends ItemController {
 class _Category extends CategoryController {
   _Category() : super(categoryServiceInterface: _CategoryService());
   @override
-  Future<void> getCategoryList(bool reload, {bool allCategory = false, dynamic dataSource, bool fromRecall = false}) async => _started.add('categories');
+  Future<void> getCategoryList(bool reload, {bool allCategory = false, dynamic dataSource, bool fromRecall = false}) async => _started.add('categories(reload=$reload)');
 }
 
 class _Campaign extends CampaignController {
@@ -257,6 +276,45 @@ class _Ads extends AdvertisementController {
   Future<void> getAdvertisementList({dynamic dataSource}) async => _started.add('ads');
 }
 
+class _Cart extends CartController {
+  _Cart() : super(cartServiceInterface: _CartService());
+  @override
+  Future<void> getCartDataOnline() async => _started.add('cart');
+}
+
+class _HomeCtl extends HomeController {
+  _HomeCtl() : super(homeServiceInterface: _HomeService());
+  @override
+  Future<void> getCashBackOfferList() async => _started.add('cashback');
+}
+
+final List<ModuleModel> _allModules = <ModuleModel>[
+  ModuleModel(id: 3, moduleType: AppConstants.food), ModuleModel(id: 5, moduleType: AppConstants.grocery),
+  ModuleModel(id: 12, moduleType: AppConstants.parcel), ModuleModel(id: 9, moduleType: AppConstants.pharmacy),
+];
+
+/// The module list from the local cache (and later the network), as the
+/// real repository serves it.
+class _SwitchSplashService extends _NoSuch implements SplashServiceInterface {
+  @override
+  Future<List<ModuleModel>?> getModules({Map<String, String>? headers, required DataSourceEnum source}) async {
+    _started.add(source == DataSourceEnum.local ? 'modules(cache)' : 'modules(network)');
+    return _allModules;
+  }
+  @override
+  Future<void> setModule(ModuleModel? module) async {}
+  @override
+  Future<ModuleModel?> setCacheModule(ModuleModel? module) async => module;
+}
+
+/// Real SplashController (getModules / setModule / switchModule / interest
+/// page); only the config is pinned.
+class _SwitchSplash extends SplashController {
+  _SwitchSplash() : super(splashServiceInterface: _SwitchSplashService());
+  @override
+  ConfigModel? get configModel => ConfigModel(moduleConfig: ModuleConfig(module: Module(isParcel: module?.moduleType == AppConstants.parcel, isTaxi: false)));
+}
+
 final ModuleModel _pharmacy = ModuleModel(id: 6, moduleType: AppConstants.pharmacy);
 final ModuleModel _parcelModule = ModuleModel(id: 9, moduleType: AppConstants.parcel);
 
@@ -264,19 +322,22 @@ void main() {
   late _Splash splash;
   late _Auth auth;
   late _Favourite favourite;
+  late _Profile profile;
 
   setUp(() {
     Get.testMode = true;
     _started.clear();
     _gates.clear();
     _unauthorized.clear();
+    HomeScreen.profileLoad = null;
     splash = _Splash();
     auth = _Auth();
     favourite = _Favourite();
+    profile = _Profile();
     Get.put<SplashController>(splash);
     Get.put<AuthController>(auth);
     Get.put<FavouriteController>(favourite);
-    Get.put<ProfileController>(_Profile());
+    Get.put<ProfileController>(profile);
     Get.put<NotificationController>(_Notification());
     Get.put<CouponController>(_Coupon());
     Get.put<AddressController>(_Address());
@@ -300,32 +361,31 @@ void main() {
     return (future: f, done: () => completed);
   }
 
-  test('All Module landing, logged in: independent requests start while customer/info is pending; modules waits for it', () async {
+  int count(String name) => _started.where((String s) => s == name).length;
+
+  test('All Module landing, logged in: modules and the independent requests start while customer/info is pending; loadData waits for it', () async {
     final load = start();
     await pumpEventQueue();
 
-    expect(_started, containsAll(<String>['customer/info', 'notifications', 'coupons', 'featuredBanner', 'featuredStores', 'addressList']));
-    expect(_started, isNot(contains('modules')), reason: 'getModules waits for customer/info (_showInterestPage reads userInfoModel!)');
+    expect(_started, containsAll(<String>['customer/info', 'modules', 'notifications', 'coupons', 'featuredBanner', 'featuredStores', 'addressList']));
     expect(load.done(), isFalse, reason: 'loadData waits for customer/info');
-    expect(_started.where((String s) => s == 'customer/info'), hasLength(1), reason: 'one customer/info');
+    expect(count('customer/info'), 1, reason: 'one customer/info');
 
     _gates['customer/info']!.complete();
     await load.future;
-    expect(_started.last, 'modules');
-    expect(_started.where((String s) => s == 'customer/info'), hasLength(1));
+    expect(count('customer/info'), 1);
+    expect(count('modules'), 1, reason: 'getModules started once, not again after the profile');
   });
 
-  test('Pharmacy, logged in: pharmacy chain starts with customer/info; loadData waits for both', () async {
+  test('Pharmacy, logged in: modules + pharmacy chain start with customer/info; loadData waits for both', () async {
     splash.active = _pharmacy;
     final load = start();
     await pumpEventQueue();
 
-    expect(_started, containsAll(<String>['customer/info', 'notifications', 'coupons', 'basicMedicine', 'featuredStores', 'commonConditions']));
-    expect(_started, isNot(contains('modules')));
+    expect(_started, containsAll(<String>['customer/info', 'modules', 'notifications', 'coupons', 'basicMedicine', 'featuredStores', 'commonConditions']));
 
     _gates['customer/info']!.complete();
     await pumpEventQueue();
-    expect(_started, contains('modules'), reason: 'modules starts right after customer/info');
     expect(load.done(), isFalse, reason: 'loadData still waits for the pharmacy chain');
     expect(_started, isNot(contains('conditionItems(4)')));
 
@@ -341,24 +401,22 @@ void main() {
     _gates['commonConditions']!.complete();
     await pumpEventQueue();
     expect(_started, contains('conditionItems(4)'));
-    expect(_started, isNot(contains('modules')));
     expect(load.done(), isFalse, reason: 'loadData waits for customer/info');
 
     _gates['customer/info']!.complete();
     await load.future;
-    expect(_started.last, 'modules');
+    expect(load.done(), isTrue);
   });
 
-  test('Parcel, logged in: parcel categories start while customer/info is pending', () async {
+  test('Parcel, logged in: parcel categories and modules start while customer/info is pending', () async {
     splash.active = _parcelModule;
     splash.parcel = true;
     final load = start();
     await pumpEventQueue();
-    expect(_started, containsAll(<String>['customer/info', 'parcelCategories']));
-    expect(_started, isNot(contains('modules')));
+    expect(_started, containsAll(<String>['customer/info', 'modules', 'parcelCategories']));
+    expect(load.done(), isFalse);
     _gates['customer/info']!.complete();
     await load.future;
-    expect(_started.last, 'modules');
   });
 
   test('guest: no customer/info, no notifications/coupons/address; modules started in its original place', () async {
@@ -369,6 +427,7 @@ void main() {
     expect(_started, isNot(contains('coupons')));
     expect(_started, isNot(contains('addressList')));
     expect(_started, containsAllInOrder(<String>['modules', 'featuredBanner', 'featuredStores']));
+    expect(HomeScreen.profileLoad, isNull);
   });
 
   testWidgets('concurrent 401s on customer/info + notifications + coupons → exactly one session recovery', (WidgetTester tester) async {
@@ -396,5 +455,142 @@ void main() {
     expect(favourite.removes, 1);
     expect(find.text('initial'), findsOneWidget);
     expect(ApiChecker.sessionRecovery, isNull, reason: 'guard released');
+  });
+
+  group('early module tap (real SplashController.switchModule)', () {
+    late _SwitchSplash switchSplash;
+    final ModuleModel food = _allModules[0];
+
+    setUp(() {
+      Get.delete<SplashController>(force: true);
+      switchSplash = _SwitchSplash();
+      Get.put<SplashController>(switchSplash);
+      Get.put<CartController>(_Cart());
+      Get.put<HomeController>(_HomeCtl());
+    });
+
+    /// The interest decision ran (its category check) before the switch's own Home load.
+    bool interestEvaluated() {
+      final int interest = _started.indexOf('categories(reload=true)');
+      final int switchLoad = _started.lastIndexOf('zoneSync');
+      return interest != -1 && interest < switchLoad;
+    }
+
+    test('cached modules: the landing tiles are available while customer/info is pending', () async {
+      final load = start();
+      await pumpEventQueue();
+      expect(_started, contains('modules(cache)'));
+      expect(switchSplash.moduleList, isNotEmpty, reason: 'All Module landing renders without the profile');
+      expect(load.done(), isFalse);
+      _gates['customer/info']!.complete();
+      await load.future;
+    });
+
+    test('tap while the profile is pending: joins the in-flight customer/info, then the same interest decision runs', () async {
+      final load = start();
+      await pumpEventQueue();
+      profile.answer = UserInfoModel(selectedModuleForInterest: <int>[]); // Food not chosen yet → interest page
+
+      final Future<void> tap = switchSplash.switchModule(0, true);
+      await pumpEventQueue();
+      expect(switchSplash.module?.id, food.id);
+      expect(count('customer/info'), 1, reason: 'no second customer/info for the tap');
+      expect(count('zoneSync'), 1, reason: 'the switch waits for the profile before its Home load');
+      expect(_started, isNot(contains('categories(reload=true)')));
+
+      _gates['customer/info']!.complete();
+      await tap;
+      expect(interestEvaluated(), isTrue, reason: 'interest decision evaluated once the profile arrived');
+      expect(count('zoneSync'), 2, reason: 'the switch continued into its Home load');
+      await load.future;
+    });
+
+    test('tap while pending, module already chosen: no interest page, switch continues', () async {
+      final load = start();
+      await pumpEventQueue();
+      profile.answer = UserInfoModel(selectedModuleForInterest: <int>[food.id!]);
+
+      final Future<void> tap = switchSplash.switchModule(0, true);
+      await pumpEventQueue();
+      _gates['customer/info']!.complete();
+      await tap;
+      expect(interestEvaluated(), isFalse);
+      expect(count('zoneSync'), 2);
+      await load.future;
+    });
+
+    test('profile already loaded before the tap: decision runs at once, unchanged', () async {
+      final load = start();
+      await pumpEventQueue();
+      profile.answer = UserInfoModel(selectedModuleForInterest: <int>[]);
+      _gates['customer/info']!.complete();
+      await load.future;
+
+      await switchSplash.switchModule(0, true);
+      expect(interestEvaluated(), isTrue);
+      expect(count('zoneSync'), 2);
+    });
+
+    test('tap while pending and customer/info fails: no null exception, interest skipped, switch continues', () async {
+      final load = start();
+      await pumpEventQueue();
+      profile.answer = null; // failed lookup: userInfoModel stays null
+
+      final Future<void> tap = switchSplash.switchModule(0, true);
+      await pumpEventQueue();
+      _gates['customer/info']!.complete();
+      await tap; // used to throw on userInfoModel!
+      expect(interestEvaluated(), isFalse);
+      expect(count('zoneSync'), 2, reason: 'Home still loads for the new module');
+      await load.future;
+    });
+
+    test('early Package Delivery tap: no wait for customer/info — the switch loads parcel categories at once', () async {
+      final load = start();
+      await pumpEventQueue();
+      final Completer<void> launchProfile = _gates['customer/info']!;
+
+      final Future<void> tap = switchSplash.switchModule(2, true); // Package Delivery (parcel)
+      await tap;
+      expect(launchProfile.isCompleted, isFalse, reason: 'launch customer/info still pending');
+      expect(count('zoneSync'), 2, reason: 'the switch went straight into its Home load');
+      expect(_started, contains('parcelCategories'));
+      expect(interestEvaluated(), isFalse, reason: 'no interest page for parcel');
+
+      launchProfile.complete();
+      _gates['customer/info']!.complete(); // the switch's own Home load
+      await load.future;
+    });
+
+    test('early Pharmacy tap: no wait for customer/info — the pharmacy chain starts at once', () async {
+      final load = start();
+      await pumpEventQueue();
+      final Completer<void> launchProfile = _gates['customer/info']!;
+
+      final Future<void> tap = switchSplash.switchModule(3, true); // Pharmacy
+      await tap;
+      expect(launchProfile.isCompleted, isFalse, reason: 'launch customer/info still pending');
+      expect(count('zoneSync'), 2, reason: 'the switch went straight into its Home load');
+      expect(_started, containsAll(<String>['basicMedicine', 'commonConditions']));
+      expect(interestEvaluated(), isFalse, reason: 'no interest page for pharmacy');
+
+      launchProfile.complete();
+      _gates['customer/info']!.complete();
+      _gates['commonConditions']!.complete();
+      await load.future;
+    });
+
+    test('tap after a failed customer/info (nothing in flight): no exception, switch continues', () async {
+      final load = start();
+      await pumpEventQueue();
+      _gates['customer/info']!.complete();
+      await load.future;
+      expect(profile.userInfoModel, isNull);
+
+      await switchSplash.switchModule(0, true);
+      expect(interestEvaluated(), isFalse);
+      expect(count('zoneSync'), 2);
+      expect(count('customer/info'), 2, reason: 'only the switch\'s own Home load requests it, as before');
+    });
   });
 }

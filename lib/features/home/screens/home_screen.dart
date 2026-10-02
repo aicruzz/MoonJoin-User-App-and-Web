@@ -52,6 +52,11 @@ import 'package:moonjoin/features/home/helpers/desktop_home_sections.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  /// The customer/info request started by the latest logged-in loadData. A
+  /// module tapped before it answers joins it (SplashController._showInterestPage)
+  /// instead of sending a second request. It never completes with an error:
+  /// loadData itself still awaits and reports the original.
+  static Future<void>? profileLoad;
 
   static Future<void> loadData(bool reload, {bool fromModule = false}) async {
     // D3a: lists only the desktop layout (WebNewHomeScreen) renders are skipped
@@ -115,15 +120,14 @@ class HomeScreen extends StatefulWidget {
       Get.find<AdvertisementController>().getAdvertisementList();
     }
     // customer/info runs alongside the requests below, none of which read the
-    // profile. getModules() still starts only after it: the module tiles lead to
-    // switchModule → _showInterestPage, which reads userInfoModel!.
+    // profile — including getModules(), so the module tiles don't wait for it.
     final Future<void>? userInfo = AuthHelper.isLoggedIn() ? Get.find<ProfileController>().getUserInfo() : null;
+    profileLoad = userInfo?.then<void>((_) {}, onError: (Object _) {});
     if(userInfo != null) {
       Get.find<NotificationController>().getNotificationList(reload);
       Get.find<CouponController>().getCouponList();
-    } else {
-      Get.find<SplashController>().getModules();
     }
+    Get.find<SplashController>().getModules();
     if(Get.find<SplashController>().module == null && Get.find<SplashController>().configModel!.module == null) {
       Get.find<BannerController>().getFeaturedBanner();
       Get.find<StoreController>().getFeaturedStoreList();
@@ -142,9 +146,7 @@ class HomeScreen extends StatefulWidget {
     }
     // Completes only after customer/info and the pharmacy chain, as before.
     await Future.wait(<Future<void>>[
-      if(userInfo != null) userInfo.then((_) {
-        Get.find<SplashController>().getModules();
-      }),
+      ?userInfo,
       ?pharmacyConditions,
     ]);
   }
