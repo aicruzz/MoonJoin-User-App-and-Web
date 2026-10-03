@@ -101,18 +101,21 @@ class SplashController extends GetxController implements GetxService {
     update();
   }
 
-  Future<void> getConfigData({NotificationBodyModel? notificationBody, bool loadModuleData = false, bool loadLandingData = false, DataSourceEnum source = DataSourceEnum.local, bool fromMainFunction = false, bool fromDemoReset = false}) async {
+  /// [routeAfterLoad]: false refreshes the config without the splash user
+  /// routing (navigation to Home + token update) — for a refresh made by a flow
+  /// that navigates itself (address save). The update/maintenance redirect stays.
+  Future<void> getConfigData({NotificationBodyModel? notificationBody, bool loadModuleData = false, bool loadLandingData = false, DataSourceEnum source = DataSourceEnum.local, bool fromMainFunction = false, bool fromDemoReset = false, bool routeAfterLoad = true}) async {
     _hasConnection = true;
     _moduleIndex = 0;
     Response response;
     if(source == DataSourceEnum.local && !fromDemoReset) {
       response = await splashServiceInterface.getConfigData(source: DataSourceEnum.local);
-      await _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody);
-      getConfigData(loadModuleData: loadModuleData, loadLandingData: loadLandingData, source: DataSourceEnum.client);
+      await _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody, routeAfterLoad: routeAfterLoad);
+      getConfigData(loadModuleData: loadModuleData, loadLandingData: loadLandingData, source: DataSourceEnum.client, routeAfterLoad: routeAfterLoad);
 
     } else {
       response = await splashServiceInterface.getConfigData(source: DataSourceEnum.client);
-      bool loaded = await _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody);
+      bool loaded = await _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody, routeAfterLoad: routeAfterLoad);
 
       // Startup resilience: the backend returned a non-JSON response (HTML challenge /
       // rate-limit / edge error) while a connection exists — keep the loading state
@@ -123,14 +126,14 @@ class SplashController extends GetxController implements GetxService {
         getConfigData(
           loadModuleData: loadModuleData, loadLandingData: loadLandingData,
           source: DataSourceEnum.client, fromMainFunction: fromMainFunction,
-          fromDemoReset: fromDemoReset, notificationBody: notificationBody,
+          fromDemoReset: fromDemoReset, notificationBody: notificationBody, routeAfterLoad: routeAfterLoad,
         );
       }
     }
 
   }
 
-  Future<bool> _handleConfigResponse(Response response, bool loadModuleData, bool loadLandingData, bool fromMainFunction, bool fromDemoReset, NotificationBodyModel? notificationBody) async {
+  Future<bool> _handleConfigResponse(Response response, bool loadModuleData, bool loadLandingData, bool fromMainFunction, bool fromDemoReset, NotificationBodyModel? notificationBody, {bool routeAfterLoad = true}) async {
     // Only treat it as a valid config when the body is actually a JSON object.
     // Startup resilience: if the backend/edge returns a non-JSON response (e.g. an
     // HTML "please wait"/rate-limit/Cloudflare challenge, or a 415/HTML error page),
@@ -149,7 +152,9 @@ class SplashController extends GetxController implements GetxService {
       if(loadLandingData){
         await getLandingPageData();
       }
-      if(fromMainFunction) {
+      if(!routeAfterLoad) {
+        route(userRouting: false);
+      } else if(fromMainFunction) {
         _mainConfigRouting();
       } else if (fromDemoReset) {
         Get.offAllNamed(RouteHelper.getInitialRoute(fromSplash: true));

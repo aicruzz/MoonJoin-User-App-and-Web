@@ -11,14 +11,16 @@ import 'package:moonjoin/util/app_constants.dart';
 
 // class SplashRouteHelper{
 
-  void route({NotificationBodyModel? body}) {
+  /// [userRouting]: false keeps only the update/maintenance redirect (a config
+  /// refresh made by a flow that navigates itself).
+  void route({NotificationBodyModel? body, bool userRouting = true}) {
     double? minimumVersion = _getMinimumVersion();
     bool isMaintenanceMode = Get.find<SplashController>().configModel!.maintenanceMode!;
     bool needsUpdate = AppConstants.appVersion < minimumVersion!;
 
     if(needsUpdate || isMaintenanceMode) {
       Get.offNamed(RouteHelper.getUpdateRoute(needsUpdate));
-    }else if(!GetPlatform.isWeb){
+    }else if(!GetPlatform.isWeb && userRouting){
       if(body != null) {
         _forNotificationRouteProcess(body);
       }else {
