@@ -876,7 +876,12 @@ class ItemController extends GetxController implements GetxService {
   }
 
   void itemDirectlyAddToCart(Item? item, BuildContext context, {bool inStore = false, bool isCampaign = false}) {
-    getItemDetails(itemId: item!.id!).then((value) {
+    // The item's own module: an item from a search scoped to another module is
+    // only found under it (same mechanism as the item details screens).
+    getItemDetails(itemId: item!.id!, moduleId: item.moduleId).then((value) {
+      if (_item == null) {
+        return; // details not found / offline: nothing to add (itemLoadFailed is set)
+      }
       if (((_item!.foodVariations != null && _item!.foodVariations!.isEmpty) && _item?.moduleType == AppConstants.food) || (_item?.variations != null && _item!.variations!.isEmpty && _item?.moduleType != AppConstants.food)) {
         double price = _item!.price!;
         double discount = _item!.discount!;
@@ -918,13 +923,13 @@ class ItemController extends GetxController implements GetxService {
         }
       } else if(Get.find<SplashController>().configModel!.moduleConfig!.module!.showRestaurantText! || _item?.moduleType == AppConstants.food){
         ResponsiveHelper.isMobile(Get.context) ? Get.bottomSheet(
-          ItemBottomSheet(itemId: _item!.id!, inStorePage: inStore, isCampaign: isCampaign),
+          ItemBottomSheet(itemId: _item!.id!, inStorePage: inStore, isCampaign: isCampaign, item: isCampaign ? null : _item),
           backgroundColor: Colors.transparent, isScrollControlled: true,
         ) : Get.dialog(
-          Dialog(child: ItemBottomSheet(itemId: _item!.id!, inStorePage: inStore, isCampaign: isCampaign)),
+          Dialog(child: ItemBottomSheet(itemId: _item!.id!, inStorePage: inStore, isCampaign: isCampaign, item: isCampaign ? null : _item)),
         );
       } else {
-        Get.toNamed(RouteHelper.getItemDetailsRoute(_item!.id, inStore), arguments: ItemDetailsScreen(itemId: _item!.id!, inStorePage: inStore));
+        Get.toNamed(RouteHelper.getItemDetailsRoute(_item!.id, inStore), arguments: ItemDetailsScreen(itemId: _item!.id!, inStorePage: inStore, item: _item));
       }
     });
   }
