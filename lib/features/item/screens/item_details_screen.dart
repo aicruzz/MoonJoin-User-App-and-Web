@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:moonjoin/common/widgets/moonjoin/notifications/moonjoin_notifications.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:moonjoin/features/cart/controllers/cart_controller.dart';
 import 'package:moonjoin/features/favourite/controllers/favourite_controller.dart';
@@ -150,7 +151,11 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
           appBar: isDesktop ? const CustomAppBar(title: '') : null,
 
-          body: (item == null) ? const Center(child: CircularProgressIndicator())
+          body: (item == null) ? (itemController.itemLoadFailed ? SafeArea(child: MoonJoinNotifications.errorState(
+                onRetry: () => itemController.retryItemDetails(
+                  itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null, moduleId: widget.item?.moduleId,
+                ),
+              )) : const Center(child: CircularProgressIndicator()))
             : isDesktop ? SafeArea(child: DetailsWebViewWidget(
                 cartModel: cartModel, stock: stock, priceWithAddOns: priceWithAddons, cart: cart,
               ))

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:moonjoin/common/widgets/moonjoin/notifications/moonjoin_notifications.dart';
 import 'package:moonjoin/common/widgets/cart_snackbar.dart';
 import 'package:moonjoin/common/widgets/custom_button.dart';
 import 'package:moonjoin/common/widgets/custom_image.dart';
@@ -64,11 +65,16 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     // items are rendered from the passed list payload. Passing the list item for non-campaign
     // caused a null-check crash (initializeAddonActiveList) for items whose list payload has no addOns.
     itemController.getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null, moduleId: widget.item?.moduleId).then((_) {
-      if (itemController.item != null) {
-        _newVariation = splashController.getModuleConfig(itemController.item!.moduleType).newVariation ?? false;
-        if (mounted) setState(() {});
-      }
+      _onDetailsLoaded();
     });
+  }
+
+  void _onDetailsLoaded() {
+    final itemController = Get.find<ItemController>();
+    if (itemController.item != null) {
+      _newVariation = Get.find<SplashController>().getModuleConfig(itemController.item!.moduleType).newVariation ?? false;
+      if (mounted) setState(() {});
+    }
   }
 
   @override
@@ -80,6 +86,13 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         return GetBuilder<ItemController>(builder: (itemController) {
           final Item? item = itemController.item;
           if (item == null) {
+            if (itemController.itemLoadFailed) {
+              return SafeArea(child: MoonJoinNotifications.errorState(
+                onRetry: () => itemController.retryItemDetails(
+                  itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null, moduleId: widget.item?.moduleId,
+                ).then((_) => _onDetailsLoaded()),
+              ));
+            }
             return const Center(child: CircularProgressIndicator());
           }
           final ItemCartData data = ItemCartHelper.compute(item, itemController, _newVariation);

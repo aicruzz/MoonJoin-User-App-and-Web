@@ -88,6 +88,11 @@ class ItemController extends GetxController implements GetxService {
   
   Item? _item;
   Item? get item => _item;
+
+  bool _itemLoadFailed = false;
+  /// The latest item details request got no item (not found, offline, server
+  /// error): the details screens show the error state instead of loading forever.
+  bool get itemLoadFailed => _itemLoadFailed;
   
   int _productSelect = 0;
   int get productSelect => _productSelect;
@@ -660,11 +665,13 @@ class ItemController extends GetxController implements GetxService {
   /// [moduleId]: the module the item belongs to (see ItemRepository._getItemDetails).
   Future<void> getItemDetails({required int itemId, CartModel? cart, Item? item, int? moduleId}) async {
     _item = null;
+    _itemLoadFailed = false;
     if(item?.name != null) {
       _item = item;
     }else {
       _item = null;
       _item = await itemServiceInterface.getItemDetails(itemId, moduleId: moduleId);
+      _itemLoadFailed = _item == null;
     }
 
     if(_item != null) {
@@ -672,6 +679,13 @@ class ItemController extends GetxController implements GetxService {
       setExistInCart(_item, _selectedVariations);
     }
     if(item == null) update();
+  }
+
+  /// Retry from the details error state: back to loading while the request runs.
+  Future<void> retryItemDetails({required int itemId, CartModel? cart, Item? item, int? moduleId}) {
+    _itemLoadFailed = false;
+    update();
+    return getItemDetails(itemId: itemId, cart: cart, item: item, moduleId: moduleId);
   }
 
   void initData(Item? item, CartModel? cart) {
