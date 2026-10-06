@@ -50,6 +50,10 @@
 	<string>26adf7e7b9959837d253d528fabb2968</string>
 	<key>FacebookDisplayName</key>
 	<string>MoonJoin</string>
+	<key>FacebookAutoLogAppEventsEnabled</key>
+	<false/>
+	<key>FacebookAdvertiserIDCollectionEnabled</key>
+	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>fbapi</string>

@@ -110,8 +110,17 @@ class SplashController extends GetxController implements GetxService {
     Response response;
     if(source == DataSourceEnum.local && !fromDemoReset) {
       response = await splashServiceInterface.getConfigData(source: DataSourceEnum.local);
-      await _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody, routeAfterLoad: routeAfterLoad);
-      getConfigData(loadModuleData: loadModuleData, loadLandingData: loadLandingData, source: DataSourceEnum.client, routeAfterLoad: routeAfterLoad);
+      final bool cachedLoaded = await _handleConfigResponse(response, loadModuleData, loadLandingData, fromMainFunction, fromDemoReset, notificationBody, routeAfterLoad: routeAfterLoad);
+      // A startup notification (terminated-state tap) routes once: when the cached
+      // config already routed it, the network refresh must not run user routing
+      // (Get.offNamed Home would replace the notification screen); without a usable
+      // cache, the network pass carries the notification and routes it.
+      final bool notificationRouted = notificationBody != null && cachedLoaded;
+      getConfigData(
+        loadModuleData: loadModuleData, loadLandingData: loadLandingData, source: DataSourceEnum.client,
+        notificationBody: cachedLoaded ? null : notificationBody,
+        routeAfterLoad: notificationRouted ? false : routeAfterLoad,
+      );
 
     } else {
       response = await splashServiceInterface.getConfigData(source: DataSourceEnum.client);

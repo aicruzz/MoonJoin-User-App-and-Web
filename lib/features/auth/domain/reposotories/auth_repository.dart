@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -18,7 +19,21 @@ import 'package:moonjoin/util/app_constants.dart';
 class AuthRepository implements AuthRepositoryInterface{
   final ApiClient apiClient;
   final SharedPreferences sharedPreferences;
-  AuthRepository({ required this.sharedPreferences, required this.apiClient});
+  final FirebaseMessaging? _firebaseMessaging;
+  AuthRepository({ required this.sharedPreferences, required this.apiClient, FirebaseMessaging? firebaseMessaging})
+      : _firebaseMessaging = firebaseMessaging;
+
+  FirebaseMessaging get _messaging => _firebaseMessaging ?? FirebaseMessaging.instance;
+
+  /// One FCM token-refresh listener per app process (registered by the first
+  /// token registration, never per updateToken call).
+  static StreamSubscription<String>? _tokenRefreshSubscription;
+
+  @visibleForTesting
+  static Future<void> resetTokenRefreshListener() async {
+    await _tokenRefreshSubscription?.cancel();
+    _tokenRefreshSubscription = null;
+  }
 
   @override
   bool isSharedPrefNotificationActive() {
@@ -121,42 +136,65 @@ class AuthRepository implements AuthRepositoryInterface{
 
   @override
   Future<Response> updateToken({String notificationDeviceToken = ''}) async {
+    // An explicit value (e.g. the '@' sentinel sent when notifications are turned
+    // off) is posted as given.
+    if(notificationDeviceToken.isNotEmpty) {
+      return await _postFirebaseToken(notificationDeviceToken);
+    }
+
     String? deviceToken;
-    if(notificationDeviceToken.isEmpty){
-      if (GetPlatform.isIOS && !GetPlatform.isWeb) {
-        FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(alert: true, badge: true, sound: true);
-        NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
-          alert: true, announcement: false, badge: true, carPlay: false,
-          criticalAlert: false, provisional: false, sound: true,
-        );
-        if(settings.authorizationStatus == AuthorizationStatus.authorized) {
-          deviceToken = await saveDeviceToken();
-        }
-      }else {
+    if (GetPlatform.isIOS && !GetPlatform.isWeb) {
+      _messaging.setForegroundNotificationPresentationOptions(alert: true, badge: true, sound: true);
+      NotificationSettings settings = await _messaging.requestPermission(
+        alert: true, announcement: false, badge: true, carPlay: false,
+        criticalAlert: false, provisional: false, sound: true,
+      );
+      if(settings.authorizationStatus == AuthorizationStatus.authorized) {
         deviceToken = await saveDeviceToken();
       }
-      if(!GetPlatform.isWeb) {
-        FirebaseMessaging.instance.subscribeToTopic(AppConstants.topic);
-        FirebaseMessaging.instance.subscribeToTopic('zone_${AddressHelper.getUserAddressFromSharedPref()!.zoneId}_customer');
-      }
+    }else {
+      deviceToken = await saveDeviceToken();
     }
-    return await apiClient.postData(AppConstants.tokenUri, {"_method": "put", "cm_firebase_token": notificationDeviceToken.isNotEmpty ? notificationDeviceToken : deviceToken}, handleError: false);
+    if(!GetPlatform.isWeb) {
+      _messaging.subscribeToTopic(AppConstants.topic);
+      _messaging.subscribeToTopic('zone_${AddressHelper.getUserAddressFromSharedPref()!.zoneId}_customer');
+      _listenForTokenRefresh();
+    }
+
+    // No real token (fetch failed, returned nothing, or permission not granted):
+    // keep the token the server already has instead of overwriting it.
+    if(deviceToken == null || deviceToken.isEmpty) {
+      return const Response(statusText: 'fcm_token_unavailable');
+    }
+    return await _postFirebaseToken(deviceToken);
   }
 
+  Future<Response> _postFirebaseToken(String token) {
+    return apiClient.postData(AppConstants.tokenUri, {"_method": "put", "cm_firebase_token": token}, handleError: false);
+  }
+
+  /// Keeps the server in sync when FCM rotates the device token. Only a signed-in
+  /// customer with notifications on is updated, and only with a real token.
+  void _listenForTokenRefresh() {
+    if(_tokenRefreshSubscription != null) return;
+    _tokenRefreshSubscription = _messaging.onTokenRefresh.listen((String token) async {
+      if(token.isEmpty || token == '@' || !isLoggedIn() || !isSharedPrefNotificationActive()) return;
+      try {
+        await _postFirebaseToken(token);
+      } catch(_) {}
+    }, onError: (_) {});
+  }
+
+  /// The device's FCM registration token, or null when none is available.
   @override
   Future<String?> saveDeviceToken() async {
-    String? deviceToken = '@';
-    if(!GetPlatform.isWeb) {
-      try {
-        deviceToken = (await FirebaseMessaging.instance.getToken())!;
-      }catch(_) {}
+    if(GetPlatform.isWeb) return null;
+    try {
+      final String? token = await _messaging.getToken();
+      return (token == null || token.isEmpty) ? null : token;
+    } catch(_) {
+      return null;
     }
-    if (deviceToken != null) {
-      if (kDebugMode) {
-        print('--------Device Token---------- $deviceToken');
-      }
-    }
-    return deviceToken;
   }
 
   @override

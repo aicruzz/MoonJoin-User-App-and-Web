@@ -38,9 +38,10 @@ class MoonJoinNotificationBanner {
   static VoidCallback? _dismisser; // the active host's animated close
 
   static void show(MoonJoinNotificationData data) {
-    final BuildContext? ctx = Get.overlayContext ?? Get.context;
-    if (ctx == null) return;
-    final OverlayState overlay = Overlay.of(ctx);
+    // The root Navigator's overlay. Overlay.of(Get.overlayContext) cannot work:
+    // that context is the Overlay's own child, above every overlay entry.
+    final OverlayState? overlay = Get.key.currentState?.overlay;
+    if (overlay == null) return;
     _remove();
     late final OverlayEntry entry;
     entry = OverlayEntry(

@@ -521,11 +521,9 @@ packages:
   flutter_facebook_auth:
     dependency: "direct main"
     description:
-      path: facebook_auth
-      ref: "sdk-18.x"
-      resolved-ref: "13a779835fda4ca31e9fd5c67c3a56c1df3a96e8"
-      url: "https://github.com/darwin-morocho/flutter-facebook-auth.git"
-    source: git
+      path: "packages/flutter_facebook_auth"
+      relative: true
+    source: path
     version: "7.1.2"
   flutter_facebook_auth_platform_interface:
     dependency: transitive

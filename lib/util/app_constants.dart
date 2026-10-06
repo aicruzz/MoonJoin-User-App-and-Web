@@ -6,7 +6,7 @@ import 'package:moonjoin/util/images.dart';
 
 class AppConstants {
   static const String appName = 'MoonJoin';
-  static const double appVersion = 3.6; ///Flutter sdk 3.38.5
+  static const double appVersion = 3.7; ///Flutter sdk 3.38.5
 
   static const String fontFamily = 'Roboto';
   static const bool payInWevView = false;

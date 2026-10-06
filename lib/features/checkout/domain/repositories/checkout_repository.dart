@@ -18,7 +18,17 @@ class CheckoutRepository implements CheckoutRepositoryInterface {
     int mostDmTipAmount = 0;
     Response response = await apiClient.getData(AppConstants.mostTipsUri);
     if (response.statusCode == 200) {
-      mostDmTipAmount = response.body['most_tips_amount'];
+      // `most_tips_amount` is legitimately null: the backend returns 200 with null
+      // whenever no order carries a non-zero `dm_tips`, so there is no most-tapped
+      // tip to suggest. Assigning that straight into an int threw
+      // "Null is not a subtype of int" on every checkout open.
+      //
+      // The column is `double(24,2)`, so a real value arrives as a JSON number that
+      // may decode as double (100.0), which an int assignment would also reject.
+      // num.tryParse handles both and keeps the existing 0 default, which the chip
+      // row already treats exactly like null -- `isSuggested` skips index 0, the only
+      // '0' option, so neither value badges a chip.
+      mostDmTipAmount = num.tryParse(response.body['most_tips_amount'].toString())?.toInt() ?? 0;
     }
     return mostDmTipAmount;
   }
