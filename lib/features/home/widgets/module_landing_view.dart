@@ -135,7 +135,7 @@ class ModuleLandingView extends StatelessWidget {
           userName: '$name 👋',
           locationText: address,
           onLocationTap: () => Get.find<LocationController>().navigateToLocationScreen('home'),
-          notificationCount: notificationController.notificationList?.length ?? 0,
+          notificationCount: notificationController.unreadNotificationCount,
           cartCount: cartController.cartList.length,
           onNotificationTap: () => Get.toNamed(RouteHelper.getNotificationRoute()),
           onCartTap: () => Get.toNamed(RouteHelper.getCartRoute()),

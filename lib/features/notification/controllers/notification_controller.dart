@@ -47,6 +47,13 @@ class NotificationController extends GetxController implements GetxService {
     return notificationServiceInterface.getNotificationIdList();
   }
 
+  /// Notifications in the list the customer has not opened yet (seen IDs are the
+  /// ones recorded by addSeenNotificationId).
+  int get unreadNotificationCount {
+    final List<int> seen = getSeenNotificationIdList() ?? const <int>[];
+    return _notificationList?.where((NotificationModel n) => n.id != null && !seen.contains(n.id)).length ?? 0;
+  }
+
   void addSeenNotificationId(int id) {
     List<int> idList = [];
     idList.addAll(notificationServiceInterface.getNotificationIdList());
