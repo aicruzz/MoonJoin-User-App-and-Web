@@ -1,7 +1,7 @@
 name: moonjoin
 description: A Multi-vendor Food. Grocery, eCommerce, Pharmacy & Parcel service.
 publish_to: 'none' #
-version: 1.0.24+35
+version: 1.0.25+36
 
 environment:
   sdk: ^3.10.0
@@ -43,11 +43,10 @@ dependencies:
   expandable_bottom_sheet: ^1.1.1+1
   google_sign_in: ^7.2.0
   google_sign_in_web: ^1.1.0
+  # Vendored: upstream sdk-18.x @ 13a7798 (v7.1.2) plus the MoonJoin iOS login
+  # patch. See packages/flutter_facebook_auth/MOONJOIN_PATCH.md.
   flutter_facebook_auth:
-    git:
-      url: https://github.com/darwin-morocho/flutter-facebook-auth.git
-      ref: sdk-18.x
-      path: facebook_auth
+    path: packages/flutter_facebook_auth
   sign_in_with_apple: ^7.0.1
   flutter_animarker: ^3.2.0
   intl: ^0.20.2
@@ -87,6 +86,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  config:
+    enable-swift-package-manager: false
   uses-material-design: true
 
   assets:
