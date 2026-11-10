@@ -277,6 +277,10 @@ class MoonjoinFlashCountdownState extends State<MoonjoinFlashCountdown> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.endTime != widget.endTime) {
       setState(() => _remaining = _compute());
+      // The timer stops at zero; a later end time (the next campaign) restarts it.
+      if (_remaining > Duration.zero && !(_timer?.isActive ?? false)) {
+        _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+      }
     }
   }
 

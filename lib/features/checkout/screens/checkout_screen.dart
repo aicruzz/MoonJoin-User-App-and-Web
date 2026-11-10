@@ -83,10 +83,16 @@ class CheckoutScreenState extends State<CheckoutScreen> {
 
   bool _firstTimeCheckPayment = false;
   bool _calledOrderTax = false;
+  late final AppLifecycleListener _lifecycleListener;
 
   @override
   void initState() {
     super.initState();
+    _lifecycleListener = AppLifecycleListener(onResume: () {
+      if(AuthHelper.isLoggedIn()) {
+        Get.find<ProfileController>().refreshUserInfo();
+      }
+    });
 
     initCall();
   }
@@ -116,9 +122,9 @@ class CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     if(isLoggedIn) {
-      if(Get.find<ProfileController>().userInfoModel == null) {
-        Get.find<ProfileController>().getUserInfo();
-      }
+      // Always: a wallet credited since the profile was loaded (e.g. a bank
+      // transfer to the virtual account) must show its current balance here.
+      Get.find<ProfileController>().refreshUserInfo();
 
       Get.find<CouponController>().getCouponList();
 
@@ -162,6 +168,7 @@ class CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   void dispose() {
+    _lifecycleListener.dispose();
     super.dispose();
 
     guestContactPersonNameController.dispose();

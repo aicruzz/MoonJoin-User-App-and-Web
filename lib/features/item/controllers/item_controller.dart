@@ -67,6 +67,11 @@ class ItemController extends GetxController implements GetxService {
   
   List<int?> _addOnQtyList = [];
   List<int?> get addOnQtyList => _addOnQtyList;
+
+  /// Indexes of selected add-ons whose quantity follows the item quantity
+  /// ("Apply to item quantity"). The quantity itself stays in [addOnQtyList], so
+  /// pricing and the add_on_qtys payload are unchanged. Not stored in the cart.
+  final Set<int> _addOnsFollowingItemQuantity = {};
   
   final String _popularType = 'all';
   String get popularType => _popularType;
@@ -88,6 +93,12 @@ class ItemController extends GetxController implements GetxService {
   
   Item? _item;
   Item? get item => _item;
+
+  static const Duration itemAvailabilityStaleAfter = Duration(minutes: 5);
+  @visibleForTesting
+  DateTime Function() availabilityClock = DateTime.now;
+  DateTime? _itemFetchedAt;
+  bool _isRefreshingAvailability = false;
 
   bool _itemLoadFailed = false;
   /// The latest item details request got no item (not found, offline, server
@@ -665,6 +676,7 @@ class ItemController extends GetxController implements GetxService {
   /// [moduleId]: the module the item belongs to (see ItemRepository._getItemDetails).
   Future<void> getItemDetails({required int itemId, CartModel? cart, Item? item, int? moduleId}) async {
     _item = null;
+    _itemFetchedAt = null;
     _itemLoadFailed = false;
     if(item?.name != null) {
       _item = item;
@@ -672,6 +684,7 @@ class ItemController extends GetxController implements GetxService {
       _item = null;
       _item = await itemServiceInterface.getItemDetails(itemId, moduleId: moduleId);
       _itemLoadFailed = _item == null;
+      _itemFetchedAt = _item == null ? null : availabilityClock();
     }
 
     if(_item != null) {
@@ -688,7 +701,40 @@ class ItemController extends GetxController implements GetxService {
     return getItemDetails(itemId: itemId, cart: cart, item: item, moduleId: moduleId);
   }
 
+  /// App resumed on the details page: when the loaded item's availability is older
+  /// than [itemAvailabilityStaleAfter], fetch it again and update only the stock,
+  /// keeping the customer's quantity and selections. A failed request keeps the last
+  /// known stock (never treated as zero) and stays stale, so the next resume retries.
+  /// Items rendered from a passed payload (campaigns) have no details to refresh.
+  Future<void> refreshItemAvailability() async {
+    final Item? current = _item;
+    final DateTime? fetchedAt = _itemFetchedAt;
+    if(current == null || fetchedAt == null || _isRefreshingAvailability) return;
+    if(availabilityClock().difference(fetchedAt) < itemAvailabilityStaleAfter) return;
+
+    _isRefreshingAvailability = true;
+    try {
+      final Item? fresh = await itemServiceInterface.getItemDetails(current.id, moduleId: current.moduleId);
+      if(fresh == null || !identical(_item, current)) return;
+
+      current.stock = fresh.stock;
+      for(final Variation variation in current.variations ?? <Variation>[]) {
+        for(final Variation freshVariation in fresh.variations ?? <Variation>[]) {
+          if(freshVariation.type == variation.type) {
+            variation.stock = freshVariation.stock;
+            break;
+          }
+        }
+      }
+      _itemFetchedAt = availabilityClock();
+      update();
+    } finally {
+      _isRefreshingAvailability = false;
+    }
+  }
+
   void initData(Item? item, CartModel? cart) {
+    _addOnsFollowingItemQuantity.clear();
     _variationIndex = [];
     _addOnQtyList = [];
     _addOnActiveList = [];
@@ -738,8 +784,10 @@ class ItemController extends GetxController implements GetxService {
       _quantity = Get.find<CartController>().cartList[_cartIndex].quantity;
       _addOnActiveList = itemServiceInterface.initializeCartAddonActiveList(Get.find<CartController>().cartList[_cartIndex].addOnIds, item.addOns);
       _addOnQtyList = itemServiceInterface.initializeCartAddonsQtyList(Get.find<CartController>().cartList[_cartIndex].addOnIds, item.addOns);
+      _addOnsFollowingItemQuantity.clear(); // saved quantities are plain numbers
     } else {
       _quantity = 1;
+      _syncAddOnsFollowingItemQuantity();
     }
     if(notify) {
       update();
@@ -747,13 +795,41 @@ class ItemController extends GetxController implements GetxService {
     return _cartIndex;
   }
 
+  bool isAddOnFollowingItemQuantity(int index) => _addOnsFollowingItemQuantity.contains(index);
+
+  /// Tapping a selected add-on deselects it at quantity 1 or while it follows the
+  /// item quantity, when its own − + are disabled.
+  bool canDeselectAddOn(int index) => _addOnQtyList[index] == 1 || isAddOnFollowingItemQuantity(index);
+
+  /// Turning it on takes the item quantity; turning it off keeps the current
+  /// quantity as the starting manual quantity.
+  void setAddOnFollowsItemQuantity(int index, bool follows) {
+    if (follows) {
+      _addOnsFollowingItemQuantity.add(index);
+      _syncAddOnsFollowingItemQuantity();
+    } else {
+      _addOnsFollowingItemQuantity.remove(index);
+    }
+    update();
+  }
+
+  void _syncAddOnsFollowingItemQuantity() {
+    for (final int index in _addOnsFollowingItemQuantity) {
+      if (index < _addOnQtyList.length) {
+        _addOnQtyList[index] = _quantity ?? 1;
+      }
+    }
+  }
+
   void setAddOnQuantity(bool isIncrement, int index) {
+    if (isAddOnFollowingItemQuantity(index)) return;
     _addOnQtyList[index] = itemServiceInterface.setAddOnQuantity(isIncrement, _addOnQtyList[index]!);
     update();
   }
 
   Future<void> setQuantity(bool isIncrement, int? stock,  int? quantityLimit, {bool getxSnackBar = false}) async {
-    _quantity = await itemServiceInterface.setQuantity(isIncrement, Get.find<SplashController>().configModel!.moduleConfig!.module!.stock!, stock, _quantity!, quantityLimit, getxSnackBar: getxSnackBar);
+    _quantity = await itemServiceInterface.setQuantity(isIncrement, Get.find<SplashController>().isStockManaged(_item?.moduleType), stock, _quantity!, quantityLimit, getxSnackBar: getxSnackBar);
+    _syncAddOnsFollowingItemQuantity();
     update();
   }
 
@@ -803,6 +879,10 @@ class ItemController extends GetxController implements GetxService {
 
   void addAddOn(bool isAdd, int index) {
     _addOnActiveList[index] = isAdd;
+    if (!isAdd) {
+      _addOnsFollowingItemQuantity.remove(index);
+      _addOnQtyList[index] = 1;
+    }
     update();
   }
 
@@ -897,7 +977,7 @@ class ItemController extends GetxController implements GetxService {
           '', null, ModuleHelper.getModuleConfig(_item?.moduleType).newVariation! ? [] : null,
           1, [], [], [], 'Item',
         );
-        if(Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && _item!.stock! <= 0){
+        if(Get.find<SplashController>().isStockManaged(_item?.moduleType) && _item!.stock! <= 0){
           showCustomSnackBar('out_of_stock'.tr);
         }
         else if (Get.find<CartController>().existAnotherStoreItem(cartModel.item!.storeId, ModuleHelper.getModule() != null

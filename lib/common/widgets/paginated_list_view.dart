@@ -33,7 +33,7 @@ class _PaginatedListViewState extends State<PaginatedListView> {
     _offsetList = [1];
 
     widget.scrollController.addListener(() {
-      if (widget.scrollController.position.pixels == widget.scrollController.position.maxScrollExtent
+      if (_isNearEnd(widget.scrollController.position)
           && widget.totalSize != null && !_isLoading && widget.enabledPagination) {
         if(mounted && !ResponsiveHelper.isDesktop(context)) {
           _paginate();
@@ -41,6 +41,11 @@ class _PaginatedListViewState extends State<PaginatedListView> {
       }
     });
   }
+
+  /// Requests the next page while about one screen of loaded content is still
+  /// left, so it is usually ready before the customer reaches the end. Waiting
+  /// for the exact bottom made the list stop as if it had ended.
+  bool _isNearEnd(ScrollPosition position) => position.extentAfter <= position.viewportDimension;
 
   void _paginate() async {
     int pageSize = (widget.totalSize! / 10).ceil();

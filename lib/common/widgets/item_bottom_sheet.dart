@@ -320,10 +320,10 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                           ) : VariationView(
                             item: item, itemController: itemController,
                           ),
-                          SizedBox(height: (Get.find<SplashController>().configModel!.moduleConfig!.module!.addOn! && item.addOns!.isNotEmpty) ? Dimensions.paddingSizeLarge : 0),
+                          SizedBox(height: (Get.find<SplashController>().isAddOnEnabled(item.moduleType) && item.addOns!.isNotEmpty) ? Dimensions.paddingSizeLarge : 0),
 
                           // Addons
-                          (Get.find<SplashController>().configModel!.moduleConfig!.module!.addOn! && item.addOns!.isNotEmpty)
+                          (Get.find<SplashController>().isAddOnEnabled(item.moduleType) && item.addOns!.isNotEmpty)
                               ? AddonView(itemController: itemController, item: item): const SizedBox(),
 
 
@@ -413,10 +413,10 @@ class _ItemBottomSheetState extends State<ItemBottomSheet> {
                           return CustomButton(
                             width: ResponsiveHelper.isDesktop(context) ? MediaQuery.of(context).size.width / 2.0 : null,
                             isLoading: cartController.isLoading,
-                            buttonText: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0)
+                            buttonText: (Get.find<SplashController>().isStockManaged(item.moduleType) && stock! <= 0)
                                 ? 'out_of_stock'.tr : widget.isCampaign ? 'order_now'.tr
                                 : (widget.cart != null || itemController.cartIndex != -1) ? 'update_in_cart'.tr : 'add_to_cart'.tr,
-                            onPressed: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0) ? null : () async {
+                            onPressed: (Get.find<SplashController>().isStockManaged(item.moduleType) && stock! <= 0) ? null : () async {
                               // Shared cart logic (validation, campaign, reset flow, add/update).
                               await ItemCartHelper.addOrUpdateCart(
                                 context: context, item: item, itemController: itemController, data: data,
@@ -494,13 +494,13 @@ class AddonView extends StatelessWidget {
                 onTap: () {
                   if (!itemController.addOnActiveList[index]) {
                     itemController.addAddOn(true, index);
-                  } else if (itemController.addOnQtyList[index] == 1) {
+                  } else if (itemController.canDeselectAddOn(index)) {
                     itemController.addAddOn(false, index);
                   }
                 },
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtraSmall),
-                  child: Row(children: [
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [
 
                     Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
 
@@ -511,7 +511,7 @@ class AddonView extends StatelessWidget {
                         onChanged:(bool? newValue) {
                           if (!itemController.addOnActiveList[index]) {
                             itemController.addAddOn(true, index);
-                          } else if (itemController.addOnQtyList[index] == 1) {
+                          } else if (itemController.canDeselectAddOn(index)) {
                             itemController.addAddOn(false, index);
                           }
                         },
@@ -536,38 +536,14 @@ class AddonView extends StatelessWidget {
                           : robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
                     ),
 
-                    itemController.addOnActiveList[index] ? Container(
-                      height: 25, width: 90,
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusSmall), color: Theme.of(context).cardColor),
-                      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              if (itemController.addOnQtyList[index]! > 1) {
-                                itemController.setAddOnQuantity(false, index);
-                              } else {
-                                itemController.addAddOn(false, index);
-                              }
-                            },
-                            child: Center(child: Icon(
-                                (itemController.addOnQtyList[index]! > 1) ? Icons.remove : Icons.delete_outline_outlined, size: 18,
-                              color: (itemController.addOnQtyList[index]! > 1) ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.error,
-                            )),
-                          ),
-                        ),
-                        Text(
-                          itemController.addOnQtyList[index].toString(),
-                          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => itemController.setAddOnQuantity(true, index),
-                            child: Center(child: Icon(Icons.add, size: 18, color: Theme.of(context).primaryColor)),
-                          ),
-                        ),
-                      ]),
-                    ) : const SizedBox(),
+                    itemController.addOnActiveList[index] ? AddonQuantityControl(itemController: itemController, index: index, width: 90) : const SizedBox(),
 
+                  ]),
+
+                    if (itemController.addOnActiveList[index]) Padding(
+                      padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
+                      child: AddonApplyToItemToggle(itemController: itemController, index: index),
+                    ),
                   ]),
                 ),
               );
@@ -577,6 +553,82 @@ class AddonView extends StatelessWidget {
         const SizedBox(height: Dimensions.paddingSizeExtraSmall),
       ],
     ) ;
+  }
+}
+
+
+/// The per add-on "Apply to item quantity" option of a selected add-on. Shared by
+/// [AddonView] and the Food details Extras cards.
+class AddonApplyToItemToggle extends StatelessWidget {
+  final ItemController itemController;
+  final int index;
+  const AddonApplyToItemToggle({super.key, required this.itemController, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool follows = itemController.isAddOnFollowingItemQuantity(index);
+    return InkWell(
+      onTap: () => itemController.setAddOnFollowsItemQuantity(index, !follows),
+      child: Padding(
+        padding: const EdgeInsets.only(top: Dimensions.paddingSizeExtraSmall),
+        child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(follows ? Icons.check_box : Icons.check_box_outline_blank, size: 18,
+              color: follows ? Theme.of(context).primaryColor : Theme.of(context).disabledColor),
+          const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+          Flexible(child: Text('apply_to_item_quantity'.tr, maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall))),
+        ]),
+      ),
+    );
+  }
+}
+
+/// The − qty + control of a selected add-on (at quantity 1, a delete icon that
+/// deselects it). Disabled while the add-on follows the item quantity. Shared by
+/// [AddonView] and the Food details Extras cards.
+class AddonQuantityControl extends StatelessWidget {
+  final ItemController itemController;
+  final int index;
+  final double? width;
+  const AddonQuantityControl({super.key, required this.itemController, required this.index, this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool follows = itemController.isAddOnFollowingItemQuantity(index);
+    final Widget control = Container(
+      height: 25, width: width,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radiusSmall), color: Theme.of(context).cardColor),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Expanded(
+          child: InkWell(
+            onTap: follows ? null : () {
+              if (itemController.addOnQtyList[index]! > 1) {
+                itemController.setAddOnQuantity(false, index);
+              } else {
+                itemController.addAddOn(false, index);
+              }
+            },
+            child: Center(child: Icon(
+                (follows || itemController.addOnQtyList[index]! > 1) ? Icons.remove : Icons.delete_outline_outlined, size: 18,
+              color: follows ? Theme.of(context).disabledColor
+                  : (itemController.addOnQtyList[index]! > 1) ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.error,
+            )),
+          ),
+        ),
+        Text(
+          itemController.addOnQtyList[index].toString(),
+          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeDefault),
+        ),
+        Expanded(
+          child: InkWell(
+            onTap: follows ? null : () => itemController.setAddOnQuantity(true, index),
+            child: Center(child: Icon(Icons.add, size: 18, color: follows ? Theme.of(context).disabledColor : Theme.of(context).primaryColor)),
+          ),
+        ),
+      ]),
+    );
+    // While disabled, a tap on the control must not fall through to the add-on card.
+    return follows ? GestureDetector(behavior: HitTestBehavior.opaque, onTap: () {}, child: control) : control;
   }
 }
 

@@ -289,7 +289,9 @@ void main() {
 
       expect(_log.where((String e) => e.startsWith('push')), <String>['push ${RouteHelper.getInitialRoute(fromSplash: true)}'],
           reason: 'cached config routes; the network config route is a GetX duplicate');
-      expect(_count('updateToken'), 2, reason: 'cached + network config, as before');
+      // Was 2 (cached + network user routing). The network pass no longer re-routes a
+      // user the cached pass already routed (test/splash/cold_start_network_reroute_test.dart).
+      expect(_count('updateToken'), 1, reason: 'user routing runs once');
       expect(find.text('home'), findsOneWidget);
     });
 

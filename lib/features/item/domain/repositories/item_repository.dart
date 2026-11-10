@@ -59,7 +59,8 @@ class ItemRepository implements ItemRepositoryInterface {
       itemHeaders[AppConstants.moduleId] = '$moduleId';
     }
     Response response = await apiClient.getData('${AppConstants.itemDetailsUri}$itemID', headers: itemHeaders);
-    if (response.statusCode == 200) {
+    // A 200 with a non-JSON body (edge/HTML error page) is a failed request, not an item.
+    if (response.statusCode == 200 && response.body is Map) {
       item = Item.fromJson(response.body);
     }
     return item;

@@ -59,6 +59,10 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
     }
 
     configurePartialPayment();
+
+    if(AuthHelper.isLoggedIn()) {
+      Get.find<ProfileController>().refreshUserInfo();
+    }
   }
 
   void configurePartialPayment() {
@@ -161,7 +165,7 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
                   children: [
 
                     // Wallet section — virtual account details (9PSB) are embedded inside
-                    walletView(checkoutController),
+                    GetBuilder<ProfileController>(builder: (_) => walletView(checkoutController)),
 
                     widget.isCashOnDeliveryActive && notHideCod ? paymentButtonView(
                       padding: EdgeInsets.only(bottom: Dimensions.paddingSizeDefault),

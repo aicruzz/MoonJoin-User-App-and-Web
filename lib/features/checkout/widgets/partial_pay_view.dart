@@ -16,7 +16,7 @@ class PartialPayView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<CheckoutController>(
+    return GetBuilder<ProfileController>(builder: (_) => GetBuilder<CheckoutController>(
       builder: (checkoutController) {
         return Get.find<SplashController>().configModel!.partialPaymentStatus! && !isPrescription
         && Get.find<SplashController>().configModel!.customerWalletStatus == 1
@@ -172,6 +172,6 @@ class PartialPayView extends StatelessWidget {
           ]),
         ) : const SizedBox();
       }
-    );
+    ));
   }
 }

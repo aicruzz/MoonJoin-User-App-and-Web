@@ -148,6 +148,8 @@ void main() {
     expect(_navigation().where((String e) => e.contains(RouteHelper.getInitialRoute(fromSplash: true))), isNotEmpty);
     expect(find.text('home'), findsOneWidget);
     expect(find.text('order details'), findsNothing);
-    expect(_log.where((String e) => e == 'updateToken').length, 2, reason: 'cached + network config, as before');
+    // Was 2 (cached + network user routing). The network pass no longer re-routes a
+    // user the cached pass already routed (cold_start_network_reroute_test.dart).
+    expect(_log.where((String e) => e == 'updateToken').length, 1, reason: 'user routing runs once');
   });
 }

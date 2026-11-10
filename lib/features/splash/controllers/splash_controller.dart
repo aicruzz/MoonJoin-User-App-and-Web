@@ -104,6 +104,9 @@ class SplashController extends GetxController implements GetxService {
   /// [routeAfterLoad]: false refreshes the config without the splash user
   /// routing (navigation to Home + token update) — for a refresh made by a flow
   /// that navigates itself (address save). The update/maintenance redirect stays.
+  /// Whether the latest config response redirected to the update/maintenance screen.
+  bool _routedToUpdateScreen = false;
+
   Future<void> getConfigData({NotificationBodyModel? notificationBody, bool loadModuleData = false, bool loadLandingData = false, DataSourceEnum source = DataSourceEnum.local, bool fromMainFunction = false, bool fromDemoReset = false, bool routeAfterLoad = true}) async {
     _hasConnection = true;
     _moduleIndex = 0;
@@ -116,10 +119,16 @@ class SplashController extends GetxController implements GetxService {
       // (Get.offNamed Home would replace the notification screen); without a usable
       // cache, the network pass carries the notification and routes it.
       final bool notificationRouted = notificationBody != null && cachedLoaded;
+      // Likewise without a notification: once the cached config has routed the
+      // user, the network refresh must not route again. Its Get.offNamed(Home)
+      // replaced whatever page the customer had opened meanwhile (a rapid tap on a
+      // Food brand returned to Food home). After a cached update/maintenance
+      // redirect the network pass still routes, so a stale redirect is left.
+      final bool userRouted = cachedLoaded && !_routedToUpdateScreen;
       getConfigData(
         loadModuleData: loadModuleData, loadLandingData: loadLandingData, source: DataSourceEnum.client,
         notificationBody: cachedLoaded ? null : notificationBody,
-        routeAfterLoad: notificationRouted ? false : routeAfterLoad,
+        routeAfterLoad: (notificationRouted || userRouted) ? false : routeAfterLoad,
       );
 
     } else {
@@ -157,18 +166,23 @@ class SplashController extends GetxController implements GetxService {
         setModule(_configModel!.module);
       }else if(GetPlatform.isWeb || (loadModuleData && _module != null)) {
         setModule(GetPlatform.isWeb ? splashServiceInterface.getModule() : _module);
+      }else if(_module != null) {
+        // ConfigModel.fromJson defaults moduleConfig.module to module_type[0]: keep
+        // the active module's config (config only, the module itself did not change).
+        _configModel!.moduleConfig!.module = Module.fromJson(_data!['module_config'][_module!.moduleType]);
       }
       if(loadLandingData){
         await getLandingPageData();
       }
+      _routedToUpdateScreen = false;
       if(!routeAfterLoad) {
-        route(userRouting: false);
+        _routedToUpdateScreen = route(userRouting: false);
       } else if(fromMainFunction) {
         _mainConfigRouting();
       } else if (fromDemoReset) {
         Get.offAllNamed(RouteHelper.getInitialRoute(fromSplash: true));
       } else {
-        route(body: notificationBody);
+        _routedToUpdateScreen = route(body: notificationBody);
       }
       _onRemoveLoader();
       update();
@@ -294,6 +308,29 @@ class SplashController extends GetxController implements GetxService {
     Module module = Module.fromJson(_data!['module_config'][moduleType]);
     moduleType == 'food' ? module.newVariation = true : module.newVariation = false;
     return module;
+  }
+
+  /// Whether stock is tracked for items of [moduleType], which can differ from the
+  /// active module (e.g. a Food item found by a Food-scoped search). Food has no
+  /// stock tracking and stores stock 0, so this must follow the item's own module.
+  /// An unknown type falls back to the active module's config.
+  bool isStockManaged(String? moduleType) {
+    final dynamic moduleConfig = (_data?['module_config'] as Map?)?[moduleType];
+    if(moduleConfig is Map && moduleConfig['stock'] is bool) {
+      return moduleConfig['stock'];
+    }
+    return configModel?.moduleConfig?.module?.stock ?? false;
+  }
+
+  /// Whether Extras (add-ons) are enabled for items of [moduleType], which can
+  /// differ from the active module. An unknown type falls back to the active
+  /// module's config.
+  bool isAddOnEnabled(String? moduleType) {
+    final dynamic moduleConfig = (_data?['module_config'] as Map?)?[moduleType];
+    if(moduleConfig is Map && moduleConfig['add_on'] is bool) {
+      return moduleConfig['add_on'];
+    }
+    return configModel?.moduleConfig?.module?.addOn ?? false;
   }
 
   Future<void> getModules({Map<String, String>? headers, DataSourceEnum dataSource = DataSourceEnum.local}) async {

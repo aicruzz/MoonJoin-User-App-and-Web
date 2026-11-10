@@ -28,6 +28,37 @@ class ProfileController extends GetxController implements GetxService {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  Future<void>? _userInfoRefresh;
+  bool _userInfoRefreshOutdated = false;
+
+  /// Authoritative refresh of the customer profile, including the wallet balance,
+  /// for flows that must show the current balance (checkout, the payment sheet,
+  /// app resume, a wallet-funded push). Concurrent calls share one request. A failed
+  /// request keeps the last known profile; the balance is never computed locally.
+  ///
+  /// [afterServerChange]: the server has just reported a change (the add_fund push).
+  /// A request already running may have been sent before that change, so its answer
+  /// is followed by exactly one more request, however many such calls arrive.
+  Future<void> refreshUserInfo({bool afterServerChange = false}) {
+    if (afterServerChange && _userInfoRefresh != null) {
+      _userInfoRefreshOutdated = true;
+    }
+    return _userInfoRefresh ??= _runUserInfoRefresh();
+  }
+
+  Future<void> _runUserInfoRefresh() async {
+    try {
+      do {
+        _userInfoRefreshOutdated = false;
+        try {
+          await getUserInfo();
+        } catch (_) {}
+      } while (_userInfoRefreshOutdated);
+    } finally {
+      _userInfoRefresh = null;
+    }
+  }
+
   Future<void> getUserInfo() async {
     _pickedFile = null;
     UserInfoModel? userInfoModel = await profileServiceInterface.getUserInfo();

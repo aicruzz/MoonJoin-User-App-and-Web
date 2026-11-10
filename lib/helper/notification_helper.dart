@@ -9,6 +9,7 @@ import 'package:moonjoin/features/chat/enums/user_type_enum.dart';
 import 'package:moonjoin/features/notification/controllers/notification_controller.dart';
 import 'package:moonjoin/features/notification/domain/models/notification_body_model.dart';
 import 'package:moonjoin/features/order/controllers/order_controller.dart';
+import 'package:moonjoin/features/profile/controllers/profile_controller.dart';
 import 'package:moonjoin/features/rental_module/rental_order/controllers/taxi_order_controller.dart';
 import 'package:moonjoin/features/rental_module/rental_order/screens/taxi_order_details_screen.dart';
 import 'package:moonjoin/helper/auth_helper.dart';
@@ -105,6 +106,7 @@ class NotificationHelper {
       }
       else {
         NotificationHelper.showNotification(message, flutterLocalNotificationsPlugin);
+        syncWalletOnFundNotification(message.data);
         if(AuthHelper.isLoggedIn()) {
           if(message.data['type'] != 'trip_status') {
             // Keep the dashboard's limit-50 model consistent (never a limit-10 overwrite).
@@ -253,6 +255,14 @@ class NotificationHelper {
     final File file = File(filePath);
     await file.writeAsBytes(response.bodyBytes);
     return filePath;
+  }
+
+  /// The backend's add_fund push follows a confirmed wallet credit: refresh the
+  /// authoritative balance so open screens (checkout, payment sheet) show it.
+  static void syncWalletOnFundNotification(Map<String, dynamic> data) {
+    if(data['type'] == 'add_fund' && AuthHelper.isLoggedIn()) {
+      Get.find<ProfileController>().refreshUserInfo(afterServerChange: true);
+    }
   }
 
   static NotificationBodyModel convertNotification(Map<String, dynamic> data) {

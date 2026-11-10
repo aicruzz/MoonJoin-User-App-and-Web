@@ -67,18 +67,33 @@ class FlashSaleController extends GetxController implements GetxService {
     }
   }
 
+  /// Counts down to the campaign's absolute [endTime]: every tick recomputes
+  /// `endTime - now` instead of subtracting a second, so the remaining time stays
+  /// right after timers were paused (app in the background, a throttled browser
+  /// tab), and the countdown stops at zero.
+  void _startCountdown(DateTime endTime) {
+    _timer?.cancel();
+    _duration = _remainingUntil(endTime);
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _duration = _remainingUntil(endTime);
+      if (_duration == Duration.zero) {
+        timer.cancel();
+      }
+      update();
+    });
+  }
+
+  static Duration _remainingUntil(DateTime endTime) {
+    final Duration remaining = endTime.difference(DateTime.now());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
   void _prepareFlashModel(FlashSaleModel? flashSaleModel) {
     if (flashSaleModel != null) {
       _flashSaleModel = flashSaleModel;
       if(_flashSaleModel?.endDate != null) {
         DateTime endTime = DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(_flashSaleModel!.endDate!, true).toLocal();
-        _duration = endTime.difference(DateTime.now());
-        _timer?.cancel();
-        _timer = null;
-        _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          _duration = _duration! - const Duration(seconds: 1);
-          update();
-        });
+        _startCountdown(endTime);
       }
     }
     update();
@@ -103,13 +118,7 @@ class FlashSaleController extends GetxController implements GetxService {
 
       if(_productFlashSale!.flashSale!.endDate != null) {
         DateTime endTime = DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').parse(_productFlashSale!.flashSale!.endDate!, true).toLocal();
-        _duration = endTime.difference(DateTime.now());
-        _timer?.cancel();
-        _timer = null;
-        _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          _duration = _duration! - const Duration(seconds: 1);
-          update();
-        });
+        _startCountdown(endTime);
       }
       update();
     }

@@ -173,7 +173,7 @@ class CartController extends GetxController implements GetxService {
   Future<void> setQuantity(bool isIncrement, int cartIndex, int? stock, int ? quantityLimit) async {
     // Update the quantity locally and refresh the UI immediately so +/- feels
     // instant. The backend sync is debounced below.
-    _cartList[cartIndex].quantity = await cartServiceInterface.decideItemQuantity(isIncrement, _cartList, cartIndex, stock, quantityLimit, Get.find<SplashController>().configModel!.moduleConfig!.module!.stock!);
+    _cartList[cartIndex].quantity = await cartServiceInterface.decideItemQuantity(isIncrement, _cartList, cartIndex, stock, quantityLimit, Get.find<SplashController>().isStockManaged(_cartList[cartIndex].item?.moduleType));
 
     int cartId = _cartList[cartIndex].id!;
     _pendingQuantities[cartId] = _cartList[cartIndex].quantity!;

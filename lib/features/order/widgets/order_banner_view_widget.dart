@@ -17,6 +17,10 @@ class OrderBannerViewWidget extends StatelessWidget {
   final OrderController orderController;
   const OrderBannerViewWidget({super.key, required this.order, required this.ongoing, required this.parcel, required this.prescriptionOrder, required this.orderController, });
 
+  static int _remainingMinutes(OrderModel order) => DateConverter.differenceInMinute(
+    order.store!.deliveryTime, order.createdAt, order.processingTime, order.scheduleAt, processingStartedAt: order.processing,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Column(children: [
@@ -35,9 +39,7 @@ class OrderBannerViewWidget extends StatelessWidget {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
 
             Text(
-              DateConverter.differenceInMinute(order.store!.deliveryTime, order.createdAt, order.processingTime, order.scheduleAt) < 5 ? '1 - 5'
-                  : '${DateConverter.differenceInMinute(order.store!.deliveryTime, order.createdAt, order.processingTime, order.scheduleAt)-5} '
-                  '- ${DateConverter.differenceInMinute(order.store!.deliveryTime, order.createdAt, order.processingTime, order.scheduleAt)}',
+              _remainingMinutes(order) < 5 ? '1 - 5' : '${_remainingMinutes(order)-5} - ${_remainingMinutes(order)}',
               style: robotoBold.copyWith(fontSize: Dimensions.fontSizeExtraLarge), textDirection: TextDirection.ltr,
             ),
             const SizedBox(width: Dimensions.paddingSizeExtraSmall),

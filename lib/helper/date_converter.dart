@@ -163,7 +163,11 @@ class DateConverter {
     return scheduleTime.isBefore(DateTime.now());
   }
 
-  static int differenceInMinute(String? deliveryTime, String? orderTime, int? processingTime, String? scheduleAt) {
+  /// [processingStartedAt] is the order's `processing` timestamp. The backend stamps it
+  /// when the store/Admin moves the order to processing, the same moment it saves the
+  /// entered [processingTime], so that time counts from then rather than from when the
+  /// order was placed.
+  static int differenceInMinute(String? deliveryTime, String? orderTime, int? processingTime, String? scheduleAt, {String? processingStartedAt}) {
     // 'min', 'hours', 'days'
     int minTime = processingTime ?? 0;
     if(deliveryTime != null && deliveryTime.isNotEmpty && processingTime == null) {
@@ -172,7 +176,13 @@ class DateConverter {
         minTime = int.parse(timeList[0]);
       }catch(_) {}
     }
-    DateTime deliveryTime0 = dateTimeStringToDate(scheduleAt ?? orderTime!).add(Duration(minutes: minTime));
+    DateTime start = dateTimeStringToDate(scheduleAt ?? orderTime!);
+    if(processingTime != null && processingStartedAt != null && processingStartedAt.isNotEmpty) {
+      try {
+        start = dateTimeStringToDate(processingStartedAt);
+      }catch(_) {}
+    }
+    DateTime deliveryTime0 = start.add(Duration(minutes: minTime));
     return deliveryTime0.difference(DateTime.now()).inMinutes;
   }
 

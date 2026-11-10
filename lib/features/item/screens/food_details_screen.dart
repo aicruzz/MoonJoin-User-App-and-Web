@@ -5,7 +5,7 @@ import 'package:moonjoin/common/widgets/cart_snackbar.dart';
 import 'package:moonjoin/common/widgets/custom_button.dart';
 import 'package:moonjoin/common/widgets/custom_image.dart';
 import 'package:moonjoin/common/widgets/custom_snackbar.dart';
-import 'package:moonjoin/common/widgets/item_bottom_sheet.dart' show VariationView;
+import 'package:moonjoin/common/widgets/item_bottom_sheet.dart' show AddonApplyToItemToggle, AddonQuantityControl, VariationView;
 import 'package:moonjoin/common/widgets/moonjoin/wavy_header.dart';
 import 'package:moonjoin/common/widgets/quantity_button.dart';
 import 'package:moonjoin/common/widgets/rating_bar.dart';
@@ -52,10 +52,12 @@ class FoodDetailsScreen extends StatefulWidget {
 
 class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   bool _newVariation = false;
+  late final AppLifecycleListener _lifecycleListener;
 
   @override
   void initState() {
     super.initState();
+    _lifecycleListener = AppLifecycleListener(onResume: () => Get.find<ItemController>().refreshItemAvailability());
     final itemController = Get.find<ItemController>();
     final splashController = Get.find<SplashController>();
     if (splashController.module == null && splashController.cacheModule != null) {
@@ -67,6 +69,12 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     itemController.getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null, moduleId: widget.item?.moduleId).then((_) {
       _onDetailsLoaded();
     });
+  }
+
+  @override
+  void dispose() {
+    _lifecycleListener.dispose();
+    super.dispose();
   }
 
   void _onDetailsLoaded() {
@@ -96,7 +104,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final ItemCartData data = ItemCartHelper.compute(item, itemController, _newVariation);
-          final bool stockOut = Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && (data.stock ?? 0) <= 0;
+          final bool stockOut = Get.find<SplashController>().isStockManaged(item.moduleType) && (data.stock ?? 0) <= 0;
 
           return Stack(children: [
             Column(children: [
@@ -127,7 +135,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                       ),
 
                     // Extras (add-ons)
-                    if (Get.find<SplashController>().configModel!.moduleConfig!.module!.addOn! && item.addOns!.isNotEmpty)
+                    if (Get.find<SplashController>().isAddOnEnabled(item.moduleType) && item.addOns!.isNotEmpty)
                       _ExtrasSection(item: item, itemController: itemController),
 
                     const SizedBox(height: Dimensions.paddingSizeLarge),
@@ -501,7 +509,7 @@ class _ExtrasSection extends StatelessWidget {
                   onTap: () {
                     if (!active) {
                       itemController.addAddOn(true, index);
-                    } else if (itemController.addOnQtyList[index] == 1) {
+                    } else if (itemController.canDeselectAddOn(index)) {
                       itemController.addAddOn(false, index);
                     }
                   },
@@ -528,6 +536,11 @@ class _ExtrasSection extends StatelessWidget {
                             style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall,
                                 color: active ? Theme.of(context).primaryColor : Theme.of(context).disabledColor),
                           ),
+                        ),
+                        if (active) AddonApplyToItemToggle(itemController: itemController, index: index),
+                        if (active) Padding(
+                          padding: const EdgeInsets.only(top: Dimensions.paddingSizeExtraSmall),
+                          child: AddonQuantityControl(itemController: itemController, index: index),
                         ),
                       ])),
                     ]),

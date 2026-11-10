@@ -121,7 +121,7 @@ class DetailsWebViewWidget extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ItemTitleViewWidget(item: itemController.item, inStock: Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0),
+                        ItemTitleViewWidget(item: itemController.item, inStock: Get.find<SplashController>().isStockManaged(itemController.item?.moduleType) && stock! <= 0),
 
                         (itemController.item!.description != null && itemController.item!.description!.isNotEmpty) ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,9 +297,9 @@ class DetailsWebViewWidget extends StatelessWidget {
                               return CustomButton(
                                 width: 300,
                                 isLoading: cartController.isLoading,
-                                buttonText: (Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && stock! <= 0) ? 'out_of_stock'.tr
+                                buttonText: (Get.find<SplashController>().isStockManaged(itemController.item?.moduleType) && stock! <= 0) ? 'out_of_stock'.tr
                                     : itemController.item!.availableDateStarts != null ? 'order_now'.tr : itemController.cartIndex != -1 ? 'update_in_cart'.tr : 'add_to_cart'.tr,
-                                onPressed: (!Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! || stock! > 0) ?  () async {
+                                onPressed: (!Get.find<SplashController>().isStockManaged(itemController.item?.moduleType) || stock! > 0) ?  () async {
                                   if(itemController.item!.availableDateStarts != null) {
                                     Get.toNamed(RouteHelper.getCheckoutRoute('campaign'), arguments: CheckoutScreen(
                                       storeId: null, fromCart: false, cartList: [cartModel],

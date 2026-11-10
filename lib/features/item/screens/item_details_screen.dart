@@ -49,9 +49,11 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   final Size size = Get.size;
   final GlobalKey<ScaffoldMessengerState> _globalKey = GlobalKey();
   final PageController _imageController = PageController();
+  late final AppLifecycleListener _lifecycleListener;
 
   @override
   void dispose() {
+    _lifecycleListener.dispose();
     _imageController.dispose();
     super.dispose();
   }
@@ -59,6 +61,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _lifecycleListener = AppLifecycleListener(onResume: () => Get.find<ItemController>().refreshItemAvailability());
 
     Get.find<ItemController>().getItemDetails(itemId: widget.itemId, cart: widget.cart, item: widget.isCampaign ? widget.item : null, moduleId: widget.item?.moduleId);
     Get.find<ItemController>().setSelect(0, false);
@@ -139,7 +142,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         }
 
         final bool isDesktop = ResponsiveHelper.isDesktop(context);
-        final bool stockOut = Get.find<SplashController>().configModel!.moduleConfig!.module!.stock! && (stock ?? 0) <= 0;
+        final bool stockOut = Get.find<SplashController>().isStockManaged(item?.moduleType) && (stock ?? 0) <= 0;
         final Color bodyBg = Theme.of(context).brightness == Brightness.light ? const Color(0xFFF6F8F0) : Theme.of(context).scaffoldBackgroundColor;
         final double totalValue = itemController.cartIndex != -1
             ? _getItemDetailsDiscountPrice(cart: Get.find<CartController>().cartList[itemController.cartIndex])
@@ -594,7 +597,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   /// Add-to-Cart button so the footer and any caller share one implementation.
   Future<void> _addToCart(BuildContext context, Item item, ItemController itemController, CartController cartController, CartModel? cartModel, OnlineCart? cart, int? stock) async {
     final splash = Get.find<SplashController>();
-    if (!(splash.configModel!.moduleConfig!.module!.stock!) || (stock ?? 0) > 0) {
+    if (!splash.isStockManaged(item.moduleType) || (stock ?? 0) > 0) {
       if (item.availableDateStarts != null) {
         Get.toNamed(RouteHelper.getCheckoutRoute('campaign'), arguments: CheckoutScreen(storeId: null, fromCart: false, cartList: [cartModel]));
       } else {
@@ -699,7 +702,7 @@ class QuantityButton extends StatelessWidget {
           if (!isIncrement && quantity! > 1) {
             Get.find<CartController>().setQuantity(false, cartIndex, stock, quantityLimit);
           } else if (isIncrement && quantity! > 0) {
-            if(quantity! < stock! || !Get.find<SplashController>().configModel!.moduleConfig!.module!.stock!) {
+            if(quantity! < stock! || !Get.find<SplashController>().isStockManaged(Get.find<ItemController>().item?.moduleType)) {
               Get.find<CartController>().setQuantity(true, cartIndex, stock, quantityLimit);
             }else {
               showCustomSnackBar('out_of_stock'.tr);
@@ -709,7 +712,7 @@ class QuantityButton extends StatelessWidget {
           if (!isIncrement && quantity! > 1) {
             Get.find<ItemController>().setQuantity(false, stock, quantityLimit);
           } else if (isIncrement && quantity! > 0) {
-            if(quantity! < stock! || !Get.find<SplashController>().configModel!.moduleConfig!.module!.stock!) {
+            if(quantity! < stock! || !Get.find<SplashController>().isStockManaged(Get.find<ItemController>().item?.moduleType)) {
               Get.find<ItemController>().setQuantity(true, stock, quantityLimit);
             }else {
               showCustomSnackBar('out_of_stock'.tr);

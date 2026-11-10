@@ -13,13 +13,15 @@ import 'package:moonjoin/util/app_constants.dart';
 
   /// [userRouting]: false keeps only the update/maintenance redirect (a config
   /// refresh made by a flow that navigates itself).
-  void route({NotificationBodyModel? body, bool userRouting = true}) {
+  /// Returns true when it redirected to the update/maintenance screen.
+  bool route({NotificationBodyModel? body, bool userRouting = true}) {
     double? minimumVersion = _getMinimumVersion();
     bool isMaintenanceMode = Get.find<SplashController>().configModel!.maintenanceMode!;
     bool needsUpdate = AppConstants.appVersion < minimumVersion!;
 
     if(needsUpdate || isMaintenanceMode) {
       Get.offNamed(RouteHelper.getUpdateRoute(needsUpdate));
+      return true;
     }else if(!GetPlatform.isWeb && userRouting){
       if(body != null) {
         _forNotificationRouteProcess(body);
@@ -27,6 +29,7 @@ import 'package:moonjoin/util/app_constants.dart';
         _handleUserRouting();
       }
     }
+    return false;
   }
 
   double? _getMinimumVersion() {
