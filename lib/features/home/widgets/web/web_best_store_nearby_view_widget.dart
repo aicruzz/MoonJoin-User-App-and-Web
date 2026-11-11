@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -200,7 +201,7 @@ class _WebBestStoreNearbyViewWidgetState extends State<WebBestStoreNearbyViewWid
                                                       borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                                                       child: CustomImage(
                                                         isHovered: hovered,
-                                                        image: '${storeList[index].logoFullUrl}',
+                                                        image: pickWebImageUrl(original: storeList[index].logoFullUrl, variants: storeList[index].logoVariants, logicalWidth: 70, logicalHeight: 70, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${storeList[index].logoFullUrl}',
                                                         fit: BoxFit.cover, height: double.infinity, width: double.infinity,
                                                       ),
                                                     ),

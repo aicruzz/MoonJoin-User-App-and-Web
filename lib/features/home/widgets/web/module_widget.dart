@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
@@ -56,7 +57,7 @@ class ModuleWidget extends StatelessWidget {
                         child: SizedBox(
                           height: 25,
                           child: CustomImage(
-                            image: '${splashController.moduleList![index].iconFullUrl}',
+                            image: pickWebImageUrl(original: splashController.moduleList![index].iconFullUrl, variants: splashController.moduleList![index].iconVariants, logicalWidth: 30, logicalHeight: 30, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${splashController.moduleList![index].iconFullUrl}',
                             height: 30, width: 30, fit: BoxFit.contain,
                           ),
                         ),

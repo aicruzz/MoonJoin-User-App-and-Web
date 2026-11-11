@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -195,7 +196,7 @@ class _WebTopOffersNearMeState extends State<WebTopOffersNearMe> {
                               borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
                               child: CustomImage(
                                 isHovered: hovered,
-                                image: '${store.logoFullUrl}',
+                                image: pickWebImageUrl(original: store.logoFullUrl, variants: store.logoVariants, logicalWidth: 90, logicalHeight: 90, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store.logoFullUrl}',
                                 height: 90, width: 90, fit: BoxFit.cover,
                               ),
                             ),

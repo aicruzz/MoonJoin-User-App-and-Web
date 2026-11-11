@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 
 class ModuleModel {
   int? id;
@@ -5,6 +6,10 @@ class ModuleModel {
   String? moduleType;
   String? thumbnailFullUrl;
   String? iconFullUrl;
+  /// Slice 3: additive `thumbnail_variants` / `icon_variants` (read-only, never
+  /// serialised, so a module restored from saved settings simply has none).
+  Map<String, String>? thumbnailVariants;
+  Map<String, String>? iconVariants;
   int? themeId;
   String? description;
   int? storesCount;
@@ -54,6 +59,8 @@ class ModuleModel {
     moduleType = json['module_type'];
     thumbnailFullUrl = json['thumbnail_full_url'];
     iconFullUrl = json['icon_full_url'];
+    thumbnailVariants = parseImageVariants(json['thumbnail_variants']);
+    iconVariants = parseImageVariants(json['icon_variants']);
     themeId = json['theme_id'];
     description = json['description'];
     storesCount = json['stores_count'];

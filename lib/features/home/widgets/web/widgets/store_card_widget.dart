@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
@@ -66,11 +67,11 @@ class StoreCardWidget extends StatelessWidget {
                     Stack(clipBehavior: Clip.none, children: [
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(Dimensions.radiusDefault)),
-                        child: CustomImage(
+                        child: LayoutBuilder(builder: (context, constraints) => CustomImage(
                           isHovered: hovered,
-                          image: '${store!.coverPhotoFullUrl}',
+                          image: pickWebImageUrl(original: store!.coverPhotoFullUrl, variants: store!.coverPhotoVariants, logicalWidth: constraints.maxWidth, logicalHeight: 120, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store!.coverPhotoFullUrl}',
                           height: 120, width: double.infinity, fit: BoxFit.cover,
-                        ),
+                        )),
                       ),
                       DiscountTag(
                         discount: discount, discountType: discountType,

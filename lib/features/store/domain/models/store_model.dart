@@ -1,3 +1,5 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
+
 class StoreModel {
   int? totalSize;
   String? limit;
@@ -36,6 +38,8 @@ class Store {
   String? phone;
   String? email;
   String? logoFullUrl;
+  /// Slice 3: additive `logo_variants` (read-only, never serialised). Null keeps [logoFullUrl] as the only URL.
+  Map<String, String>? logoVariants;
   String? latitude;
   String? longitude;
   String? address;
@@ -43,6 +47,8 @@ class Store {
   String? currency;
   bool? freeDelivery;
   String? coverPhotoFullUrl;
+  /// Slice 3: additive `cover_photo_variants` (read-only, never serialised). Null keeps [coverPhotoFullUrl] as the only URL.
+  Map<String, String>? coverPhotoVariants;
   bool? delivery;
   bool? takeAway;
   bool? scheduleOrder;
@@ -143,6 +149,7 @@ class Store {
     phone = json['phone'];
     email = json['email'];
     logoFullUrl = json['logo_full_url'] ?? '';
+    logoVariants = parseImageVariants(json['logo_variants']);
     latitude = json['latitude'];
     longitude = json['longitude'];
     address = json['address'];
@@ -150,6 +157,7 @@ class Store {
     currency = json['currency'];
     freeDelivery = json['free_delivery'];
     coverPhotoFullUrl = json['cover_photo_full_url'] ?? '';
+    coverPhotoVariants = parseImageVariants(json['cover_photo_variants']);
     delivery = json['delivery'];
     takeAway = json['take_away'];
     scheduleOrder = json['schedule_order'];

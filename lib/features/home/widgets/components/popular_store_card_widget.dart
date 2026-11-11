@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/common/widgets/custom_ink_well.dart';
@@ -36,11 +37,11 @@ class PopularStoreCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
               child: Stack(
                 children: [
-                  CustomImage(
+                  LayoutBuilder(builder: (context, constraints) => CustomImage(
                     isHovered: hovered,
-                    image: '${store.coverPhotoFullUrl}',
+                    image: pickWebImageUrl(original: store.coverPhotoFullUrl, variants: store.coverPhotoVariants, logicalWidth: constraints.maxWidth, logicalHeight: 170, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store.coverPhotoFullUrl}',
                     fit: BoxFit.cover, width: double.infinity, height: 170,
-                  ),
+                  )),
 
                   Positioned(
                     bottom: 0, left: 0, right: 0,
@@ -70,7 +71,7 @@ class PopularStoreCard extends StatelessWidget {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(100),
                                   child: CustomImage(
-                                    image: '${store.logoFullUrl}',
+                                    image: pickWebImageUrl(original: store.logoFullUrl, variants: store.logoVariants, logicalWidth: 40, logicalHeight: 40, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store.logoFullUrl}',
                                     height: 40, width: 40,
                                   ),
                                 ),

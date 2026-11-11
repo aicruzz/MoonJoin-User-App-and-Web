@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -80,7 +81,7 @@ class StoreCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                             child: CustomImage(
                               isHovered: hovered,
-                              image: '${store.logoFullUrl}',
+                              image: pickWebImageUrl(original: store.logoFullUrl, variants: store.logoVariants, logicalWidth: 50, logicalHeight: 50, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store.logoFullUrl}',
                               height: 50, width: 50, fit: BoxFit.cover,
                             ),
                           ),

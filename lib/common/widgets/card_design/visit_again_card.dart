@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/common/widgets/add_favourite_view.dart';
@@ -134,7 +135,7 @@ class VisitAgainCard extends StatelessWidget {
                   children: [
                     CustomImage(
                       isHovered: hovered,
-                      image: '${store.logoFullUrl}',
+                      image: pickWebImageUrl(original: store.logoFullUrl, variants: store.logoVariants, logicalWidth: 54, logicalHeight: 54, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store.logoFullUrl}',
                       fit: BoxFit.cover, height: 54, width: 54,
                     ),
 

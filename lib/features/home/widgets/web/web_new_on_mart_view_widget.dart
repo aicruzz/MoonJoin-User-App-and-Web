@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:moonjoin/common/widgets/hover/text_hover.dart';
 import 'package:moonjoin/features/language/controllers/language_controller.dart';
@@ -143,7 +144,7 @@ class _WebNewOnMartViewWidgetState extends State<WebNewOnMartViewWidget> {
                                             borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
                                             child: CustomImage(
                                               isHovered: hovered,
-                                              image: '${storeList[index].logoFullUrl}',
+                                              image: pickWebImageUrl(original: storeList[index].logoFullUrl, variants: storeList[index].logoVariants, logicalWidth: 90, logicalHeight: 90, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${storeList[index].logoFullUrl}',
                                               height: 90, width: 90, fit: BoxFit.cover,
                                             ),
                                           ),

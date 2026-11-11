@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/common/widgets/custom_image.dart';
@@ -117,7 +118,7 @@ class StoreHeroHeader extends StatelessWidget {
                 padding: const EdgeInsets.only(left: Dimensions.paddingSizeSmall),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-                  child: CustomImage(image: store.coverPhotoFullUrl!, width: 104, height: 104, fit: BoxFit.cover),
+                  child: CustomImage(image: pickWebImageUrl(original: store.coverPhotoFullUrl!, variants: store.coverPhotoVariants, logicalWidth: 104, logicalHeight: 104, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? store.coverPhotoFullUrl!, width: 104, height: 104, fit: BoxFit.cover),
                 ),
               ),
             ]),

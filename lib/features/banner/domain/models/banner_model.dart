@@ -1,6 +1,7 @@
 import 'package:moonjoin/features/item/domain/models/basic_campaign_model.dart';
 import 'package:moonjoin/features/item/domain/models/item_model.dart';
 import 'package:moonjoin/features/store/domain/models/store_model.dart';
+import 'package:moonjoin/helper/image_variant_helper.dart';
 
 class BannerModel {
   List<BasicCampaignModel>? campaigns;
@@ -40,6 +41,8 @@ class Banner {
   String? title;
   String? type;
   String? imageFullUrl;
+  /// Slice 3: additive `image_variants` (read-only, never serialised). Null keeps [imageFullUrl] as the only URL.
+  Map<String, String>? imageVariants;
   String? link;
   Store? store;
   Item? item;
@@ -59,6 +62,7 @@ class Banner {
     title = json['title'];
     type = json['type'];
     imageFullUrl = json['image_full_url'];
+    imageVariants = parseImageVariants(json['image_variants']);
     link = json['link'];
     store = json['store'] != null ? Store.fromJson(json['store']) : null;
     item = json['item'] != null ? Item.fromJson(json['item']) : null;

@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/features/category/controllers/category_controller.dart';
 import 'package:moonjoin/helper/responsive_helper.dart';
 import 'package:moonjoin/helper/route_helper.dart';
@@ -72,7 +73,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
                           child: CustomImage(
                             height: 50, width: 50, fit: BoxFit.cover,
-                            image: '${catController.categoryList![index].imageFullUrl}',
+                            image: pickWebImageUrl(original: catController.categoryList![index].imageFullUrl, variants: catController.categoryList![index].imageVariants, logicalWidth: 50, logicalHeight: 50, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${catController.categoryList![index].imageFullUrl}',
                           ),
                         ),
                         const SizedBox(height: Dimensions.paddingSizeExtraSmall),

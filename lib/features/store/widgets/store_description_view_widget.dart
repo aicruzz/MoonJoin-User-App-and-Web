@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/features/store/controllers/store_controller.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
 import 'package:moonjoin/features/favourite/controllers/favourite_controller.dart';
@@ -39,7 +40,7 @@ class StoreDescriptionViewWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
           child: Stack(children: [
             CustomImage(
-              image: '${store!.logoFullUrl}',
+              image: pickWebImageUrl(original: store!.logoFullUrl, variants: store!.logoVariants, logicalWidth: ResponsiveHelper.isDesktop(context) ? 140 : 70, logicalHeight: ResponsiveHelper.isDesktop(context) ? 140 : 60, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store!.logoFullUrl}',
               height: ResponsiveHelper.isDesktop(context) ? 140 : 60, width: ResponsiveHelper.isDesktop(context) ? 140 : 70, fit: BoxFit.cover,
             ),
             isAvailable ? const SizedBox() : Positioned(

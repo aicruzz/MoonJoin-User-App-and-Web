@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/common/models/module_model.dart';
@@ -29,6 +30,7 @@ class SpecialOffersView extends StatelessWidget {
     return GetBuilder<BannerController>(builder: (bannerController) {
       final List<String?>? bannerList = bannerController.featuredBannerList;
       final List<dynamic>? bannerDataList = bannerController.featuredBannerDataList;
+      final List<Map<String, String>?>? bannerVariantList = bannerController.featuredBannerVariantList;
 
       if (bannerList != null && bannerList.isEmpty) return const SizedBox();
 
@@ -61,7 +63,15 @@ class SpecialOffersView extends StatelessWidget {
                 width: cardWidth,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-                  child: CustomImage(image: '${bannerList[index]}', fit: BoxFit.cover, width: cardWidth, height: cardHeight),
+                  child: CustomImage(
+                    image: pickWebImageUrl(
+                      original: bannerList[index],
+                      variants: (bannerVariantList != null && index < bannerVariantList.length) ? bannerVariantList[index] : null,
+                      logicalWidth: cardWidth, logicalHeight: cardHeight,
+                      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                    ) ?? '${bannerList[index]}',
+                    fit: BoxFit.cover, width: cardWidth, height: cardHeight,
+                  ),
                 ),
               ),
             );

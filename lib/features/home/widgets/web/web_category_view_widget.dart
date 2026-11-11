@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/features/category/controllers/category_controller.dart';
 import 'package:moonjoin/features/language/controllers/language_controller.dart';
 import 'package:moonjoin/features/splash/controllers/splash_controller.dart';
@@ -104,11 +105,11 @@ class _WebCategoryViewWidgetState extends State<WebCategoryViewWidget> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                              child: CustomImage(
+                              child: LayoutBuilder(builder: (context, constraints) => CustomImage(
                                 isHovered: hovered,
-                                image: '${widget.categoryController.categoryList![index].imageFullUrl}',
+                                image: pickWebImageUrl(original: widget.categoryController.categoryList![index].imageFullUrl, variants: widget.categoryController.categoryList![index].imageVariants, logicalWidth: constraints.maxWidth, logicalHeight: 80, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${widget.categoryController.categoryList![index].imageFullUrl}',
                                 height: 80, width: double.infinity, fit: BoxFit.cover,
-                              ),
+                              )),
                             ),
                           ),
                           const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -248,11 +249,11 @@ class _PharmacyCategoryViewState extends State<PharmacyCategoryView> {
 
                               ClipRRect(
                                 borderRadius: const BorderRadius.only(topLeft: Radius.circular(100), topRight: Radius.circular(100)),
-                                child: CustomImage(
+                                child: LayoutBuilder(builder: (context, constraints) => CustomImage(
                                   isHovered: hovered,
-                                  image: '${widget.categoryController.categoryList![index].imageFullUrl}',
+                                  image: pickWebImageUrl(original: widget.categoryController.categoryList![index].imageFullUrl, variants: widget.categoryController.categoryList![index].imageVariants, logicalWidth: constraints.maxWidth, logicalHeight: 80, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${widget.categoryController.categoryList![index].imageFullUrl}',
                                   height: 80, width: double.infinity, fit: BoxFit.cover,
-                                ),
+                                )),
                               ),
                               const SizedBox(height: Dimensions.paddingSizeSmall),
 
@@ -385,11 +386,11 @@ class _FoodCategoryViewState extends State<FoodCategoryView> {
                               ),
                               child: ClipRRect(
                                 borderRadius: const BorderRadius.all(Radius.circular(100)),
-                                child: CustomImage(
+                                child: LayoutBuilder(builder: (context, constraints) => CustomImage(
                                   isHovered: hovered,
-                                  image: '${widget.categoryController.categoryList![index].imageFullUrl}',
+                                  image: pickWebImageUrl(original: widget.categoryController.categoryList![index].imageFullUrl, variants: widget.categoryController.categoryList![index].imageVariants, logicalWidth: constraints.maxWidth, logicalHeight: 120, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${widget.categoryController.categoryList![index].imageFullUrl}',
                                   height: 120, width: double.infinity, fit: BoxFit.cover,
-                                ),
+                                )),
                               ),
                             ),
                             const SizedBox(height: Dimensions.paddingSizeSmall),

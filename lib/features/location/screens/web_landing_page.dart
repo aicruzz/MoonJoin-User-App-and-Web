@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -329,7 +330,7 @@ class _WebLandingPageState extends State<WebLandingPage> {
                           )),
                         ])),
                         CustomImage(
-                          image: '${splashController.moduleList![index].thumbnailFullUrl}',
+                          image: pickWebImageUrl(original: splashController.moduleList![index].thumbnailFullUrl, variants: splashController.moduleList![index].thumbnailVariants, logicalWidth: 450, logicalHeight: 450, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${splashController.moduleList![index].thumbnailFullUrl}',
                           height: 450, width: 450,
                         ),
                       ]),
@@ -356,7 +357,7 @@ class _WebLandingPageState extends State<WebLandingPage> {
                               _pageController.animateToPage(index, duration: const Duration(seconds: 2), curve: Curves.easeInOut);
                             },
                             child: CustomImage(
-                              image: '${splashController.moduleList![index].iconFullUrl}',
+                              image: pickWebImageUrl(original: splashController.moduleList![index].iconFullUrl, variants: splashController.moduleList![index].iconVariants, logicalWidth: 45, logicalHeight: 45, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${splashController.moduleList![index].iconFullUrl}',
                               height: 45, width: 45,
                             ),
                           ),

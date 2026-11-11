@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/features/category/controllers/category_controller.dart';
 import 'package:moonjoin/helper/route_helper.dart';
 import 'package:moonjoin/util/dimensions.dart';
@@ -59,7 +60,7 @@ class CategoryPopUp extends StatelessWidget {
                                     boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
                                   ),
                                   child: CustomImage(
-                                    image: '${categoryController.categoryList![index].imageFullUrl}',
+                                    image: pickWebImageUrl(original: categoryController.categoryList![index].imageFullUrl, variants: categoryController.categoryList![index].imageVariants, logicalWidth: 50, logicalHeight: 50, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${categoryController.categoryList![index].imageFullUrl}',
                                     height: 50, width: 50, fit: BoxFit.cover,
                                   ),
                                 ),

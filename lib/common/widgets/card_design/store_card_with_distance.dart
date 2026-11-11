@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/common/widgets/add_favourite_view.dart';
@@ -66,11 +67,11 @@ class StoreCardWithDistance extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: const BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusDefault), topRight: Radius.circular(Dimensions.radiusDefault)),
                       child: Stack(clipBehavior: Clip.none, children: [
-                        CustomImage(
+                        LayoutBuilder(builder: (context, constraints) => CustomImage(
                           isHovered: hovered,
-                          image: '${store.coverPhotoFullUrl}',
+                          image: pickWebImageUrl(original: store.coverPhotoFullUrl, variants: store.coverPhotoVariants, logicalWidth: constraints.maxWidth, logicalHeight: constraints.maxHeight, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store.coverPhotoFullUrl}',
                           fit: BoxFit.cover, height: double.infinity, width: double.infinity,
-                        ),
+                        )),
 
                        !fromTopOffers! ? DiscountTag(
                           discount: Get.find<StoreController>().getDiscount(store),
@@ -280,7 +281,7 @@ class StoreCardWithDistance extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
                   child: CustomImage(
-                    image: '${store.logoFullUrl}',
+                    image: pickWebImageUrl(original: store.logoFullUrl, variants: store.logoVariants, logicalWidth: 65, logicalHeight: 65, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${store.logoFullUrl}',
                     fit: BoxFit.cover, height: double.infinity, width: double.infinity,
                   ),
                 ),

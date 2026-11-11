@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
@@ -56,7 +57,7 @@ class ModuleDialogWidget extends StatelessWidget {
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
                         CustomImage(
-                          image: '${splashController.moduleList![index].iconFullUrl}',
+                          image: pickWebImageUrl(original: splashController.moduleList![index].iconFullUrl, variants: splashController.moduleList![index].iconVariants, logicalWidth: 80, logicalHeight: 80, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${splashController.moduleList![index].iconFullUrl}',
                           height: 80, width: 80,
                         ),
                         const SizedBox(height: Dimensions.paddingSizeSmall),

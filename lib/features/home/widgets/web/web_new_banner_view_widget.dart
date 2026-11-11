@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:moonjoin/common/widgets/hover/text_hover.dart';
 import 'package:moonjoin/features/banner/controllers/banner_controller.dart';
@@ -28,6 +29,7 @@ class WebNewBannerViewWidget extends StatelessWidget {
     return GetBuilder<BannerController>(builder: (bannerController) {
       List<String?>? bannerList = isFeatured ? bannerController.featuredBannerList : bannerController.bannerImageList;
       List<dynamic>? bannerDataList = isFeatured ? bannerController.featuredBannerDataList : bannerController.bannerDataList;
+      List<Map<String, String>?>? bannerVariantList = isFeatured ? bannerController.featuredBannerVariantList : bannerController.bannerVariantList;
 
         return (bannerList != null && bannerList.isEmpty) ? const SizedBox() : Container(
           width: MediaQuery.of(context).size.width,
@@ -93,11 +95,16 @@ class WebNewBannerViewWidget extends StatelessWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                               child: GetBuilder<SplashController>(builder: (splashController) {
-                                return CustomImage(
+                                return LayoutBuilder(builder: (context, constraints) => CustomImage(
                                   isHovered: hovered,
-                                  image: '${bannerList[index]}',
+                                  image: pickWebImageUrl(
+                                    original: bannerList[index],
+                                    variants: (bannerVariantList != null && index < bannerVariantList.length) ? bannerVariantList[index] : null,
+                                    logicalWidth: constraints.maxWidth, logicalHeight: constraints.maxHeight,
+                                    devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                                  ) ?? '${bannerList[index]}',
                                   fit: BoxFit.cover,
-                                );
+                                ));
                               }),
                             ),
                           );

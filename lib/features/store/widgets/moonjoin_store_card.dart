@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moonjoin/common/widgets/custom_image.dart';
@@ -82,7 +83,7 @@ class MoonjoinStoreCard extends StatelessWidget {
             aspectRatio: 2.55,
             child: Stack(fit: StackFit.expand, children: [
               (store.coverPhotoFullUrl != null && store.coverPhotoFullUrl!.isNotEmpty)
-                  ? CustomImage(image: store.coverPhotoFullUrl!, fit: BoxFit.cover)
+                  ? LayoutBuilder(builder: (context, constraints) => CustomImage(image: pickWebImageUrl(original: store.coverPhotoFullUrl!, variants: store.coverPhotoVariants, logicalWidth: constraints.maxWidth, logicalHeight: constraints.maxHeight, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? store.coverPhotoFullUrl!, fit: BoxFit.cover))
                   : Container(color: Theme.of(context).disabledColor.withValues(alpha: 0.15)),
 
               // Discount + "orders over" badges (top-left)
@@ -106,7 +107,7 @@ class MoonjoinStoreCard extends StatelessWidget {
                     height: 42, width: 42,
                     decoration: BoxDecoration(color: Theme.of(context).cardColor, shape: BoxShape.circle),
                     padding: const EdgeInsets.all(2),
-                    child: ClipOval(child: CustomImage(image: store.logoFullUrl!, fit: BoxFit.cover)),
+                    child: ClipOval(child: CustomImage(image: pickWebImageUrl(original: store.logoFullUrl!, variants: store.logoVariants, logicalWidth: 42, logicalHeight: 42, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? store.logoFullUrl!, fit: BoxFit.cover)),
                   ),
                 ),
 

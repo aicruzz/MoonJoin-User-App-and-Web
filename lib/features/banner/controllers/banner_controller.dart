@@ -28,6 +28,16 @@ class BannerController extends GetxController implements GetxService {
   
   List<dynamic>? _featuredBannerDataList;
   List<dynamic>? get featuredBannerDataList => _featuredBannerDataList;
+
+  /// Web Performance Slice 3. Index-aligned with [bannerImageList] /
+  /// [featuredBannerList]: entry i holds the `image_variants` of the banner whose
+  /// URL is entry i there, or null for a campaign or a banner with none. Built in
+  /// the same iteration as the URL lists, which keep their exact existing values.
+  List<Map<String, String>?>? _bannerVariantList;
+  List<Map<String, String>?>? get bannerVariantList => _bannerVariantList;
+
+  List<Map<String, String>?>? _featuredBannerVariantList;
+  List<Map<String, String>?>? get featuredBannerVariantList => _featuredBannerVariantList;
   
   int _currentIndex = 0;
   int get currentIndex => _currentIndex;
@@ -43,6 +53,7 @@ class BannerController extends GetxController implements GetxService {
     if (bannerModel != null) {
       _featuredBannerList = [];
       _featuredBannerDataList = [];
+      _featuredBannerVariantList = [];
 
       List<int?> moduleIdList = bannerServiceInterface.moduleIdList();
 
@@ -52,6 +63,7 @@ class BannerController extends GetxController implements GetxService {
         } else {
           _featuredBannerList!.add(campaign.imageFullUrl);
         }
+        _featuredBannerVariantList!.add(null);
         _featuredBannerDataList!.add(campaign);
       }
       for (var banner in bannerModel.banners!) {
@@ -60,6 +72,7 @@ class BannerController extends GetxController implements GetxService {
         } else {
           _featuredBannerList!.add(banner.imageFullUrl);
         }
+        _featuredBannerVariantList!.add(banner.imageVariants);
         if(banner.item != null && moduleIdList.contains(banner.item!.moduleId)) {
           _featuredBannerDataList!.add(banner.item);
         }else if(banner.store != null && moduleIdList.contains(banner.store!.moduleId)) {
@@ -76,6 +89,7 @@ class BannerController extends GetxController implements GetxService {
 
   void clearBanner() {
     _bannerImageList = null;
+    _bannerVariantList = null;
   }
 
   Future<void> getBannerList(bool reload, {DataSourceEnum dataSource = DataSourceEnum.local, bool fromRecall = false}) async {
@@ -111,12 +125,14 @@ class BannerController extends GetxController implements GetxService {
     if (bannerModel != null) {
       _bannerImageList = [];
       _bannerDataList = [];
+      _bannerVariantList = [];
       for (var campaign in bannerModel.campaigns!) {
         if(_bannerImageList!.contains(campaign.imageFullUrl)) {
           _bannerImageList!.add('${campaign.imageFullUrl}${bannerModel.campaigns!.indexOf(campaign)}');
         } else {
           _bannerImageList!.add(campaign.imageFullUrl);
         }
+        _bannerVariantList!.add(null);
         _bannerDataList!.add(campaign);
       }
       for (var banner in bannerModel.banners!) {
@@ -126,6 +142,7 @@ class BannerController extends GetxController implements GetxService {
         } else {
           _bannerImageList!.add(banner.imageFullUrl);
         }
+        _bannerVariantList!.add(banner.imageVariants);
 
         if(banner.item != null) {
           _bannerDataList!.add(banner.item);

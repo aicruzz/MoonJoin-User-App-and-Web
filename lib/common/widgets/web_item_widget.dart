@@ -52,11 +52,15 @@ class WebItemWidget extends StatelessWidget {
       }
     }
     /// Media 6V. Resolve the card's image box ONCE so the selected variant and the
-    /// rendered size always agree. Products only: a Store has no `imageVariants`,
-    /// so the store-logo branch keeps exactly its existing URL.
+    /// rendered size always agree. The store-logo branch uses the same box via the
+    /// web-only `pickWebImageUrl` (Slice 3), so mobile keeps its existing logo URL.
     final double resolvedImageHeight = desktop ? 140 : length == null ? 100 : 65;
     final double resolvedImageWidth = desktop ? isStore ? 275 : 300 : 80;
-    final String cardImage = isStore ? '${store != null ? store!.logoFullUrl : ''}'
+    final String cardImage = isStore ? (store != null ? (pickWebImageUrl(
+            original: store!.logoFullUrl, variants: store!.logoVariants,
+            logicalWidth: resolvedImageWidth, logicalHeight: resolvedImageHeight,
+            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+          ) ?? '${store!.logoFullUrl}') : '')
         : (pickImageUrl(
             original: item!.imageFullUrl, variants: item!.imageVariants,
             logicalWidth: resolvedImageWidth, logicalHeight: resolvedImageHeight,

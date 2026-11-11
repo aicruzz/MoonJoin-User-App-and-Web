@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
@@ -65,11 +66,11 @@ class WebRecommendedStoreView extends StatelessWidget {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                          child: CustomImage(
+                          child: LayoutBuilder(builder: (context, constraints) => CustomImage(
                             isHovered: hovered,
-                            image: '${storeController.recommendedStoreList![index].logoFullUrl}',
+                            image: pickWebImageUrl(original: storeController.recommendedStoreList![index].logoFullUrl, variants: storeController.recommendedStoreList![index].logoVariants, logicalWidth: constraints.maxWidth, logicalHeight: 60, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '${storeController.recommendedStoreList![index].logoFullUrl}',
                             fit: BoxFit.cover, height: 60, width: double.infinity,
-                          ),
+                          )),
                         ),
                       );
                     }

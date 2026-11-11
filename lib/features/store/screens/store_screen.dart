@@ -1,3 +1,4 @@
+import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:flutter/rendering.dart';
 import 'package:moonjoin/features/cart/controllers/cart_controller.dart';
 import 'package:moonjoin/features/category/controllers/category_controller.dart';
@@ -151,7 +152,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             children: [
                               CustomImage(
                                 fit: BoxFit.cover, height: 240, width: 590,
-                                image: store?.coverPhotoFullUrl ?? '',
+                                image: pickWebImageUrl(original: store?.coverPhotoFullUrl, variants: store?.coverPhotoVariants, logicalWidth: 590, logicalHeight: 240, devicePixelRatio: MediaQuery.devicePixelRatioOf(context)) ?? '',
                               ),
 
                               store?.discount != null ? Positioned(

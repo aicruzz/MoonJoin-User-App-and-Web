@@ -74,11 +74,16 @@ class ItemWidget extends StatelessWidget {
     }
     /// Media 6V. Resolve the card's image box ONCE so the variant that gets
     /// selected and the size that gets rendered can never disagree, honouring the
-    /// caller's [imageHeight]/[imageWidth] overrides. Products only: a Store has no
-    /// `imageVariants`, so the store-logo branch keeps exactly its existing URL.
+    /// caller's [imageHeight]/[imageWidth] overrides. The store-logo branch uses the
+    /// same box via the web-only `pickWebImageUrl` (Slice 3), so mobile keeps
+    /// exactly its existing logo URL.
     final double resolvedImageHeight = imageHeight ?? (desktop ? 120 : length == null ? 100 : 90);
     final double resolvedImageWidth = imageWidth ?? (desktop ? 120 : 90);
-    final String cardImage = isStore ? '${store != null ? store!.logoFullUrl : ''}'
+    final String cardImage = isStore ? (store != null ? (pickWebImageUrl(
+            original: store!.logoFullUrl, variants: store!.logoVariants,
+            logicalWidth: resolvedImageWidth, logicalHeight: resolvedImageHeight,
+            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+          ) ?? '${store!.logoFullUrl}') : '')
         : (pickImageUrl(
             original: item!.imageFullUrl, variants: item!.imageVariants,
             logicalWidth: resolvedImageWidth, logicalHeight: resolvedImageHeight,
