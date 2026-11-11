@@ -9,13 +9,14 @@
 @TestOn('browser')
 library;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moonjoin/common/widgets/custom_image.dart';
+import 'package:moonjoin/common/widgets/web_raster_image.dart';
 import 'package:moonjoin/helper/image_variant_helper.dart';
 import 'package:moonjoin/util/app_constants.dart';
+import 'package:octo_image/octo_image.dart';
 
 const String _host = 'https://admin.moonjoin.com/storage/app/public';
 const String kLogo = '$_host/store/logo.png';
@@ -36,7 +37,8 @@ void main() {
     final String chosen = pickWebImageUrl(original: kLogo, variants: const <String, String>{'sm': kLogoSm},
         logicalWidth: 50, logicalHeight: 50, devicePixelRatio: 2) ?? kLogo;
     await tester.pumpWidget(MaterialApp(home: CustomImage(image: chosen, height: 50, width: 50)));
-    expect(tester.widget<CachedNetworkImage>(find.byType(CachedNetworkImage)).imageUrl,
+    // Web renders through OctoImage + WebRasterImage (raster, not <img>).
+    expect((tester.widget<OctoImage>(find.byType(OctoImage)).image as WebRasterImage).url,
         '${AppConstants.baseUrl}/image-proxy?url=$kLogoSm');
   });
 
@@ -44,7 +46,8 @@ void main() {
     final String chosen = pickWebImageUrl(original: kLogo, variants: null,
         logicalWidth: 50, logicalHeight: 50, devicePixelRatio: 2) ?? kLogo;
     await tester.pumpWidget(MaterialApp(home: CustomImage(image: chosen, height: 50, width: 50)));
-    expect(tester.widget<CachedNetworkImage>(find.byType(CachedNetworkImage)).imageUrl,
+    // Web renders through OctoImage + WebRasterImage (raster, not <img>).
+    expect((tester.widget<OctoImage>(find.byType(OctoImage)).image as WebRasterImage).url,
         '${AppConstants.baseUrl}/image-proxy?url=$kLogo');
   });
 }
