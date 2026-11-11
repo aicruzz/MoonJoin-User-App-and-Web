@@ -59,6 +59,73 @@ class _HostState extends State<_Host> {
   }
 }
 
+/// The live mobile "All Products" list: the API pages by 13 (`limit` in the
+/// response), the list preloads 3 screens ahead, and a category/filter change
+/// reloads page 1 (the store screen has no pull-to-refresh; that is its refresh).
+const double _apiRow = 400; // 13 rows = 5200px per page
+const int _apiLimit = 13;
+
+class _ApiHost extends StatefulWidget {
+  final int totalSize;
+  final Future<bool> Function(int page) load;
+  final ScrollController controller;
+  final int? limit;
+  final double preloadScreens;
+  const _ApiHost({required this.totalSize, required this.load, required this.controller, this.limit = _apiLimit, this.preloadScreens = 3});
+
+  @override
+  State<_ApiHost> createState() => _ApiHostState();
+}
+
+class _ApiHostState extends State<_ApiHost> {
+  List<int> rows = <int>[];
+  int offset = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    rows = _page(1);
+  }
+
+  List<int> _page(int page) {
+    final int first = (page - 1) * _apiLimit + 1;
+    final int last = (page * _apiLimit).clamp(0, widget.totalSize);
+    return <int>[for (int id = first; id <= last; id++) id];
+  }
+
+  /// Category/filter change: StoreController reloads offset 1 and replaces the list.
+  void reloadFirstPage() => setState(() {
+    rows = _page(1);
+    offset = 1;
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: widget.controller,
+      child: PaginatedListView(
+        scrollController: widget.controller,
+        totalSize: widget.totalSize,
+        offset: offset,
+        limit: widget.limit,
+        preloadScreens: widget.preloadScreens,
+        onPaginate: (int? page) async {
+          final bool ok = await widget.load(page!);
+          if (ok && mounted) {
+            setState(() {
+              rows.addAll(_page(page));
+              offset = page;
+            });
+          }
+        },
+        itemView: Column(children: <Widget>[
+          for (final int row in rows) SizedBox(height: _apiRow, child: Text('product $row')),
+        ]),
+      ),
+    );
+  }
+}
+
 class _NoSuch {
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError(invocation.memberName.toString());
@@ -172,6 +239,135 @@ void main() {
       await tester.pumpAndSettle();
       expect(requested, <int>[2, 2], reason: 'the customer scrolling again retries the same page');
       expect(find.text('product 11', skipOffstage: false), findsOneWidget);
+    });
+  });
+
+  group('All Products (API limit 13, preload 3 screens)', () {
+    late ScrollController controller;
+    late List<int> requested;
+    Completer<bool>? hold;
+
+    setUp(() {
+      controller = ScrollController();
+      requested = <int>[];
+      hold = null;
+    });
+
+    Future<void> pumpApi(WidgetTester tester, {required int totalSize, int? limit = _apiLimit, double preloadScreens = 3}) async {
+      tester.view.physicalSize = const Size(400, _viewportHeight);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: _ApiHost(
+        totalSize: totalSize, controller: controller, limit: limit, preloadScreens: preloadScreens,
+        load: (int page) async {
+          requested.add(page);
+          return hold != null ? hold!.future : true;
+        },
+      ))));
+    }
+
+    testWidgets('the next page starts about 3 screens before the end, not 1', (WidgetTester tester) async {
+      await pumpApi(tester, totalSize: 40);
+      expect(controller.position.maxScrollExtent, 13 * _apiRow - _viewportHeight); // 4400
+      controller.jumpTo(1900); // 2500px left: just over 3 screens
+      await tester.pump();
+      expect(requested, isEmpty);
+      controller.jumpTo(2100); // 2300px left: within 3 screens
+      await tester.pump();
+      expect(requested, <int>[2]);
+      expect(controller.position.extentAfter, greaterThan(2 * _viewportHeight),
+          reason: 'requested with more than two screens of products still to scroll');
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('one screen (the default) would only start at 800px left', (WidgetTester tester) async {
+      await pumpApi(tester, totalSize: 40, preloadScreens: 1);
+      controller.jumpTo(2100);
+      await tester.pump();
+      expect(requested, isEmpty, reason: 'other lists keep their behaviour');
+      controller.jumpTo(3700);
+      await tester.pump();
+      expect(requested, <int>[2]);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('a page is never requested twice, however much the customer scrolls while it loads', (WidgetTester tester) async {
+      hold = Completer<bool>();
+      await pumpApi(tester, totalSize: 40);
+      for (final double y in <double>[2100, 2600, 3500, 4400, 4000, 4400]) {
+        controller.jumpTo(y);
+        await tester.pump();
+      }
+      expect(requested, <int>[2]);
+      hold!.complete(true);
+      await tester.pumpAndSettle();
+      expect(requested, <int>[2]);
+    });
+
+    testWidgets('pages arrive in order and end at the API last page (13 per page, no empty extra request)', (WidgetTester tester) async {
+      await pumpApi(tester, totalSize: 30); // 13 + 13 + 4
+      for (int i = 0; i < 8; i++) {
+        controller.jumpTo(controller.position.maxScrollExtent);
+        await tester.pumpAndSettle();
+      }
+      expect(requested, <int>[2, 3], reason: 'ceil(30 / 13) = 3 pages, nothing beyond the last');
+      final List<String> shown = tester.widgetList<Text>(find.byType(Text, skipOffstage: false)).map((Text t) => t.data!).toList();
+      expect(shown, <String>[for (int id = 1; id <= 30; id++) 'product $id'], reason: 'server order, no duplicates, nothing skipped');
+      expect(find.byType(CircularProgressIndicator, skipOffstage: false), findsNothing);
+    });
+
+    testWidgets('26 products = 2 pages of 13: no request for an empty third page', (WidgetTester tester) async {
+      await pumpApi(tester, totalSize: 26);
+      for (int i = 0; i < 6; i++) {
+        controller.jumpTo(controller.position.maxScrollExtent);
+        await tester.pumpAndSettle();
+      }
+      expect(requested, <int>[2], reason: 'the old 10-per-page count (ceil(26/10) = 3) asked for page 3');
+    });
+
+    testWidgets('a failed page shows the spinner while loading, is not retried by itself, and retries on the next scroll', (WidgetTester tester) async {
+      hold = Completer<bool>();
+      await pumpApi(tester, totalSize: 40);
+      controller.jumpTo(2100);
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator, skipOffstage: false), findsOneWidget);
+      hold!.complete(false);
+      hold = null;
+      await tester.pumpAndSettle();
+      expect(find.byType(CircularProgressIndicator, skipOffstage: false), findsNothing);
+      expect(requested, <int>[2]);
+      controller.jumpTo(2200);
+      await tester.pumpAndSettle();
+      expect(requested, <int>[2, 2]);
+      expect(find.text('product 14', skipOffstage: false), findsOneWidget);
+    });
+
+    testWidgets('reloading page 1 (category or filter change) restarts paging cleanly', (WidgetTester tester) async {
+      await pumpApi(tester, totalSize: 40);
+      controller.jumpTo(2100);
+      await tester.pumpAndSettle();
+      expect(requested, <int>[2]);
+
+      tester.state<_ApiHostState>(find.byType(_ApiHost)).reloadFirstPage();
+      controller.jumpTo(0);
+      await tester.pumpAndSettle();
+      expect(find.text('product 14', skipOffstage: false), findsNothing);
+      controller.jumpTo(2100);
+      await tester.pumpAndSettle();
+      expect(requested, <int>[2, 2], reason: 'page 2 again for the reloaded list, once');
+      expect(find.text('product 14', skipOffstage: false), findsOneWidget);
+    });
+
+    testWidgets('leaving the store while a page loads does not throw', (WidgetTester tester) async {
+      hold = Completer<bool>();
+      await pumpApi(tester, totalSize: 40);
+      controller.jumpTo(2100);
+      await tester.pump();
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      hold!.complete(true);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     });
   });
 

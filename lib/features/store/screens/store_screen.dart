@@ -625,6 +625,8 @@ class _StoreScreenState extends State<StoreScreen> {
                   onPaginate: (int? offset) async => await storeController.getStoreItemList(widget.store!.id ?? storeController.store!.id, offset!, storeController.type, false),
                   totalSize: storeController.storeItemModel?.totalSize,
                   offset: storeController.storeItemModel?.offset,
+                  limit: int.tryParse(storeController.storeItemModel?.limit ?? ''),
+                  preloadScreens: 3,
                   itemView: ItemsView(
                     isStore: false, stores: null,
                     items: (storeController.categoryList!.isNotEmpty && storeController.storeItemModel != null)

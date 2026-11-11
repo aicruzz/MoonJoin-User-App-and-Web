@@ -12,8 +12,15 @@ class PaginatedListView extends StatefulWidget {
   final Widget itemView;
   final bool enabledPagination;
   final bool reverse;
+  /// Items per page as the API reports it (the response's `limit`). Null keeps the
+  /// historical assumption of 10.
+  final int? limit;
+  /// How many screens of loaded content may still be left when the next page is
+  /// requested.
+  final double preloadScreens;
   const PaginatedListView({super.key, required this.scrollController, required this.onPaginate, required this.totalSize,
     required this.offset, required this.itemView, this.enabledPagination = true, this.reverse = false,
+    this.limit, this.preloadScreens = 1,
   });
 
   @override
@@ -42,13 +49,20 @@ class _PaginatedListViewState extends State<PaginatedListView> {
     });
   }
 
-  /// Requests the next page while about one screen of loaded content is still
-  /// left, so it is usually ready before the customer reaches the end. Waiting
-  /// for the exact bottom made the list stop as if it had ended.
-  bool _isNearEnd(ScrollPosition position) => position.extentAfter <= position.viewportDimension;
+  /// Requests the next page while [PaginatedListView.preloadScreens] screens of
+  /// loaded content are still left, so it is usually ready before the customer
+  /// reaches the end. Waiting for the exact bottom made the list stop as if it
+  /// had ended.
+  bool _isNearEnd(ScrollPosition position) => position.extentAfter <= position.viewportDimension * widget.preloadScreens;
+
+  /// Number of pages the API holds for [PaginatedListView.totalSize].
+  int _pageCount() {
+    final int perPage = (widget.limit != null && widget.limit! > 0) ? widget.limit! : 10;
+    return (widget.totalSize! / perPage).ceil();
+  }
 
   void _paginate() async {
-    int pageSize = (widget.totalSize! / 10).ceil();
+    int pageSize = _pageCount();
     if (_offset! < pageSize && !_offsetList.contains(_offset!+1)) {
 
       setState(() {
@@ -57,6 +71,7 @@ class _PaginatedListViewState extends State<PaginatedListView> {
         _isLoading = true;
       });
       await widget.onPaginate(_offset);
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -84,7 +99,7 @@ class _PaginatedListViewState extends State<PaginatedListView> {
 
       widget.reverse ? const SizedBox() : widget.itemView,
 
-      (ResponsiveHelper.isDesktop(context) && (widget.totalSize == null || _offset! >= (widget.totalSize! / 10).ceil() || _offsetList.contains(_offset!+1))) ? const SizedBox() : Center(child: Padding(
+      (ResponsiveHelper.isDesktop(context) && (widget.totalSize == null || _offset! >= _pageCount() || _offsetList.contains(_offset!+1))) ? const SizedBox() : Center(child: Padding(
         padding: (_isLoading || ResponsiveHelper.isDesktop(context)) ? const EdgeInsets.all(Dimensions.paddingSizeSmall) : EdgeInsets.zero,
         child: _isLoading ? const CircularProgressIndicator() : (ResponsiveHelper.isDesktop(context) && widget.totalSize != null) ? InkWell(
           onTap: _paginate,
