@@ -1,6 +1,7 @@
 import 'package:moonjoin/util/dimensions.dart';
 import 'package:moonjoin/util/styles.dart';
 import 'package:moonjoin/common/widgets/custom_button.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -42,7 +43,12 @@ class PermissionDialogWidget extends StatelessWidget {
               ),
               const SizedBox(width: Dimensions.paddingSizeSmall),
               Expanded(child: CustomButton(buttonText: 'settings'.tr, onPressed: () async {
-                await Geolocator.openAppSettings();
+                // Browsers expose no API to open site/OS settings (geolocator_web
+                // throws UnsupportedError, which left this dialog stuck open), so
+                // on web the button only dismisses; native behaviour is unchanged.
+                if (!kIsWeb) {
+                  await Geolocator.openAppSettings();
+                }
                 Get.back();
               })),
             ]),
