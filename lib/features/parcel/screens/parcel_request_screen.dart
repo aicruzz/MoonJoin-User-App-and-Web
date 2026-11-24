@@ -751,6 +751,12 @@ class _ParcelRequestScreenState extends State<ParcelRequestScreen> {
       if (charge < parcelMinimumShippingCharge) {
         charge = parcelMinimumShippingCharge;
       }
+      // Same global maximum the backend applies to the base parcel charge (missing or 0 = no cap),
+      // before extra charges and surge. Display only; the backend charges the actual amount.
+      double parcelMaximumShippingCharge = Get.find<SplashController>().configModel!.parcelMaximumShippingCharge ?? 0;
+      if (parcelMaximumShippingCharge > 0 && charge > parcelMaximumShippingCharge) {
+        charge = parcelMaximumShippingCharge;
+      }
 
       if (parcelController.extraCharge != null) {
         charge = charge + parcelController.extraCharge!;

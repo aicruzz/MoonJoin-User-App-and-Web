@@ -35,6 +35,7 @@ class ConfigModel {
   int? digitAfterDecimalPoint;
   double? parcelPerKmShippingCharge;
   double? parcelMinimumShippingCharge;
+  double? parcelMaximumShippingCharge;
   ModuleModel? module;
   ModuleConfig? moduleConfig;
   LandingPageSettings? landingPageSettings;
@@ -138,6 +139,7 @@ class ConfigModel {
     this.moduleConfig,
     this.parcelPerKmShippingCharge,
     this.parcelMinimumShippingCharge,
+    this.parcelMaximumShippingCharge,
     this.landingPageSettings,
     this.socialMedia,
     this.footerText,
@@ -239,6 +241,7 @@ class ConfigModel {
     moduleConfig = json['module_config'] != null ? ModuleConfig.fromJson(json['module_config']) : null;
     parcelPerKmShippingCharge = json['parcel_per_km_shipping_charge']?.toDouble();
     parcelMinimumShippingCharge = json['parcel_minimum_shipping_charge']?.toDouble();
+    parcelMaximumShippingCharge = json['parcel_maximum_shipping_charge']?.toDouble();
     landingPageSettings = json['landing_page_settings'] != null ? LandingPageSettings.fromJson(json['landing_page_settings']) : null;
     if (json['social_media'] != null) {
       socialMedia = <SocialMedia>[];
@@ -367,6 +370,7 @@ class ConfigModel {
     }
     data['parcel_per_km_shipping_charge'] = parcelPerKmShippingCharge;
     data['parcel_minimum_shipping_charge'] = parcelMinimumShippingCharge;
+    data['parcel_maximum_shipping_charge'] = parcelMaximumShippingCharge;
     if (landingPageSettings != null) {
       data['landing_page_settings'] = landingPageSettings!.toJson();
     }
